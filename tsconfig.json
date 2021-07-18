@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "target": "ES2015",
+        "moduleResolution": "node",
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "declarationDir": "./declarations/",
+        "allowJs": true,
+        "alwaysStrict": true,
+        // "noUnusedLocals": true,
+        // "noUnusedParameters": true,
+        "noImplicitAny": true,
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "strictNullChecks": true,
+        "strictPropertyInitialization": true
+    },
+    "exclude": ["./node_modules"],
+    "include": ["./src"]
+}

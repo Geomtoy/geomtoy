@@ -1,0 +1,44 @@
+<!-- <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="1024"
+    height="1024" viewBox="0 0 1024 1024">
+    <g fill="none" stroke="gray">
+        <circle r="69" cx="250" cy="250" />
+        <circle r="26" cx="208.5" cy="261" />
+        <circle r="35" cx="250" cy="216" />
+        <circle r="13.4" cx="202" cy="222" />
+    </g>
+</svg> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        class Test {
+            constructor(){
+                this.x = 1
+                this.y = 2
+            }
+            #pMethod(){
+                
+            }
+            instanceMethod(){
+                return this.#pMethod()
+            }
+            static staticMethod(p){
+                return p.#pMethod()
+            }
+        }
+
+        let a = new Test()
+        a.instanceMethod()
+
+        Test.staticMethod(a)
+
+    </script>
+</body>
+</html>
