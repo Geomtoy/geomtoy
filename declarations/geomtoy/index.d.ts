@@ -4,7 +4,6 @@ import Segment from "./Segment";
 import Vector from "./Vector";
 import Triangle from "./Triangle";
 import Circle from "./Circle";
-import Angle from "./utility/Angle";
 import Rectangle from "./Rectangle";
 import Polyline from "./Polyline";
 import Polygon from "./Polygon";
@@ -20,7 +19,6 @@ declare type GStatic = {
     Triangle: typeof Triangle;
     Circle: typeof Circle;
     Ellipse: typeof Ellipse;
-    Angle: typeof Angle;
     Rectangle: typeof Rectangle;
     Polyline: typeof Polyline;
     Polygon: typeof Polygon;
@@ -28,8 +26,11 @@ declare type GStatic = {
     Inversion: typeof Inversion;
     options: {
         epsilon: number;
-        pointSize: number;
         anglePositive: AnglePositive;
+        graphic: {
+            pointSize: number;
+            lineRange: number;
+        };
         [prop: string]: any;
     };
 };

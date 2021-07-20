@@ -165,16 +165,17 @@ class Segment {
 
     /**
      * 获得从线段起点开始的lambda定比分点P
-     * @description 当P为内分点时，lambda > 0；当P为外分点时，lambda < 0 && lambda !== -1；当P与A重合时，lambda === 0
+     * @description 当P为内分点时，lambda > 0；当P为外分点时，lambda < 0 && lambda !== -1；当P与A重合时，lambda === 0,当P与B重合时，lambda===1
      * @param {Number} lambda
      * @returns {Point}
      */
-    getDivisionPoint(lambda) {
+    getInterpolatePoint(lambda){
         if (lambda === -1) throw new Error(`[G]Can NOT divide \`Segment\` by -1.`)
         let x = (this.p1.x + lambda * this.p2.x) / (1 + lambda),
             y = (this.p1.y + lambda * this.p2.y) / (1 + lambda)
         return new Point(x, y)
     }
+
     /**
      * `直线l`分线段成两部分之间的比例
      * @param {Line} l

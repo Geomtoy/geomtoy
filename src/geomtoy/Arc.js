@@ -16,14 +16,10 @@ class Arc {
         if(this.p1.isSameAs(this.p2)){
             throw new Error(`[G]The two end points of an \`Arc\` must be distinct.`)
         }
-
     }
-
 
     getLength(){
         if(this.ellipse.radius){
-            
-
             let pO = this.ellipse.centerPoint
                 pA = this.p1
                 pB = this.p2,

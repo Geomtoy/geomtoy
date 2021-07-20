@@ -7,8 +7,8 @@ import utility from "../utility"
 import { AnglePositive, Coordinate } from "../types"
 
 class Rotation extends Matrix {
-    #angle!: number
-    #origin!: Point
+    #angle: number
+    #origin: Point
 
     constructor(angle: number, originX: number, originY: number)
     constructor(angle: number, originCoordinate: Coordinate)

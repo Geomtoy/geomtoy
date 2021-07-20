@@ -1,5 +1,6 @@
-import { Coordinate } from "../types";
-declare const _default: {
+import { Coordinate, GraphicDirectiveType } from "../types";
+declare const typeUtility: {
     isCoordinate(value: any): value is Coordinate;
+    isGraphicDirectiveType(value: any): value is GraphicDirectiveType;
 };
-export default _default;
+export default typeUtility;

@@ -29,7 +29,6 @@ declare class Matrix {
     preMultiplyO(m: Matrix): this;
     postMultiply(m: Matrix): Matrix;
     postMultiplyO(m: Matrix): this;
-    static matrixTransformPoint(matrix: Matrix, p: Point): Point;
     getPointBeforeMatrixTransformed(p: Point): Point;
     getPointAfterMatrixTransformed(p: Point): Point;
     /**

@@ -37,11 +37,11 @@ declare class Segment {
     getMiddlePoint(): Point;
     /**
      * 获得从线段起点开始的lambda定比分点P
-     * @description 当P为内分点时，lambda > 0；当P为外分点时，lambda < 0 && lambda !== -1；当P与A重合时，lambda === 0
+     * @description 当P为内分点时，lambda > 0；当P为外分点时，lambda < 0 && lambda !== -1；当P与A重合时，lambda === 0,当P与B重合时，lambda===1
      * @param {Number} lambda
      * @returns {Point}
      */
-    getDivisionPoint(lambda: number): Point;
+    getInterpolatePoint(lambda: number): Point;
     /**
      * `直线l`分线段成两部分之间的比例
      * @param {Line} l

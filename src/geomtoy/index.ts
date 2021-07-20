@@ -4,7 +4,6 @@ import Segment from "./Segment"
 import Vector from "./Vector"
 import Triangle from "./Triangle"
 import Circle from "./Circle"
-import Angle from "./utility/Angle"
 import Rectangle from "./Rectangle"
 import Polyline from "./Polyline"
 import Polygon from "./Polygon"
@@ -21,7 +20,6 @@ type GStatic = {
     Triangle: typeof Triangle
     Circle: typeof Circle
     Ellipse: typeof Ellipse
-    Angle: typeof Angle
     Rectangle: typeof Rectangle
     Polyline: typeof Polyline
     Polygon: typeof Polygon
@@ -29,8 +27,11 @@ type GStatic = {
     Inversion: typeof Inversion
     options: {
         epsilon: number
-        pointSize: number
         anglePositive: AnglePositive
+        graphic: {
+            pointSize: number
+            lineRange: number
+        }
         [prop: string]: any
     }
 }
@@ -43,7 +44,6 @@ const G: GStatic = {
     Triangle,
     Circle,
     Ellipse,
-    Angle,
     Rectangle,
     Polyline,
     Polygon,
@@ -51,8 +51,11 @@ const G: GStatic = {
     Inversion,
     options: {
         epsilon: 2 ** -11,
-        pointSize: 1,
-        anglePositive: AnglePositive.Clockwise
+        anglePositive: AnglePositive.Clockwise,
+        graphic: {
+            pointSize: 2,
+            lineRange: 2 ** 10
+        }
     }
 }
 

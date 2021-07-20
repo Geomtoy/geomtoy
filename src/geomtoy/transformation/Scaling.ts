@@ -66,6 +66,7 @@ class Scaling extends Matrix {
     }
     set origin(value) {
         this.#origin = value
+        this.#scaling()
     }
 
     #scaling() {

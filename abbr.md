@@ -6,11 +6,18 @@ l = line
 ip = intersection point
 
 diam = diameter
-coord = coordinate
 
 apx = approximate | approximately
 def = definite | definitely
 dist = distance
+
+impl = implement | implementation
+cp = control point
+
+cx = center point x
+cy = center point y
+rx = radius x
+ry = radius y
 
 
 ### plus

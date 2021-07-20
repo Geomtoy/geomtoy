@@ -2,7 +2,9 @@ import _ from "lodash"
 import utility from "./utility"
 import Point from "./Point"
 import Segment from "./Segment"
+import Graphic from "./graphic"
 import Rectangle from "./Rectangle"
+import G from "."
 
 //Line stands for `ax + by + c = 0`
 class Line {
@@ -273,7 +275,6 @@ class Line {
         if (this.b === 0 && line.b === 0) return true
         if (this.a === 0 && line.a === 0) return true
         return utility.apxEqualsTo(this.a * line.b, this.b * line.a)
-        return false
     }
     /**
      * 若`直线this`与`直线line`平行，则返回它们之间的距离，否则返回null
@@ -285,6 +286,36 @@ class Line {
         let l1 = this,
             l2 = line
         return Math.abs(l1.c - l2.c) / Math.hypot(l1.a, l1.b)
+    }
+
+    getGraphic(type) {
+        let lowerBound = -G.options.graphic.lineRange,
+            upperBound = G.options.graphic.lineRange,
+            { a, b, c } = this,
+            x1,
+            x2,
+            y1,
+            y2
+        //x=-(b/a)y-c/a
+        //y=-(a/b)x-c/b
+        if (this.b === 0) {
+            y1 = lowerBound
+            y2 = upperBound
+            x1 = -(b / a) * y1 - c / a
+            x2 = -(b / a) * y2 - c / a
+        } else {
+            x1 = lowerBound
+            x2 = upperBound
+            y1 = -(a / b) * x1 - c / b
+            y2 = -(a / b) * x2 - c / b
+        }
+        let p1 = new Point(x1, y1),
+            p2 = new Point(x2, y2),
+            g = new Graphic()
+        g.moveTo(x1, y1)
+        g.lineTo(x2, y2)
+        g.close()
+        return g.valueOf(type)
     }
 
     clone() {

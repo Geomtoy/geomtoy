@@ -6,24 +6,32 @@ import _ from "lodash"
 import Vector from "./Vector"
 import Segment from "./Segment"
 import Inversion from "./transformation/Inversion"
+import { Coordinate } from "./types"
 
 //Circle stands for `(x-cx) ** 2 + (y-cy) ** 2 = r ** 2`
 class Circle {
-    radius
-    cx
-    cy
+    radius!: number
+    cx!: number
+    cy!: number
 
-    constructor(radius, cx, cy) {
+    constructor(radius: number, cx: number, cy: number)
+    constructor(radius: number, centerPointCoordinate: Coordinate)
+    constructor(radius: number, centerPoint: Point)
+    constructor(radius: number, cx?: any, cy?: any) {
         if (!utility.defGreaterThan(radius, 0)) {
             throw new Error(`[G]The \`radius\` of \`Circle\` can NOT be 0 or less than 0.`)
         }
         this.radius = radius
-        if (_.isArrayLike(cx)) {
-            Object.assign(this, { cx: cx[0], cy: cx[1] })
-        } else if (cx instanceof Point) {
-            Object.assign(this, { cx: cx.x, cy: cx.y })
-        } else {
+        if (_.isNumber(cx) && _.isNumber(cy)) {
             Object.assign(this, { cx, cy })
+            return this
+        }
+        if (utility.type.isCoordinate(cx)) {
+            Object.assign(this, { cx: cx[0], cy: cx[1] })
+            return this
+        }
+        if (cx instanceof Point) {
+            Object.assign(this, { cx: cx.x, cy: cx.y })
         }
     }
 
@@ -31,16 +39,16 @@ class Circle {
         return new Point(this.cx, this.cy)
     }
 
-    isSameAs(circle) {
+    isSameAs(circle: Circle) {
         return this.centerPoint.isSameAs(circle.centerPoint) && utility.apxEqualsTo(this.radius, circle.radius)
     }
 
     /**
      * 获得圆上某个角度的点
-     * @param {Number} angle
-     * @returns
+     * @param {number} angle
+     * @returns {Point}
      */
-    getPointAtAngle(angle) {
+    getPointAtAngle(angle:number): Point {
         return this.centerPoint.goTo(angle, this.radius)
     }
     /**
@@ -48,7 +56,7 @@ class Circle {
      * @param {Point} point
      * @returns {Line | null}
      */
-    getTangentLineAtPoint(point) {
+    getTangentLineAtPoint(point: Point): Line | null {
         if (!point.isOnCircle(this)) return null
         let x0 = point.x,
             y0 = point.y,
@@ -65,14 +73,14 @@ class Circle {
         return 2 * Math.PI * this.radius
     }
 
-    getArcLengthBetween(p1, p2, clockwise = false) {
-        if (p1.isSameAs(p2)) return null
+    getArcLengthBetween(p1:Point, p2:Point, clockwise = false) {
+        if (p1.isSameAs(p2)) return NaN
         let angle = this.getArcAngleBetween(p1, p2, clockwise)
         return this.getPerimeter() * (Math.abs(angle) / (2 * Math.PI))
     }
-    getArcAngleBetween(p1, p2, clockwise = false) {
-        if (p1.isSameAs(p2)) return null
 
+    getArcAngleBetween(p1:Point, p2:Point, clockwise = false):number {
+        if (p1.isSameAs(p2)) return NaN
         let aP1 = new Vector(this.centerPoint, p1).angle,
             aP2 = new Vector(this.centerPoint, p2).angle
 
@@ -94,9 +102,9 @@ class Circle {
     /**
      * 若`点point`在`圆this`外，则求过`点point`的`圆this`的切线，一共有两个
      * @param {Point} point
-     * @returns {Object | null}
+     * @returns {object | null}
      */
-    getTangleDataWithPointOutside(point) {
+    getTangleDataWithPointOutside(point: Point): object | null {
         if (!point.isOutsideCircle(this)) return null
 
         //设圆心为O，圆外一点为P，切线与圆的切点为Q
@@ -121,21 +129,21 @@ class Circle {
 
     /**
      * `圆point`和`圆this`是否相切（内切、外切）
-     * @param {*} circle
+     * @param {Circle} circle
      * @returns {Boolean}
      */
-    isTangentWithCircle(circle) {
+    isTangentWithCircle(circle: Circle): boolean {
         return this.isInternallyTangentWithCircle(circle) || this.isExternallyTangentWithCircle(circle)
     }
-    isInternallyTangentWithCircle(circle) {
+    isInternallyTangentWithCircle(circle:Circle) {
         let dSquare = circle.centerPoint.getDistanceSquareFromPoint(this.centerPoint)
         return utility.apxEqualsTo(dSquare, (circle.radius - this.radius) ** 2)
     }
-    isExternallyTangentWithCircle(circle) {
+    isExternallyTangentWithCircle(circle:Circle) {
         let dSquare = circle.centerPoint.getDistanceSquareFromPoint(this.centerPoint)
         return utility.apxEqualsTo(dSquare, (circle.radius + this.radius) ** 2)
     }
-    getInternallyTangentDataWithCircle(circle) {
+    getInternallyTangentDataWithCircle(circle:Circle) {
         if (!this.isInternallyTangentWithCircle(circle)) return null
         let p = this.getPointAtAngle(new Vector(this.centerPoint, circle.centerPoint).angle),
             l = this.getTangentLineAtPoint(p)
@@ -144,7 +152,7 @@ class Circle {
             line: l
         }
     }
-    getExternallyTangentDataWithCircle(circle) {
+    getExternallyTangentDataWithCircle(circle:Circle) {
         if (!this.isExternallyTangentWithCircle(circle)) return null
         let p = this.getPointAtAngle(new Vector(this.centerPoint, circle.centerPoint).angle),
             l = this.getTangentLineAtPoint(p)
@@ -156,18 +164,18 @@ class Circle {
     /**
      * `圆this`是否在`圆circle`的内部，被circle包含
      * @param {Circle} circle
-     * @returns {Boolean}
+     * @returns {boolean}
      */
-    isInsideCircle(circle) {
+    isInsideCircle(circle: Circle): boolean {
         let dSquare = circle.centerPoint.getDistanceSquareFromPoint(this.centerPoint)
         return utility.defLessThan(dSquare, (circle.radius - this.radius) ** 2)
     }
     /**
      * `圆this`是否在`圆circle`的外部，包含circle
      * @param {Circle} circle
-     * @returns
+     * @returns {boolean}
      */
-    isOutsideCircle(circle) {
+    isOutsideCircle(circle: Circle): boolean {
         let dSquare = circle.centerPoint.getDistanceSquareFromPoint(this.centerPoint)
         return utility.defGreaterThan(dSquare, (circle.radius + this.radius) ** 2)
     }
@@ -299,6 +307,7 @@ class Circle {
         return new RegularPolygon(this.radius, this.cx, this.cy, number, angle)
     }
 
+    getGraphic() {}
     toArray() {
         return [this.radius, this.cx, this.cy]
     }

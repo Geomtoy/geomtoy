@@ -6,6 +6,7 @@ declare abstract class GeomObject {
     abstract lineReflect(...args: any): any;
     abstract pointReflect(...args: any): any;
     abstract transform(...args: any): any;
+    abstract getGraphic(...args: any): any;
     abstract clone(): any;
     abstract toString(): any;
     abstract toObject(): any;

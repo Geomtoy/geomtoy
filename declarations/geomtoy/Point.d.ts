@@ -4,6 +4,7 @@ import Segment from "./Segment";
 import Line from "./Line";
 import { Coordinate } from "./types";
 import Circle from "./Circle";
+import { GraphicImplType } from "./types";
 import Matrix from "./transformation/Matrix";
 import GeomObjectD0 from "./base/GeomObjectD0";
 declare class Point extends GeomObjectD0 {
@@ -76,6 +77,7 @@ declare class Point extends GeomObjectD0 {
     isOnCircle(circle: Circle): boolean;
     isInsideCircle(circle: Circle): boolean;
     isOutsideCircle(circle: Circle): boolean;
+    getGraphic(type: GraphicImplType): object[];
     clone(): Point;
     toArray(): number[];
     toObject(): {

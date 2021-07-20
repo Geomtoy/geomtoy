@@ -2,8 +2,8 @@ import Matrix from "./Matrix"
 import _ from "lodash"
 
 class Translation extends Matrix {
-    #offsetX!: number
-    #offsetY!: number
+    #offsetX: number
+    #offsetY: number
 
     constructor(offsetX: number, offsetY: number)
     constructor()

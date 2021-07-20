@@ -22,8 +22,6 @@ const testCases = ((dir = "./test/case") => {
     return tc
 })()
 
-console.log(testCases)
-
 module.exports = function (env, argv) {
     return {
         entry: {

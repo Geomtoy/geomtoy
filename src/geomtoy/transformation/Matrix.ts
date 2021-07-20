@@ -97,24 +97,24 @@ class Matrix {
         return { a, b, c, d, e, f }
     }
 
-    static matrixTransformPoint(matrix: Matrix, p: Point) {
-        let { a, b, c, d, e, f } = matrix
-        let { x, y } = p
-        let xt = a * x + c * y + e,
-            yt = b * x + d * y + f
-        return new Point(xt, yt)
+    #transformPoint(point: Point) {
+        let { a, b, c, d, e, f } = this
+        let { x, y } = point
+        let tx = a * x + c * y + e,
+            ty = b * x + d * y + f
+        return new Point(tx, ty)
     }
 
     //将对应单位矩阵（没有变换的初始状态下）的点，转换为有了当前变换的点，点的实际位置不会改变
     getPointBeforeMatrixTransformed(p: Point) {
         let m = this.inverse()
-        if (!m) throw new Error(`[G]\`Matrix:\` ${this.toString()} is NOT invertible.`)
-        return Matrix.matrixTransformPoint(<Matrix>this.inverse(), p)
+        if (!(m instanceof Matrix)) throw new Error(`[G]\`Matrix:\` ${this.toString()} is NOT invertible.`)
+        return m.#transformPoint(p)
     }
 
     //将点的当前变换塌陷或者应用，成为对应单位矩阵（没有变换的初始状态下）状态下的点，点的实际位置不会改变
     getPointAfterMatrixTransformed(p: Point) {
-        return Matrix.matrixTransformPoint(this, p)
+        return this.#transformPoint(p)
     }
 
     /**

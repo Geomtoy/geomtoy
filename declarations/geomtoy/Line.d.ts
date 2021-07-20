@@ -6,7 +6,7 @@ declare class Line {
      * @param {Point} point2
      * @returns this
      */
-    static "__#78387@#fromPoints"(point1: Point, point2: Point): Line;
+    static "__#72280@#fromPoints"(point1: Point, point2: Point): Line;
     static fromPoints(point1: any, point2: any): Line;
     static fromPointAndAngle(point: any, angle: any): void;
     static fromSegment(segment: any): Line;
@@ -59,6 +59,7 @@ declare class Line {
      * @returns {Number | null}
      */
     getDistanceToParallelLine(line: Line): number | null;
+    getGraphic(type: any): object[];
     clone(): Line;
     toArray(): any[];
     toObject(): {

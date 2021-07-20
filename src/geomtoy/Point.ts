@@ -7,6 +7,8 @@ import utility from "./utility"
 import { AnglePositive, Coordinate } from "./types"
 import G from "."
 import Circle from "./Circle"
+import Graphic from "./graphic"
+import { GraphicImplType } from "./types"
 import Matrix from "./transformation/Matrix"
 import GeomObjectD0 from "./base/GeomObjectD0"
 
@@ -21,6 +23,7 @@ class Point extends GeomObjectD0 {
     constructor(vector: Vector)
     constructor()
     constructor(x?: any, y?: any) {
+        super()
         if (_.isNumber(x) && _.isNumber(y)) {
             Object.assign(this, { x, y })
             return this
@@ -181,6 +184,15 @@ class Point extends GeomObjectD0 {
         return utility.defGreaterThan(this.getDistanceSquareFromPoint(new Point(circle.cx, circle.cy)), circle.radius ** 2)
     }
 
+    getGraphic(type: GraphicImplType) {
+        let x = this.x,
+            y = this.y,
+            g = new Graphic()
+        g.moveTo(x, y)
+        g.centerArcTo(x, y, G.options.graphic.pointSize, G.options.graphic.pointSize, 0, 2 * Math.PI, 0)
+        g.close()
+        return g.valueOf(type)
+    }
     clone() {
         return new Point(this)
     }

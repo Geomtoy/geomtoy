@@ -2,6 +2,7 @@ import Point from "./Point";
 import Segment from "./Segment";
 import { Coordinate } from "./types";
 declare class Vector {
+    #private;
     x: number;
     y: number;
     initial: Point;
@@ -16,10 +17,15 @@ declare class Vector {
     constructor(vector: Vector);
     constructor();
     /**
-     *
+     * 向量角度
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/atan2}
      */
     get angle(): number;
+    /**
+     * 向量长度（模）
+     * @returns {number}
+     */
+    get length(): number;
     static fromPoint(point: Point): Vector;
     static fromPoints(initialPoint: Point, terminalPoint: Point): Vector;
     static fromAngleAndLength(angle: number, length: number): Vector;
@@ -27,36 +33,15 @@ declare class Vector {
     static get zero(): Vector;
     isZero(): boolean;
     isSameAs(v: Vector): boolean;
-    isSameDirectionAs(v: Vector): boolean;
+    isSameAngleAs(v: Vector): boolean;
     isSameLengthAs(v: Vector): boolean;
     /**
-     * `向量this`的长度（模）
-     * @returns {Number}
-     */
-    getLength(): number;
-    /**
-     * `向量this`相对于x轴正方向V(1, 0)的逆时针旋转角度，零向量没有方向，故没有旋转角度
-     * @returns {number | null}
-     */
-    getRotationAngle(): number | null;
-    /**
-     * `向量this`相对于x轴正方向V(1, 0)的夹角，零向量没有方向，故没有夹角
-     * @returns {number | null}
-     */
-    getIncludedAngle(): number | null;
-    /**
-     * 两个向量之间的逆时针旋转角度，即从`向量this`，需要逆时针旋转多少角度才能与`向量v`方向相同
+     * `向量this`到`向量v`的角差，记作theta，(-Math.PI, Math.PI]
+     * angle本身已经处理了顺时针/逆时针正角的问题
      * @param {Vector} v
-     * @returns {number | null}
+     * @returns {number}
      */
-    getRotationAngleBetween(v: Vector): number | null;
-    /**
-     * 两个向量之间的夹角，记作theta，0 <= theta <= Math.PI
-     * @description 可以区分0和Math.PI，即可以区分出同向和反向
-     * @param {Vector} v
-     * @returns {number | null}
-     */
-    getIncludedAngleBetween(v: Vector): number | null;
+    angleBetween(v: Vector): number;
     /**
      * `向量this`与`向量v`的点乘
      * @summary V1(x1, y1) · V2(x2, y2) = x1 * x2 + y1 * y2

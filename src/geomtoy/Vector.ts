@@ -64,15 +64,23 @@ class Vector {
     }
 
     /**
-     *
+     * 向量角度
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/atan2}
      */
     get angle() {
-        if (G.options.anglePositive === AnglePositive.Clockwise) {
-            return utility.angle.simplify(-Math.atan2(this.y, this.x)) //注意Math.atan2返回是逆时针正角下的角
-        } else {
-            return utility.angle.simplify(Math.atan2(this.y, this.x))
-        }
+        if (this.isZero()) return NaN
+        let a = Math.atan2(this.y, this.x) //注意Math.atan2返回是逆时针正角下的角，[-Math.PI, Math.PI]
+        if (G.options.anglePositive === AnglePositive.Clockwise) a = -a
+        //将其转到[0,2*Math.PI)之间
+        return utility.angle.simplify(a)
+    }
+    /**
+     * 向量长度（模）
+     * @returns {number}
+     */
+    get length(): number {
+        if (this.isZero()) return 0
+        return Math.hypot(this.x, this.y)
     }
 
     static fromPoint(point: Point): Vector {
@@ -101,89 +109,56 @@ class Vector {
     }
 
     isZero() {
-        return this.getLength() === 0
+        return this.x === 0 && this.y === 0
     }
     isSameAs(v: Vector): boolean {
-        if (this.isZero() && v.isZero()) {
-            return true
-        } else {
-            return this.isSameDirectionAs(v) && this.isSameLengthAs(v)
-        }
+        if (this.isZero() && v.isZero()) return true
+        return this.isSameAngleAs(v) && this.isSameLengthAs(v)
     }
-    isSameDirectionAs(v: Vector) {
-        if (this.isZero() && v.isZero()) {
-            return true
-        }
-        return utility.apxEqualsTo(<number>this.getRotationAngle(), <number>v.getRotationAngle())
+    isSameAngleAs(v: Vector) {
+        if (this.isZero() && v.isZero()) return true
+        return utility.apxEqualsTo(this.angle, v.angle)
     }
     isSameLengthAs(v: Vector) {
-        return utility.apxEqualsTo(this.getLength(), v.getLength())
+        if (this.isZero() && v.isZero()) return true
+        return utility.apxEqualsTo(this.length, v.length)
     }
 
     /**
-     * `向量this`的长度（模）
-     * @returns {Number}
-     */
-    getLength() {
-        return Math.hypot(this.x, this.y)
-    }
-    /**
-     * `向量this`相对于x轴正方向V(1, 0)的逆时针旋转角度，零向量没有方向，故没有旋转角度
-     * @returns {number | null}
-     */
-    getRotationAngle(): number | null {
-        if (this.isZero()) return null
-        return this.getRotationAngleBetween(new Vector(1, 0))
-    }
-    /**
-     * `向量this`相对于x轴正方向V(1, 0)的夹角，零向量没有方向，故没有夹角
-     * @returns {number | null}
-     */
-    getIncludedAngle(): number | null {
-        if (this.isZero()) return null
-        return this.getIncludedAngleBetween(new Vector(1, 0))
-    }
-    /**
-     * 两个向量之间的逆时针旋转角度，即从`向量this`，需要逆时针旋转多少角度才能与`向量v`方向相同
+     * `向量this`到`向量v`的角差，记作theta，(-Math.PI, Math.PI]
+     * angle本身已经处理了顺时针/逆时针正角的问题
      * @param {Vector} v
-     * @returns {number | null}
+     * @returns {number}
      */
-    getRotationAngleBetween(v: Vector): number | null {
-        let angle = this.getIncludedAngleBetween(v)
-        if (angle === null) return null
-
-        if (angle === 0 || angle === Math.PI) {
-            return angle
-        }
-
-        let crossProduct = this.crossProduct(v)
-        //如果crossProduct接近0，则angle === 0 || angle === Math.PI，所以此处不用判断近似等于0的情况
-        if (crossProduct < 0) {
-            angle = 2 * Math.PI - angle
-        } else if (crossProduct > 0) {
-            //do nothing
-        }
-        return angle
+    angleBetween(v: Vector): number {
+        return utility.angle.simplify2(this.angle - v.angle)
     }
+
     /**
-     * 两个向量之间的夹角，记作theta，0 <= theta <= Math.PI
-     * @description 可以区分0和Math.PI，即可以区分出同向和反向
+     * `向量this`到`向量v`的角差（另一种实现），记作theta，(-Math.PI, Math.PI]
      * @param {Vector} v
-     * @returns {number | null}
+     * @returns {number}
      */
-    getIncludedAngleBetween(v: Vector): number | null {
-        if (this.isZero() || v.isZero()) return null
+    #angleBetweenAnotherImpl(v: Vector): number {
+        if (this.isZero() || v.isZero()) return NaN
+        let dotProduct = this.dotProduct(v),
+            crossProduct = this.crossProduct(v),
+            cosTheta = dotProduct / (this.length * v.length),
+            angle = Math.acos(cosTheta) //Math.acos，[0, Math.PI]
 
-        let lA = this.getLength(),
-            lB = v.getLength(),
-            dotProduct = this.dotProduct(v),
-            cosTheta = dotProduct / (lA * lB),
-            angle = Math.acos(cosTheta)
+        //点乘与夹角范围：
+        //dp>0      投影为正，夹角[0, Math.PI/2)
+        //dp==0     投影为0，夹角为Math.PI/2，正交
+        //dp<0      投影为负，夹角(Math.PI/2,Math.PI]
 
-        if (utility.apxEqualsTo(angle, Math.PI)) angle = Math.PI
-        if (utility.apxEqualsTo(angle, 0)) angle = 0
-        return angle
+        //利用叉乘来确定符号，注意叉乘参数有顺序之别
+        //cp>0      法向量大于0，`向量this`到`向量v`的正旋角 (0, Math.PI)
+        //cp==0     法向量为0，`向量this`到`向量v`的正旋角 0或Math.PI
+        //cp<0      法向量小于0，`向量this`到`向量v`的正旋角 (Math.PI, 2*Math.PI)
+        if (crossProduct < 0) angle = -angle //此处已经是正旋角，无论正旋角定义为顺时针还是逆时针都一样
+        return utility.angle.simplify2(angle)
     }
+
     /**
      * `向量this`与`向量v`的点乘
      * @summary V1(x1, y1) · V2(x2, y2) = x1 * x2 + y1 * y2
@@ -202,6 +177,7 @@ class Vector {
     crossProduct(v: Vector): number {
         return this.x * v.y - this.y * v.x
     }
+
     normalize() {
         let norm = Math.hypot(this.x, this.y)
         return new Vector(this.x / norm, this.y / norm)

@@ -8,6 +8,7 @@ declare const _default: {
     };
     type: {
         isCoordinate(value: any): value is import("../types").Coordinate;
+        isGraphicDirectiveType(value: any): value is import("../types").GraphicDirectiveType;
     };
     /**
      * 利用求根公式计算一元二次方程(ax^2 + bx + c = 0)的解
