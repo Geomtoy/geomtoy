@@ -1,37 +1,37 @@
-export default Rectangle;
-declare class Rectangle {
-    static fromPoints(p1: any, p2: any): Rectangle;
-    static standardize(rect: any): Rectangle | undefined;
-    static "__#1@#standardize"(_new: any, rect: any): Rectangle | undefined;
-    static pad(rect: any, s: any): Rectangle | undefined;
-    /**
-     *
-     * @param {Boolean} _new
-     * @param {Rectangle} rect
-     * @param {Size} s
-     * @returns {Rectangle | undefined}
-     */
-    static "__#1@#pad"(_new: boolean, rect: Rectangle, s: Size): Rectangle | undefined;
-    static "__#1@#scale"(): void;
-    static "__#1@#translate"(): void;
-    static "__#1@#rotate"(): void;
-    static "__#1@#inflate"(): void;
-    constructor(x: any, y: any, w: any, h: any, r: any);
-    x: any;
-    y: any;
-    width: any;
-    height: any;
-    rotation: any;
-    set size(arg: Size);
-    get size(): Size;
-    set origin(arg: Point);
-    get origin(): Point;
-    get p1(): Point;
-    get p2(): Point;
-    get p3(): Point;
-    get p4(): Point;
-    standardize(): Rectangle;
-    pad(s: any): Rectangle;
-}
-import Size from "./Size";
 import Point from "./Point";
+import { Size, Coordinate, CanvasDirective, GraphicImplType, SvgDirective } from "./types";
+import GeomObject from "./base/GeomObject";
+import Transformation from "./transformation";
+declare class Rectangle extends GeomObject {
+    #private;
+    constructor(x: number, y: number, width: number, height: number);
+    constructor(x: number, y: number, size: Size);
+    constructor(position: Coordinate | Point, width: number, height: number);
+    constructor(position: Coordinate | Point, size: Size);
+    get originPoint(): Point;
+    set originPoint(value: Point);
+    get x(): number;
+    set x(value: number);
+    get y(): number;
+    set y(value: number);
+    get width(): number;
+    set width(value: number);
+    get height(): number;
+    set height(value: number);
+    get size(): Size;
+    set size(value: Size);
+    static fromPoints(point1: Point, point2: Point): Rectangle;
+    getCornerPoint(corner: "leftTop" | "rightTop" | "rightBottom" | "leftBottom"): Point;
+    getBounding(side: "left" | "right" | "top" | "bottom"): number;
+    move(offsetX: number, offsetY: number): Rectangle;
+    moveSelf(offsetX: number, offsetY: number): Rectangle;
+    inflate(size: Size): Rectangle;
+    inflateSelf(size: Size): this;
+    clone(withTransformation?: boolean): Rectangle;
+    apply(transformation: Transformation): GeomObject;
+    getGraphic(type: GraphicImplType): (SvgDirective | CanvasDirective)[];
+    toString(): string;
+    toObject(): object;
+    toArray(): any[];
+}
+export default Rectangle;

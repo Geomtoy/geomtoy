@@ -2,14 +2,19 @@ import G from ".."
 import _ from "lodash"
 import angle from "./angle"
 import type from "./type"
+import vector from "./vector"
 
 export default {
-    angle:{
+    angle: {
         ...angle
     },
-    type:{
+    type: {
         ...type
     },
+    vector: {
+        ...vector
+    },
+    
 
     /**
      * 利用求根公式计算一元二次方程(ax^2 + bx + c = 0)的解
@@ -84,7 +89,7 @@ export default {
      * @param {number} epsilon
      * @returns {boolean}
      */
-    apxEqualsTo(a: number, b: number, epsilon: number = G.options.epsilon): boolean {
+    apxEqualsTo(a: number, b: number, epsilon: number = Number.EPSILON): boolean {
         if (Math.abs(a - b) <= epsilon) return true
         return Math.abs(a - b) <= (Math.abs(a) < Math.abs(b) ? Math.abs(b) : Math.abs(a)) * epsilon
     },
@@ -95,7 +100,7 @@ export default {
      * @param {number} epsilon
      * @returns {boolean}
      */
-    defGreaterThan(a: number, b: number, epsilon: number = G.options.epsilon): boolean {
+    defGreaterThan(a: number, b: number, epsilon: number = Number.EPSILON): boolean {
         if (Math.abs(a - b) <= epsilon) return false
         return a - b > (Math.abs(a) < Math.abs(b) ? Math.abs(b) : Math.abs(a)) * epsilon
     },
@@ -107,7 +112,7 @@ export default {
      * @param {number} epsilon
      * @returns {boolean}
      */
-    defLessThan(a: number, b: number, epsilon: number = G.options.epsilon): boolean {
+    defLessThan(a: number, b: number, epsilon: number = Number.EPSILON): boolean {
         if (Math.abs(b - a) <= epsilon) return false
         return b - a > (Math.abs(a) < Math.abs(b) ? Math.abs(b) : Math.abs(a)) * epsilon
     },
@@ -121,7 +126,7 @@ export default {
      * @param {number} epsilon
      * @returns {number}
      */
-    strictSign(x: number, epsilon: number = G.options.epsilon): number {
+    strictSign(x: number, epsilon: number = Number.EPSILON): number {
         return Number(x > epsilon) - Number(x < -epsilon)
     }
 }

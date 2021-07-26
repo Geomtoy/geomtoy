@@ -1,6 +1,9 @@
-export default class _default {
-    constructor(context: any);
+import Geomtoy from "..";
+import GeomObject from "../base/GeomObject";
+export default class {
     context: CanvasRenderingContext2D;
-    draw(object: any): void;
-    clear(): void;
+    geomtoy: Geomtoy;
+    constructor(context: any, geomtoy: Geomtoy);
+    draw(object: GeomObject): CanvasRenderingContext2D;
+    clear(): CanvasRenderingContext2D;
 }

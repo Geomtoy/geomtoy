@@ -55,3 +55,4 @@ export function arcEndpointToCenterParameterization({ x1, y1, x2, y2, rx: srcRx,
     xAxisRotation: any;
     anticlockwise: boolean;
 };
+export function correctRadii(rx: any, ry: any, x1P: any, y1P: any): any[];

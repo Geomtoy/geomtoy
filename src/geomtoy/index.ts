@@ -1,3 +1,4 @@
+import _ from "lodash"
 import Point from "./Point"
 import Line from "./Line"
 import Segment from "./Segment"
@@ -8,55 +9,121 @@ import Rectangle from "./Rectangle"
 import Polyline from "./Polyline"
 import Polygon from "./Polygon"
 import RegularPolygon from "./RegularPolygon"
-import Inversion from "./transformation/Inversion"
+import Inversion from "./inversion/Inversion"
 import Ellipse from "./Ellipse"
-import { AnglePositive } from "./types"
+import Matrix from "./transformation/Matrix"
+import {defaultOptions, Options } from "./types"
 
-type GStatic = {
-    Point: typeof Point
-    Line: typeof Line
-    Segment: typeof Segment
-    Vector: typeof Vector
-    Triangle: typeof Triangle
-    Circle: typeof Circle
-    Ellipse: typeof Ellipse
-    Rectangle: typeof Rectangle
-    Polyline: typeof Polyline
-    Polygon: typeof Polygon
-    RegularPolygon: typeof RegularPolygon
-    Inversion: typeof Inversion
-    options: {
-        epsilon: number
-        anglePositive: AnglePositive
-        graphic: {
-            pointSize: number
-            lineRange: number
+function optionsMixin<T extends new (...args: any[]) => any>(c: T, options: Options) {
+    class Mixin extends c {
+        constructor(...args: any[]) {
+            super()
         }
-        [prop: string]: any
+        options:Options = options
+    }
+    return Mixin
+}
+
+class Geomtoy {
+    width: number
+    height: number
+    #options: Options
+
+    constructor(width: number, height: number, options: object) {
+        this.width = width
+        this.height = height
+        this.#options = _.defaultsDeep(options, defaultOptions )
+    }
+
+    get options() {
+        this.#options.global = {
+            xAxisPositiveOnRight: this.#xAxisPositiveOnRight,
+            yAxisPositiveOnBottom: this.#yAxisPositiveOnBottom,
+            originX: this.#originX,
+            originY: this.#originY,
+            scale: this.#scale
+        }
+        return this.#options
+    }
+
+    get Point() {
+        return optionsMixin(Point, this.options)
+    }
+    get Line() {
+        return optionsMixin(Line, this.options)
+    }
+    get Segment() {
+        return optionsMixin(Segment, this.options)
+    }
+    get Vector() {
+        return optionsMixin(Vector, this.options)
+    }
+    get Triangle() {
+        return optionsMixin(Triangle, this.options)
+    }
+    get Circle() {
+        return optionsMixin(Circle, this.options)
+    }
+    get Ellipse() {
+        return optionsMixin(Ellipse, this.options)
+    }
+    get Rectangle() {
+        return optionsMixin(Rectangle, this.options)
+    }
+    get Polyline() {
+        return optionsMixin(Polyline, this.options)
+    }
+    get Polygon() {
+        return optionsMixin(Polygon, this.options)
+    }
+    get Inversion() {
+        return optionsMixin(Inversion, this.options)
+    }
+    get RegularPolygon() {
+        return optionsMixin(RegularPolygon, this.options)
+    }
+
+    #transformation = Matrix.identity
+    #xAxisPositiveOnRight = true
+    #yAxisPositiveOnBottom = true
+    #originX = 0
+    #originY = 0
+    #scale = 1
+
+    getCoordinateSystem() {
+        return {
+            xAxisPositiveOnRight: this.#xAxisPositiveOnRight,
+            yAxisPositiveOnBottom: this.#yAxisPositiveOnBottom,
+            originX: this.#originX,
+            originY: this.#originY,
+            scale: this.#scale
+        }
+    }
+    setCoordinateSystem({ xAxisPositiveOnRight = true, yAxisPositiveOnBottom = true, originX = 0, originY = 0, scale = 1 }) {
+        let sx = scale,
+            sy = scale,
+            tx = originX,
+            ty = originY
+        if (!xAxisPositiveOnRight) sx = -scale
+        if (!yAxisPositiveOnBottom) sy = -scale
+
+        this.#xAxisPositiveOnRight = xAxisPositiveOnRight
+        this.#yAxisPositiveOnBottom = yAxisPositiveOnBottom
+        this.#originX = originX
+        this.#originY = originY
+        this.#scale = scale
+
+        // If `sx` and `sy` have different sign, the positive rotation angle is anticlockwise, otherwise clockwise.
+        this.#transformation.postMultiplySelf(new Matrix(0, 0, 0, 0, tx, ty))
+        this.#transformation.postMultiplySelf(new Matrix(sx, 0, 0, sy, 0, 0))
+    }
+
+    getGlobalTransformation() {
+        return this.#transformation
+    }
+    setGlobalTransformation(matrix: Matrix) {
+        this.#transformation = matrix
     }
 }
 
-const G: GStatic = {
-    Point,
-    Line,
-    Segment,
-    Vector,
-    Triangle,
-    Circle,
-    Ellipse,
-    Rectangle,
-    Polyline,
-    Polygon,
-    RegularPolygon,
-    Inversion,
-    options: {
-        epsilon: 2 ** -11,
-        anglePositive: AnglePositive.Clockwise,
-        graphic: {
-            pointSize: 2,
-            lineRange: 2 ** 10
-        }
-    }
-}
-
-export default G
+export default Geomtoy

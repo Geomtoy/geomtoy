@@ -1,48 +1,48 @@
-import Matrix from "./Matrix"
 import _ from "lodash"
+import Matrix from "./Matrix"
+import { is, sealed } from "../decorator"
 
+@sealed
 class Translation extends Matrix {
-    #offsetX: number
-    #offsetY: number
+    #deltaX: number | undefined
+    #deltaY: number | undefined
 
-    constructor(offsetX: number, offsetY: number)
+    constructor(deltaX: number, deltaY: number)
     constructor()
     constructor(dx?: any, dy?: any) {
         super()
         if (_.isNumber(dx) && _.isNumber(dy)) {
-            this.#offsetX = dx
-            this.#offsetY = dy
+            Object.assign(this, { deltaX: dx, deltaY: dy })
             this.#translation()
             return this
         }
-
-        this.#offsetX = 0
-        this.#offsetY = 0
+        Object.assign(this, { deltaX: 0, deltaY: 0 })
         this.#translation()
     }
 
-    get offsetX() {
-        return this.#offsetX
+    @is("realNumber")
+    get deltaX() {
+        return this.#deltaX!
     }
-    set offsetX(value) {
-        this.#offsetX = value
+    set deltaX(value) {
+        this.#deltaX = value
         this.#translation()
     }
-    get offsetY() {
-        return this.#offsetY
+    @is("realNumber")
+    get deltaY() {
+        return this.#deltaY!
     }
-    set offsetY(value) {
-        this.#offsetY = value
+    set deltaY(value) {
+        this.#deltaY = value
         this.#translation()
     }
 
     #translation() {
-        this.e = this.#offsetX
-        this.f = this.#offsetY
+        this.e = this.#deltaX!
+        this.f = this.#deltaY!
     }
-    
     clone() {
-        return new Translation(this.#offsetX, this.#offsetY)
+        return new Translation(this.deltaX, this.deltaY)
     }
 }
 

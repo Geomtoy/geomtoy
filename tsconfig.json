@@ -13,7 +13,9 @@
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
         "strictNullChecks": true,
-        "strictPropertyInitialization": true
+        "strictPropertyInitialization": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
     },
     "exclude": ["./node_modules"],
     "include": ["./src"]

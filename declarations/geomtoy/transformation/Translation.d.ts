@@ -1,12 +1,12 @@
 import Matrix from "./Matrix";
 declare class Translation extends Matrix {
     #private;
-    constructor(offsetX: number, offsetY: number);
+    constructor(deltaX: number, deltaY: number);
     constructor();
-    get offsetX(): number;
-    set offsetX(value: number);
-    get offsetY(): number;
-    set offsetY(value: number);
+    get deltaX(): number;
+    set deltaX(value: number);
+    get deltaY(): number;
+    set deltaY(value: number);
     clone(): Translation;
 }
 export default Translation;

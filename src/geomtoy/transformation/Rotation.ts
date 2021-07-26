@@ -1,62 +1,43 @@
+import _, { times } from "lodash"
 import Matrix from "./Matrix"
 import Translation from "./Translation"
 import Point from "../Point"
-import G from "../"
-import _ from "lodash"
-import utility from "../utility"
-import { AnglePositive, Coordinate } from "../types"
+import { is, sealed } from "../decorator"
 
+@sealed
 class Rotation extends Matrix {
-    #angle: number
-    #origin: Point
+    #angle: number | undefined
+    #origin: Point | undefined
 
-    constructor(angle: number, originX: number, originY: number)
-    constructor(angle: number, originCoordinate: Coordinate)
     constructor(angle: number, origin: Point)
     constructor(angle: number)
     constructor()
-    constructor(a?: any, ox?: any, oy?: any) {
+    constructor(a?: any, o?: any) {
         super()
         if (_.isNumber(a)) {
-            this.#angle = a
-            if (_.isNumber(ox) && _.isNumber(oy)) {
-                let p = new Point(ox, oy)
-                this.#origin = p
+            if (o instanceof Point) {
+                Object.seal(Object.assign({ angle: a, origin: o }))
                 this.#rotation()
                 return this
             }
-
-            if (utility.type.isCoordinate(ox)) {
-                let p = new Point(ox)
-                this.#origin = p
-                this.#rotation()
-                return this
-            }
-
-            if (ox instanceof Point) {
-                this.#origin = ox
-                this.#rotation()
-                return this
-            }
-
-            this.#origin = Point.zero
+            Object.seal(Object.assign({ angle: a, origin: Point.zero }))
             this.#rotation()
             return this
         }
-        this.#angle = 0
-        this.#origin = Point.zero
+        Object.seal(Object.assign({ angle: 0, origin: Point.zero }))
         this.#rotation()
     }
-
+    @is("realNumber")
     get angle() {
-        return this.#angle
+        return this.#angle!
     }
     set angle(value) {
         this.#angle = value
         this.#rotation()
     }
+    @is("point")
     get origin() {
-        return this.#origin
+        return this.#origin!
     }
     set origin(value) {
         this.#origin = value
@@ -64,31 +45,19 @@ class Rotation extends Matrix {
     }
 
     #rotation() {
-        let preTranslation = new Translation(this.#origin.x, this.#origin.y),
-            postTranslation = new Translation(-this.#origin.x, -this.#origin.y)
+        let preTranslation = new Translation(this.#origin!.x, this.#origin!.y),
+            postTranslation = new Translation(-this.#origin!.x, -this.#origin!.y)
 
-        if (G.options.anglePositive === AnglePositive.Clockwise) {
-            this.a = Math.cos(this.#angle)
-            this.b = Math.sin(this.#angle)
-            this.c = -Math.sin(this.#angle)
-            this.d = Math.cos(this.#angle)
-            this.e = 0
-            this.f = 0
-        } else {
-            this.a = Math.cos(this.#angle)
-            this.b = -Math.sin(this.#angle)
-            this.c = Math.sin(this.#angle)
-            this.d = Math.cos(this.#angle)
-            this.e = 0
-            this.f = 0
-        }
+        this.a = Math.cos(this.#angle!)
+        this.b = -Math.sin(this.#angle!)
+        this.c = Math.sin(this.#angle!)
+        this.d = Math.cos(this.#angle!)
 
-        this.preMultiplyO(preTranslation)
-        this.postMultiplyO(postTranslation)
+        this.preMultiplySelf(preTranslation)
+        this.postMultiplySelf(postTranslation)
     }
-
     clone() {
-        return new Rotation(this.#angle, this.#origin)
+        return new Rotation(this.angle, this.origin)
     }
 }
 

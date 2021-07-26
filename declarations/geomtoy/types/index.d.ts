@@ -1,78 +1,80 @@
+export * from "./graphic";
+export declare type Options = {
+    epsilon: number;
+    graphic: {
+        pointSize: number;
+        lineRange: number;
+        vectorArrow: {
+            width: number;
+            length: number;
+            foldback: number;
+        };
+    };
+    fillRule: "nonzero" | "evenodd";
+    pathSampleRatio: 100;
+    global: {
+        xAxisPositiveOnRight: boolean;
+        yAxisPositiveOnBottom: boolean;
+        originX: number;
+        originY: number;
+        scale: number;
+    };
+    [key: string]: any;
+};
+export declare const defaultOptions: Options;
 export declare type Coordinate = [x: number, y: number];
-export declare enum AnglePositive {
-    Clockwise = 0,
-    Anticlockwise = 1
+export declare type Size = [width: number, height: number];
+export declare enum RsPointToLine {
+    On = 2,
+    NotOn = 3
 }
-export declare enum GraphicDirectiveType {
-    M = "moveTo",
-    L = "lineTo",
-    C = "bezierCurveTo",
-    Q = "quadraticBezierCurveTo",
-    A = "arcTo",
-    Z = "close"
+export declare enum RsPointToSegment {
+    On = 2,
+    NotOn = 32,
+    Collinear = 64
 }
-export declare enum GraphicImplType {
-    Canvas = 0,
-    Svg = 1
+export declare enum RsPointToCircle {
+    On = 2,
+    Inside = 4,
+    Outside = 8,
+    NotOn = 12
 }
-export declare type GraphicDirective = GraphicMoveToDirective | GraphicLineToDirective | GraphicBezierCurveToDirective | GraphicQuadraticBezierCurveToDirective | GraphicArcToDirective | GraphicCloseDirective;
-export declare type GraphicMoveToDirective = {
-    type: GraphicDirectiveType.M;
-    x: number;
-    y: number;
-    currentX: number;
-    currentY: number;
-};
-export interface SvgMoveToDirective {
+export declare enum RsLineToSegment {
 }
-export declare type GraphicLineToDirective = {
-    type: GraphicDirectiveType.L;
-    x: number;
-    y: number;
-    currentX: number;
-    currentY: number;
-};
-export declare type GraphicBezierCurveToDirective = {
-    type: GraphicDirectiveType.C;
-    cp1x: number;
-    cp1y: number;
-    cp2x: number;
-    cp2y: number;
-    x: number;
-    y: number;
-    currentX: number;
-    currentY: number;
-};
-export declare type GraphicQuadraticBezierCurveToDirective = {
-    type: GraphicDirectiveType.Q;
-    cpx: number;
-    cpy: number;
-    x: number;
-    y: number;
-    currentX: number;
-    currentY: number;
-};
-export declare type GraphicArcToDirective = {
-    type: GraphicDirectiveType.A;
-    cx: number;
-    cy: number;
-    rx: number;
-    ry: number;
-    startAngle: number;
-    endAngle: number;
-    xAxisRotation: number;
-    anticlockwise: boolean;
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
-    largeArcFlag: boolean;
-    sweepFlag: boolean;
-    currentX: number;
-    currentY: number;
-};
-export declare type GraphicCloseDirective = {
-    type: GraphicDirectiveType.Z;
-    currentX: number;
-    currentY: number;
-};
+export declare enum RsLineToRectangle {
+    Intersected = 2,
+    IntersectedWith1Point = 6,
+    IntersectedWith2Points = 10,
+    Separated = 16
+}
+export declare enum RsSegmentToSegment {
+    Perpendicular = 2,
+    Parallel = 4,
+    Collinear = 12,
+    Jointed = 16,
+    Overlapped = 44,
+    Intersected = 64,
+    Separated = 128
+}
+export declare enum RsLineToCircle {
+    Intersected = 2,
+    Tangent = 4,
+    Separated = 8
+}
+export declare enum RsCircleToCircle {
+    Intersected = 2,
+    InternallyTangent = 4,
+    ExternallyTangent = 8,
+    Inside = 16,
+    Outside = 32,
+    Separated = 64
+}
+export declare enum RsRectangleToRectangle {
+    Inside = 0,
+    Outside = 1,
+    Separated = 1,
+    Overlapped = 2,
+    OverlappedWith1Rectangle = 3,
+    OverlappedWith1Line = 2,
+    OverlappedWith2Line = 2
+}

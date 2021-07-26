@@ -1,33 +1,26 @@
-import Line from "../Line"
-import Matrix from "./Matrix"
 import _ from "lodash"
+import Matrix from "./Matrix"
 import Point from "../Point"
+import Line from "../Line"
+import { is, sealed } from "../decorator"
 
+@sealed
 class LineReflection extends Matrix {
-    #line: Line
+    #line: Line | undefined
 
-    constructor(a: number, b: number, c: number)
-    constructor(line: Line)
-    constructor()
-    constructor(a?: any, b?: any, c?: any) {
+    constructor(line: Line) {
         super()
-        if (_.isNumber(a) && _.isNumber(b) && _.isNumber(c)) {
-            this.#line = new Line(a, b, c)
+        if (line instanceof Line) {
+            Object.seal(Object.assign(this, { line }))
             this.#lineReflection()
             return this
         }
-        if (a instanceof Line) {
-            this.#line = a
-            this.#lineReflection()
-            return this
-        }
-
-        this.#line = Line.fromPoints(Point.zero, new Point(0, 1))
-        this.#lineReflection()
+        throw new Error(`[G]Arguments can NOT construct a LineReflection.`)
     }
 
-    get line() {
-        return this.#line
+    @is("line")
+    get line(): Line {
+        return this.#line!
     }
     set line(value) {
         this.#line = value
@@ -35,7 +28,7 @@ class LineReflection extends Matrix {
     }
 
     static get yAxis() {
-        return new LineReflection()
+        return new LineReflection(Line.fromPoints(Point.zero, new Point(0, 1)))
     }
     static get xAxis() {
         return new LineReflection(Line.fromPoints(Point.zero, new Point(1, 0)))
@@ -48,9 +41,9 @@ class LineReflection extends Matrix {
     }
 
     #lineReflection() {
-        let la = this.#line.a,
-            lb = this.#line.b,
-            lc = this.#line.c,
+        let la = this.#line!.a,
+            lb = this.#line!.b,
+            lc = this.#line!.c,
             denominator = la ** 2 + lb ** 2
 
         this.a = (lb ** 2 - la ** 2) / denominator
@@ -59,6 +52,9 @@ class LineReflection extends Matrix {
         this.d = -this.a
         this.e = -(2 * la * lc) / denominator
         this.f = -(2 * lb * lc) / denominator
+    }
+    clone() {
+        return new LineReflection(this.line)
     }
 }
 

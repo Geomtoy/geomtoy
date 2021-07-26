@@ -22,7 +22,7 @@ class RegularPolygon {
     get points() {
         let ps = []
         _.forEach(_.range(this.number), i => {
-            let p = Point.goTo(this.centerPoint, ((2 * Math.PI) / this.number) * i + this.angle, this.radius)
+            let p = this.centerPoint.walk(((2 * Math.PI) / this.number) * i + this.angle, this.radius)
             ps.push(p)
         })
         return ps

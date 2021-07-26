@@ -1,68 +1,53 @@
+import _ from "lodash"
 import Matrix from "./Matrix"
 import Translation from "./Translation"
 import Point from "../Point"
-import { Coordinate } from "../types"
-import _ from "lodash"
-import utility from "../utility"
+import { is, sealed } from "../decorator"
 
+@sealed
 class Skewing extends Matrix {
-    #angleX: number
-    #angleY: number
-    #origin: Point
+    #angleX: number | undefined
+    #angleY: number | undefined
+    #origin: Point | undefined
 
-    constructor(angleX: number, angleY: number, originX: number, originY: number)
-    constructor(angleX: number, angleY: number, originCoordinate: Coordinate)
     constructor(angleX: number, angleY: number, origin: Point)
     constructor(angleX: number, angleY: number)
     constructor()
-    constructor(ax?: any, ay?: any, ox?: any, oy?: any) {
+    constructor(ax?: any, ay?: any, o?: any) {
         super()
         if (_.isNumber(ax) && _.isNumber(ay)) {
-            this.#angleX = ax
-            this.#angleY = ay
-            if (_.isNumber(ox) && _.isNumber(oy)) {
-                this.#origin = new Point(ox, oy)
+            if (o instanceof Point) {
+                Object.seal(Object.assign(this, { angleX: ax, angleY: ay, origin: o }))
                 this.#skewing()
                 return this
             }
-
-            if (utility.type.isCoordinate(ox)) {
-                this.#origin = new Point(ox)
-                this.#skewing()
-                return this
-            }
-
-            if (ox instanceof Point) {
-                this.#origin = ox
-                this.#skewing()
-                return this
-            }
-            this.#origin = Point.zero
+            Object.seal(Object.assign(this, { angleX: ax, angleY: ay, origin: Point.zero }))
             this.#skewing()
             return this
         }
-        this.#angleX = 0
-        this.#angleY = 0
-        this.#origin = Point.zero
+        Object.seal(Object.assign(this, { angleX: 0, angleY: 0, origin: Point.zero }))
         this.#skewing()
     }
 
+    @is("realNumber")
     get angleX() {
-        return this.#angleX
+        return this.#angleX!
     }
     set angleX(value) {
-        this.#angleX = value
+        this.#angleX = value //(-90,90)
         this.#skewing()
     }
+    @is("realNumber")
     get angleY() {
-        return this.#angleY
+        return this.#angleY!
     }
     set angleY(value) {
-        this.#angleY = value
+        this.#angleY = value  //(-90,90)
         this.#skewing()
     }
+    @is("point")
     get origin() {
-        return this.#origin
+        return this.#origin!
     }
     set origin(value) {
         this.#origin = value
@@ -70,14 +55,17 @@ class Skewing extends Matrix {
     }
 
     #skewing() {
-        let preTranslation = new Translation(this.#origin.x, this.#origin.y),
-            postTranslation = new Translation(-this.#origin.x, -this.#origin.y)
+        let preTranslation = new Translation(this.#origin!.x, this.#origin!.y),
+            postTranslation = new Translation(-this.#origin!.x, -this.#origin!.y)
 
-        this.b = Math.tan(this.#angleY)
-        this.c = Math.tan(this.#angleX)
+        this.b = Math.tan(this.#angleY!)
+        this.c = Math.tan(this.#angleX!)
 
-        this.preMultiplyO(preTranslation)
-        this.postMultiplyO(postTranslation)
+        this.preMultiplySelf(preTranslation)
+        this.postMultiplySelf(postTranslation)
+    }
+    clone() {
+        return new Skewing(this.angleX, this.angleY, this.origin)
     }
 }
 

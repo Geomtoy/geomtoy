@@ -8,31 +8,103 @@ import Rectangle from "./Rectangle";
 import Polyline from "./Polyline";
 import Polygon from "./Polygon";
 import RegularPolygon from "./RegularPolygon";
-import Inversion from "./transformation/Inversion";
+import Inversion from "./inversion/Inversion";
 import Ellipse from "./Ellipse";
-import { AnglePositive } from "./types";
-declare type GStatic = {
-    Point: typeof Point;
-    Line: typeof Line;
-    Segment: typeof Segment;
-    Vector: typeof Vector;
-    Triangle: typeof Triangle;
-    Circle: typeof Circle;
-    Ellipse: typeof Ellipse;
-    Rectangle: typeof Rectangle;
-    Polyline: typeof Polyline;
-    Polygon: typeof Polygon;
-    RegularPolygon: typeof RegularPolygon;
-    Inversion: typeof Inversion;
-    options: {
-        epsilon: number;
-        anglePositive: AnglePositive;
-        graphic: {
-            pointSize: number;
-            lineRange: number;
+import Matrix from "./transformation/Matrix";
+import { Options } from "./types";
+declare class Geomtoy {
+    #private;
+    width: number;
+    height: number;
+    constructor(width: number, height: number, options: object);
+    get options(): Options;
+    get Point(): {
+        new (...args: any[]): {
+            [x: string]: any;
+            options: Options;
         };
-        [prop: string]: any;
+    } & typeof Point;
+    get Line(): {
+        new (...args: any[]): {
+            [x: string]: any;
+            options: Options;
+        };
+    } & typeof Line;
+    get Segment(): {
+        new (...args: any[]): {
+            [x: string]: any;
+            options: Options;
+        };
+    } & typeof Segment;
+    get Vector(): {
+        new (...args: any[]): {
+            [x: string]: any;
+            options: Options;
+        };
+    } & typeof Vector;
+    get Triangle(): {
+        new (...args: any[]): {
+            [x: string]: any;
+            options: Options;
+        };
+    } & typeof Triangle;
+    get Circle(): {
+        new (...args: any[]): {
+            [x: string]: any;
+            options: Options;
+        };
+    } & typeof Circle;
+    get Ellipse(): {
+        new (...args: any[]): {
+            [x: string]: any;
+            options: Options;
+        };
+    } & typeof Ellipse;
+    get Rectangle(): {
+        new (...args: any[]): {
+            [x: string]: any;
+            options: Options;
+        };
+    } & typeof Rectangle;
+    get Polyline(): {
+        new (...args: any[]): {
+            [x: string]: any;
+            options: Options;
+        };
+    } & typeof Polyline;
+    get Polygon(): {
+        new (...args: any[]): {
+            [x: string]: any;
+            options: Options;
+        };
+    } & typeof Polygon;
+    get Inversion(): {
+        new (...args: any[]): {
+            [x: string]: any;
+            options: Options;
+        };
+    } & typeof Inversion;
+    get RegularPolygon(): {
+        new (...args: any[]): {
+            [x: string]: any;
+            options: Options;
+        };
+    } & typeof RegularPolygon;
+    getCoordinateSystem(): {
+        xAxisPositiveOnRight: boolean;
+        yAxisPositiveOnBottom: boolean;
+        originX: number;
+        originY: number;
+        scale: number;
     };
-};
-declare const G: GStatic;
-export default G;
+    setCoordinateSystem({ xAxisPositiveOnRight, yAxisPositiveOnBottom, originX, originY, scale }: {
+        xAxisPositiveOnRight?: boolean | undefined;
+        yAxisPositiveOnBottom?: boolean | undefined;
+        originX?: number | undefined;
+        originY?: number | undefined;
+        scale?: number | undefined;
+    }): void;
+    getGlobalTransformation(): Matrix;
+    setGlobalTransformation(matrix: Matrix): void;
+}
+export default Geomtoy;

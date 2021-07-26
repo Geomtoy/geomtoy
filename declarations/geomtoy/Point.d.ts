@@ -1,83 +1,133 @@
 import Vector from "./Vector";
-import Size from "./Size";
 import Segment from "./Segment";
 import Line from "./Line";
-import { Coordinate } from "./types";
 import Circle from "./Circle";
-import { GraphicImplType } from "./types";
-import Matrix from "./transformation/Matrix";
-import GeomObjectD0 from "./base/GeomObjectD0";
-declare class Point extends GeomObjectD0 {
-    x: number;
-    y: number;
-    transformation: Matrix;
+import GeomObject from "./base/GeomObject";
+import { Coordinate, GraphicImplType, RsPointToCircle, RsPointToLine, RsPointToSegment, CanvasDirective, SvgDirective } from "./types";
+import Transformation from "./transformation";
+declare class Point extends GeomObject {
+    #private;
     constructor(x: number, y: number);
-    constructor(coordinate: Coordinate);
-    constructor(point: Point);
-    constructor(vector: Vector);
+    constructor(position: Coordinate | Point | Vector);
     constructor();
-    static fromVector(vector: Vector): Point;
-    static fromSize(size: Size): Point;
+    get x(): number;
+    set x(value: number);
+    get y(): number;
+    set y(value: number);
     static get zero(): Point;
-    isSameAs(point: Point): boolean;
-    done(): void;
     /**
-     * 按照给出的角和距离进行移动
-     * @param {Number} angle 移动方向，与x轴正方向逆时针/顺时针旋转的角
-     * @param {Number} distance 移动距离
+     * Return a point from a coordinate
+     * @param {Coordinate} coordinate
      * @returns {Point}
      */
-    goTo(angle: number, distance: number): Point;
-    goToO(angle: number, distance: number): Point;
+    static fromCoordinate(coordinate: Coordinate): Point;
     /**
-     * 求出`点this`到`点p`之间的距离
-     * @param {Point} p
+     * Return a point from a vector
+     * @param {Vector} vector
+     * @returns {Point}
+     */
+    static fromVector(vector: Vector): Point;
+    /**
+     * Whether point `this` is `Point.zero`
+     * @returns {boolean}
+     */
+    isZero(): boolean;
+    /**
+     * Whether point `this` is the same as point `point`
+     * @param {Point} point
+     * @returns {boolean}
+     */
+    isSameAs(point: Point): boolean;
+    /**
+     * Get coordinate from point `this`
+     * @returns {Coordinate}
+     */
+    getCoordinate(): Coordinate;
+    /**
+     * Walk point `this` with a `distance` towards the direction of the `angle`
+     * @param {number} angle
+     * @param {number} distance
+     * @returns {Point}
+     */
+    walk(angle: number, distance: number): Point;
+    walkSelf(angle: number, distance: number): this;
+    /**
+     * Move point `this` by the offset
+     * @param {number} offsetX
+     * @param {number} offsetY
+     * @returns {Point}
+     */
+    move(offsetX: number, offsetY: number): Point;
+    moveSelf(offsetX: number, offsetY: number): this;
+    /**
+     * Get the distance between point `this` and point `point`
+     * @param {Point} point
      * @returns {number}
      */
-    getDistanceFromPoint(p: Point): number;
+    getDistanceBetweenPoint(point: Point): number;
     /**
-     * 求出`点this`到`点p`之间的距离的平方
+     * Get the distance square between point `this` and point `point`
      * @param {Point} point
      * @returns {number}
      */
     getDistanceSquareFromPoint(point: Point): number;
     /**
-     * 求出`点this`到`直线l`之间的距离
-     * @param {Line} l
+     * Get the distance between point `this` and line `line`
+     * @param {Line} line
      * @returns {number}
      */
-    getDistanceToLine(l: Line): number;
+    getDistanceBetweenLine(line: Line): number;
     /**
-     * 求出`点this`到`直线l`之间的带符号距离
-     * @param {Line} l
+     * Get the signed distance between point `this` and line `line`
+     * @param {Line} line
      * @returns {number}
      */
-    getSignedDistanceToLine(l: Line): number;
+    getSignedDistanceBetweenLine(line: Line): number;
     /**
-     * 判断`点this`是否在由`点p1`和`点p2`为对角线的假想矩形内，`点this`的坐标不会大于`点p1`和`点p2`中的最大值，且也不会小于最小值
-     * @param {Point} p1
-     * @param {Point} p2
-     * @param {boolean} allowedOn 是否允许在矩形的上
+     * Whether point `this` is inside an imaginary rectangle with diagonals of point `point1` and point `point2`,
+     * the coordinate of point `this` will not be greater than the maximum value of point `point1` and point `point2`,
+     * nor less than the minimum value
+     * @param {Point} point1
+     * @param {Point} point2
+     * @param {boolean} allowedOn Can it be on the rectangle, in other words, can it be equal to the maximum or minimum value
      * @returns {boolean}
      */
-    isBetweenPoints(p1: Point, p2: Point, allowedOn?: boolean): boolean;
+    isBetweenPoints(point1: Point, point2: Point, allowedOn?: boolean): boolean;
     /**
-     * `点this`是否在`直线l`上
-     * @param {Line} l
+     * Get the relationship of point `this` to line `line`
+     * @param {Line} line
+     * @returns {RsPointToLine}
+     */
+    getRelationshipToLine(line: Line): RsPointToLine;
+    /**
+     * Whether point `this` is an endpoint of segment `segment`
+     * @param {Segment} segment
      * @returns {boolean}
      */
-    isOnLine(l: Line): boolean;
+    isEndpointOfSegment(segment: Segment): boolean;
     /**
-     * `点this`是否在`线段s`上
+     * Get the relationship of point `this` to segment `segment`
      * @param {Segment} s
-     * @returns {boolean}
+     * @returns {RsPointToSegment}
      */
-    isOnSegment(s: Segment): boolean;
-    isAnEndpointOfSegment(s: Segment): boolean;
-    isOnCircle(circle: Circle): boolean;
-    isInsideCircle(circle: Circle): boolean;
-    isOutsideCircle(circle: Circle): boolean;
-    getGraphic(type: GraphicImplType): object[];
+    getRelationshipToSegment(segment: Segment): RsPointToSegment;
+    /**
+     * Get the relationship of point `this` to circle `circle`
+     * @param {Circle} circle
+     * @returns {RsPointToCircle}
+     */
+    getRelationshipToCircle(circle: Circle): RsPointToCircle;
+    /**
+     * Get graphic object of `this`
+     * @param {GraphicImplType} type
+     * @returns {Array<SvgDirective | CanvasDirective>}
+     */
+    getGraphic(type: GraphicImplType): Array<SvgDirective | CanvasDirective>;
+    /**
+     * apply the transformation
+     * @returns {Point}
+     */
+    apply(t: Transformation): Point;
     clone(): Point;
     toArray(): number[];
     toObject(): {

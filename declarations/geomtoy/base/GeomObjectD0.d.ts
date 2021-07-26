@@ -1,31 +1,8 @@
 import Matrix from "../transformation/Matrix";
-import { Coordinate } from "../types";
 import GeomObject from "./GeomObject";
-import Vector from "../Vector";
-import Line from "../Line";
-import Point from "../Point";
 declare abstract class GeomObjectD0 extends GeomObject {
     abstract x: number;
     abstract y: number;
     abstract transformation: Matrix;
-    normalize(): GeomObjectD0;
-    normalizeO(): GeomObjectD0;
-    translate(offsetX: number, offsetY: number): GeomObjectD0;
-    translateO(offsetX: number, offsetY: number): GeomObjectD0;
-    translateFromVector(vector: Vector): GeomObjectD0;
-    translateFromVectorO(vector: Vector): GeomObjectD0;
-    rotate(angle: number, origin: Point): GeomObjectD0;
-    rotateO(angle: number, origin: Point): GeomObjectD0;
-    scale(factorX: number, factorY: number, origin: Point): GeomObjectD0;
-    scaleO(factorX: number, factorY: number, origin: Point): GeomObjectD0;
-    skew(angleX: number, angleY: number, origin: Point): GeomObjectD0;
-    skewO(angleX: number, angleY: number, origin: Point): GeomObjectD0;
-    lineReflect(line: Line): GeomObjectD0;
-    lineReflectO(line: Line): GeomObjectD0;
-    pointReflect(point: Point): GeomObjectD0;
-    pointReflectO(point: Point): GeomObjectD0;
-    transform(matrix: Matrix): GeomObjectD0;
-    transformO(matrix: Matrix): GeomObjectD0;
-    getCoordinate(): Coordinate;
 }
 export default GeomObjectD0;

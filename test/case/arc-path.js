@@ -28,11 +28,14 @@ ctx.closePath()
         cd = new vanillaCanvasDrawer(context),
         sd = new vanillaSvgDrawer(svg)
 
-        console.log(l)
+        console.log(l,l.__proto__)
     cd.draw(e)
     sd.draw(e)
     cd.draw(p)
     sd.draw(p)
     cd.draw(l)
     sd.draw(l)
+
+
+    let a = new SVGMatrix()
 }

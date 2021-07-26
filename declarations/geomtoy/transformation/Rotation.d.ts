@@ -1,10 +1,7 @@
 import Matrix from "./Matrix";
 import Point from "../Point";
-import { Coordinate } from "../types";
 declare class Rotation extends Matrix {
     #private;
-    constructor(angle: number, originX: number, originY: number);
-    constructor(angle: number, originCoordinate: Coordinate);
     constructor(angle: number, origin: Point);
     constructor(angle: number);
     constructor();

@@ -1,56 +1,42 @@
-import Point from "../Point"
-import { Coordinate } from "../types"
 import _ from "lodash"
-import utility from "../utility"
+import { is, sealed } from "../decorator"
+import Point from "../Point"
 import Matrix from "./Matrix"
 
+@sealed
 class PointReflection extends Matrix {
-    #point: Point
+    #point: Point | undefined
 
-    constructor(pointX: number, pointY: number)
-    constructor(pointCoordinate: Coordinate)
     constructor(point: Point)
     constructor()
-    constructor(px?: any, py?: any) {
+    constructor(p?: any) {
         super()
-        if (_.isNumber(px) && _.isNumber(py)) {
-            this.#point = new Point(px, py)
+        if (p instanceof Point) {
+            Object.seal(Object.assign(this, { point: p }))
             this.#pointReflection()
             return this
         }
-
-        if (utility.type.isCoordinate(px)) {
-            this.#point = new Point(px)
-            this.#pointReflection()
-            return this
-        }
-
-        if (px instanceof Point) {
-            this.#point = px
-            this.#pointReflection()
-            return this
-        }
-        this.#point = Point.zero
+        Object.seal(Object.assign(this, { point: Point.zero }))
         this.#pointReflection()
     }
 
+    @is("point")
     get point() {
-        return this.#point
+        return this.#point!
     }
     set point(value) {
         this.#point = value
         this.#pointReflection()
     }
 
-    static get zero() {
-        return new PointReflection()
-    }
-
     #pointReflection() {
         this.a = -1
         this.d = -1
-        this.e = 2 * this.#point.x
-        this.f = 2 * this.#point.y
+        this.e = 2 * this.#point!.x
+        this.f = 2 * this.#point!.y
+    }
+    clone() {
+        return new PointReflection(this.point)
     }
 }
 

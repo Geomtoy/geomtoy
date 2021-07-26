@@ -2,7 +2,8 @@ import _ from "lodash"
 
 /**
  * 由于总是在屏幕上绘制，所以此处不做角度正旋转换（即总是顺时针正旋）
- * @see https://www.w3.org/TR/SVG2/implnote.html#ArcImplementationNotes
+ * @see {@link https://www.w3.org/TR/SVG2/implnote.html#ArcImplementationNotes}
+ * @see {@link https://observablehq.com/@awhitty/svg-2-elliptical-arc-to-canvas-path2d}
  */
 
 /**
@@ -135,4 +136,4 @@ function correctRadii(rx, ry, x1P, y1P) {
     return [rx, ry]
 }
 
-export { arcCenterToEndpointParameterization, arcEndpointToCenterParameterization }
+export { arcCenterToEndpointParameterization, arcEndpointToCenterParameterization, correctRadii }

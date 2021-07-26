@@ -1,3 +1,5 @@
-export interface ObjectD1 {
-    getLength(): number;
+import GeomObject from "./GeomObject";
+declare abstract class GeomObjectD1 extends GeomObject {
+    abstract getLength(): number;
 }
+export default GeomObjectD1;

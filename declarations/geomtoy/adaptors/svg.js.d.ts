@@ -1,6 +1,9 @@
-export default class _default {
-    constructor(svgDotJsContainer: any);
+import Geomtoy from "..";
+import GeomObject from "../base/GeomObject";
+export default class {
     svgDotJsContainer: any;
-    draw(object: any): void;
-    clear(): void;
+    geomtoy: Geomtoy;
+    constructor(svgDotJsContainer: any, geomtoy: Geomtoy);
+    draw(object: GeomObject): any;
+    clear(): any;
 }

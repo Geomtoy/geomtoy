@@ -1,7 +1,7 @@
 import Point from "./Point"
 import Line from "./Line"
 import Vector from "./Vector"
-import utility from "./utility"
+import util from "./utility"
 
 class Segment {
     p1
@@ -27,7 +27,7 @@ class Segment {
     /**
      * `线段this`与`线段s`是否相同
      * @param {Segment} s
-     * @returns {Boolean}
+     * @returns {boolean}
      */
     isSameAs(s) {
         return (this.p1.isSameAs(s.p1) && this.p2.isSameAs(s.p2)) || (this.p1.isSameAs(s.p2) && this.p2.isSameAs(s.p1))
@@ -35,29 +35,29 @@ class Segment {
     /**
      * `线段this`与`线段s`是否垂直，无论是否相交，夹角为Math.PI / 2
      * @param {Segment} s
-     * @returns {Boolean}
+     * @returns {boolean}
      */
     isPerpendicularToSegment(s) {
         let v1 = new Vector(this.p1, this.p2),
             v2 = new Vector(s.p1, s.p2),
             dp = v1.dotProduct(v2)
-        return utility.apxEqualsTo(dp, 0)
+        return util.apxEqualsTo(dp, 0)
     }
     /**
      * `线段this`与`线段s`是否平行，无论是否共线乃至相同，夹角为0或者Math.PI
      * @param {Segment} s
-     * @returns {Boolean}
+     * @returns {boolean}
      */
     isParallelToSegment(s) {
         let v1 = new Vector(this.p1, this.p2),
             v2 = new Vector(s.p1, s.p2),
             cp = v1.crossProduct(v2)
-        return utility.apxEqualsTo(cp, 0)
+        return util.apxEqualsTo(cp, 0)
     }
     /**
      * `线段this`与`线段s`是否共线，无论是否相接乃至相同
      * @param {Segment} s
-     * @returns {Boolean}
+     * @returns {boolean}
      */
     isCollinearWithSegment(s) {
         let v1 = new Vector(this.p1, this.p2),
@@ -65,12 +65,12 @@ class Segment {
             v3 = new Vector(this.p1, s.p1),
             cp1 = v1.crossProduct(v2),
             cp2 = v3.crossProduct(v2)
-        return utility.apxEqualsTo(cp1, 0) && utility.apxEqualsTo(cp2, 0)
+        return util.apxEqualsTo(cp1, 0) && util.apxEqualsTo(cp2, 0)
     }
     /**
      * `线段this`与`线段s`是否相接，即有且只有一个端点被共用(若两个共用则相同)，无论夹角为多少
      * @param {Segment} s
-     * @returns {Boolean | Point} 接点
+     * @returns {boolean | Point} 接点
      */
     #isJointedWithSegment(s) {
         let j1 = this.p1.isSameAs(s.p1),
@@ -94,7 +94,7 @@ class Segment {
     /**
      * `线段this`与`线段s`是否有重合，即有部分重合的一段(线段)
      * @param {Segment} s
-     * @returns {Boolean | Segment} 重合部分
+     * @returns {boolean | Segment} 重合部分
      */
     #isOverlappedWithSegment(s) {
         if (!this.isCollinearWithSegment(s)) return false //重合的前提是共线
@@ -124,7 +124,7 @@ class Segment {
      * `线段this`与`线段s`是否相交，相交不仅要求有且仅有一个点重合，且要求夹角不等于0或者Math.PI
      * 包含了不共线的相接和线段的端点在另一个线段上的特殊情况
      * @param {Segment} segment
-     * @returns {Boolean | Point} 交点
+     * @returns {boolean | Point} 交点
      */
     #isIntersectedWithSegment(segment) {
         if (this.isParallelTo(segment)) return false //相交的前提是不平行
@@ -136,7 +136,7 @@ class Segment {
             cp2 = v3.crossProduct(v2),
             cp3 = v3.crossProduct(v1)
 
-        if (utility.apxEqualsTo(cp1, 0)) {
+        if (util.apxEqualsTo(cp1, 0)) {
             return false
         }
         let t1 = cp3 / cp1,
@@ -166,7 +166,7 @@ class Segment {
     /**
      * 获得从线段起点开始的lambda定比分点P
      * @description 当P为内分点时，lambda > 0；当P为外分点时，lambda < 0 && lambda !== -1；当P与A重合时，lambda === 0,当P与B重合时，lambda===1
-     * @param {Number} lambda
+     * @param {number} lambda
      * @returns {Point}
      */
     getInterpolatePoint(lambda){
@@ -179,7 +179,7 @@ class Segment {
     /**
      * `直线l`分线段成两部分之间的比例
      * @param {Line} l
-     * @returns {Number}
+     * @returns {number}
      */
     getDivisionRatioByLine(l) {
         return -(l.a * this.p1.x + l.b * this.p1.y + l.c) / (l.a * this.p2.x + l.b * this.p2.y + l.c)

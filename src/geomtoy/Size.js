@@ -1,6 +1,6 @@
 import _ from "lodash"
 import Point from "./Point"
-import utility from "./utility"
+import util from "./utility"
 
 //Size代表的是一个点和另一个点的x，y轴坐标的差值关系，所以两个值可以为负
 //一个矩形的size如果为Size(-1，-1)，而起始点为Point(0, 0)，则Rectangle是处于在笛卡尔坐标系第三象限中边长为1的正方形
@@ -76,7 +76,7 @@ class Size {
     }
 
     isEqualTo(s) {
-        return utility.apxEqualsTo(this.width, s.width) && utility.apxEqualsTo(this.height, s.height)
+        return util.apxEqualsTo(this.width, s.width) && util.apxEqualsTo(this.height, s.height)
     }
     standardize() {
         this.width = Math.abs(this.width)

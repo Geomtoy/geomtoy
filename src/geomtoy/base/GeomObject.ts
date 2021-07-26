@@ -1,18 +1,15 @@
+import Transformation from "../transformation"
+import { defaultOptions, Options, GraphicImplType, CanvasDirective, SvgDirective } from "../types"
+
 abstract class GeomObject {
-    abstract translate(...args: any): any
+    options: Options = defaultOptions
 
-    abstract rotate(...args: any): any
-    abstract scale(...args: any): any
-    abstract skew(...args: any): any
+    abstract apply(transformation: Transformation): GeomObject
+    abstract clone(): GeomObject
+    abstract toString(): string
+    abstract toObject(): object
+    abstract toArray(): [...value: any[]]
 
-    abstract lineReflect(...args: any): any
-    abstract pointReflect(...args: any): any
-    abstract transform(...args: any): any
-
-    abstract getGraphic(...args: any): any
-    abstract clone(): any
-    abstract toString(): any
-    abstract toObject(): any
-    abstract toArray(): any
+    abstract getGraphic(type: GraphicImplType): Array<SvgDirective | CanvasDirective>
 }
 export default GeomObject

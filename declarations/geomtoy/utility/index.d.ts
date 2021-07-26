@@ -1,14 +1,34 @@
 declare const _default: {
     angle: {
         simplify(angle: number): number;
+        /**
+         * 利用求根公式计算一元二次方程(ax^2 + bx + c = 0)的解
+         * @param {number} a
+         * @param {number} b
+         * @param {number} c
+         * @returns {Array<number>}
+         */
         simplify2(angle: number): number;
-        reverse(angle: number): number;
         degreeToRadian(degree: number): number;
         radianToDegree(radian: number): number;
     };
     type: {
+        isRealNumber(value: any): boolean;
+        isBoolean(value: any): boolean;
         isCoordinate(value: any): value is import("../types").Coordinate;
+        isSize(value: any): value is import("../types").Size;
         isGraphicDirectiveType(value: any): value is import("../types").GraphicDirectiveType;
+    };
+    vector: {
+        add([ux, uy]: import("../types").Coordinate, [vx, vy]: import("../types").Coordinate): import("../types").Coordinate;
+        subtract([ux, uy]: import("../types").Coordinate, [vx, vy]: import("../types").Coordinate): import("../types").Coordinate;
+        scalarMultiply([x, y]: import("../types").Coordinate, scalar: number): import("../types").Coordinate;
+        dotProduct([ux, uy]: import("../types").Coordinate, [vx, vy]: import("../types").Coordinate): number;
+        crossProduct([ux, uy]: import("../types").Coordinate, [vx, vy]: import("../types").Coordinate): number;
+        reverse([x, y]: import("../types").Coordinate): import("../types").Coordinate;
+        swap([x, y]: import("../types").Coordinate): import("../types").Coordinate;
+        rotate([x, y]: import("../types").Coordinate, a: number): import("../types").Coordinate;
+        normalize([x, y]: import("../types").Coordinate): import("../types").Coordinate;
     };
     /**
      * 利用求根公式计算一元二次方程(ax^2 + bx + c = 0)的解

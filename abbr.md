@@ -10,15 +10,19 @@ diam = diameter
 apx = approximate | approximately
 def = definite | definitely
 dist = distance
-
+param = parameter
 impl = implement | implementation
 cp = control point
+
+rs = relationship
 
 cx = center point x
 cy = center point y
 rx = radius x
 ry = radius y
 
+util = utility
+alt = alternative
 
 ### plus
 triangle

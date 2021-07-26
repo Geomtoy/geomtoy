@@ -1,52 +1,78 @@
-export default Line;
-declare class Line {
+import Point from "./Point";
+import Segment from "./Segment";
+import Rectangle from "./Rectangle";
+import Circle from "./Circle";
+import GeomObject from "./base/GeomObject";
+import { GraphicImplType } from "./types";
+import Transformation from "./transformation";
+import Vector from "./Vector";
+declare class Line extends GeomObject {
+    #private;
+    constructor(a: number, b: number, c: number);
+    constructor(line: Line);
+    get a(): number;
+    set a(value: number);
+    get b(): number;
+    set b(value: number);
+    get c(): number;
+    set c(value: number);
+    isSameAs(line: Line): boolean;
     /**
-     * 从`点point1`,`点point2`两个点确定一条直线
+     * Determine a line from two points `point1` and `point2`.
      * @param {Point} point1
      * @param {Point} point2
-     * @returns this
+     * @returns {Line}
      */
-    static "__#72280@#fromPoints"(point1: Point, point2: Point): Line;
-    static fromPoints(point1: any, point2: any): Line;
-    static fromPointAndAngle(point: any, angle: any): void;
-    static fromSegment(segment: any): Line;
-    constructor(a: any, b: any, c: any);
-    a: any;
-    b: any;
-    c: any;
+    static fromPoints(point1: Point, point2: Point): Line;
+    /**
+     * Get the line where the `segment` lies.
+     * @param {Segment} segment
+     * @returns {Line}
+     */
+    static fromSegment(segment: Segment): Line;
+    static fromPointAndAngle(point: Point, angle: number): Line;
+    static fromPointAndSlope(point: Point, slope: number): void;
+    static fromVector(vector: Vector): Line;
+    static fromIntercepts(interceptX: number, interceptY: number): void;
+    static fromSlopeAndInterceptX(slope: number, interceptX: number): void;
+    static fromSlopeAndInterceptY(slope: number, interceptY: number): void;
     /**
      * `直线this`的斜率
-     * @returns {Number}
+     * @returns {number}
      */
     getSlope(): number;
     /**
      * `直线this`的截距
-     * @returns {Number}
+     * @returns {number}
      */
     getInterceptY(): number;
-    getInterceptX(): number | null;
-    getRandomPointOnLine(): Point;
-    isIntersectedWithCircle(circle: any): boolean;
-    getIntersectionPointsWithCircle(circle: any): true | Point[] | null;
-    isIntersectedWithLine(line: any): boolean;
-    getIntersectionPointWithLine(line: any): true | Point | null;
-    isIntersectedWithSegment(segment: any): boolean;
-    getIntersectionPointWithSegment(segment: any): true | Point | null;
-    isIntersectedWithRectangle(rectangle: any): boolean;
-    getIntersectionPointWithRectangle(rectangle: any): true | Point[] | null;
+    /**
+     *
+     * @returns {number}
+     */
+    getInterceptX(): number;
+    getRandomPointOnLine(): void;
+    isIntersectedWithCircle(circle: Circle): boolean;
+    getIntersectionPointsWithCircle(circle: Circle): Point[] | null;
+    isIntersectedWithLine(line: Line): boolean;
+    getIntersectionPointWithLine(line: Line): Point | null;
+    isIntersectedWithSegment(segment: Segment): boolean;
+    getIntersectionPointWithSegment(segment: Segment): Point | null;
+    isIntersectedWithRectangle(rectangle: Rectangle): boolean;
+    getIntersectionPointWithRectangle(rectangle: Rectangle): true | null;
     getNormalLineAtPoint(): void;
     /**
      * 过`直线this`上一点`点point`的垂线
      * @param {Point} point
      * @returns {Line}
      */
-    getPerpendicularLineWithPointOn(point: Point): Line;
+    getPerpendicularLineWithPointOn(point: Point): Line | null;
     /**
      * `直线this`外一点`点point`到`直线this`的垂点（垂足）
      * @param {Line} l
      * @returns {Point | null}
      */
-    getPerpendicularPointWithPointNotOn(point: any): Point | null;
+    getPerpendicularPointWithPointNotOn(point: Point): Point | null;
     /**
      * `直线this`与`直线line`是否平行（包括重合）
      * @param {Line} line
@@ -56,18 +82,19 @@ declare class Line {
     /**
      * 若`直线this`与`直线line`平行，则返回它们之间的距离，否则返回null
      * @param {Line} line
-     * @returns {Number | null}
+     * @returns {number | null}
      */
     getDistanceToParallelLine(line: Line): number | null;
-    getGraphic(type: any): object[];
+    apply(transformation: Transformation): GeomObject;
+    getGraphic(type: GraphicImplType): (import("./types").SvgDirective | import("./types").CanvasDirective)[];
+    flatten(): this;
     clone(): Line;
-    toArray(): any[];
+    toArray(): number[];
     toObject(): {
-        a: any;
-        b: any;
-        c: any;
+        a: number;
+        b: number;
+        c: number;
     };
     toString(): string;
-    #private;
 }
-import Point from "./Point";
+export default Line;

@@ -1,127 +1,162 @@
 import Point from "./Point"
 import Segment from "./Segment"
-import utility from "./utility"
+import util from "./utility"
 import _ from "lodash"
-import { Coordinate, AnglePositive } from "./types"
-import G from "./index"
+import { CanvasDirective, Coordinate, GraphicImplType, SvgDirective } from "./types"
+import GeomObject from "./base/GeomObject"
+import Graphic from "./graphic"
+import { is, sealed } from "./decorator"
+import Transformation from "./transformation"
 
-class Vector {
-    x!: number
-    y!: number
-    initial!: Point
+@sealed
+class Vector extends GeomObject {
+    #x: number | undefined
+    #y: number | undefined
+    #point1: Point | undefined
 
     constructor(x: number, y: number)
-    constructor(x1: number, y1: number, x2: number, y2: number)
-    constructor(coordinate: Coordinate)
-    constructor(initialCoordinate: Coordinate, terminalCoordinate: Coordinate)
-    constructor(point: Point)
-    constructor(initialPoint: Point, terminalPoint: Point)
-    constructor(initialPoint: Point, terminalCoordinate: Coordinate)
-    constructor(initialCoordinate: Coordinate, terminalPoint: Point)
-    constructor(vector: Vector)
+    constructor(point1X: number, point1Y: number, point2X: number, point2Y: number)
+    constructor(position: Coordinate | Point | Vector)
+    constructor(point1Position: Coordinate | Point | Vector, point2Position: Coordinate | Point | Vector)
     constructor()
-    constructor(x1?: any, y1?: any, x2?: any, y2?: any) {
-        if (_.isNumber(x1) && _.isNumber(y1)) {
-            if (_.isNumber(x2) && _.isNumber(y2)) {
-                Object.assign(this, { initial: new Point(x1, y1), x: x2 - x1, y: y2 - y1 })
+    constructor(a1?: any, a2?: any, a3?: any, a4?: any) {
+        super()
+        if (_.isNumber(a1) && _.isNumber(a2)) {
+            if (_.isNumber(a3) && _.isNumber(a4)) {
+                let [x, y] = util.vector.subtract([a3, a4], [a1, a2])
+                Object.seal(Object.assign(this, { point1: new Point(a1, a2), x, y }))
                 return this
             }
-            Object.assign(this, { initial: Point.zero, x: x1, y: y1 })
+            Object.seal(Object.assign(this, { point1: Point.zero, x: a1, y: a2 }))
             return this
         }
 
-        if (utility.type.isCoordinate(x1)) {
-            if (utility.type.isCoordinate(y1)) {
-                Object.assign(this, { initial: new Point(x1[0], x1[1]), x: y1[0] - x1[0], y: y1[1] - x1[1] })
-                return this
-            }
-            if (y1 instanceof Point) {
-                Object.assign(this, { initial: new Point(x1[0], x1[1]), x: y1.x - x1[0], y: y1.y - x1[1] })
-                return this
-            }
-            Object.assign(this, { initial: Point.zero, x: x1[0], y: x1[1] })
-            return this
-        }
+        if (util.type.isCoordinate(a1) || a1 instanceof Point || a1 instanceof Vector) {
+            if (util.type.isCoordinate(a2) || a2 instanceof Point || a2 instanceof Vector) {
+                let p1 = new Point(a1),
+                    p2 = new Point(a2),
+                    { x: x1, y: y1 } = p1,
+                    { x: x2, y: y2 } = p2
 
-        if (x1 instanceof Point) {
-            if (y1 instanceof Point) {
-                Object.assign(this, { initial: x1.clone(), x: y1.x - x1.x, y: y1.y - x1.y })
+                let [x, y] = util.vector.subtract([x1, y1], [x2, y2])
+                Object.seal(Object.assign(this, { point1: p1, x, y }))
                 return this
             }
-            if (utility.type.isCoordinate(y1)) {
-                Object.assign(this, { initial: x1.clone(), x: y1[0] - x1.x, y: y1[1] - x1.y })
+
+            if (!(a1 instanceof Vector)) {
+                let p = new Point(a1),
+                    { x, y } = p
+                Object.seal(Object.assign(this, { point1: Point.zero, x, y }))
                 return this
             }
-            Object.assign(this, { initial: Point.zero, x: x1.x, y: x1.y })
-            return this
+            return a1.clone()
         }
-
-        if (x1 instanceof Vector) {
-            return x1.clone()
-        }
-
         return Vector.zero
     }
 
+    @is("realNumber")
+    get x() {
+        return this.#x!
+    }
+    set x(value) {
+        this.#x = value
+    }
+    @is("realNumber")
+    get y() {
+        return this.#y!
+    }
+    set y(value) {
+        this.#y = value
+    }
     /**
-     * 向量角度
+     * Initial point of vector `this`, usually `Point.zero`
+     */
+    @is("point")
+    get point1() {
+        return this.#point1!
+    }
+    set point1(value) {
+        this.#point1 = value
+    }
+    /**
+     * Terminal point of vector `this`
+     */
+    get point2() {
+        let { x: x1, y: y1 } = this.#point1!,
+            x = this.#x!,
+            y = this.#y!,
+            [x2, y2] = util.vector.add([x1, y1], [x, y])
+        return new Point([x2, y2])
+    }
+    /**
+     * The angle of vector `this`
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/atan2}
      */
     get angle() {
         if (this.isZero()) return NaN
-        let a = Math.atan2(this.y, this.x) //注意Math.atan2返回是逆时针正角下的角，[-Math.PI, Math.PI]
-        if (G.options.anglePositive === AnglePositive.Clockwise) a = -a
-        //将其转到[0,2*Math.PI)之间
-        return utility.angle.simplify(a)
+        let a = Math.atan2(this.y, this.x) //Note: Math.atan2 return the ANTICLOCKWISE angle, in the range of [-Math.PI, Math.PI]
+        return util.angle.simplify(-a)
     }
     /**
-     * 向量长度（模）
+     * The magnitude of vector `this`
      * @returns {number}
      */
-    get length(): number {
+    get magnitude(): number {
         if (this.isZero()) return 0
         return Math.hypot(this.x, this.y)
-    }
-
-    static fromPoint(point: Point): Vector {
-        return new Vector(point)
-    }
-
-    static fromPoints(initialPoint: Point, terminalPoint: Point): Vector {
-        return new Vector(initialPoint, terminalPoint)
-    }
-
-    static fromAngleAndLength(angle: number, length: number): Vector {
-        if (G.options.anglePositive === AnglePositive.Anticlockwise) {
-            angle = -angle
-        }
-        let x = length * Math.cos(angle),
-            y = length * Math.sin(angle)
-        return new Vector(x, y)
-    }
-
-    static fromSegment(segment: Segment, reverse = false) {
-        return reverse ? new Vector(segment.p2, segment.p1) : new Vector(segment.p1, segment.p2)
     }
 
     static get zero() {
         return new Vector(0, 0)
     }
 
-    isZero() {
-        return this.x === 0 && this.y === 0
+    static fromPoint(point: Point): Vector {
+        return new Vector(point)
     }
-    isSameAs(v: Vector): boolean {
-        if (this.isZero() && v.isZero()) return true
-        return this.isSameAngleAs(v) && this.isSameLengthAs(v)
+    static fromPoints(point1: Point, point2: Point): Vector {
+        return new Vector(point1, point2)
     }
-    isSameAngleAs(v: Vector) {
-        if (this.isZero() && v.isZero()) return true
-        return utility.apxEqualsTo(this.angle, v.angle)
+    static fromAngleAndMagnitude(angle: number, magnitude: number): Vector {
+        let x = magnitude * Math.cos(angle),
+            y = magnitude * Math.sin(angle)
+        return new Vector(x, y)
     }
-    isSameLengthAs(v: Vector) {
-        if (this.isZero() && v.isZero()) return true
-        return utility.apxEqualsTo(this.length, v.length)
+    static fromSegment(segment: Segment, reverse = false) {
+        return reverse ? new Vector(segment.p2, segment.p1) : new Vector(segment.p1, segment.p2)
+    }
+
+    /**
+     * Whether vector `this` is `Vector.zero`
+     * @returns {boolean}
+     */
+    isZero(): boolean {
+        let { x, y } = this,
+            epsilon = this.options.epsilon
+        return util.apxEqualsTo(x, 0, epsilon) && util.apxEqualsTo(y, 0, epsilon)
+    }
+    /**
+     * Whether vector `this` is the same as vector `vector`
+     * @param {Vector} vector
+     * @returns {boolean}
+     */
+    isSameAs(vector: Vector): boolean {
+        if (this.isZero() && vector.isZero()) return true
+        return this.isSameAngleAs(vector) && this.isSameMagnitudeAs(vector)
+    }
+    /**
+     * Whether the angle of vector `this` is the same as vector `vector`
+     * @param {Vector} vector 
+     * @returns {boolean}
+     */
+    isSameAngleAs(vector: Vector):boolean {
+        if (this.isZero() && vector.isZero()) return true
+        let epsilon = this.options.epsilon
+        return util.apxEqualsTo(this.angle, vector.angle, epsilon)
+    }
+    isSameMagnitudeAs(vector: Vector) {
+        if (this.isZero() && vector.isZero()) return true
+        let epsilon = this.options.epsilon
+        return util.apxEqualsTo(this.magnitude, vector.magnitude, epsilon)
     }
 
     /**
@@ -130,8 +165,8 @@ class Vector {
      * @param {Vector} v
      * @returns {number}
      */
-    angleBetween(v: Vector): number {
-        return utility.angle.simplify2(this.angle - v.angle)
+    angleTo(vector: Vector): number {
+        return util.angle.simplify2(this.angle - vector.angle)
     }
 
     /**
@@ -139,11 +174,11 @@ class Vector {
      * @param {Vector} v
      * @returns {number}
      */
-    #angleBetweenAnotherImpl(v: Vector): number {
-        if (this.isZero() || v.isZero()) return NaN
-        let dotProduct = this.dotProduct(v),
-            crossProduct = this.crossProduct(v),
-            cosTheta = dotProduct / (this.length * v.length),
+    #angleToAnotherImpl(vector: Vector): number {
+        if (this.isZero() || vector.isZero()) return NaN
+        let dotProduct = this.dotProduct(vector),
+            crossProduct = this.crossProduct(vector),
+            cosTheta = dotProduct / (this.magnitude * vector.magnitude),
             angle = Math.acos(cosTheta) //Math.acos，[0, Math.PI]
 
         //点乘与夹角范围：
@@ -156,7 +191,7 @@ class Vector {
         //cp==0     法向量为0，`向量this`到`向量v`的正旋角 0或Math.PI
         //cp<0      法向量小于0，`向量this`到`向量v`的正旋角 (Math.PI, 2*Math.PI)
         if (crossProduct < 0) angle = -angle //此处已经是正旋角，无论正旋角定义为顺时针还是逆时针都一样
-        return utility.angle.simplify2(angle)
+        return util.angle.simplify2(angle)
     }
 
     /**
@@ -179,33 +214,73 @@ class Vector {
     }
 
     normalize() {
-        let norm = Math.hypot(this.x, this.y)
-        return new Vector(this.x / norm, this.y / norm)
+        let { x, y } = this,
+            [nx, ny] = util.vector.normalize([x, y])
+        return new Vector([nx, ny])
     }
     add(v: Vector): Vector {
-        return new Vector(this.x + v.x, this.y + v.y)
+        let { x: x1, y: y1 } = this,
+            { x: x2, y: y2 } = v,
+            [nx, ny] = util.vector.add([x1, y1], [x2, y2])
+        return new Vector([nx, ny])
     }
     subtract(v: Vector): Vector {
-        return new Vector(this.x - v.x, this.y - v.y)
+        let { x: x1, y: y1 } = this,
+            { x: x2, y: y2 } = v,
+            [nx, ny] = util.vector.subtract([x1, y1], [x2, y2])
+        return new Vector([nx, ny])
     }
-    multiply(n: number): Vector {
-        return new Vector(this.x * n, this.y * n)
+    scalarMultiply(scalar: number): Vector {
+        let { x, y } = this,
+            [nx, ny] = util.vector.scalarMultiply([x, y], scalar)
+        return new Vector([nx, ny])
     }
     reverse() {
         return new Vector(-this.x, -this.y)
     }
-    rotate(angle: number): Vector {
-        if (G.options.anglePositive === AnglePositive.Anticlockwise) {
-            angle = -angle
-        }
-
-        let x = this.x * Math.cos(angle) + this.y * Math.sin(angle),
-            y = -this.x * Math.sin(angle) + this.y * Math.cos(angle)
-        return new Vector(x, y)
+    rotate(angle:number):Vector{
+        let { x, y } = this,
+            [nx, ny] = util.vector.rotate([x, y], angle)
+        return new Vector([nx, ny]) 
+    }
+    clone() {
+        return new Vector(this.point1, [this.x, this.y])
     }
 
-    clone() {
-        return new Vector(this.initial.clone(), [this.x, this.y])
+    getCoordinate(): Coordinate {
+        return this.point2.getCoordinate()
+    }
+
+    // todo
+    apply(transformation: Transformation) {
+        return transformation.get().transformVector(this)
+    }
+    /**
+     * Get graphic object of `this`
+     * @param {GraphicImplType} type
+     * @returns {Array<SvgDirective | CanvasDirective>}
+     */
+    getGraphic(type: GraphicImplType): Array<SvgDirective | CanvasDirective> {
+        let p1 = this.point1,
+            { x: x1, y: y1 } = p1,
+            p2 = this.point2,
+            { x: x2, y: y2 } = p2,
+            g = new Graphic()
+
+        g.moveTo(x1, y1)
+        g.lineTo(x2, y2)
+        // g.centerArcTo(x, y, Vector.options.graphic.pointSize, Vector.options.graphic.pointSize, 0, 2 * Math.PI, 0)
+        // g.close()
+        return g.valueOf(type)
+    }
+    toArray() {
+        return []
+    }
+    toObject() {
+        return {}
+    }
+    toString() {
+        return ""
     }
 }
 
