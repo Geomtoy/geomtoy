@@ -3,12 +3,17 @@ import Circle from "../Circle";
 import Line from "../Line";
 import { Coordinate } from "../types";
 declare class Inversion {
-    ix: number;
-    iy: number;
-    invertPower: number;
-    constructor(invertPower: number, point: Point);
-    constructor(invertPower: number, coordinate: Coordinate);
+    #private;
+    constructor(power: number, centerX: number, centerY: number);
+    constructor(power: number, centerPosition: Coordinate | Point);
+    get power(): number;
+    set power(value: number);
     get centerPoint(): Point;
+    set centerPoint(value: Point);
+    get ix(): number;
+    set ix(value: number);
+    get iy(): number;
+    set iy(value: number);
     /**
      * 求`点point`的反形
      * @param {Point} point

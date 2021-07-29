@@ -1,8 +1,26 @@
 import { SVG } from "@svgdotjs/svg.js"
 import _ from "lodash"
-import G from "../../src/geomtoy"
+import Geomtoy from "../../src/geomtoy"
 import "../../src/_draw.js"
  
+
+
+const _reveal = (obj, resolve, duration, delay) => {
+    obj.attr({
+        "fill-opacity": 0,
+        "stroke-opacity": 0
+    })
+        .animate(duration, delay, "now")
+        .attr({
+            "fill-opacity": 1,
+            "stroke-opacity": 1
+        })
+        .after(() => {
+            resolve(obj)
+        })
+}
+
+
 
 const radius = 256,
     prePadding = 100,
@@ -11,13 +29,14 @@ const radius = 256,
     three = 3,
     colors = ["#900", "#099", "#009"]
 
-console.log(G);window.G = G
-
 let draw = SVG()
         .addTo("body")
         .size(radius * 2 + prePadding * 2, radius * 2 + prePadding * 2)
         .viewbox(0, 0, radius * 2 + prePadding * 2, radius * 2 + prePadding * 2),
     data = {}
+
+const G = new Geomtoy(radius * 2 + prePadding * 2,radius * 2 + prePadding * 2)
+
 
 let sketchGroup = draw.group()
 sketchGroup.stroke({ color: "rgba(77, 77, 77, 0.5)", width: 1 }).fill("none")

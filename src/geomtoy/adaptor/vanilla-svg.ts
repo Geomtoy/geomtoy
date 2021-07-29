@@ -1,10 +1,9 @@
-import _ from "lodash"
 import Geomtoy from ".."
 import GeomObject from "../base/GeomObject"
 
 export default class {
     svgContainer: SVGGElement | SVGSVGElement
-    geomtoy:Geomtoy
+    geomtoy: Geomtoy
 
     constructor(svgContainer: any, geomtoy: Geomtoy) {
         if (svgContainer instanceof SVGGElement || svgContainer instanceof SVGSVGElement) {
@@ -14,17 +13,17 @@ export default class {
         }
         throw new Error(`[G]Unable to initialize.`)
     }
-    setup(){
+    setup() {
         let gt = this.geomtoy.getGlobalTransformation()
         this.svgContainer.setAttribute("transform", `matrix(${gt.a} ${gt.b} ${gt.c} ${gt.d} ${gt.e} ${gt.f})`)
     }
     draw(object: GeomObject) {
         let ds = object.getGraphic("svg"),
-            elemPath =   document.createElementNS("http://www.w3.org/2000/svg", "path"),
+            elemPath = document.createElementNS("http://www.w3.org/2000/svg", "path"),
             attrD = ""
         this.setup()
 
-        _.forEach(ds, d => {
+        ds.forEach(d => {
             if (d.type === "M") {
                 attrD += `M${d.x},${d.y}`
             }

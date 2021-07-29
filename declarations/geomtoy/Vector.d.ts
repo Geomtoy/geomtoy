@@ -23,15 +23,7 @@ declare class Vector extends GeomObject {
      * Terminal point of vector `this`
      */
     get point2(): Point;
-    /**
-     * The angle of vector `this`
-     * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/atan2}
-     */
     get angle(): number;
-    /**
-     * The magnitude of vector `this`
-     * @returns {number}
-     */
     get magnitude(): number;
     static get zero(): Vector;
     static fromPoint(point: Point): Vector;
@@ -44,11 +36,17 @@ declare class Vector extends GeomObject {
      */
     isZero(): boolean;
     /**
-     * Whether vector `this` is the same as vector `vector`
+     * Whether vector `this` is the same as vector `vector`, if they are all initialized from `Point.zero`
      * @param {Vector} vector
      * @returns {boolean}
      */
     isSameAs(vector: Vector): boolean;
+    /**
+     * Whether vector `this` is the same as vector `vector`, including the initial point
+     * @param {Vector} vector
+     * @returns {boolean}
+     */
+    isSameAs2(vector: Vector): boolean;
     /**
      * Whether the angle of vector `this` is the same as vector `vector`
      * @param {Vector} vector
@@ -57,31 +55,20 @@ declare class Vector extends GeomObject {
     isSameAngleAs(vector: Vector): boolean;
     isSameMagnitudeAs(vector: Vector): boolean;
     /**
-     * `向量this`到`向量v`的角差，记作theta，(-Math.PI, Math.PI]
-     * angle本身已经处理了顺时针/逆时针正角的问题
-     * @param {Vector} v
+     * Angle from vector `this` to vector `vector`, in "(-Math.PI,Math.PI]"
+     * @param {Vector} vector
      * @returns {number}
      */
     angleTo(vector: Vector): number;
-    /**
-     * `向量this`与`向量v`的点乘
-     * @summary V1(x1, y1) · V2(x2, y2) = x1 * x2 + y1 * y2
-     * @param {Vector} v
-     * @returns {number}
-     */
-    dotProduct(v: Vector): number;
-    /**
-     * `向量this`与`向量v`的叉乘（不考虑叉乘之后得到的向量方向）
-     * @summary V1(x1, y1) × V2(x2, y2) = x1 * y2 – y1 * x2
-     * @param {*} v
-     * @returns {number}
-     */
-    crossProduct(v: Vector): number;
+    simplify(): void;
+    simplifySelf(): void;
+    dotProduct(vector: Vector): number;
+    crossProduct(vector: Vector): number;
     normalize(): Vector;
-    add(v: Vector): Vector;
-    subtract(v: Vector): Vector;
+    add(vector: Vector): Vector;
+    subtract(vector: Vector): Vector;
     scalarMultiply(scalar: number): Vector;
-    reverse(): Vector;
+    negative(): Vector;
     rotate(angle: number): Vector;
     clone(): Vector;
     getCoordinate(): Coordinate;

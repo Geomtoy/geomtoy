@@ -1,4 +1,3 @@
-import _ from "lodash"
 import Geomtoy from ".."
 import GeomObject from "../base/GeomObject"
 
@@ -21,7 +20,7 @@ export default class {
 
         this.setup()
 
-        _.forEach(ds, d => {
+        ds.forEach(d => {
             if (d.type === "M") {
                 attrD += `M${d.x},${d.y}`
             }

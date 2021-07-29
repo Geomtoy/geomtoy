@@ -1,8 +1,8 @@
-import _ from "lodash"
 import Matrix from "./Matrix"
 import Translation from "./Translation"
 import Point from "../Point"
 import { is, sealed } from "../decorator"
+import type from "../utility/type"
 
 @sealed
 class Scaling extends Matrix {
@@ -15,7 +15,7 @@ class Scaling extends Matrix {
     constructor()
     constructor(fx?: any, fy?: any, o?: any) {
         super()
-        if (_.isNumber(fx) && _.isNumber(fy)) {
+        if (type.isNumber(fx) && type.isNumber(fy)) {
             if (o instanceof Point) {
                 Object.seal(Object.assign(this, { factorX: fx, factorY: fy, origin: o }))
                 this.#scaling()

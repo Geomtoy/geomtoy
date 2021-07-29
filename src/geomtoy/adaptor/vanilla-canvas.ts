@@ -1,4 +1,3 @@
-import _ from "lodash"
 import Geomtoy from ".."
 import GeomObject from "../base/GeomObject"
 
@@ -22,7 +21,7 @@ export default class {
             ct = this.context.getTransform()
         this.setup()
         this.context.beginPath()
-        _.forEach(ds, d => {
+        ds.forEach(d => {
             if (d.type === "moveTo") {
                 this.context.moveTo(d.x, d.y)
             }

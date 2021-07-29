@@ -1,4 +1,4 @@
-import _ from "lodash"
+import type from "../utility/type"
 import Matrix from "./Matrix"
 import { is, sealed } from "../decorator"
 
@@ -11,7 +11,7 @@ class Translation extends Matrix {
     constructor()
     constructor(dx?: any, dy?: any) {
         super()
-        if (_.isNumber(dx) && _.isNumber(dy)) {
+        if (type.isNumber(dx) && type.isNumber(dy)) {
             Object.assign(this, { deltaX: dx, deltaY: dy })
             this.#translation()
             return this

@@ -5,11 +5,12 @@ import Rotation from "./Rotation"
 import Scaling from "./Scaling"
 import Skewing from "./Skewing"
 import Translation from "./Translation"
-import util from "../utility"
-import _ from "lodash"
+import math from "../utility/math" 
 import { Coordinate } from "../types"
 import Vector from "../Vector"
 import { is, sealed } from "../decorator"
+import util from "../utility"
+import type from "../utility/type"
 
 @sealed
 class Matrix {
@@ -35,7 +36,7 @@ class Matrix {
     constructor(m: PointReflection)
     constructor()
     constructor(a?: any, b?: any, c?: any, d?: any, e?: any, f?: any) {
-        if (_.every([a, b, c, d, e, f], _.isNumber)) {
+        if (util.every([a, b, c, d, e, f], type.isNumber)) {
             Object.seal(Object.assign(this, { a, b, c, d, e, f }))
             return this
         }
@@ -91,12 +92,12 @@ class Matrix {
     isSameAs(matrix: Matrix): boolean {
         if (matrix === this) return true
         return (
-            util.apxEqualsTo(this.a, matrix.a) &&
-            util.apxEqualsTo(this.b, matrix.b) &&
-            util.apxEqualsTo(this.c, matrix.c) &&
-            util.apxEqualsTo(this.d, matrix.d) &&
-            util.apxEqualsTo(this.e, matrix.e) &&
-            util.apxEqualsTo(this.f, matrix.f)
+            math.equalTo(this.a, matrix.a) &&
+            math.equalTo(this.b, matrix.b) &&
+            math.equalTo(this.c, matrix.c) &&
+            math.equalTo(this.d, matrix.d) &&
+            math.equalTo(this.e, matrix.e) &&
+            math.equalTo(this.f, matrix.f)
         )
     }
 
@@ -129,7 +130,7 @@ class Matrix {
     }
 
     //@see {@link:https://frederic-wang.fr/decomposition-of-2d-transform-matrices.html}
-    decompose(matrix: Matrix) {
+    decompose() {
         let { a, b, c, d, e, f } = this
 
         let determinant = a * d - b * c,
@@ -193,17 +194,11 @@ class Matrix {
         return [tx, ty]
     }
     transformPoint(point: Point): Point {
-        let { x, y } = point
-        return new Point(this.transformCoordinate([x, y]))
+        return new Point(this.transformCoordinate(point.getCoordinate()))
     }
     transformVector(vector: Vector): Vector {
-        let { x: x1, y: y1 } = vector.point1,
-            { x: x2, y: y2 } = vector.point2,
-            [nx1, ny1] = this.transformCoordinate([x1, y1]),
-            [nx2, ny2] = this.transformCoordinate([x2, y2])
-        return new Vector(nx1, ny1, nx2, ny2)
+        return new Vector(vector.point1, this.transformCoordinate(vector.getCoordinate()))
     }
-
     /**
      * Convert the point corresponding to the identity matrix (in the initial state without transformation)
      * to the point with the current transformation,
@@ -269,7 +264,7 @@ class Matrix {
     inverseSelf(): Matrix | boolean {
         let det = this.determinant()
 
-        if (util.apxEqualsTo(det, 0)) return false
+        if (math.equalTo(det, 0)) return false
         //
         // B = A* (adjoint matrix)
         // b11 b12 b13

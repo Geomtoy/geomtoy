@@ -1,9 +1,11 @@
+import type from "./utility/type"
+
 import Point from "./Point"
 import Circle from "./Circle"
 import GeomObject from "./base/GeomObject"
 import { CanvasDirective, Coordinate, GraphicImplType, SvgDirective } from "./types"
 import Transformation from "./transformation"
-import util from "./utility"
+
 import { is, sealed } from "./decorator"
 
 @sealed
@@ -18,13 +20,12 @@ class Triangle extends GeomObject {
             a2 = point2Position,
             a3 = point3Position
 
-        if ((util.type.isCoordinate(a1) || a1 instanceof Point) && (util.type.isCoordinate(a2) || a2 instanceof Point) && (util.type.isCoordinate(a3) || a3 instanceof Point)) {
+        if ((type.isCoordinate(a1) || a1 instanceof Point) && (type.isCoordinate(a2) || a2 instanceof Point) && (type.isCoordinate(a3) || a3 instanceof Point)) {
             let p1 = new Point(a1),
                 p2 = new Point(a2),
                 p3 = new Point(a3)
 
-            Object.seal(Object.assign(this, { point1: p1, point2: p2, point3: p3 }))
-            return this
+            return Object.seal(Object.assign(this, { point1: p1, point2: p2, point3: p3 }))
         }
         throw new Error(`[G]Arguments can NOT construct a triangle.`)
     }
@@ -116,7 +117,7 @@ class Triangle extends GeomObject {
             c2 = a2 * y2 - b2 * x2,
             x = (a1 * c2 - a2 * c1) / (a2 * b1 - a1 * b2),
             y = (b1 * c2 - b2 * c1) / (a2 * b1 - a1 * b2)
-            
+
         return new Point(x, y)
     }
 

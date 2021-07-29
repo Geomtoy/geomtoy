@@ -1,8 +1,9 @@
-import _ from "lodash"
 import Point from "./Point"
 import { Coordinate } from "./types"
 import Rectangle from "./Rectangle"
+import type from "./utility/type"
 import util from "./utility"
+import vec2 from "./utility/vec2"
 
 class Polygon {
     #points: Array<Point> | undefined
@@ -12,12 +13,12 @@ class Polygon {
     constructor(...points: Array<Point>)
     constructor(...points: Array<Coordinate>)
     constructor(points: any) {
-        if (_.every(points, p => p instanceof Point)) {
+        if (util.every(points, p => p instanceof Point)) {
             Object.seal(Object.assign(this, { points }))
             return this
         }
-        if (_.every(points, util.type.isCoordinate)) {
-            let ps = _.map(points, c => new Point(c))
+        if (util.every(points, type.isCoordinate)) {
+            let ps = util.map(points, c => new Point(c))
             Object.seal(Object.assign(this, { points: ps }))
             return this
         }
@@ -29,14 +30,14 @@ class Polygon {
     set points(value) {
         this.#points = value
         if (this.points.length < 3) throw new Error(`[G]The \`points\` of a polygon should have at least 3 points.`)
-        if (!_.every(this.points, p => p instanceof Point)) throw new Error(`[G]The \`points\` of a polygon should be an array of points.`)
+        if (!util.every(this.points, p => p instanceof Point)) throw new Error(`[G]The \`points\` of a polygon should be an array of points.`)
     }
     get pointCount() {
         return this.points.length
     }
 
     getPoint(index: number): Point | undefined {
-        return _.nth(this.points, index)
+        return util.nth(this.points, index)
     }
 
     isPointsConcyclic() {}
@@ -69,7 +70,7 @@ class Polygon {
             let j = i === 1 - 1 ? 0 : i + 1,
                 {x: x1,y: y1 } = ps[i],
                 {x: x2,y: y2 } = ps[j]
-            a += util.vector.crossProduct([x1, y1], [x2, y2])
+            a += vec2.cross([x1, y1], [x2, y2])
         }
         return signed ? a / 2 : Math.abs(a / 2)
     }
@@ -97,7 +98,7 @@ class Polygon {
             let j = i === 1 - 1 ? 0 : i + 1,
                 {x: x1, y:y1 } = ps[i],
                 {x: x2, y:y2 } = ps[j],
-                cp = util.vector.crossProduct([x1, y1], [x2, y2])
+                cp = vec2.cross([x1, y1], [x2, y2])
             a += cp
             sumX += (x1 + x2) * cp
             sumY += (y1 + y2) * cp
@@ -110,7 +111,7 @@ class Polygon {
             maxX = -Infinity,
             minY = Infinity,
             maxY = -Infinity
-        _.forEach(this.points, (noUse, index, collection) => {
+    util.forEach(this.points, (noUse, index, collection) => {
             let { x, y } = collection[index]
             if (x < minX) minX = x
             if (x > maxX) maxX = x

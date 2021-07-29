@@ -1,4 +1,3 @@
-import _ from "lodash"
 import Matrix from "./Matrix"
 import Point from "../Point"
 import Line from "../Line"

@@ -1,10 +1,10 @@
 import Point from "./Point"
-import _ from "lodash"
-import util from "./utility"
+import type from "./utility/type"
 import { Size, Coordinate, CanvasDirective, GraphicImplType, SvgDirective } from "./types"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import { is, sealed } from "./decorator"
+import math from "./utility/math"
 
 @sealed
 class Rectangle extends GeomObject {
@@ -18,26 +18,26 @@ class Rectangle extends GeomObject {
     constructor(position: Coordinate | Point, size: Size)
     constructor(a1: any, a2: any, a3?: any, a4?: any) {
         super()
-        if (_.isNumber(a1) && _.isNumber(a2)) {
-            if (_.isNumber(a3) && _.isNumber(a4)) {
+        if (type.isNumber(a1) && type.isNumber(a2)) {
+            if (type.isNumber(a3) && type.isNumber(a4)) {
                 let p = new Point(a1, a2)
                 Object.seal(Object.assign(this, { originPoint: p, width: a3, height: a4 }))
                 return this
             }
-            if (util.type.isSize(a3)) {
+            if (type.isSize(a3)) {
                 let p = new Point(a1, a2),
                     [w, h] = a3
                 Object.seal(Object.assign(this, { originPoint: p, width: w, height: h }))
                 return this
             }
         }
-        if (util.type.isCoordinate(a1) || a1 instanceof Point) {
-            if (_.isNumber(a2) && _.isNumber(a3)) {
+        if (type.isCoordinate(a1) || a1 instanceof Point) {
+            if (type.isNumber(a2) && type.isNumber(a3)) {
                 let p = new Point(a1)
                 Object.seal(Object.assign(this, { originPoint: p, width: a2, height: a3 }))
                 return this
             }
-            if (util.type.isSize(a2)) {
+            if (type.isSize(a2)) {
                 let p = new Point(a1),
                     [w, h] = a2
                 Object.seal(Object.assign(this, { originPoint: p, width: w, height: h }))
@@ -98,10 +98,10 @@ class Rectangle extends GeomObject {
 
         let { x: x1, y: y1 } = point1,
             { x: x2, y: y2 } = point2,
-            minX = _.min([x1, x2])!,
-            minY = _.min([y1, y2])!,
-            dx = Math.abs(x1 - x2),
-            dy = Math.abs(y1 - y2)
+            minX = math.min(...[x1, x2])!,
+            minY = math.min(...[y1, y2])!,
+            dx = math.abs(x1 - x2),
+            dy = math.abs(y1 - y2)
         return new Rectangle([minX, minY], dx, dy)
     }
 

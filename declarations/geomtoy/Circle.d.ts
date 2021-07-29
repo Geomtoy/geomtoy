@@ -7,8 +7,7 @@ import Transformation from "./transformation";
 declare class Circle extends GeomObject {
     #private;
     constructor(radius: number, centerX: number, centerY: number);
-    constructor(radius: number, centerCoordinate: Coordinate);
-    constructor(radius: number, centerPoint: Point);
+    constructor(radius: number, centerPosition: Coordinate | Point);
     get radius(): number;
     set radius(value: number);
     get cx(): number;
@@ -18,36 +17,34 @@ declare class Circle extends GeomObject {
     get centerPoint(): Point;
     set centerPoint(value: Point);
     isSameAs(circle: Circle): boolean;
+    isConcentricWithCircle(circle: Circle): boolean;
+    isIntersectedWithCircle(circle: Circle): boolean;
+    isInternallyTangentWithCircle(circle: Circle): boolean;
+    isExternallyTangentWithCircle(circle: Circle): boolean;
+    isTangentWithCircle(circle: Circle): boolean;
+    isWrappingOutsideCircle(circle: Circle): boolean;
+    isWrappedInsideCircle(circle: Circle): boolean;
+    isSeparatedFromCircle(circle: Circle): boolean;
     getEccentricity(): number;
-    /**
-     * 获得圆上某个角度的点
-     * @param {number} angle
-     * @returns {Point}
-     */
+    getPerimeter(): number;
+    getArea(): number;
     getPointAtAngle(angle: number): Point;
+    getAngleOfPoint(point: Point): number;
+    getArcAngleBetweenPoints(point1: Point, point2: Point, positive?: boolean): number;
+    getArcLengthBetweenPoints(point1: Point, point2: Point, positive?: boolean): number;
     /**
      * 若`点point`在`圆this`上，则求过`点point`的`圆this`的切线
      * @param {Point} point
      * @returns {Line | null}
      */
     getTangentLineAtPoint(point: Point): Line | null;
-    getPerimeter(): number;
-    getArcLengthBetween(p1: Point, p2: Point, clockwise?: boolean): number;
-    getArcAngleBetween(p1: Point, p2: Point, clockwise?: boolean): number;
+    getTangentLineAtAngle(angle: number): Line;
     /**
      * 若`点point`在`圆this`外，则求过`点point`的`圆this`的切线，一共有两个
      * @param {Point} point
      * @returns {object | null}
      */
     getTangleLineDataWithPointOutside(point: Point): object | null;
-    /**
-     * `圆point`和`圆this`是否相切（内切、外切）
-     * @param {Circle} circle
-     * @returns {boolean}
-     */
-    isTangentWithCircle(circle: Circle): boolean;
-    isInternallyTangentWithCircle(circle: Circle): boolean;
-    isExternallyTangentWithCircle(circle: Circle): boolean;
     getInternallyTangentDataWithCircle(circle: Circle): object;
     getExternallyTangentDataWithCircle(circle: Circle): {
         point: Point;
@@ -65,7 +62,6 @@ declare class Circle extends GeomObject {
      * @returns {boolean}
      */
     isOutsideCircle(circle: Circle): boolean;
-    isIntersectedWithCircle(circle: Circle): boolean;
     getIntersectionPointsWithCircle(circle: Circle): Point[] | null;
     /**
      * 是否与`圆this`正交，过其中一交点分别作两圆的切线，两切线夹角（圆的交角）为直角
@@ -94,7 +90,7 @@ declare class Circle extends GeomObject {
     getInscribedRegularPolygon(sideCount: number, angle?: number): RegularPolygon;
     getGraphic(type: GraphicImplType): (SvgDirective | CanvasDirective)[];
     apply(transformation: Transformation): GeomObject;
-    clone(): GeomObject;
+    clone(): Circle;
     toArray(): number[];
     toObject(): {
         radius: number;

@@ -37,7 +37,7 @@ declare class Matrix {
     preMultiplySelf(matrix: Matrix): this;
     postMultiply(matrix: Matrix): Matrix;
     postMultiplySelf(matrix: Matrix): this;
-    decompose(matrix: Matrix): {
+    decompose(): {
         rotation: number | undefined;
         scaleX: number;
         scaleY: number;

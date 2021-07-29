@@ -1,25 +1,29 @@
-import _ from "lodash"
 import util from "."
+import math from "./math"
 import { Coordinate, Size, GraphicDirectiveType } from "../types"
-import Point from "../Point"
-import Line from "../Line"
 
-const typeUtility = {
+const type = {
+    isNumber(value: any): boolean {
+        return util.isNumber(value)
+    },
+    isInteger(value: any): boolean {
+        return util.isInteger(value)
+    },
     isRealNumber(value: any): boolean {
-        return _.isNumber(value) && !_.isNaN(value) && _.isFinite(value)
+        return util.isNumber(value) && !util.isNaN(value) && util.isFinite(value)
     },
     isBoolean(value: any): boolean {
-        return _.isBoolean(value)
+        return util.isBoolean(value)
     },
     isCoordinate(value: any): value is Coordinate {
-        return _.isArray(value) && value.length === 2 && _.every(value, typeUtility.isRealNumber)
+        return util.isArray(value) && value.length === 2 && util.every(value, type.isRealNumber)
     },
     isSize(value: any): value is Size {
-        return _.isArray(value) && value.length === 2 && _.every(value, v => typeUtility.isRealNumber(v) && util.defGreaterThan(v, 0))
+        return util.isArray(value) && value.length === 2 && util.every(value, v => type.isRealNumber(v) && math.greaterThan(v, 0))
     },
     isGraphicDirectiveType(value: any): value is GraphicDirectiveType {
         return value in GraphicDirectiveType
     }
 }
 
-export default typeUtility
+export default type

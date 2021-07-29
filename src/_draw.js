@@ -6,20 +6,7 @@ import Polyline from "./geomtoy/Polyline"
 import Polygon from "./geomtoy/Polygon"
 import RegularPolygon from "./geomtoy/RegularPolygon"
 
-const _reveal = (obj, resolve, duration, delay) => {
-    obj.attr({
-        "fill-opacity": 0,
-        "stroke-opacity": 0
-    })
-        .animate(duration, delay, "now")
-        .attr({
-            "fill-opacity": 1,
-            "stroke-opacity": 1
-        })
-        .after(() => {
-            resolve(obj)
-        })
-}
+
 
 Point.prototype.draw = async function (container, { duration = 2000, delay = 0 } = {}) {
     return new Promise((resolve, reject) => {

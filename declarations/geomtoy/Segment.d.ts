@@ -1,39 +1,52 @@
-export default Segment;
-declare class Segment {
-    static fromPoints(p1: any, p2: any): Segment;
-    constructor(x1: any, y1: any, x2: any, y2: any);
-    p1: any;
-    p2: any;
+import Point from "./Point";
+import Line from "./Line";
+import GeomObject from "./base/GeomObject";
+import Transformation from "./transformation";
+import { GraphicImplType, SvgDirective, CanvasDirective, Coordinate } from "./types";
+declare class Segment extends GeomObject {
+    #private;
+    constructor(point1X: number, point1Y: number, point2X: number, point2Y: number);
+    constructor(point1Position: Coordinate | Point, point2Position: Coordinate | Point);
+    get point1(): Point;
+    set point1(value: Point);
+    get point2(): Point;
+    set point2(value: Point);
+    static fromPoints(point1: Point, point2: Point): Segment;
+    isSameAs(segment: Segment): boolean;
+    getIntersectionPointWithLine(line: Line): Point | null;
     /**
-     * `线段this`与`线段s`是否相同
-     * @param {Segment} s
+     * Whether segment `this` is perpendicular to segment `segment`,
+     * regardless of whether they intersect,
+     * the angle between them is `Math.PI / 2`
+     * @param {Segment} segment
      * @returns {boolean}
      */
-    isSameAs(s: Segment): boolean;
+    isPerpendicularWithSegment(segment: Segment): boolean;
     /**
-     * `线段this`与`线段s`是否垂直，无论是否相交，夹角为Math.PI / 2
-     * @param {Segment} s
+     * Whether segment `this` is parallel to segment `segment`,
+     * regardless of whether they are collinear or even the same,
+     * the angle between them is `0` or `Math.PI`
+     * @param {Segment} segment
      * @returns {boolean}
      */
-    isPerpendicularToSegment(s: Segment): boolean;
-    /**
-     * `线段this`与`线段s`是否平行，无论是否共线乃至相同，夹角为0或者Math.PI
-     * @param {Segment} s
-     * @returns {boolean}
-     */
-    isParallelToSegment(s: Segment): boolean;
+    isParallelToSegment(segment: Segment): boolean;
     /**
      * `线段this`与`线段s`是否共线，无论是否相接乃至相同
-     * @param {Segment} s
+     * @param {Segment} segment
      * @returns {boolean}
      */
-    isCollinearWithSegment(s: Segment): boolean;
-    isJointedWithSegment(s: any): boolean;
-    getJointPointWithSegment(s: any): true | Point | null;
-    isOverlappedWithSegment(s: any): boolean;
-    getOverlapSegmentWithSegment(s: any): true | Segment | null;
-    isIntersectedWithSegment(segment: any): boolean;
-    getIntersectionPointWithSegment(segment: any): true | Point | null;
+    isCollinearToSegment(segment: Segment): boolean;
+    /**
+     * `线段this`与`线段s`是否相接，即有且只有一个端点被共用(若两个共用则相同)，无论夹角为多少
+     * @param {Segment} segment
+     * @returns {boolean | Point} 接点
+     */
+    isJointedWithSegment(segment: Segment): boolean;
+    getJointPointWithSegment(segment: Segment): Point | null;
+    isOverlappedWithSegment(segment: Segment): boolean;
+    getOverlapSegmentWithSegment(segment: Segment): Segment | null;
+    isIntersectedWithSegment(segment: Segment): boolean;
+    getIntersectionPointWithSegment(segment: Segment): Point | null;
     getMiddlePoint(): Point;
     /**
      * 获得从线段起点开始的lambda定比分点P
@@ -50,20 +63,19 @@ declare class Segment {
     getDivisionRatioByLine(l: Line): number;
     /**
      * `线段this`与x轴正方向的夹角，范围[-Math.PI, Math.PI]
-     * @param {*} p
-     * @returns
+     * @returns {number}
      */
-    getAngle: () => number;
-    getIntersectionPointWithLine(l: any): void;
-    toArray(): any[];
+    getAngle(): number;
+    getGraphic(type: GraphicImplType): (SvgDirective | CanvasDirective)[];
+    toArray(): number[];
     toObject(): {
-        p1x: any;
-        p1y: any;
-        p2x: any;
-        p2y: any;
+        p1x: number;
+        p1y: number;
+        p2x: number;
+        p2y: number;
     };
     toString(): string;
-    #private;
+    apply(transformation: Transformation): GeomObject;
+    clone(): GeomObject;
 }
-import Point from "./Point";
-import Line from "./Line";
+export default Segment;

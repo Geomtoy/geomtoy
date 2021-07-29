@@ -1,20 +1,20 @@
-const angleUtility = {
+const angle = {
     /**
-     * Simplify an `angle` to [0, 2*Math.PI)
-     * @param {number} angle
+     * Simplify angle `a` to [0, 2*Math.PI)
+     * @param {number} a
      * @returns {number}
      */
-    simplify(angle: number): number {
-        let t = angle % (2 * Math.PI)
+    simplify(a: number): number {
+        let t = a % (2 * Math.PI)
         return t < 0 ? t + 2 * Math.PI : t
     },
     /**
-     * Simplify an `angle` to (-Math.PI, Math.PI]
-     * @param {number} angle
+     * Simplify angle `a` to (-Math.PI, Math.PI]
+     * @param {number} a
      * @returns {number}
      */
-    simplify2(angle: number): number {
-        let t = angleUtility.simplify(angle)
+    simplify2(a: number): number {
+        let t = angle.simplify(a)
         return t > Math.PI ? t - 2 * Math.PI : t
     },
     /**
@@ -35,4 +35,4 @@ const angleUtility = {
     }
 }
 
-export default angleUtility
+export default angle

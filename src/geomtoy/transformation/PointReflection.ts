@@ -1,4 +1,3 @@
-import _ from "lodash"
 import { is, sealed } from "../decorator"
 import Point from "../Point"
 import Matrix from "./Matrix"

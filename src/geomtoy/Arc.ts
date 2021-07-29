@@ -1,12 +1,12 @@
-import Vector from "./Vector"
 import Point from "./Point"
-import Ellipse from "./Ellipse"
-import { is } from "./decorator"
+import { is, sealed } from "./decorator"
 import { Coordinate } from "./types"
-import util from "./utility"
-import _ from "lodash"
+import type from "./utility/type"
+import math from "./utility/math"
+import angle from "./utility/angle"
 import { arcCenterToEndpointParameterization } from "./graphic/helper"
 
+@sealed
 class Arc {
     #centerPoint: Point | undefined
     #startAngle: number | undefined
@@ -23,9 +23,18 @@ class Arc {
     #sweepFlag: boolean | undefined
 
     constructor(centerX: number, centerY: number, radiusX: number, radiusY: number, xAxisRotation: number, startAngle: number, endAngle: number, positive: boolean)
-    constructor(centerPosition: Coordinate | Point | Vector, radiusX: number, radiusY: number, xAxisRotation: number, startAngle: number, endAngle: number, positive: boolean)
+    constructor(centerPosition: Coordinate | Point, radiusX: number, radiusY: number, xAxisRotation: number, startAngle: number, endAngle: number, positive: boolean)
     constructor(a1: any, a2: any, a3: any, a4: any, a5: any, a6: any, a7: any, a8?: any) {
-        if (_.isNumber(a1) && _.isNumber(a2) && _.isNumber(a3) && _.isNumber(a4) && _.isNumber(a5) && _.isNumber(a6) && _.isNumber(a7) && _.isBoolean(a8)) {
+        if (
+            type.isNumber(a1) &&
+            type.isNumber(a2) &&
+            type.isNumber(a3) &&
+            type.isNumber(a4) &&
+            type.isNumber(a5) &&
+            type.isNumber(a6) &&
+            type.isNumber(a7) &&
+            type.isBoolean(a8)
+        ) {
             let cp = new Point(a1, a2)
             this.#centerPoint = cp
             this.#radiusX = a3
@@ -35,10 +44,17 @@ class Arc {
             this.#endAngle = a7
             this.#positive = a8
             this.#arcCenterToEndpointParameterization()
-            Object.seal(this)
-            return this
+            return Object.seal(this)
         }
-        if ((util.type.isCoordinate(a1) || a1 instanceof Point || a1 instanceof Vector) && _.isNumber(a2) && _.isNumber(a3) && _.isNumber(a4) && _.isNumber(a5) && _.isNumber(a6) && _.isBoolean(a7)) {
+        if (
+            (type.isCoordinate(a1) || a1 instanceof Point) &&
+            type.isNumber(a2) &&
+            type.isNumber(a3) &&
+            type.isNumber(a4) &&
+            type.isNumber(a5) &&
+            type.isNumber(a6) &&
+            type.isBoolean(a7)
+        ) {
             let cp = new Point(a1)
             this.#centerPoint = cp
             this.#radiusX = a2
@@ -48,10 +64,9 @@ class Arc {
             this.#endAngle = a6
             this.#positive = a7
             this.#arcCenterToEndpointParameterization()
-            Object.seal(this)
-            return this
+            return Object.seal(this)
         }
-        throw new Error(`[G]Arguments can NOT construct a arc.`)
+        throw new Error(`[G]Arguments can NOT construct an arc.`)
     }
 
     @is("point")
@@ -125,7 +140,6 @@ class Arc {
     get sweepFlag() {
         return this.#sweepFlag!
     }
-    
 
     #arcCenterToEndpointParameterization() {
         let cx = this.#centerPoint!.x,
@@ -137,7 +151,16 @@ class Arc {
             xAxisRotation = this.#xAxisRotation!,
             anticlockwise = !this.#positive!
 
-        let { x1, y1, x2, y2, rx, ry, largeArcFlag, sweepFlag } = arcCenterToEndpointParameterization({ cx, cy, rx: srcRx, ry: srcRy, startAngle, endAngle, xAxisRotation, anticlockwise })
+        let { x1, y1, x2, y2, rx, ry, largeArcFlag, sweepFlag } = arcCenterToEndpointParameterization({
+            cx,
+            cy,
+            rx: srcRx,
+            ry: srcRy,
+            startAngle,
+            endAngle,
+            xAxisRotation,
+            anticlockwise
+        })
         this.#point1 = new Point(x1, y1)
         this.#point2 = new Point(x2, y2)
         this.#radiusX = rx
@@ -147,15 +170,11 @@ class Arc {
     }
 
     #guard() {
-        let deltaAngle = util.angle.simplify(this.#endAngle! - this.#startAngle!)
-        if (util.apxEqualsTo(deltaAngle, 0)) {
-            throw new Error(
-                `[G]The \`startAngle\` and \`endAngle\` of an arc should not be coincide, to keep an arc not full ellipse nor empty ellipse.`
-            )
+        let deltaAngle = angle.simplify(this.#endAngle! - this.#startAngle!)
+        if (math.equalTo(deltaAngle, 0)) {
+            throw new Error(`[G]The \`startAngle\` and \`endAngle\` of an arc should not be coincide, to keep an arc not full ellipse nor empty ellipse.`)
         }
     }
-
-    
 
     getLength() {
         // if (this.ellipse.radius) {
@@ -163,7 +182,6 @@ class Arc {
         //     pA = this.p1
         //     ;(pB = this.p2), (aOA = new Vector(pO, pA).angle)
         //     ;(aOB = new Vector(pO, pB).angle), angle
-
         //     if (this.large) {
         //         angle
         //     }

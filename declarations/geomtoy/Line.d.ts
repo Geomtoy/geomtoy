@@ -30,24 +30,52 @@ declare class Line extends GeomObject {
      * @returns {Line}
      */
     static fromSegment(segment: Segment): Line;
-    static fromPointAndAngle(point: Point, angle: number): Line;
-    static fromPointAndSlope(point: Point, slope: number): void;
     static fromVector(vector: Vector): Line;
-    static fromIntercepts(interceptX: number, interceptY: number): void;
-    static fromSlopeAndInterceptX(slope: number, interceptX: number): void;
-    static fromSlopeAndInterceptY(slope: number, interceptY: number): void;
+    static fromVector2(vector: Vector): Line;
+    static fromPointAndVector(point: Point, vector: Vector): Line;
+    static fromPointAndSlope(point: Point, slope: number): Line;
+    static fromPointAndAngle(point: Point, angle: number): Line;
+    static fromIntercepts(interceptX: number, interceptY: number): Line;
+    static fromSlopeAndInterceptX(slope: number, interceptX: number): Line;
+    static fromSlopeAndInterceptY(slope: number, interceptY: number): Line;
     /**
-     * `直线this`的斜率
+     * Whether line `this` is parallel(including identical) to line `line`
+     * @summary
+     * If two lines "a1x+b1y+c1=0" and "a2x+b2y+c2=0" are parallel(including identical) then
+     * "k1=-(a1/b1)" and "k2=-(a2/b2)", "k1=k2", "a1b2=b1a2"
+     * @param {Line} line
+     * @returns
+     */
+    isParallelToLine(line: Line): boolean;
+    /**
+     * Whether line `this` is perpendicular to line `line`
+     * @summary
+     * If two lines "a1x+b1y+c1=0" and "a2x+b2y+c2=0" are perpendicular then
+     * "k1=-(a1/b1)" and "k2=-(a2/b2)", "k1k2=-1", "a1a2=-b1b2"
+     * @param {Line} line
+     * @returns
+     */
+    isPerpendicularToLine(line: Line): boolean;
+    simple(): void;
+    simpleSelf(): void;
+    /**
+     * Get the slope of line `this`
+     * @summary
+     * If "b=0", line `this` is "ax+c=0". It is perpendicular to the x-axis, the slope is `NaN` or `Infinity`
      * @returns {number}
      */
     getSlope(): number;
     /**
-     * `直线this`的截距
+     * Get the intercept on the y-axis of line `this`
+     * @summary
+     * If "b=0", line `this` is "ax+c=0". It is perpendicular to the x-axis, the intercept on the y-axis is `NaN` or `Infinity`
      * @returns {number}
      */
     getInterceptY(): number;
     /**
-     *
+     * Get the intercept on the x-axis of line `this`
+     * @summary
+     * If "a=0", line `this` is "by+c=0". It is perpendicular to the y-axis, the intercept on the x-axis is `NaN` or `Infinity`
      * @returns {number}
      */
     getInterceptX(): number;
@@ -73,12 +101,6 @@ declare class Line extends GeomObject {
      * @returns {Point | null}
      */
     getPerpendicularPointWithPointNotOn(point: Point): Point | null;
-    /**
-     * `直线this`与`直线line`是否平行（包括重合）
-     * @param {Line} line
-     * @returns
-     */
-    isParallelToLine(line: Line): boolean;
     /**
      * 若`直线this`与`直线line`平行，则返回它们之间的距离，否则返回null
      * @param {Line} line

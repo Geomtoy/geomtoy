@@ -1,5 +1,3 @@
-import _ from "lodash"
-
 /**
  * 由于总是在屏幕上绘制，所以此处不做角度正旋转换（即总是顺时针正旋）
  * @see {@link https://www.w3.org/TR/SVG2/implnote.html#ArcImplementationNotes}
@@ -129,7 +127,7 @@ function correctRadii(rx, ry, x1P, y1P) {
     if (rx == 0 || ry == 0) return [0, 0]
     rx = Math.abs(rx)
     ry = Math.abs(ry)
-    if (_.isNumber(x1P) && _.isNumber(y1P)) {
+    if (x1P !== undefined && y1P !== undefined) {
         let lambda = x1P ** 2 / rx ** 2 + y1P ** 2 / ry ** 2
         if (lambda > 1) [rx, ry] = [Math.sqrt(lambda) * rx, Math.sqrt(lambda) * ry]
     }

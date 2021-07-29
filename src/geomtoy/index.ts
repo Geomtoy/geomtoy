@@ -1,4 +1,3 @@
-import _ from "lodash"
 import Point from "./Point"
 import Line from "./Line"
 import Segment from "./Segment"
@@ -12,14 +11,19 @@ import RegularPolygon from "./RegularPolygon"
 import Inversion from "./inversion/Inversion"
 import Ellipse from "./Ellipse"
 import Matrix from "./transformation/Matrix"
-import {defaultOptions, Options } from "./types"
+import { defaultOptions, Options } from "./types"
+
+import vanillaCanvas from "./adaptor/vanilla-canvas"
+import vanillaSvg from "./adaptor/vanilla-svg"
+import svgDotJs from "./adaptor/svg-dot-js"
+import util from "./utility"
 
 function optionsMixin<T extends new (...args: any[]) => any>(c: T, options: Options) {
     class Mixin extends c {
         constructor(...args: any[]) {
             super()
         }
-        options:Options = options
+        options: Options = options
     }
     return Mixin
 }
@@ -29,10 +33,16 @@ class Geomtoy {
     height: number
     #options: Options
 
-    constructor(width: number, height: number, options: object) {
+    constructor(width: number, height: number, options: Partial<Options> = {}) {
         this.width = width
         this.height = height
-        this.#options = _.defaultsDeep(options, defaultOptions )
+        this.#options = util.defaultsDeep(options, defaultOptions)
+    }
+
+    static adapters: object = {
+        vanillaCanvas,
+        vanillaSvg,
+        svgDotJs
     }
 
     get options() {

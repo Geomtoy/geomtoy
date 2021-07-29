@@ -1,8 +1,8 @@
-import _, { times } from "lodash"
 import Matrix from "./Matrix"
 import Translation from "./Translation"
 import Point from "../Point"
 import { is, sealed } from "../decorator"
+import type from "../utility/type"
 
 @sealed
 class Rotation extends Matrix {
@@ -14,7 +14,7 @@ class Rotation extends Matrix {
     constructor()
     constructor(a?: any, o?: any) {
         super()
-        if (_.isNumber(a)) {
+        if (type.isNumber(a)) {
             if (o instanceof Point) {
                 Object.seal(Object.assign({ angle: a, origin: o }))
                 this.#rotation()

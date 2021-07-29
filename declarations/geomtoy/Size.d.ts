@@ -15,7 +15,7 @@ declare class Size {
     width: any;
     height: any;
     isZeroSize(): boolean;
-    isEqualTo(s: any): boolean;
+    isEqualTo(s: any): any;
     standardize(): Size;
     keepAspectRadioAndFit(size: any, keepInside?: boolean): Size;
     add(s: any): Size;

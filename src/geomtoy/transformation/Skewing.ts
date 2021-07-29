@@ -1,4 +1,4 @@
-import _ from "lodash"
+import type from "../utility/type"
 import Matrix from "./Matrix"
 import Translation from "./Translation"
 import Point from "../Point"
@@ -15,7 +15,7 @@ class Skewing extends Matrix {
     constructor()
     constructor(ax?: any, ay?: any, o?: any) {
         super()
-        if (_.isNumber(ax) && _.isNumber(ay)) {
+        if (type.isNumber(ax) && type.isNumber(ay)) {
             if (o instanceof Point) {
                 Object.seal(Object.assign(this, { angleX: ax, angleY: ay, origin: o }))
                 this.#skewing()

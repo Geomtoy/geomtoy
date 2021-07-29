@@ -1,13 +1,15 @@
-import Vector from "./Vector"
-import Point from "./Point"
-import Ellipse from "./Ellipse"
-import { is } from "./decorator"
-import { Coordinate } from "./types"
+import math from "./utility/math"
 import util from "./utility"
-import _ from "lodash"
-import { arcEndpointToCenterParameterization } from "./graphic/helper"
-import Rotation from "./transformation/Rotation"
+import angle from "./utility/angle"
+import vec2 from "./utility/vec2"
+import type from "./utility/type"
 
+import Point from "./Point" 
+import { is, sealed } from "./decorator"
+import { Coordinate } from "./types"
+import { arcEndpointToCenterParameterization } from "./graphic/helper"
+
+@sealed
 class ArcAlt {
     #centerPoint: Point | undefined
     #startAngle: number | undefined
@@ -35,8 +37,8 @@ class ArcAlt {
         sweepFlag: boolean
     )
     constructor(
-        point1Position: Coordinate | Point | Vector,
-        point2Position: Coordinate | Point | Vector,
+        point1Position: Coordinate | Point,
+        point2Position: Coordinate | Point,
         radiusX: number,
         radiusY: number,
         xAxisRotation: number,
@@ -44,7 +46,9 @@ class ArcAlt {
         sweepFlag: boolean
     )
     constructor(a1: any, a2: any, a3: any, a4: any, a5: any, a6: any, a7: any, a8?: any, a9?: any) {
-        if (_.isNumber(a1) && _.isNumber(a2) && _.isNumber(a3) && _.isNumber(a4) && _.isNumber(a5) && _.isNumber(a6) && _.isNumber(a7) && _.isBoolean(a8) && _.isBoolean(a9)) {
+
+
+        if (type.isNumber(a1) && type.isNumber(a2) && type.isNumber(a3) && type.isNumber(a4) && type.isNumber(a5) && type.isNumber(a6) && type.isNumber(a7) && type.isBoolean(a8) && type.isBoolean(a9)) {
             let p1 = new Point(a1, a2),
                 p2 = new Point(a3, a4)
             this.#point1 = p1
@@ -55,16 +59,15 @@ class ArcAlt {
             this.#largeArcFlag = a8
             this.#sweepFlag = a9
             this.#arcEndpointToCenterParameterization()
-            Object.seal(this)
-            return this
+            return Object.seal(this) 
         }
         if (
-            ((util.type.isCoordinate(a1) && util.type.isCoordinate(a2)) || (a1 instanceof Point && a2 instanceof Point) || (a1 instanceof Vector && a2 instanceof Vector)) &&
-            _.isNumber(a3) &&
-            _.isNumber(a4) &&
-            _.isNumber(a5) &&
-            _.isBoolean(a6) &&
-            _.isBoolean(a7)
+            ((type.isCoordinate(a1) && type.isCoordinate(a2)) || (a1 instanceof Point && a2 instanceof Point)) &&
+            type.isNumber(a3) &&
+            type.isNumber(a4) &&
+            type.isNumber(a5) &&
+            type.isBoolean(a6) &&
+            type.isBoolean(a7)
         ) {
             let p1 = new Point(a1),
                 p2 = new Point(a2)
@@ -76,11 +79,10 @@ class ArcAlt {
             this.#largeArcFlag = a6
             this.#sweepFlag = a7
             this.#arcEndpointToCenterParameterization()
-            Object.seal(this)
-            return this
+            return Object.seal(this) 
         }
 
-        throw new Error(`[G]Arguments can NOT construct a arc.`)
+        throw new Error(`[G]Arguments can NOT construct an arc.`)
     }
 
     @is("positiveNumber")
@@ -190,8 +192,6 @@ class ArcAlt {
             throw new Error(`[G]The \`point1\` and \`point2\` of an arc should not be the same, to keep an arc not full ellipse nor empty ellipse.`)
         }
     }
-
-    
 
     getLength() {
         // if (this.ellipse.radius) {

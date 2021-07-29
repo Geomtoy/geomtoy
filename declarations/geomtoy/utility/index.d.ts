@@ -1,120 +1,44 @@
-declare const _default: {
-    angle: {
-        simplify(angle: number): number;
-        /**
-         * 利用求根公式计算一元二次方程(ax^2 + bx + c = 0)的解
-         * @param {number} a
-         * @param {number} b
-         * @param {number} c
-         * @returns {Array<number>}
-         */
-        simplify2(angle: number): number;
-        degreeToRadian(degree: number): number;
-        radianToDegree(radian: number): number;
+import _ from "lodash";
+declare const util: {
+    every: {
+        <T>(collection: _.List<T> | null | undefined, predicate?: _.ListIterateeCustom<T, boolean> | undefined): boolean;
+        <T_1 extends object>(collection: T_1 | null | undefined, predicate?: _.ObjectIterateeCustom<T_1, boolean> | undefined): boolean;
     };
-    type: {
-        isRealNumber(value: any): boolean;
-        isBoolean(value: any): boolean;
-        isCoordinate(value: any): value is import("../types").Coordinate;
-        isSize(value: any): value is import("../types").Size;
-        isGraphicDirectiveType(value: any): value is import("../types").GraphicDirectiveType;
+    map: {
+        <T_2, TResult>(collection: T_2[] | null | undefined, iteratee: _.ArrayIterator<T_2, TResult>): TResult[];
+        <T_3, TResult_1>(collection: _.List<T_3> | null | undefined, iteratee: _.ListIterator<T_3, TResult_1>): TResult_1[];
+        <T_4>(collection: _.Dictionary<T_4> | _.NumericDictionary<T_4> | null | undefined): T_4[];
+        <T_5 extends object, TResult_2>(collection: T_5 | null | undefined, iteratee: _.ObjectIterator<T_5, TResult_2>): TResult_2[];
+        <T_6, K extends keyof T_6>(collection: _.Dictionary<T_6> | _.NumericDictionary<T_6> | null | undefined, iteratee: K): T_6[K][];
+        <T_7>(collection: _.Dictionary<T_7> | _.NumericDictionary<T_7> | null | undefined, iteratee?: string | undefined): any[];
+        <T_8>(collection: _.Dictionary<T_8> | _.NumericDictionary<T_8> | null | undefined, iteratee?: object | undefined): boolean[];
     };
-    vector: {
-        add([ux, uy]: import("../types").Coordinate, [vx, vy]: import("../types").Coordinate): import("../types").Coordinate;
-        subtract([ux, uy]: import("../types").Coordinate, [vx, vy]: import("../types").Coordinate): import("../types").Coordinate;
-        scalarMultiply([x, y]: import("../types").Coordinate, scalar: number): import("../types").Coordinate;
-        dotProduct([ux, uy]: import("../types").Coordinate, [vx, vy]: import("../types").Coordinate): number;
-        crossProduct([ux, uy]: import("../types").Coordinate, [vx, vy]: import("../types").Coordinate): number;
-        reverse([x, y]: import("../types").Coordinate): import("../types").Coordinate;
-        swap([x, y]: import("../types").Coordinate): import("../types").Coordinate;
-        rotate([x, y]: import("../types").Coordinate, a: number): import("../types").Coordinate;
-        normalize([x, y]: import("../types").Coordinate): import("../types").Coordinate;
+    nth: <T_9>(array: _.List<T_9> | null | undefined, n?: number | undefined) => T_9 | undefined;
+    forEach: {
+        <T_10>(collection: T_10[], iteratee?: _.ArrayIterator<T_10, any> | undefined): T_10[];
+        (collection: string, iteratee?: _.StringIterator<any> | undefined): string;
+        <T_11>(collection: _.List<T_11>, iteratee?: _.ListIterator<T_11, any> | undefined): _.List<T_11>;
+        <T_12 extends object>(collection: T_12, iteratee?: _.ObjectIterator<T_12, any> | undefined): T_12;
+        <T_13, TArray extends T_13[] | null | undefined>(collection: TArray & (T_13[] | null | undefined), iteratee?: _.ArrayIterator<T_13, any> | undefined): TArray;
+        <TString extends string | null | undefined>(collection: TString, iteratee?: _.StringIterator<any> | undefined): TString;
+        <T_14, TList extends _.List<T_14> | null | undefined>(collection: TList & (_.List<T_14> | null | undefined), iteratee?: _.ListIterator<T_14, any> | undefined): TList;
+        <T_15 extends object>(collection: T_15 | null | undefined, iteratee?: _.ObjectIterator<T_15, any> | undefined): T_15 | null | undefined;
     };
-    /**
-     * 利用求根公式计算一元二次方程(ax^2 + bx + c = 0)的解
-     * @param {number} a
-     * @param {number} b
-     * @param {number} c
-     * @returns {Array<number>}
-     */
-    solveQuadraticEquation(a: number, b: number, c: number): Array<number>;
-    /**
-     * 浮点数大小判断参考
-     * @see https://www.learncpp.com/cpp-tutorial/relational-operators-and-floating-point-comparisons/comment-page-2/
-     * @see https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
-     * @see http://stackoverflow.com/questions/17333/most-effective-way-for-float-and-double-comparison
-     *
-     * 结论：
-     *
-     * [近似相等的比较]
-     * 设置参数epsilon,
-     * 先使用absEpsilon=epsilon，检查两个数的差距是否很靠近0（-1<x<1），主要处理小数部分的差异
-     * 然后再按照数量级计算：relEpsilon=数量级*epsilon,主要处理整数部分的差异
-     * 如：
-     * 设epsilon=0.000001
-     * 情况一：
-     * a=12.0000011         b=12.0000012
-     * Math.abs(a-b)=0.0000001 < 0.000001       ====>认为它们近似相等
-     *
-     * 情况二：
-     * a=123456780.0        b=123456790.0
-     * Math.abs(a-b)=10 > 0.000001
-     * relEpsilon=123456790.0*0.000001=123.45679
-     * Math.abs(a-b)=10 < 123.45679             ====>认为它们近似相等，此时随着数量级放宽了近似相等的标准
-     *
-     * 情况三：
-     * a=12344.1            b=12345.2
-     * Math.abs(a-b)=1.1 > 0.000001
-     * relEpsilon=12345.2*0.000001=0.0123452
-     * Math.abs(a-b)=1.1 > 0.0123452            ====>认为它们不近似相等，此时随着数量级放宽了近似相等的标准，但差异值仍然大于了
-     *
-     * 情况四：
-     * a=0.1234561          b=0.1234562
-     * Math.abs(a-b)=0.0000001 < 0.000001       ====>认为它们近似相等
-     *
-     * 情况五：
-     * a=0.12341            b=0.12342
-     * Math.abs(a-b)=0.00001 > 0.000001
-     * relEpsilon=0.00012*0.000001=0.0000000012
-     * Math.abs(a-b)=0.00001 > 0.0000000012     ====>认为它们不近似相等，此时随着数量级收紧了近似相等的标准，所以差异值显得更大了
-     *
-     * [大于和小于的比较]
-     * 同理
-     *
-     */
-    /**
-     * 两个数字是否近似相等
-     * @param {number} a
-     * @param {number} b
-     * @param {number} epsilon
-     * @returns {boolean}
-     */
-    apxEqualsTo(a: number, b: number, epsilon?: number): boolean;
-    /**
-     * 数字a是否肯定大于数字b
-     * @param {number} a
-     * @param {number} b
-     * @param {number} epsilon
-     * @returns {boolean}
-     */
-    defGreaterThan(a: number, b: number, epsilon?: number): boolean;
-    /**
-     * 数字a是否肯定小于数字b
-     * @param {number} a
-     * @param {number} b
-     * @param {number} epsilon
-     * @returns {boolean}
-     */
-    defLessThan(a: number, b: number, epsilon?: number): boolean;
-    /**
-     * 严格判断一个数字的符号
-     * 如果数字在(-Infinite,-epsilon)，则0 - 1 = -1
-     * 如果数字在[-epsilon,epsilon]，则0 - 0 = 0
-     * 如果数字在(epsilon,+Infinity)，则1 - 0 = 1
-     * @param {number} x
-     * @param {number} epsilon
-     * @returns {number}
-     */
-    strictSign(x: number, epsilon?: number): number;
+    defaultsDeep: (object: any, ...sources: any[]) => any;
+    cloneDeep: <T_16>(value: T_16) => T_16;
+    range: {
+        (start: number, end?: number | undefined, step?: number | undefined): number[];
+        (end: number, index: string | number, guard: object): number[];
+    };
+    uniqWith: <T_17>(array: _.List<T_17> | null | undefined, comparator?: _.Comparator<T_17> | undefined) => T_17[];
+    isInteger: (value?: any) => boolean;
+    isNumber: (value?: any) => value is number;
+    isBoolean: (value?: any) => value is boolean;
+    isNaN: (value?: any) => boolean;
+    isFinite: (value?: any) => boolean;
+    isArray: {
+        (value?: any): value is any[];
+        <T_18>(value?: any): value is any[];
+    };
 };
-export default _default;
+export default util;

@@ -1,11 +1,13 @@
-import _ from "lodash"
 import Vector from "./Vector"
 import Segment from "./Segment"
 import Line from "./Line"
 import Circle from "./Circle"
 import Graphic from "./graphic"
 import GeomObject from "./base/GeomObject"
-import util from "./utility"
+import vec2 from "./utility/vec2"
+import type from "./utility/type"
+import angle from "./utility/angle"
+import math from "./utility/math"
 import { Coordinate, GraphicImplType, RsPointToCircle, RsPointToLine, RsPointToSegment, CanvasDirective, SvgDirective } from "./types"
 import { is, sealed } from "./decorator"
 import Transformation from "./transformation"
@@ -20,11 +22,11 @@ class Point extends GeomObject {
     constructor()
     constructor(a1?: any, a2?: any) {
         super()
-        if (_.isNumber(a1) && _.isNumber(a2)) {
+        if (type.isNumber(a1) && type.isNumber(a2)) {
             Object.seal(Object.assign(this, { a1, a2 }))
             return this
         }
-        if (util.type.isCoordinate(a1)) {
+        if (type.isCoordinate(a1)) {
             return Point.fromCoordinate(a1)
         }
         if (a1 instanceof Point) {
@@ -86,10 +88,8 @@ class Point extends GeomObject {
      */
     isSameAs(point: Point): boolean {
         if (point === this) return true
-        let { x: x1, y: y1 } = this,
-            { x: x2, y: y2 } = point,
-            epsilon = this.options.epsilon
-        return util.apxEqualsTo(x1, x2, epsilon) && util.apxEqualsTo(y1, y2, epsilon)
+        let epsilon = this.options.epsilon
+        return math.equalTo(this.x, point.x, epsilon) && math.equalTo(this.y, point.y, epsilon)
     }
     /**
      * Get coordinate from point `this`
@@ -108,8 +108,8 @@ class Point extends GeomObject {
         return this.clone().walkSelf(angle, distance)
     }
     walkSelf(angle: number, distance: number) {
-        this.x += distance * Math.cos(angle)
-        this.y += distance * Math.sin(angle)
+        this.x += distance * math.cos(angle)
+        this.y += distance * math.sin(angle)
         return this
     }
     /**
@@ -132,19 +132,15 @@ class Point extends GeomObject {
      * @returns {number}
      */
     getDistanceBetweenPoint(point: Point): number {
-        let { x: x1, y: y1 } = this,
-            { x: x2, y: y2 } = point
-        return Math.hypot(x1 - x2, y1 - y2)
+        return vec2.magnitude(vec2.from(this.getCoordinate(), point.getCoordinate()))
     }
     /**
      * Get the distance square between point `this` and point `point`
      * @param {Point} point
      * @returns {number}
      */
-    getDistanceSquareFromPoint(point: Point): number {
-        let { x: x1, y: y1 } = this,
-            { x: x2, y: y2 } = point
-        return (x1 - x2) ** 2 + (y1 - y2) ** 2
+    getSquaredDistanceFromPoint(point: Point): number {
+        return vec2.squaredMagnitude(vec2.from(this.getCoordinate(), point.getCoordinate()))
     }
     /**
      * Get the distance between point `this` and line `line`
@@ -152,7 +148,7 @@ class Point extends GeomObject {
      * @returns {number}
      */
     getDistanceBetweenLine(line: Line): number {
-        return Math.abs(this.getSignedDistanceBetweenLine(line))
+        return math.abs(this.getSignedDistanceBetweenLine(line))
     }
     /**
      * Get the signed distance between point `this` and line `line`
@@ -162,104 +158,76 @@ class Point extends GeomObject {
     getSignedDistanceBetweenLine(line: Line): number {
         let { a, b, c } = line,
             { x, y } = this
-        return (a * x + b * y + c) / Math.hypot(a, b)
+        return (a * x + b * y + c) / math.hypot(a, b)
     }
     /**
-     * Whether point `this` is inside an imaginary rectangle with diagonals of point `point1` and point `point2`,
-     * the coordinate of point `this` will not be greater than the maximum value of point `point1` and point `point2`,
-     * nor less than the minimum value
+     * Whether point `this` is lying on the same line determined by points `point1` and `point2` and point `this` is between points `point1` and `point2`
      * @param {Point} point1
      * @param {Point} point2
-     * @param {boolean} allowedOn Can it be on the rectangle, in other words, can it be equal to the maximum or minimum value
+     * @param {boolean} allowEqual Allow point `this` to be equal to point `point1` or `point2`
      * @returns {boolean}
      */
-    isBetweenPoints(point1: Point, point2: Point, allowedOn: boolean = true): boolean {
-        let { x: x1, y: y1 } = point1,
-            { x: x2, y: y2 } = point2,
-            arrX = _.sortBy([x1, x2]),
-            arrY = _.sortBy([y1, y2]),
+    isBetweenPoints(point1: Point, point2: Point, allowEqual: boolean = true): boolean {
+        let v1 = vec2.from(point1.getCoordinate(), point2.getCoordinate()),
+            v2 = vec2.from(point1.getCoordinate(), this.getCoordinate()),
+            cp = vec2.cross(v1, v2),
+            dp = vec2.dot(v1, v2),
+            sm = vec2.squaredMagnitude(v1),
             epsilon = this.options.epsilon
 
-        if (allowedOn) {
-            return (
-                !util.defLessThan(this.x, arrX[0], epsilon) &&
-                !util.defGreaterThan(this.x, arrX[1], epsilon) &&
-                !util.defLessThan(this.y, arrY[0], epsilon) &&
-                !util.defGreaterThan(this.y, arrY[1], epsilon)
-            )
+        if (allowEqual) {
+            return math.equalTo(cp, 0, epsilon) && !math.lessThan(dp, 0, epsilon) && !math.greaterThan(dp, sm, epsilon)
         }
-        return (
-            util.defGreaterThan(this.x, arrX[0], epsilon) &&
-            util.defLessThan(this.x, arrX[1], epsilon) &&
-            util.defGreaterThan(this.y, arrY[0], epsilon) &&
-            util.defLessThan(this.y, arrY[1], epsilon)
-        )
+        return math.equalTo(cp, 0, epsilon) && math.greaterThan(dp, 0, epsilon) && math.lessThan(dp, sm, epsilon)
     }
-    /**
-     * Get the relationship of point `this` to line `line`
-     * @param {Line} line
-     * @returns {RsPointToLine}
-     */
-    getRelationshipToLine(line: Line): RsPointToLine {
-        let ret = 1,
-            { a, b, c } = line,
+
+    isOutsideRectangle() {}
+
+    isInsideRectangle() {}
+
+    isOnRectangle() {}
+
+    isOnLine(line: Line): boolean {
+        let { a, b, c } = line,
             { x, y } = this,
             epsilon = this.options.epsilon
-
-        if (util.apxEqualsTo(a * x + b * y + c, 0, epsilon)) {
-            return (ret |= RsPointToLine.On)
-        }
-        return (ret |= RsPointToLine.NotOn)
+        return math.equalTo(a * x + b * y + c, 0, epsilon)
     }
-    /**
-     * Whether point `this` is an endpoint of segment `segment`
-     * @param {Segment} segment
-     * @returns {boolean}
-     */
     isEndpointOfSegment(segment: Segment): boolean {
-        return this.isSameAs(segment.p1) || this.isSameAs(segment.p2)
+        return this.isSameAs(segment.point1) || this.isSameAs(segment.point2)
     }
-    /**
-     * Get the relationship of point `this` to segment `segment`
-     * @param {Segment} s
-     * @returns {RsPointToSegment}
-     */
-    getRelationshipToSegment(segment: Segment): RsPointToSegment {
-        let ret = 1,
-            { x: x0, y: y0 } = this,
-            { x: x1, y: y1 } = segment.p1,
-            { x: x2, y: y2 } = segment.p2,
-            v1 = util.vector.subtract([x1, y1], [x0, y0]),
-            v2 = util.vector.subtract([x2, y2], [x0, y0]),
-            epsilon = this.options.epsilon
 
-        if (util.apxEqualsTo(util.vector.crossProduct(v1, v2), 0, epsilon) && this.isBetweenPoints(segment.p1, segment.p2, false)) {
-            return (ret |= RsPointToSegment.On)
-        }
-        return (ret |= RsPointToSegment.NotOn)
+    isOnSegmentLyingLine(segment: Segment): boolean {
+        let v1 = vec2.from(segment.point1.getCoordinate(), segment.point2.getCoordinate()),
+            v2 = vec2.from(segment.point1.getCoordinate(), this.getCoordinate()),
+            epsilon = this.options.epsilon,
+            dp = vec2.dot(v1, v2)
+        return math.equalTo(dp, 0, epsilon)
     }
-    /**
-     * Get the relationship of point `this` to circle `circle`
-     * @param {Circle} circle
-     * @returns {RsPointToCircle}
-     */
-    getRelationshipToCircle(circle: Circle): RsPointToCircle {
-        let ret = 1,
-            distSquare = this.getDistanceSquareFromPoint(circle.centerPoint),
-            rSquare = circle.radius ** 2,
-            epsilon = this.options.epsilon
 
-        if (util.apxEqualsTo(distSquare, rSquare, epsilon)) {
-            ret |= RsPointToCircle.On
-        }
-        if (util.defLessThan(distSquare, rSquare, epsilon)) {
-            ret |= RsPointToCircle.Inside | RsPointToCircle.NotOn
-        }
-        if (util.defGreaterThan(distSquare, rSquare, epsilon)) {
-            ret |= RsPointToCircle.Outside | RsPointToCircle.NotOn
-        }
-        return ret
+    isOnSegment(segment: Segment): boolean {
+        return this.isBetweenPoints(segment.point1, segment.point2, true)
     }
+
+    isOnCircle(circle: Circle) {
+        let sd = this.getSquaredDistanceFromPoint(circle.centerPoint),
+            sr = circle.radius ** 2,
+            epsilon = this.options.epsilon
+        return math.equalTo(sd, sr, epsilon)
+    }
+    isInsideCircle(circle: Circle) {
+        let sd = this.getSquaredDistanceFromPoint(circle.centerPoint),
+            sr = circle.radius ** 2,
+            epsilon = this.options.epsilon
+        return math.lessThan(sd, sr, epsilon)
+    }
+    isOutsideCircle(circle: Circle) {
+        let sd = this.getSquaredDistanceFromPoint(circle.centerPoint),
+            sr = circle.radius ** 2,
+            epsilon = this.options.epsilon
+        return math.greaterThan(sd, sr, epsilon)
+    }
+
     /**
      * Get graphic object of `this`
      * @param {GraphicImplType} type

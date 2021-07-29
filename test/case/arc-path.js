@@ -1,7 +1,5 @@
 import _ from "lodash"
 import G from "../../src/geomtoy"
-import vanillaCanvasDrawer from "../../src/geomtoy/adaptors/vanilla-canvas"
-import vanillaSvgDrawer from "../../src/geomtoy/adaptors/vanilla-svg"
 
 let c = document.querySelector("#canOrigin")
 let ctx = c.getContext("2d")

@@ -1,38 +1,60 @@
-import _ from "lodash"
-import util from "../utility"
+import math from "../utility/math"
+import type from "../utility/type"
+
 import Point from "../Point"
 import Circle from "../Circle"
 import Vector from "../Vector"
 import Line from "../Line"
 import { Coordinate, RsPointToCircle, RsPointToLine } from "../types"
+import { is, sealed } from "../decorator"
 
+@sealed
 class Inversion {
-    ix!: number
-    iy!: number
-    invertPower!: number //反演幂
+    #centerPoint: Point | undefined //Inversion center
+    #power: number | undefined //Inversion power
 
-    constructor(invertPower: number, point: Point)
-    constructor(invertPower: number, coordinate: Coordinate)
-    constructor(invertPower: number = 10000, ix?: any, iy?: any) {
-        this.invertPower = invertPower
-        if (util.apxEqualsTo(this.invertPower, 0)) throw new Error(`[G]The \`invertPower\` of \`Inversion\` can NOT be 0.`)
-
-        if (util.type.isCoordinate(ix)) {
-            Object.assign(this, { ix: ix[0], iy: ix[1] })
-            return this
+    constructor(power: number, centerX: number, centerY: number)
+    constructor(power: number, centerPosition: Coordinate | Point)
+    constructor(a1: number, a2: any, a3?: any) {
+        if (type.isNumber(a2) && type.isNumber(a3)) {
+            let p = new Point(a2, a3)
+            return Object.seal(Object.assign(this, { power: a1, centerPoint: p }))
+        }
+        if (type.isCoordinate(a2) || a2 instanceof Point) {
+            let p = new Point(a2)
+            return Object.seal(Object.assign(this, { power: a1, centerPoint: p }))
         }
 
-        if (ix instanceof Point) {
-            Object.assign(this, { ix: ix.x, iy: ix.y })
-            return this
-        }
-
-        Object.assign(this, { ix, iy })
+        throw new Error(`[G]Arguments can NOT construct an inversion.`)
     }
 
-    //反演中心
+    @is("nonZeroNumber")
+    get power() {
+        return this.#power!
+    }
+    set power(value) {
+        this.#power = value
+    }
+    @is("point")
     get centerPoint() {
-        return new Point(this.ix, this.iy)
+        return this.#centerPoint!
+    }
+    set centerPoint(value) {
+        this.#centerPoint = value
+    }
+    @is("realNumber")
+    get ix() {
+        return this.#centerPoint!.x
+    }
+    set ix(value) {
+        this.#centerPoint!.x = value
+    }
+    @is("realNumber")
+    get iy() {
+        return this.#centerPoint!.y
+    }
+    set iy(value) {
+        this.#centerPoint!.y = value
     }
 
     /**
@@ -45,12 +67,12 @@ class Inversion {
         let pO = this.centerPoint,
             pP = point,
             dist = pP.getDistanceBetweenPoint(pO),
-            inversionDist = Math.abs(this.invertPower / dist),
+            inversionDist = Math.abs(this.power / dist),
             vOP = new Vector(pO, pP),
             angle
         //OP和OQ方向相反
-        if (this.invertPower < 0) {
-            angle = vOP.reverse().angle
+        if (this.power < 0) {
+            angle = vOP.negative().angle
         }
         //OP和OQ方向相同
         else {
@@ -68,19 +90,21 @@ class Inversion {
      * @returns {Line | Circle}
      */
     invertLine(line: Line): Line | Circle {
-        if (this.centerPoint.getRelationshipToLine(line) & RsPointToLine.On) return line.clone()
+        if(this.centerPoint.isOnLine(line))return line.clone()
+
+ 
         //设反演中心为O，O对line做垂线，垂足为P，而垂线过反形圆的圆心M，并交反形圆于两个交点（其中一个是O），另一个为Q
         let pO = this.centerPoint,
             pP = <Point>line.getPerpendicularPointWithPointNotOn(pO),
             dist = pP.getDistanceBetweenPoint(pO),
-            inversionDist = Math.abs(this.invertPower / dist),
+            inversionDist = Math.abs(this.power / dist),
             radius = inversionDist / 2,
             vOP = new Vector(pO, pP),
             angle
 
         //OP和OQ，OM方向相反
-        if (this.invertPower < 0) {
-            angle = vOP.reverse().angle
+        if (this.power < 0) {
+            angle = vOP.negative().angle
         }
         //OP和OQ，OM方向相同
         else {
@@ -99,19 +123,18 @@ class Inversion {
      */
 
     invertCircle(circle: Circle): Line | Circle {
-        let rs = this.centerPoint.getRelationshipToCircle(circle)
-
-        if (rs & RsPointToCircle.On) {
+    
+        if (this.centerPoint.isOnCircle(circle)) {
             //设反演中心为O，连接O和circle的圆心P成直线L，L与反形线相交于点Q，则经过点Q，且垂直于L的直线即反形线
             let pO = this.centerPoint,
                 pP = circle.centerPoint,
-                inversionDist = Math.abs((this.invertPower / 2) * circle.radius),
+                inversionDist = Math.abs((this.power / 2) * circle.radius),
                 lL = Line.fromPoints(pO, pP),
                 vOP = new Vector(pO, pP),
                 angle
             //OP和OQ方向相反
-            if (this.invertPower < 0) {
-                angle = vOP.reverse().angle
+            if (this.power < 0) {
+                angle = vOP.negative().angle
             }
             //OP和OQ方向相同
             else {
@@ -138,14 +161,14 @@ class Inversion {
             dist = pO.getDistanceBetweenPoint(pP),
             i = 1 / Math.abs(dist - circle.radius),
             j = 1 / Math.abs(dist + circle.radius),
-            r = ((i - j) * Math.abs(this.invertPower)) / 2,
-            s = ((i + j) * Math.abs(this.invertPower)) / 2,
+            r = ((i - j) * Math.abs(this.power)) / 2,
+            s = ((i + j) * Math.abs(this.power)) / 2,
             angle,
             vOP = new Vector(pO, pP)
         //OP和OQ的方向判定，
 
-        if (this.invertPower < 0 !== Boolean(rs & RsPointToCircle.Inside)) {
-            angle = vOP.reverse().angle
+        if (this.power < 0 !== this.centerPoint.isInsideCircle(circle)) {
+            angle = vOP.negative().angle
         } else {
             angle = vOP.angle
         }

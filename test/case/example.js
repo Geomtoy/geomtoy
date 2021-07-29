@@ -1,5 +1,5 @@
 import Geomtoy from "../../src/geomtoy"
-import vanillaCanvasDrawer from "../../src/geomtoy/adaptors/vanilla-canvas"
+
 let canvasContext = new CanvasRenderingContext2D(),
     canDrawer = new vanillaCanvasDrawer(canvasContext)
 

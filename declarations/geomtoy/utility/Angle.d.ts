@@ -1,16 +1,16 @@
-declare const angleUtility: {
+declare const angle: {
     /**
-     * Simplify an `angle` to [0, 2*Math.PI)
-     * @param {number} angle
+     * Simplify angle `a` to [0, 2*Math.PI)
+     * @param {number} a
      * @returns {number}
      */
-    simplify(angle: number): number;
+    simplify(a: number): number;
     /**
-     * Simplify an `angle` to (-Math.PI, Math.PI]
-     * @param {number} angle
+     * Simplify angle `a` to (-Math.PI, Math.PI]
+     * @param {number} a
      * @returns {number}
      */
-    simplify2(angle: number): number;
+    simplify2(a: number): number;
     /**
      * Convert the unit of an angle from degree to radian
      * @param {number} degree
@@ -24,4 +24,4 @@ declare const angleUtility: {
      */
     radianToDegree(radian: number): number;
 };
-export default angleUtility;
+export default angle;

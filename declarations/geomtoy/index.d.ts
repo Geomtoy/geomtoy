@@ -16,7 +16,8 @@ declare class Geomtoy {
     #private;
     width: number;
     height: number;
-    constructor(width: number, height: number, options: object);
+    constructor(width: number, height: number, options?: Partial<Options>);
+    static adapters: object;
     get options(): Options;
     get Point(): {
         new (...args: any[]): {

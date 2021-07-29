@@ -1,8 +1,8 @@
-import _ from "lodash"
+
 import Graphic from "./graphic"
 import Point from "./Point"
 import Vector from "./Vector"
-import util from "./utility"
+import type from "./utility/type"
 import { GraphicImplType, Coordinate } from "./types"
 import { is, sealed } from "./decorator"
 import GeomObject from "./base/GeomObject"
@@ -22,7 +22,7 @@ class Ellipse extends GeomObject {
             a2 = radiusX,
             a3 = radiusY
 
-        if ((util.type.isCoordinate(a1) || a1 instanceof Point || a1 instanceof Vector) && _.isNumber(a2) && _.isNumber(a3)) {
+        if ((type.isCoordinate(a1) || a1 instanceof Point || a1 instanceof Vector) && type.isNumber(a2) && type.isNumber(a3)) {
             let cp = new Point(a1)
             Object.seal(Object.assign(this, { centerPoint: cp, radiusX: a2, radiusY: a3 }))
             return this

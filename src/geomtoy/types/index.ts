@@ -92,9 +92,11 @@ export enum RsCircleToCircle {
     Intersected = 2,
     InternallyTangent = 2 << 1,
     ExternallyTangent = 2 << 2,
-    Inside = 2 << 3,
-    Outside = 2 << 4,
-    Separated = 2 << 5
+    WrapInside = 2 << 3,
+    WrapOutside = 2 << 4,
+    Separated = 2 << 5,
+    Tangent = InternallyTangent | ExternallyTangent,
+    NotIntersected = WrapInside | WrapOutside | Separated
 }
 
 export enum RsRectangleToRectangle {

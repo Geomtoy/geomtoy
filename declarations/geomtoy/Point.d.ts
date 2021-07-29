@@ -3,7 +3,7 @@ import Segment from "./Segment";
 import Line from "./Line";
 import Circle from "./Circle";
 import GeomObject from "./base/GeomObject";
-import { Coordinate, GraphicImplType, RsPointToCircle, RsPointToLine, RsPointToSegment, CanvasDirective, SvgDirective } from "./types";
+import { Coordinate, GraphicImplType, CanvasDirective, SvgDirective } from "./types";
 import Transformation from "./transformation";
 declare class Point extends GeomObject {
     #private;
@@ -70,7 +70,7 @@ declare class Point extends GeomObject {
      * @param {Point} point
      * @returns {number}
      */
-    getDistanceSquareFromPoint(point: Point): number;
+    getSquaredDistanceFromPoint(point: Point): number;
     /**
      * Get the distance between point `this` and line `line`
      * @param {Line} line
@@ -84,39 +84,23 @@ declare class Point extends GeomObject {
      */
     getSignedDistanceBetweenLine(line: Line): number;
     /**
-     * Whether point `this` is inside an imaginary rectangle with diagonals of point `point1` and point `point2`,
-     * the coordinate of point `this` will not be greater than the maximum value of point `point1` and point `point2`,
-     * nor less than the minimum value
+     * Whether point `this` is lying on the same line determined by points `point1` and `point2` and point `this` is between points `point1` and `point2`
      * @param {Point} point1
      * @param {Point} point2
-     * @param {boolean} allowedOn Can it be on the rectangle, in other words, can it be equal to the maximum or minimum value
+     * @param {boolean} allowEqual Allow point `this` to be equal to point `point1` or `point2`
      * @returns {boolean}
      */
-    isBetweenPoints(point1: Point, point2: Point, allowedOn?: boolean): boolean;
-    /**
-     * Get the relationship of point `this` to line `line`
-     * @param {Line} line
-     * @returns {RsPointToLine}
-     */
-    getRelationshipToLine(line: Line): RsPointToLine;
-    /**
-     * Whether point `this` is an endpoint of segment `segment`
-     * @param {Segment} segment
-     * @returns {boolean}
-     */
+    isBetweenPoints(point1: Point, point2: Point, allowEqual?: boolean): boolean;
+    isOutsideRectangle(): void;
+    isInsideRectangle(): void;
+    isOnRectangle(): void;
+    isOnLine(line: Line): boolean;
     isEndpointOfSegment(segment: Segment): boolean;
-    /**
-     * Get the relationship of point `this` to segment `segment`
-     * @param {Segment} s
-     * @returns {RsPointToSegment}
-     */
-    getRelationshipToSegment(segment: Segment): RsPointToSegment;
-    /**
-     * Get the relationship of point `this` to circle `circle`
-     * @param {Circle} circle
-     * @returns {RsPointToCircle}
-     */
-    getRelationshipToCircle(circle: Circle): RsPointToCircle;
+    isOnSegmentLyingLine(segment: Segment): boolean;
+    isOnSegment(segment: Segment): boolean;
+    isOnCircle(circle: Circle): boolean;
+    isInsideCircle(circle: Circle): boolean;
+    isOutsideCircle(circle: Circle): boolean;
     /**
      * Get graphic object of `this`
      * @param {GraphicImplType} type

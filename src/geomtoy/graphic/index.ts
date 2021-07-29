@@ -1,7 +1,7 @@
-import _ from "lodash"
+import util from "../utility"
 import { GraphicDirectiveType, GraphicImplType, GraphicDirective, SvgDirectiveType, SvgDirective, CanvasDirectiveType, CanvasDirective } from "../types"
 import { arcCenterToEndpointParameterization, arcEndpointToCenterParameterization } from "./helper"
-import util from "../utility"
+import angle from "../utility/angle"
 
 export { GraphicDirectiveType }
 
@@ -173,7 +173,7 @@ export default class Graphic {
         let retArray: Array<SvgDirective | CanvasDirective> = []
 
         if (type === "canvas") {
-            _.forEach(this.directives, (d, index, collection) => {
+            util.forEach(this.directives, (d, index, collection) => {
                 if (d.type === GraphicDirectiveType.MoveTo) {
                     let { x, y } = d
                     retArray.push({ type: CanvasDirectiveType.MoveTo, x, y })
@@ -221,7 +221,7 @@ export default class Graphic {
         }
 
         if (type === "svg") {
-            _.forEach(this.directives, (d, index, collection) => {
+            util.forEach(this.directives, (d, index, collection) => {
                 if (d.type === GraphicDirectiveType.MoveTo) {
                     let { x, y } = d
                     retArray.push({ type: SvgDirectiveType.M, x, y })
@@ -246,7 +246,7 @@ export default class Graphic {
                     let { x1, y1, x2, y2, rx, ry, cx, cy, largeArcFlag, sweepFlag, xAxisRotation, startAngle, endAngle, anticlockwise } = d
                     let prevDirective = collection[index - 1],
                         { currentX: prevCurrentX, currentY: prevCurrentY } = prevDirective,
-                        xAxisRotationInDegree = util.angle.radianToDegree(xAxisRotation)
+                        xAxisRotationInDegree = angle.radianToDegree(xAxisRotation)
 
                     // Adjust the start point of arc
                     if (x1 !== prevCurrentX || y1 !== prevCurrentY) {

@@ -1,17 +1,19 @@
-import _ from "lodash"
-import util from "./utility"
+import math from "./utility/math"
+import type from "./utility/type"
+
 import Point from "./Point"
-import Matrix from "./transformation/Matrix"
 import Segment from "./Segment"
 import Graphic from "./graphic"
 import Rectangle from "./Rectangle"
 import Circle from "./Circle"
-import { is } from "./decorator"
+import { is, sealed } from "./decorator"
 import GeomObject from "./base/GeomObject"
-import { GraphicImplType, RsPointToLine } from "./types"
+import { GraphicImplType } from "./types"
 import Transformation from "./transformation"
 import Vector from "./Vector"
+import util from "./utility"
 
+@sealed
 class Line extends GeomObject {
     #a: number | undefined
     #b: number | undefined
@@ -21,9 +23,12 @@ class Line extends GeomObject {
     constructor(line: Line)
     constructor(a1: any, a2?: any, a3?: any) {
         super()
-        if (_.isNumber(a1) && _.isNumber(a2) && _.isNumber(a3)) {
-            Object.seal(Object.assign(this, { a: a1, b: a2, c: a3 }))
-            return this
+        if (type.isNumber(a1) && type.isNumber(a2) && type.isNumber(a3)) {
+            this.#a = a1
+            this.#b = a2
+            this.#c = a3
+            this.#guard()
+            return Object.seal(this)
         }
         if (a1 instanceof Line) {
             return a1.clone()
@@ -56,15 +61,26 @@ class Line extends GeomObject {
     }
 
     #guard() {
-        if (this.a === 0 && this.b === 0) {
+        let epsilon = this.options.epsilon
+        if (math.equalTo(this.#a!, 0, epsilon) && math.equalTo(this.#b!, 0, epsilon)) {
             throw new Error(`[G]The \`a\` and \`b\` of a line can NOT equal to 0 at the same time.`)
         }
     }
 
     isSameAs(line: Line) {
+        // If two lines "a1x+b1y+c1=0" and "a2x+b2y+c2=0" are identical then
+        // "a1/a2=b1/b2=c1/c2"
+        // Use multiply to avoid "a/b/c=0" situation
+
         if (this === line) return true
-        if (util.apxEqualsTo(this.a, line.a) && util.apxEqualsTo(this.b, line.b) && util.apxEqualsTo(this.c, line.c)) return true
-        return false
+        let { a: a1, b: b1, c: c1 } = this,
+            { a: a2, b: b2, c: c2 } = line,
+            epsilon = this.options.epsilon
+
+        // If `a1 === a2 === 0`, check `c1 * b2 === c2 * b1` is `true`
+        // If `b1 === b2 === 0`, check `a1 * c2 === a2 * c1` is `true`
+        // If `c1 === c2 === 0`, check `a1 * b2 === a2 * b1` is `true`
+        return math.equalTo(a1 * b2, a2 * b1, epsilon) && math.equalTo(c1 * b2, c2 * b1, epsilon) && math.equalTo(a1 * c2, a2 * c1, epsilon)
     }
 
     /**
@@ -77,7 +93,6 @@ class Line extends GeomObject {
         if (point1.isSameAs(point2)) {
             throw new Error(`[G]Points \`point1\` and \`point2\` are the same, they can NOT determine a line.`)
         }
-
         let { x: x1, y: y1 } = point1,
             { x: x2, y: y2 } = point2,
             a = y2 - y1,
@@ -91,66 +106,150 @@ class Line extends GeomObject {
      * @returns {Line}
      */
     static fromSegment(segment: Segment): Line {
-        return this.fromPoints(segment.p1, segment.p2)
+        return Line.fromPoints(segment.point1, segment.point2)
     }
-
-    static fromPointAndAngle(point: Point, angle: number) {
-        let pointP = point.walk(angle, 100)
-        return Line.fromPoints(point, pointP)
+    static fromVector(vector: Vector) {
+        let { x, y } = vector
+        return Line.fromPoints(Point.zero, new Point(x, y))
     }
-    static fromPointAndSlope(point:Point,slope:number){
-
-    }
-
-    static fromVector(vector:Vector) {
+    static fromVector2(vector: Vector) {
         return Line.fromPoints(vector.point1, vector.point2)
     }
-
-    static fromIntercepts(interceptX:number,interceptY:number) {
-        if(interceptX === NaN) {
-
+    static fromPointAndVector(point:Point,vector:Vector){
+        let { x, y } = vector
+        return Line.fromPoints(point, new Point(x, y))
+    }
+    static fromPointAndSlope(point: Point, slope: number) {
+        let { x, y } = point
+        if (math.abs(slope) === Infinity) {
+            let a = 1,
+                b = 0,
+                c = point.x
+            return new Line(a, b, c)
         }
-        if(interceptY === NaN){
-
-
-        }        
+        let a = slope,
+            b = -1,
+            c = y - slope * x
+        return new Line(a, b, c)
     }
-    
-    static fromSlopeAndInterceptX(slope : number, interceptX:number) {
-
-
+    static fromPointAndAngle(point: Point, angle: number) {
+        let slope = math.tan(angle)
+        return Line.fromPointAndSlope(point, slope)
     }
-    static fromSlopeAndInterceptY(slope : number, interceptY:number) {
 
+    static fromIntercepts(interceptX: number, interceptY: number) {
+        if (math.abs(interceptX) === Infinity && math.abs(interceptY) === Infinity) {
+            throw new Error(`[G]It is impossible for a line to have infinite intercepts on both the x-axis and y-axis.`)
+        }
+        if (math.abs(interceptX) === Infinity) {
+            return Line.fromPointAndSlope(new Point(0, interceptY), 0)
+        }
+        if (math.abs(interceptY) === Infinity) {
+            return Line.fromPointAndSlope(new Point(interceptX, 0), Infinity)
+        }
+        return Line.fromPoints(new Point(0, interceptY), new Point(interceptX, 0))
     }
-    
+
+    static fromSlopeAndInterceptX(slope: number, interceptX: number) {
+        if (math.abs(slope) === Infinity || math.abs(interceptX) === Infinity) {
+            throw new Error(`[G]Provide values other than infinity for slope and interceptX.`)
+        }
+        return Line.fromPointAndSlope(new Point(interceptX, 0), slope)
+    }
+    static fromSlopeAndInterceptY(slope: number, interceptY: number) {
+        if (math.abs(slope) === Infinity || math.abs(interceptY) === Infinity) {
+            throw new Error(`[G]Provide values other than infinity for slope and interceptY.`)
+        }
+        return Line.fromPointAndSlope(new Point(0, interceptY), slope)
+    }
 
     /**
-     * `直线this`的斜率
+     * Whether line `this` is parallel(including identical) to line `line`
+     * @summary
+     * If two lines "a1x+b1y+c1=0" and "a2x+b2y+c2=0" are parallel(including identical) then
+     * "k1=-(a1/b1)" and "k2=-(a2/b2)", "k1=k2", "a1b2=b1a2"
+     * @param {Line} line
+     * @returns
+     */
+    isParallelToLine(line: Line) {
+        if (this === line) return true
+        let { a: a1, b: b1 } = this,
+            { a: a2, b: b2 } = line,
+            epsilon = this.options.epsilon
+        if (math.equalTo(a1, 0, epsilon) && math.equalTo(a2, 0, epsilon)) return true
+        if (math.equalTo(b1, 0, epsilon) && math.equalTo(b2, 0, epsilon)) return true
+        return math.equalTo(a1 * b2, a2 * b1, epsilon)
+    }
+    /**
+     * Whether line `this` is perpendicular to line `line`
+     * @summary
+     * If two lines "a1x+b1y+c1=0" and "a2x+b2y+c2=0" are perpendicular then
+     * "k1=-(a1/b1)" and "k2=-(a2/b2)", "k1k2=-1", "a1a2=-b1b2"
+     * @param {Line} line
+     * @returns
+     */
+    isPerpendicularToLine(line: Line) {
+        let { a: a1, b: b1 } = this,
+            { a: a2, b: b2 } = line,
+            epsilon = this.options.epsilon
+        if (math.equalTo(a1, 0, epsilon) && math.equalTo(b2, 0, epsilon)) return true
+        if (math.equalTo(b1, 0, epsilon) && math.equalTo(a2, 0, epsilon)) return true
+        return math.equalTo(a1 * a2, -b1 * b2, epsilon)
+    }
+    simple() {
+        return this.clone().simpleSelf()
+    }
+    simpleSelf() {
+        //make `b` equal to `1`, if "b=0", make `a` equal to `1`
+        let { a, b, c } = this,
+            epsilon = this.options.epsilon
+        if (math.equalTo(b, 0, epsilon)) {
+            let d = a
+            this.a = a / d
+            this.b = b / d
+            this.c = c / d
+        }
+        let d = b
+        this.a = a / d
+        this.b = b / d
+        this.c = c / d
+    }
+
+    /**
+     * Get the slope of line `this`
+     * @summary
+     * If "b=0", line `this` is "ax+c=0". It is perpendicular to the x-axis, the slope is `NaN` or `Infinity`
      * @returns {number}
      */
     getSlope(): number {
-        //ax+c = 0 垂直于x轴的直线，与x轴的夹角为Math.PI / 2, 斜率无穷大或不存在（Math.tan(Math.PI / 2)的结果有bug）
-        if (util.apxEqualsTo(this.b, 0)) return NaN
-        return -(this.a / this.b)
+        let { a, b } = this,
+            epsilon = this.options.epsilon
+        if (math.equalTo(b, 0, epsilon)) return Infinity
+        return -(a / b)
     }
     /**
-     * `直线this`的截距
+     * Get the intercept on the y-axis of line `this`
+     * @summary
+     * If "b=0", line `this` is "ax+c=0". It is perpendicular to the x-axis, the intercept on the y-axis is `NaN` or `Infinity`
      * @returns {number}
      */
     getInterceptY(): number {
-        //ax+c = 0 垂直于x轴的直线，不与y轴相交，截距无穷大或不存在
-        if (util.apxEqualsTo(this.b, 0)) return NaN
-        return -(this.c / this.b)
+        let { b, c } = this,
+            epsilon = this.options.epsilon
+        if (math.equalTo(b, 0, epsilon)) return Infinity
+        return -(c / b)
     }
     /**
-     * 
+     * Get the intercept on the x-axis of line `this`
+     * @summary
+     * If "a=0", line `this` is "by+c=0". It is perpendicular to the y-axis, the intercept on the x-axis is `NaN` or `Infinity`
      * @returns {number}
      */
     getInterceptX(): number {
-        //by+c = 0 垂直于y轴的直线，不与x轴相交，截距无穷大或不存在
-        if (util.apxEqualsTo(this.a, 0)) return NaN
-        return -(this.c / this.a)
+        let { a, c } = this,
+            epsilon = this.options.epsilon
+        if (math.equalTo(a, 0, epsilon)) return Infinity
+        return -(c / a)
     }
 
     getRandomPointOnLine() {
@@ -183,14 +282,14 @@ class Line extends GeomObject {
             n = circle.cy,
             r = circle.radius
 
-        if (util.apxEqualsTo(this.b, 0)) {
+        if (math.equalTo(this.b, 0)) {
             k = -(this.b / this.a) //ax+by+c = 0  x=(-by-c)/a  x=-(b/a)y-c/a
             b = -(this.c / this.a)
             let aY = 1 + k ** 2,
                 bY = 2 * k * (b - m) - 2 * n,
                 cY = n ** 2 + (b - m) ** 2 - r ** 2,
-                roots = util.solveQuadraticEquation(aY, bY, cY)
-            return _.map(roots, root => {
+                roots = math.quadraticRoots(aY, bY, cY)
+            return util.map(roots, root => {
                 return new Point(k * root + b, root)
             })
         } else {
@@ -199,8 +298,8 @@ class Line extends GeomObject {
             let aX = 1 + k ** 2,
                 bX = 2 * k * (b - n) - 2 * m,
                 cX = m ** 2 + (b - n) ** 2 - r ** 2,
-                roots = util.solveQuadraticEquation(aX, bX, cX)
-            return _.map(roots, root => {
+                roots = math.quadraticRoots(aX, bX, cX)
+            return util.map(roots, root => {
                 return new Point(root, k * root + b)
             })
         }
@@ -250,7 +349,7 @@ class Line extends GeomObject {
     #isIntersectedWithSegment(segment: Segment) {
         let l = Line.fromSegment(segment),
             ret = this.#isIntersectedWithLine(l)
-        if (ret && ret.isBetweenPoints(segment.p1, segment.p2)) return ret
+        if (ret && ret.isBetweenPoints(segment.point1, segment.point2)) return ret
         return false
     }
     isIntersectedWithSegment(segment: Segment) {
@@ -301,21 +400,19 @@ class Line extends GeomObject {
      * @returns {Line}
      */
     getPerpendicularLineWithPointOn(point: Point) {
-        if (point.getRelationshipToLine(this) & RsPointToLine.NotOn) return null
-        let a = this.a,
-            b = this.b,
-            c = this.c,
-            x0 = point.x,
-            y0 = point.y
+        if (!point.isOnLine(this)) return null
+        let { a, b } = this,
+            { x, y } = point,
+            epsilon = this.options.epsilon
 
-        if (util.apxEqualsTo(this.b, 0)) {
+        if (math.equalTo(b, 0, epsilon)) {
             //ax+by+c = 0  x=-(b/a)y-c/a，斜率为-(b/a)，直线垂直斜率乘积为-1，故垂线：x-x0=a/b(y-y0)
             // bx-ay+ay0-bx0=0
-            return new Line(b, -a, a * y0 - b * x0)
+            return new Line(b, -a, a * y - b * x)
         } else {
             //ax+by+c = 0  y=-(a/b)x-c/b，斜率为-(a/b)，直线垂直斜率乘积为-1，故垂线：y-y0=b/a(x-x0)
             // -bx+ay-ay0+bx0=0
-            return new Line(-b, a, -a * y0 + b * x0)
+            return new Line(-b, a, -a * y + b * x)
         }
     }
 
@@ -325,11 +422,9 @@ class Line extends GeomObject {
      * @returns {Point | null}
      */
     getPerpendicularPointWithPointNotOn(point: Point) {
-        if (point.getRelationshipToLine(this) & RsPointToLine.On) return null
+        if (point.isOnLine(this)) return null
 
-        let a = this.a,
-            b = this.b,
-            c = this.c,
+        let { a, b, c } = this,
             x0 = point.x,
             y0 = point.y,
             x,
@@ -339,16 +434,6 @@ class Line extends GeomObject {
         return new Point(x, y)
     }
 
-    /**
-     * `直线this`与`直线line`是否平行（包括重合）
-     * @param {Line} line
-     * @returns
-     */
-    isParallelToLine(line: Line) {
-        if (this.b === 0 && line.b === 0) return true
-        if (this.a === 0 && line.a === 0) return true
-        return util.apxEqualsTo(this.a * line.b, this.b * line.a)
-    }
     /**
      * 若`直线this`与`直线line`平行，则返回它们之间的距离，否则返回null
      * @param {Line} line
