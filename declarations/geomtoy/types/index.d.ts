@@ -12,17 +12,15 @@ export declare type Options = {
     };
     fillRule: "nonzero" | "evenodd";
     pathSampleRatio: 100;
-    global: {
+    coordinateSystem: {
         xAxisPositiveOnRight: boolean;
         yAxisPositiveOnBottom: boolean;
         originX: number;
         originY: number;
         scale: number;
     };
-    [key: string]: any;
 };
 export declare const defaultOptions: Options;
-export declare type Coordinate = [x: number, y: number];
 export declare type Size = [width: number, height: number];
 export declare enum RsPointToLine {
     On = 2,
@@ -55,11 +53,6 @@ export declare enum RsSegmentToSegment {
     Overlapped = 44,
     Intersected = 64,
     Separated = 128
-}
-export declare enum RsLineToCircle {
-    Intersected = 2,
-    Tangent = 4,
-    Separated = 8
 }
 export declare enum RsCircleToCircle {
     Intersected = 2,

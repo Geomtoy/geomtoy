@@ -1,15 +1,25 @@
-import Transformation from "../transformation"
-import { defaultOptions, Options, GraphicImplType, CanvasDirective, SvgDirective } from "../types"
+import Geomtoy from ".."
 
 abstract class GeomObject {
-    options: Options = defaultOptions
+    #owner: Geomtoy = null as any as Geomtoy
+    
+    constructor(owner: Geomtoy) {
+        this.owner = owner
+    }
+    get owner() {
+        return this.#owner!
+    }
+    set owner(value: Geomtoy) {
+        if (!(value instanceof Geomtoy)) throw new Error("[G]The `owner` of a `GeomObject` should be a `Geomtoy` instance.")
+        this.#owner = value
+    }
 
-    abstract apply(transformation: Transformation): GeomObject
     abstract clone(): GeomObject
     abstract toString(): string
+    abstract toArray(): Array<any>
     abstract toObject(): object
-    abstract toArray(): [...value: any[]]
-
-    abstract getGraphic(type: GraphicImplType): Array<SvgDirective | CanvasDirective>
 }
+/**
+ * @category Base
+ */
 export default GeomObject

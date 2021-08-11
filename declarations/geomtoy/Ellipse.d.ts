@@ -1,11 +1,22 @@
 import Point from "./Point";
-import Vector from "./Vector";
-import { GraphicImplType, Coordinate } from "./types";
+import { GraphicImplType } from "./types";
 import GeomObject from "./base/GeomObject";
 import Transformation from "./transformation";
-declare class Ellipse extends GeomObject {
+import Geomtoy from ".";
+import { AreaMeasurable } from "./interfaces";
+declare class Ellipse extends GeomObject implements AreaMeasurable {
     #private;
-    constructor(centerPosition: Coordinate | Point | Vector, radiusX: number, radiusY: number, rotation: number);
+    constructor(owner: Geomtoy, centerX: number, centerY: number, radiusX: number, radiusY: number, rotation?: number);
+    constructor(owner: Geomtoy, centerCoordinate: [number, number], radiusX: number, radiusY: number, rotation?: number);
+    constructor(owner: Geomtoy, centerPoint: Point, radiusX: number, radiusY: number, rotation?: number);
+    get name(): string;
+    get uuid(): string;
+    get centerX(): number;
+    set centerX(value: number);
+    get centerY(): number;
+    set centerY(value: number);
+    get centerCoordinate(): [number, number];
+    set centerCoordinate(value: [number, number]);
     get centerPoint(): Point;
     set centerPoint(value: Point);
     get radiusX(): number;
@@ -23,6 +34,8 @@ declare class Ellipse extends GeomObject {
     static findTangentLineOfTwoEllipse(ellipse1: Ellipse, ellipse2: Ellipse): void;
     static findTangentLineOfEllipseAndParabola(): void;
     apply(transformation: Transformation): GeomObject;
+    getPerimeter(): number;
+    getArea(): number;
     getGraphicAlt(type: GraphicImplType): (import("./types").SvgDirective | import("./types").CanvasDirective)[];
 }
 export default Ellipse;

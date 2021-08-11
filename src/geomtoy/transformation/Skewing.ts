@@ -1,4 +1,4 @@
-import type from "../utility/type"
+import util from "../utility"
 import Matrix from "./Matrix"
 import Translation from "./Translation"
 import Point from "../Point"
@@ -15,7 +15,7 @@ class Skewing extends Matrix {
     constructor()
     constructor(ax?: any, ay?: any, o?: any) {
         super()
-        if (type.isNumber(ax) && type.isNumber(ay)) {
+        if (util.isNumber(ax) && util.isNumber(ay)) {
             if (o instanceof Point) {
                 Object.seal(Object.assign(this, { angleX: ax, angleY: ay, origin: o }))
                 this.#skewing()

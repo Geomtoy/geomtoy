@@ -1,5 +1,6 @@
 declare const vec2: {
     from([ux, uy]: [number, number], [vx, vy]: [number, number]): [number, number];
+    from2(angle: number, magnitude: number): [number, number];
     angle([x, y]: [number, number]): number;
     magnitude([x, y]: [number, number]): number;
     squaredMagnitude([x, y]: [number, number]): number;

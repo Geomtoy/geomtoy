@@ -2,92 +2,192 @@ import math from "./utility/math"
 import util from "./utility"
 import angle from "./utility/angle"
 import vec2 from "./utility/vec2"
-import type from "./utility/type"
 
 import Point from "./Point"
 import Circle from "./Circle"
 import Line from "./Line"
 import Polygon from "./Polygon"
-import { sealed, is, compared } from "./decorator"
-import { Coordinate } from "./types"
+import { sealed, is, compared, sameOwner } from "./decorator"
+import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
+import GeomObject from "./base/GeomObject"
+import { AreaMeasurable } from "./interfaces"
+import Transformation from "./transformation"
+import Graphic from "./graphic"
+import Geomtoy from "."
+import coord from "./helper/coordinate"
 
-class RegularPolygon {
-    #radius: number | undefined
-    #centerPoint: Point | undefined
-    #number: number | undefined
-    #rotation: number | undefined
+@sealed
+class RegularPolygon extends GeomObject implements AreaMeasurable {
+    #radius: number = NaN
+    #centerCoordinate: [number, number] = [NaN, NaN]
+    #sideCount: number = NaN
+    #rotation: number = NaN
 
-    constructor(radius: number, centerX: number, centerY: number, number: number, rotation: number)
-    constructor(radius: number, centerPosition: Coordinate | Point, number: number, rotation: number)
-    constructor(a1: number, a2?: any, a3?: any, a4?: any, a5?: any) {
-        if (type.isNumber(a2) && type.isNumber(a3)) {
-            let p = new Point(a2, a3)
-            if (a5 === undefined) a5 = 0
-
-            return Object.seal(Object.assign(this, { radius: a1, centerPoint: p, number: a4, angle: a5 }))
+    constructor(owner: Geomtoy, radius: number, centerX: number, centerY: number, sideCount: number, rotation?: number)
+    constructor(owner: Geomtoy, radius: number, centerCoordinate: [number, number], sideCount: number, rotation?: number)
+    constructor(owner: Geomtoy, radius: number, centerPosition: Point, sideCount: number, rotation?: number)
+    constructor(o: Geomtoy, a1: number, a2?: any, a3?: any, a4?: any, a5?: any) {
+        super(o)
+        if (util.isNumber(a2) && util.isNumber(a3)) {
+            return Object.seal(util.assign(this, { radius: a1, centerX: a2, centerY: a3, sideCount: a4, rotation: a5 ?? 0 }))
         }
-        if (type.isCoordinate(a2) || a2 instanceof Point) {
-            let p = new Point(a2)
-            if (a4 === undefined) a4 = 0
-            return Object.seal(Object.assign(this, { radius: a1, centerPoint: p, number: a3, angle: a4 }))
+        if (util.isCoordinate(a2)) {
+            return Object.seal(util.assign(this, { radius: a1, centerCoordinate: a2, sideCount: a3, rotation: a4 ?? 0 }))
         }
-        throw new Error(`[G]Arguments can NOT construct a regular polygon.`)
+        if (a2 instanceof Point) {
+            return Object.seal(util.assign(this, { radius: a1, centerPoint: a2, sideCount: a3, rotation: a4 ?? 0 }))
+        }
+        throw new Error("[G]Arguments can NOT construct a `RegularPolygon`.")
     }
 
+    @is("realNumber")
+    get centerX() {
+        return coord.x(this.#centerCoordinate)
+    }
+    set centerX(value) {
+        coord.x(this.#centerCoordinate, value)
+    }
+    @is("realNumber")
+    get centerY() {
+        return coord.y(this.#centerCoordinate)
+    }
+    set centerY(value) {
+        coord.y(this.#centerCoordinate, value)
+    }
+    @is("coordinate")
+    get centerCoordinate() {
+        return this.#centerCoordinate
+    }
+    set centerCoordinate(value) {
+        coord.assign(this.#centerCoordinate, value)
+    }
+    @sameOwner
+    @is("point")
+    get centerPoint() {
+        return new Point(this.owner, this.#centerCoordinate)
+    }
+    set centerPoint(value) {
+        coord.assign(this.#centerCoordinate, value.coordinate)
+    }
     @is("positiveNumber")
     get radius() {
-        return this.#radius!
+        return this.#radius
     }
     set radius(value) {
         this.#radius = value
     }
-    @is("point")
-    get centerPoint() {
-        return this.#centerPoint!
-    }
-    set centerPoint(value) {
-        this.#centerPoint = value
-    }
     @compared("ge", 3)
     @is("integer")
     @is("positiveNumber")
-    get number() {
-        return this.#number!
+    get sideCount() {
+        return this.#sideCount
     }
-    set number(value) {
-        this.#number = value
+    set sideCount(value) {
+        this.#sideCount = value
     }
     @is("realNumber")
     get rotation() {
-        return this.#rotation!
+        return this.#rotation
     }
     set rotation(value) {
         this.#rotation = value
     }
 
-    get points() {
+    get apothem() {
+        return this.radius * Math.cos(Math.PI / this.sideCount)
+    }
+    get sideLength() {
+        return 2 * this.radius * Math.sin(Math.PI / this.sideCount)
+    }
+    get centralAngle() {
+        return (2 * Math.PI) / this.sideCount
+    }
+    get interiorAngle() {
+        return Math.PI - (2 * Math.PI) / this.sideCount
+    }
+    get sumOfInteriorAngle() {
+        return Math.PI * (this.sideCount - 2)
+    }
+    get exteriorAngle() {
+        return (2 * Math.PI) / this.sideCount
+    }
+    get sumOfExteriorAngle() {
+        return 2 * Math.PI
+    }
+    get diagonalCount() {
+        let n = this.sideCount
+        return (n * (n - 3)) / 2
+    }
+
+    static fromApothemEtc(owner: Geomtoy, apothem: number, centerPoint: Point, sideCount: number, rotation: number = 0) {
+        let r = apothem / Math.cos(Math.PI / sideCount)
+        return new RegularPolygon(owner, r, centerPoint, sideCount, rotation)
+    }
+    static fromSideLengthEtc(owner: Geomtoy, sideLength: number, centerPoint: Point, sideCount: number, rotation: number = 0) {
+        let r = sideLength / Math.sin(Math.PI / sideCount) / 2
+        return new RegularPolygon(owner, r, centerPoint, sideCount, rotation)
+    }
+
+    getPoints() {
         let ps: Array<Point> = []
-        util.forEach(util.range(this.number), i => {
-            let p = this.centerPoint.walk(((2 * Math.PI) / this.number) * i + this.rotation, this.radius)
+        util.forEach(util.range(this.sideCount), i => {
+            let p = this.centerPoint.moveAlongAngle(((2 * Math.PI) / this.sideCount) * i + this.rotation, this.radius)
             ps.push(p)
         })
         return ps
     }
-    get lines() {
-        let ps = this.points,
+    getLines() {
+        let ps = this.getPoints(),
             ls: Array<Line> = []
-        util.forEach(ps, (p, index) => {
-            ls.push(Line.fromPoints(util.nth(ps, index - this.number)!, util.nth(ps, index - this.number + 1)!))
+        util.forEach(util.range(this.sideCount), i => {
+            ls.push(Line.fromPoints(this.owner, util.nth(ps, i - this.sideCount)!, util.nth(ps, i - this.sideCount + 1)!))
         })
         return ls
     }
 
-    getApothem() {
-        return this.radius * Math.cos(Math.PI / this.number)
+    getCircumscribedCircle() {
+        return new Circle(this.owner, this.radius, this.centerPoint)
     }
-    getEdgeLength() {
-        return 2 * this.radius * Math.sin(Math.PI / this.number)
+    getInscribedCircle() {
+        return new Circle(this.owner, this.apothem, this.centerPoint)
+    }
+
+    getPerimeter(): number {
+        return this.sideCount * this.sideLength
+    }
+    getArea(): number {
+        let p = this.getPerimeter()
+        return (p * this.apothem) / 2
+    }
+    apply(transformation: Transformation): GeomObject {
+        throw new Error("Method not implemented.")
+    }
+    clone() {
+        return new RegularPolygon(this.owner, this.radius, this.centerCoordinate, this.sideCount, this.rotation)
+    }
+    toString(): string {
+        throw new Error("Method not implemented.")
+    }
+    toObject(): object {
+        throw new Error("Method not implemented.")
+    }
+    toArray(): any[] {
+        throw new Error("Method not implemented.")
+    }
+    getGraphic(type: GraphicImplType): (SvgDirective | CanvasDirective)[] {
+        let g = new Graphic(),
+            ps = this.getPoints()
+        g.moveTo(...util.head(ps)?.coordinate!)
+        util.forEach(util.range(1, this.sideCount), i => {
+            g.lineTo(...ps[i].coordinate)
+        })
+        g.close()
+        return g.valueOf(type)
     }
 }
 
+/**
+ * 
+ * @category GeomObject
+ */
 export default RegularPolygon

@@ -1,12 +1,12 @@
-import Transformation from "../transformation";
-import { Options, GraphicImplType, CanvasDirective, SvgDirective } from "../types";
+import Geomtoy from "..";
 declare abstract class GeomObject {
-    options: Options;
-    abstract apply(transformation: Transformation): GeomObject;
+    #private;
+    constructor(o: Geomtoy);
+    get owner(): Geomtoy;
+    set owner(value: Geomtoy);
     abstract clone(): GeomObject;
     abstract toString(): string;
+    abstract toArray(): Array<any>;
     abstract toObject(): object;
-    abstract toArray(): [...value: any[]];
-    abstract getGraphic(type: GraphicImplType): Array<SvgDirective | CanvasDirective>;
 }
 export default GeomObject;

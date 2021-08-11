@@ -13,15 +13,14 @@ export type Options = {
         }
     }
     fillRule: "nonzero" | "evenodd"
-    pathSampleRatio: 100
-    global: {
+    pathSampleRatio: 100,
+    coordinateSystem:{
         xAxisPositiveOnRight: boolean
         yAxisPositiveOnBottom: boolean
         originX: number
         originY: number
         scale: number
     }
-    [key: string]: any
 }
 export const defaultOptions: Options = {
     epsilon: 2 ** -11,
@@ -36,7 +35,7 @@ export const defaultOptions: Options = {
     },
     fillRule: "evenodd",
     pathSampleRatio: 100,
-    global: {
+    coordinateSystem:{
         xAxisPositiveOnRight: true,
         yAxisPositiveOnBottom: true,
         originX: 0,
@@ -44,9 +43,6 @@ export const defaultOptions: Options = {
         scale: 1
     }
 }
-
-export type Coordinate = [x: number, y: number]
-export type Size = [width: number, height: number]
 
 // Relationship here only means the positional relationship not belonging relationship.
 // So if it is a special belonging, equaling object of other objects, it is not a positional relationship
@@ -83,11 +79,7 @@ export enum RsSegmentToSegment {
     Separated = 2 << 6
 }
 
-export enum RsLineToCircle {
-    Intersected = 2,
-    Tangent = 2 << 1,
-    Separated = 2 << 2
-}
+
 export enum RsCircleToCircle {
     Intersected = 2,
     InternallyTangent = 2 << 1,

@@ -1,7 +1,8 @@
 import Geomtoy from ".."
 import GeomObject from "../base/GeomObject"
+import { Visible } from "../interfaces"
 
-export default class {
+export default class VanillaSvg {
     svgContainer: SVGGElement | SVGSVGElement
     geomtoy: Geomtoy
 
@@ -14,10 +15,10 @@ export default class {
         throw new Error(`[G]Unable to initialize.`)
     }
     setup() {
-        let gt = this.geomtoy.getGlobalTransformation()
+        let gt = this.geomtoy.globalTransformation
         this.svgContainer.setAttribute("transform", `matrix(${gt.a} ${gt.b} ${gt.c} ${gt.d} ${gt.e} ${gt.f})`)
     }
-    draw(object: GeomObject) {
+    draw(object: GeomObject & Visible) {
         let ds = object.getGraphic("svg"),
             elemPath = document.createElementNS("http://www.w3.org/2000/svg", "path"),
             attrD = ""

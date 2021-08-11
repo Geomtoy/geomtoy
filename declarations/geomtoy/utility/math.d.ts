@@ -19,10 +19,20 @@ declare const math: {
     sin: (n: number) => number;
     tan: (n: number) => number;
     /**
+     * Lerp between `u` and `v` by `t`
+     * @see {@link https://en.wikipedia.org/wiki/Linear_interpolation}
+     * @param {number} u
+     * @param {number} v
+     * @param {number} t
+     * @returns {number}
+     */
+    lerp: (u: number, v: number, t: number) => number;
+    /**
      * Clamps number `n` between the lower bound `l` and the upper bound `u`
      * @param {number} n
      * @param {number} l
      * @param {number} u
+     * @returns {number}
      */
     clamp: (n: number, l: number, u: number) => number;
     /**
@@ -33,7 +43,7 @@ declare const math: {
      *
      * Conclusion:
      * - Set parameter `epsilon`
-     * - First use `absEpsilon = epsilon`, check whether the difference between the two numbers is very close to 0("[-epsilon,epsilon]"), mainly deal with the difference of the decimal part
+     * - First use `absEpsilon = epsilon`, check whether the difference between the two numbers is very close to 0(`[-epsilon, epsilon]`), mainly deal with the difference of the decimal part
      * - Then calculate `relEpsilon` according to the magnitude: `relEpsilon = magnitude * epsilon`, mainly dealing with the difference of the integer part
      */
     /**
@@ -63,9 +73,9 @@ declare const math: {
     /**
      * Strictly determine the sign of a number
      * @summary
-     * - If `n` is in "(-Infinity,-epsilon)", then `-1`
-     * - If `n` is in "[-epsilon,epsilon]", then `0`
-     * - If `n` is in "(epsilon,+Infinity)", then `1`
+     * - If `n` is in `(-Infinity, -epsilon)`, then -1
+     * - If `n` is in `[-epsilon, epsilon]`, then 0
+     * - If `n` is in `(epsilon, +Infinity)`, then 1
      * @param {number} n
      * @param {number} epsilon
      * @returns {number}

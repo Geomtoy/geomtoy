@@ -1,6 +1,0 @@
-{
-    "entryPoints": ["./src/geomtoy/"],
-    "out": "type-doc",
-    "excludePrivate":true,
-    "excludeInternal":true
-}

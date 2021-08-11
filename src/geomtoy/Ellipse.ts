@@ -1,71 +1,101 @@
-
 import Graphic from "./graphic"
 import Point from "./Point"
 import Vector from "./Vector"
-import type from "./utility/type"
-import { GraphicImplType, Coordinate } from "./types"
-import { is, sealed } from "./decorator"
+import util from "./utility"
+import { GraphicImplType } from "./types"
+import { is, sameOwner, sealed } from "./decorator"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
+import Geomtoy from "."
+import { AreaMeasurable } from "./interfaces"
+import coord from "./helper/coordinate"
 
 @sealed
-class Ellipse extends GeomObject {
-    
-    #centerPoint: Point | undefined
-    #radiusX: number | undefined
-    #radiusY: number | undefined
-    #rotation :number | undefined
+class Ellipse extends GeomObject implements AreaMeasurable {
+    #name = "Ellipse"
+    #uuid = util.uuid()
 
-    constructor(centerPosition: Coordinate | Point | Vector, radiusX: number, radiusY: number,rotation:number) {
-        super()
-        let a1 = centerPosition,
-            a2 = radiusX,
-            a3 = radiusY
+    #centerCoordinate: [number, number] = [NaN, NaN]
+    #radiusX: number = NaN
+    #radiusY: number = NaN
+    #rotation: number = NaN
 
-        if ((type.isCoordinate(a1) || a1 instanceof Point || a1 instanceof Vector) && type.isNumber(a2) && type.isNumber(a3)) {
-            let cp = new Point(a1)
-            Object.seal(Object.assign(this, { centerPoint: cp, radiusX: a2, radiusY: a3 }))
-            return this
+    constructor(owner: Geomtoy, centerX: number, centerY: number, radiusX: number, radiusY: number, rotation?: number)
+    constructor(owner: Geomtoy, centerCoordinate: [number, number], radiusX: number, radiusY: number, rotation?: number)
+    constructor(owner: Geomtoy, centerPoint: Point, radiusX: number, radiusY: number, rotation?: number)
+    constructor(o: Geomtoy, a1: any, a2: any, a3: any, a4?: any, a5?: any) {
+        super(o)
+        if (util.isNumber(a1) && util.isNumber(a2)) {
+            return Object.seal(util.assign(this, { centerX: a1, centerY: a2, radiusX: a3, radiusY: a4, rotation: a5 ?? 0 }))
         }
-        throw new Error(`[G]Arguments can NOT construct a ellipse.`)
+        if (util.isArray(a1)) {
+            return Object.seal(util.assign(this, { centerCoordinate: a1, radiusX: a2, radiusY: a3, rotation: a4 ?? 0 }))
+        }
+        if (a1 instanceof Point) {
+            return Object.seal(Object.assign(this, { centerPoint: a1, radiusX: a2, radiusY: a3, rotation: a4 ?? 0 }))
+        }
+        throw new Error("[G]Arguments can NOT construct an `Ellipse`.")
+    }
+    get name() {
+        return this.#name
+    }
+    get uuid() {
+        return this.#uuid
     }
 
+    @is("realNumber")
+    get centerX() {
+        return coord.x(this.#centerCoordinate)
+    }
+    set centerX(value) {
+        coord.x(this.#centerCoordinate, value)
+    }
+    @is("realNumber")
+    get centerY() {
+        return coord.y(this.#centerCoordinate)
+    }
+    set centerY(value) {
+        coord.y(this.#centerCoordinate, value)
+    }
+    @is("coordinate")
+    get centerCoordinate() {
+        return coord.copy(this.#centerCoordinate)
+    }
+    set centerCoordinate(value) {
+        coord.assign(this.#centerCoordinate, value)
+    }
+    @sameOwner
     @is("point")
     get centerPoint() {
-        return this.#centerPoint!
+        return new Point(this.owner, this.#centerCoordinate)
     }
     set centerPoint(value) {
-        this.#centerPoint = value
+        coord.assign(this.#centerCoordinate, value.coordinate)
     }
     @is("positiveNumber")
     get radiusX() {
-        return this.#radiusX!
+        return this.#radiusX
     }
     set radiusX(value) {
         this.#radiusX = value
     }
     @is("positiveNumber")
     get radiusY() {
-        return this.#radiusY!
+        return this.#radiusY
     }
     set radiusY(value) {
         this.#radiusY = value
     }
     @is("realNumber")
-    get rotation (){
-        return this.#rotation!
+    get rotation() {
+        return this.#rotation
     }
-    set rotation (value){
+    set rotation(value) {
         this.#rotation = value
     }
- 
 
-    getEccentricity(){
+    getEccentricity() {}
 
-        
-    }
-
-    
     clone(): GeomObject {
         throw new Error("Method not implemented.")
     }
@@ -78,7 +108,6 @@ class Ellipse extends GeomObject {
     toArray(): any[] {
         throw new Error("Method not implemented.")
     }
-
 
     getGraphic(type: GraphicImplType) {
         let x = this.centerPoint.x,
@@ -93,17 +122,20 @@ class Ellipse extends GeomObject {
     }
 
     //https://www.coder.work/article/1220553
-    static findTangentLineOfTwoEllipse(ellipse1:Ellipse, ellipse2:Ellipse){
-
-    }
+    static findTangentLineOfTwoEllipse(ellipse1: Ellipse, ellipse2: Ellipse) {}
 
     //https://zhuanlan.zhihu.com/p/64550850
-    static findTangentLineOfEllipseAndParabola(){}
+    static findTangentLineOfEllipseAndParabola() {}
 
     apply(transformation: Transformation): GeomObject {
         throw new Error("Method not implemented.")
     }
-   
+    getPerimeter(): number {
+        throw new Error("Method not implemented.")
+    }
+    getArea(): number {
+        throw new Error("Method not implemented.")
+    }
 
     getGraphicAlt(type: GraphicImplType) {
         /**
@@ -127,4 +159,8 @@ class Ellipse extends GeomObject {
     }
 }
 
+/**
+ * 
+ * @category GeomObject
+ */
 export default Ellipse

@@ -1,27 +1,33 @@
 import Point from "./Point";
 import Line from "./Line";
 import RegularPolygon from "./RegularPolygon";
-import { CanvasDirective, Coordinate, GraphicImplType, SvgDirective } from "./types";
+import { CanvasDirective, GraphicImplType, SvgDirective } from "./types";
 import GeomObject from "./base/GeomObject";
 import Transformation from "./transformation";
+import Geomtoy from ".";
 declare class Circle extends GeomObject {
     #private;
-    constructor(radius: number, centerX: number, centerY: number);
-    constructor(radius: number, centerPosition: Coordinate | Point);
+    constructor(owner: Geomtoy, radius: number, centerX: number, centerY: number);
+    constructor(owner: Geomtoy, radius: number, centerCoordinate: [number, number]);
+    constructor(owner: Geomtoy, radius: number, centerPoint: Point);
+    get name(): string;
+    get uuid(): string;
     get radius(): number;
     set radius(value: number);
-    get cx(): number;
-    set cx(value: number);
-    get cy(): number;
-    set cy(value: number);
+    get centerX(): number;
+    set centerX(value: number);
+    get centerY(): number;
+    set centerY(value: number);
+    get centerCoordinate(): [number, number];
+    set centerCoordinate(value: [number, number]);
     get centerPoint(): Point;
     set centerPoint(value: Point);
     isSameAs(circle: Circle): boolean;
     isConcentricWithCircle(circle: Circle): boolean;
     isIntersectedWithCircle(circle: Circle): boolean;
-    isInternallyTangentWithCircle(circle: Circle): boolean;
-    isExternallyTangentWithCircle(circle: Circle): boolean;
-    isTangentWithCircle(circle: Circle): boolean;
+    isInternallyTangentToCircle(circle: Circle): boolean;
+    isExternallyTangentToCircle(circle: Circle): boolean;
+    isTangentToCircle(circle: Circle): boolean;
     isWrappingOutsideCircle(circle: Circle): boolean;
     isWrappedInsideCircle(circle: Circle): boolean;
     isSeparatedFromCircle(circle: Circle): boolean;
@@ -75,7 +81,7 @@ declare class Circle extends GeomObject {
      * @param {circle} circle2
      * @returns {Array<object> | null}
      */
-    static getCommonTangentDataOfTwoCircles(circle1: Circle, circle2: Circle): {
+    static getCommonTangentDataOfTwoCircles(owner: Geomtoy, circle1: Circle, circle2: Circle): {
         line: any;
         points: any[];
     }[] | null;
@@ -86,7 +92,7 @@ declare class Circle extends GeomObject {
      * @param {Point} point
      * @returns {Array<Circle> | null}
      */
-    static getCommonTangentCirclesOfTwoCirclesThroughPointNotOn(circle1: Circle, circle2: Circle, point: Point): Array<Circle> | null;
+    static getCommonTangentCirclesOfTwoCirclesThroughPointNotOn(owner: Geomtoy, circle1: Circle, circle2: Circle, point: Point): Array<Circle> | null;
     getInscribedRegularPolygon(sideCount: number, angle?: number): RegularPolygon;
     getGraphic(type: GraphicImplType): (SvgDirective | CanvasDirective)[];
     apply(transformation: Transformation): GeomObject;
@@ -94,8 +100,8 @@ declare class Circle extends GeomObject {
     toArray(): number[];
     toObject(): {
         radius: number;
-        cx: number;
-        cy: number;
+        centerX: number;
+        centerY: number;
     };
     toString(): string;
 }

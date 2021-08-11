@@ -1,5 +1,4 @@
 import Matrix from "./Matrix"
-import Point from "../Point"
 import Line from "../Line"
 import { is, sealed } from "../decorator"
 
@@ -25,20 +24,6 @@ class LineReflection extends Matrix {
         this.#line = value
         this.#lineReflection()
     }
-
-    static get yAxis() {
-        return new LineReflection(Line.fromPoints(Point.zero, new Point(0, 1)))
-    }
-    static get xAxis() {
-        return new LineReflection(Line.fromPoints(Point.zero, new Point(1, 0)))
-    }
-    static get yEqPositiveX() {
-        return new LineReflection(Line.fromPoints(Point.zero, new Point(1, 1)))
-    }
-    static get yEqNegativeX() {
-        return new LineReflection(Line.fromPoints(Point.zero, new Point(-1, -1)))
-    }
-
     #lineReflection() {
         let la = this.#line!.a,
             lb = this.#line!.b,

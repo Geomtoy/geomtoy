@@ -4,6 +4,11 @@ const vec2 = {
     from([ux, uy]: [number, number], [vx, vy]: [number, number]): [number, number] {
         return vec2.subtract([vx, vy], [ux, uy])
     },
+    from2(angle: number, magnitude: number): [number, number] {
+        let x = magnitude * Math.cos(angle),
+            y = magnitude * Math.sin(angle)
+        return [x, y]
+    },
     angle([x, y]: [number, number]): number {
         return math.atan2(y, x)
     },

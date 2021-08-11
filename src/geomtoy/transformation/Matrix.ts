@@ -1,16 +1,12 @@
-import Point from "../Point"
 import LineReflection from "./LineReflection"
 import PointReflection from "./PointReflection"
 import Rotation from "./Rotation"
 import Scaling from "./Scaling"
 import Skewing from "./Skewing"
 import Translation from "./Translation"
-import math from "../utility/math" 
-import { Coordinate } from "../types"
-import Vector from "../Vector"
+import math from "../utility/math"
 import { is, sealed } from "../decorator"
 import util from "../utility"
-import type from "../utility/type"
 
 @sealed
 class Matrix {
@@ -36,7 +32,7 @@ class Matrix {
     constructor(m: PointReflection)
     constructor()
     constructor(a?: any, b?: any, c?: any, d?: any, e?: any, f?: any) {
-        if (util.every([a, b, c, d, e, f], type.isNumber)) {
+        if (util.every([a, b, c, d, e, f], util.isNumber)) {
             Object.seal(Object.assign(this, { a, b, c, d, e, f }))
             return this
         }
@@ -107,6 +103,10 @@ class Matrix {
 
     isIdentity(): boolean {
         return this.isSameAs(Matrix.identity)
+    }
+
+    resetToIdentity() {
+        util.assign(this, { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 })
     }
 
     preMultiply(matrix: Matrix): Matrix {
@@ -186,40 +186,34 @@ class Matrix {
         return { a, b, c, d, e, f }
     }
 
-    transformCoordinate(coordinate: Coordinate): Coordinate {
+    transformCoordinate(coordinate: [number, number]): [number, number] {
         let { a, b, c, d, e, f } = this,
             [x, y] = coordinate,
             tx = a * x + c * y + e,
             ty = b * x + d * y + f
         return [tx, ty]
     }
-    transformPoint(point: Point): Point {
-        return new Point(this.transformCoordinate(point.getCoordinate()))
-    }
-    transformVector(vector: Vector): Vector {
-        return new Vector(vector.point1, this.transformCoordinate(vector.getCoordinate()))
-    }
     /**
-     * Convert the point corresponding to the identity matrix (in the initial state without transformation)
-     * to the point with the current transformation,
-     * and the actual position of the point will not change
-     * @param point
-     * @returns
+     * Convert the coordinate corresponding to the identity matrix (in the initial state without transformation)
+     * to the coordinate with the current transformation,
+     * and the visual position of the coordinate will not change
+     * @param {[number,number]} coordinate
+     * @returns {[number,number]}
      */
-    pointBeforeTransformed(point: Point) {
+    beforeTransformed(coordinate: [number, number]): [number, number] {
         let m = this.inverse()
         if (!(m instanceof Matrix)) throw new Error(`[G]\`Matrix:\` ${this.toString()} is NOT invertible.`)
-        return m.transformPoint(point)
+        return m.transformCoordinate(coordinate)
     }
     /**
-     * Convert the point with the current transformation
-     * to the point corresponding to the identity matrix (in the initial state without transformation),
-     * and the actual position of the point will not change
-     * @param point
-     * @returns
+     * Convert the coordinate with the current transformation
+     * to the coordinate corresponding to the identity matrix (in the initial state without transformation),
+     * and the visual position of the coordinate will not change
+     * @param {[number,number]} coordinate
+     * @returns {[number,number]}
      */
-    pointAfterTransformed(point: Point) {
-        return this.transformPoint(point)
+    afterTransformed(coordinate: [number, number]): [number, number] {
+        return this.transformCoordinate(coordinate)
     }
 
     /**
@@ -320,7 +314,7 @@ class Matrix {
 
     clone(): Matrix {
         let { a, b, c, d, e, f } = this
-        return new Matrix(...(<[number, number, number, number, number, number]>[a, b, c, d, e, f]))
+        return new Matrix(a, b, c, d, e, f)
     }
 
     toString(): string {

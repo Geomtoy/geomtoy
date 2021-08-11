@@ -1,139 +1,157 @@
+import util from "./utility"
+
 import Point from "./Point"
-import type from "./utility/type"
-import { Size, Coordinate, CanvasDirective, GraphicImplType, SvgDirective } from "./types"
+import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import { is, sealed } from "./decorator"
 import math from "./utility/math"
+import Geomtoy from "."
+import coord from "./helper/coordinate"
+import size from "./helper/size"
 
 @sealed
 class Rectangle extends GeomObject {
-    #originPoint: Point | undefined
-    #width: number | undefined
-    #height: number | undefined
+    #name = "Rectangle"
+    #uuid = util.uuid()
 
-    constructor(x: number, y: number, width: number, height: number)
-    constructor(x: number, y: number, size: Size)
-    constructor(position: Coordinate | Point, width: number, height: number)
-    constructor(position: Coordinate | Point, size: Size)
-    constructor(a1: any, a2: any, a3?: any, a4?: any) {
-        super()
-        if (type.isNumber(a1) && type.isNumber(a2)) {
-            if (type.isNumber(a3) && type.isNumber(a4)) {
-                let p = new Point(a1, a2)
-                Object.seal(Object.assign(this, { originPoint: p, width: a3, height: a4 }))
-                return this
+    #originCoordinate: [number, number] = [NaN, NaN]
+    #size: [number, number] = [NaN, NaN]
+
+    constructor(owner: Geomtoy, originX: number, originY: number, width: number, height: number)
+    constructor(owner: Geomtoy, originX: number, originY: number, size: [number, number])
+    constructor(owner: Geomtoy, originCoordinate: [number, number], width: number, height: number)
+    constructor(owner: Geomtoy, originCoordinate: [number, number], size: [number, number])
+    constructor(owner: Geomtoy, originPoint: Point, width: number, height: number)
+    constructor(owner: Geomtoy, originPoint: Point, size: [number, number])
+    constructor(o: Geomtoy, a1: any, a2: any, a3?: any, a4?: any) {
+        super(o)
+        if (util.isNumber(a1) && util.isNumber(a2)) {
+            if (util.isNumber(a3) && util.isNumber(a4)) {
+                return Object.seal(util.assign(this, { originX: a1, originY: a2, width: a3, height: a4 }))
             }
-            if (type.isSize(a3)) {
-                let p = new Point(a1, a2),
-                    [w, h] = a3
-                Object.seal(Object.assign(this, { originPoint: p, width: w, height: h }))
-                return this
+            if (util.isArray(a3)) {
+                return Object.seal(util.assign(this, { originX: a1, originY: a2, size: a3 }))
             }
         }
-        if (type.isCoordinate(a1) || a1 instanceof Point) {
-            if (type.isNumber(a2) && type.isNumber(a3)) {
-                let p = new Point(a1)
-                Object.seal(Object.assign(this, { originPoint: p, width: a2, height: a3 }))
-                return this
+        if (util.isArray(a1)) {
+            if (util.isNumber(a2) && util.isNumber(a3)) {
+                return Object.seal(util.assign(this, { originCoordinate: a1, width: a2, height: a3 }))
             }
-            if (type.isSize(a2)) {
-                let p = new Point(a1),
-                    [w, h] = a2
-                Object.seal(Object.assign(this, { originPoint: p, width: w, height: h }))
-                return this
+            if (util.isArray(a2)) {
+                return Object.seal(util.assign(this, { originCoordinate: a1, size: a2 }))
+            }
+        }
+
+        if (a1 instanceof Point) {
+            if (util.isNumber(a2) && util.isNumber(a3)) {
+                return Object.seal(util.assign(this, { originPoint: a1, width: a2, height: a3 }))
+            }
+            if (util.isArray(a2)) {
+                return Object.seal(util.assign(this, { originPoint: a1, size: a2 }))
             }
         }
         throw new Error(`[G]Arguments can NOT construct a rectangle.`)
     }
+    get name() {
+        return this.#name
+    }
+    get uuid() {
+        return this.#uuid
+    }
 
+    @is("realNumber")
+    get originX() {
+        return coord.x(this.#originCoordinate)
+    }
+    set originX(value) {
+        coord.x(this.#originCoordinate, value)
+    }
+    @is("realNumber")
+    get originY() {
+        return coord.y(this.#originCoordinate)
+    }
+    set originY(value) {
+        coord.y(this.#originCoordinate, value)
+    }
+    @is("coordinate")
+    get originCoordinate() {
+        return coord.copy(this.#originCoordinate)
+    }
+    set originCoordinate(value) {
+        coord.assign(this.#originCoordinate, value)
+    }
     @is("point")
     get originPoint() {
-        return this.#originPoint!
+        return new Point(this.owner, this.#originCoordinate)
     }
     set originPoint(value) {
-        this.#originPoint = value
-    }
-    @is("realNumber")
-    get x() {
-        return this.#originPoint!.x
-    }
-    set x(value) {
-        this.#originPoint!.x = value
-    }
-    @is("realNumber")
-    get y() {
-        return this.#originPoint!.y
-    }
-    set y(value) {
-        this.#originPoint!.y = value
+        coord.assign(this.#originCoordinate, value.coordinate)
     }
     @is("positiveNumber")
     get width() {
-        return this.#width!
+        return size.width(this.#size)
     }
     set width(value) {
-        this.#width = value
+        size.width(this.#size, value)
     }
     @is("positiveNumber")
     get height() {
-        return this.#height!
+        return size.height(this.#size)
     }
     set height(value) {
-        this.#height = value
+        size.height(this.#size, value)
     }
     @is("size")
-    get size(): Size {
-        return [this.width, this.height]
+    get size() {
+        return size.copy(this.#size)
     }
-    set size(value: Size) {
-        this.#width = value[0]
-        this.#height = value[1]
+    set size(value) {
+        size.assign(this.#size, value)
     }
 
-    static fromPoints(point1: Point, point2: Point) {
+    static fromPoints(owner: Geomtoy, point1: Point, point2: Point) {
         if (point1.isSameAs(point2)) {
             throw new Error(`[G]Diagonal endpoints \`point1\` and \`point2\` of a rectangle can NOT be the same.`)
         }
-
         let { x: x1, y: y1 } = point1,
             { x: x2, y: y2 } = point2,
             minX = math.min(...[x1, x2])!,
             minY = math.min(...[y1, y2])!,
             dx = math.abs(x1 - x2),
             dy = math.abs(y1 - y2)
-        return new Rectangle([minX, minY], dx, dy)
+        return new Rectangle(owner, [minX, minY], dx, dy)
     }
 
     getCornerPoint(corner: "leftTop" | "rightTop" | "rightBottom" | "leftBottom"): Point {
-        let xRight = this.options.global.xAxisPositiveOnRight,
-            yBottom = this.options.global.yAxisPositiveOnBottom,
-            { x, y, width: w, height: h } = this,
-            lt: Coordinate = [x, y],
-            rt: Coordinate = [x + w, y],
-            rb: Coordinate = [x + w, y + h],
-            lb: Coordinate = [x, y + h]
+        let xRight = this.owner.getOptions().coordinateSystem.xAxisPositiveOnRight,
+            yBottom = this.owner.getOptions().coordinateSystem.yAxisPositiveOnBottom,
+            { originX: x, originY: y, width: w, height: h } = this,
+            lt: [number, number] = [x, y],
+            rt: [number, number] = [x + w, y],
+            rb: [number, number] = [x + w, y + h],
+            lb: [number, number] = [x, y + h]
         if (!xRight) ([lt, rt] = [rt, lt]), ([lb, rb] = [rb, lb])
         if (!yBottom) ([lt, lb] = [lb, lt]), ([rt, rb] = [rb, rt])
-        let ret = Point.zero
+        let ret = Point.zero(this.owner)
         if (corner === "leftTop") {
-            ret = new Point(lt)
+            ret = new Point(this.owner, lt)
         }
         if (corner === "rightTop") {
-            ret = new Point(rt)
+            ret = new Point(this.owner, rt)
         }
         if (corner === "rightBottom") {
-            ret = new Point(rb)
+            ret = new Point(this.owner, rb)
         }
         if (corner === "leftBottom") {
-            ret = new Point(lb)
+            ret = new Point(this.owner, lb)
         }
         return ret
     }
     getBounding(side: "left" | "right" | "top" | "bottom"): number {
-        let xRight = this.options.global.xAxisPositiveOnRight,
-            yBottom = this.options.global.yAxisPositiveOnBottom,
-            { x, y, width: w, height: h } = this,
+        let xRight = this.owner.getOptions().coordinateSystem.xAxisPositiveOnRight,
+            yBottom = this.owner.getOptions().coordinateSystem.yAxisPositiveOnBottom,
+            { originX: x, originY: y, width: w, height: h } = this,
             l = x,
             r = x + w,
             t = y,
@@ -160,16 +178,16 @@ class Rectangle extends GeomObject {
         return this.clone().moveSelf(offsetX, offsetY)
     }
     moveSelf(offsetX: number, offsetY: number): Rectangle {
-        this.x += offsetX
-        this.y += offsetY
+        this.originX += offsetX
+        this.originY += offsetY
         return this
     }
 
-    inflate(size: Size) {
+    inflate(size: [number, number]) {
         return this.clone().inflateSelf(size)
     }
-    inflateSelf(size: Size) {
-        let { x, y, width: w, height: h } = this,
+    inflateSelf(size: [number, number]) {
+        let { originX: x, originY: y, width: w, height: h }  = this,
             [sw, sh] = size,
             nx = x - sw,
             ny = y - sh,
@@ -178,15 +196,35 @@ class Rectangle extends GeomObject {
         if (nw <= 0 || nh <= 0) {
             return this
         }
-        this.x = nx
-        this.y = ny
+        this.originX = nx
+        this.originY = ny
         this.width = nw
         this.height = nh
         return this
     }
 
-    clone(withTransformation = true) {
-        return new Rectangle(this.x, this.y, this.width, this.height)
+    // keepAspectRadioAndFit(size, keepInside = true) {
+    //     if (this.width === 0) {
+    //         return new Size(0, size.height)
+    //     }
+    //     if (this.height === 0) {
+    //         return new Size(size.width, 0)
+    //     }
+    //     let nw = (this.width / this.height) * size.height,
+    //         nh = (this.height / this.width) * size.width
+
+    //     if (nw === size.width && nh === size.height) {
+    //         return new Size(size)
+    //     }
+    //     if ((nw < size.width) ^ keepInside) {
+    //         return new Size(nw, size.height)
+    //     } else {
+    //         return new Size(size.width, nh)
+    //     }
+    // }
+
+    clone() {
+        return new Rectangle(this.owner,this.originCoordinate, this.size)
     }
     apply(transformation: Transformation): GeomObject {
         throw new Error("Method not implemented.")
@@ -221,4 +259,8 @@ class Rectangle extends GeomObject {
     // }
 }
 
+/**
+ * 
+ * @category GeomObject
+ */
 export default Rectangle

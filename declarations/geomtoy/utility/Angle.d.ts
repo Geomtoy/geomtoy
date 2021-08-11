@@ -1,12 +1,12 @@
 declare const angle: {
     /**
-     * Simplify angle `a` to [0, 2*Math.PI)
+     * Simplify angle `a` into the interval `[0, 2*Math.PI)`
      * @param {number} a
      * @returns {number}
      */
     simplify(a: number): number;
     /**
-     * Simplify angle `a` to (-Math.PI, Math.PI]
+     * Simplify angle `a` into the interval `(-Math.PI, Math.PI]`
      * @param {number} a
      * @returns {number}
      */

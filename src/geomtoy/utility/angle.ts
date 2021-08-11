@@ -1,6 +1,6 @@
 const angle = {
     /**
-     * Simplify angle `a` to [0, 2*Math.PI)
+     * Simplify angle `a` into the interval `[0, 2*Math.PI)`
      * @param {number} a
      * @returns {number}
      */
@@ -9,7 +9,7 @@ const angle = {
         return t < 0 ? t + 2 * Math.PI : t
     },
     /**
-     * Simplify angle `a` to (-Math.PI, Math.PI]
+     * Simplify angle `a` into the interval `(-Math.PI, Math.PI]`
      * @param {number} a
      * @returns {number}
      */

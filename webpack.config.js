@@ -42,7 +42,7 @@ module.exports = function (env, argv) {
         devtool: dev ? "eval-cheap-module-source-map" : "source-map",
         devServer: {
             contentBase: path.join(__dirname, "public"),
-            compress: true,
+            // compress: true,
             historyApiFallback: true,
             hot: true
         },

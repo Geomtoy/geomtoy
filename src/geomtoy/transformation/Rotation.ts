@@ -2,7 +2,7 @@ import Matrix from "./Matrix"
 import Translation from "./Translation"
 import Point from "../Point"
 import { is, sealed } from "../decorator"
-import type from "../utility/type"
+import util from "../utility"
 
 @sealed
 class Rotation extends Matrix {
@@ -14,7 +14,7 @@ class Rotation extends Matrix {
     constructor()
     constructor(a?: any, o?: any) {
         super()
-        if (type.isNumber(a)) {
+        if (util.isNumber(a)) {
             if (o instanceof Point) {
                 Object.seal(Object.assign({ angle: a, origin: o }))
                 this.#rotation()

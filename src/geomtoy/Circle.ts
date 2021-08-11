@@ -2,7 +2,6 @@ import math from "./utility/math"
 import util from "./utility"
 import angle from "./utility/angle"
 import vec2 from "./utility/vec2"
-import type from "./utility/type"
 
 import Point from "./Point"
 import Line from "./Line"
@@ -10,114 +9,138 @@ import RegularPolygon from "./RegularPolygon"
 
 import Vector from "./Vector"
 import Segment from "./Segment"
-import Inversion from "./inversion/Inversion"
-import { CanvasDirective, Coordinate, GraphicImplType, RsPointToCircle, SvgDirective } from "./types"
-import { is, sealed } from "./decorator"
+import Inversion from "./inversion"
+import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
+import { is, sameOwner, sealed } from "./decorator"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
+import Graphic from "./graphic"
+import Geomtoy from "."
+import coord from "./helper/coordinate"
 
 @sealed
 class Circle extends GeomObject {
-    #radius: number | undefined
-    #centerPoint: Point | undefined
+    #name = "Circle"
+    #uuid = util.uuid()
 
-    constructor(radius: number, centerX: number, centerY: number)
-    constructor(radius: number, centerPosition: Coordinate | Point)
-    constructor(a1: number, a2: any, a3?: any) {
-        super()
-        if (type.isNumber(a2) && type.isNumber(a3)) {
-            let p = new Point(a2, a3)
-            return Object.seal(Object.assign(this, { radius: a1, centerPoint: p }))
+    #radius: number = NaN
+    #centerCoordinate: [number, number] = [NaN, NaN]
+
+    constructor(owner: Geomtoy, radius: number, centerX: number, centerY: number)
+    constructor(owner: Geomtoy, radius: number, centerCoordinate: [number, number])
+    constructor(owner: Geomtoy, radius: number, centerPoint: Point)
+    constructor(o: Geomtoy, a1: number, a2: any, a3?: any) {
+        super(o)
+        if (util.isNumber(a2) && util.isNumber(a3)) {
+            return Object.seal(util.assign(this, { radius: a1, centerX: a2, centerY: a3 }))
         }
-        if (type.isCoordinate(a2) || a2 instanceof Point) {
-            let p = new Point(a2)
-            return Object.seal(Object.assign(this, { radius: a1, centerPoint: p }))
+        if (util.isArray(a2)) {
+            return Object.seal(util.assign(this, { radius: a1, centerCoordinate: a2 }))
         }
-        throw new Error(`[G]Arguments can NOT construct a circle.`)
+        if (a2 instanceof Point) {
+            return Object.seal(util.assign(this, { radius: a1, centerPoint: a2 }))
+        }
+        throw new Error("[G]Arguments can NOT construct a `Circle`.")
     }
+    get name() {
+        return this.#name
+    }
+    get uuid() {
+        return this.#uuid
+    }
+
     @is("positiveNumber")
     get radius() {
-        return this.#radius!
+        return this.#radius
     }
     set radius(value) {
         this.#radius = value
     }
     @is("realNumber")
-    get cx() {
-        return this.#centerPoint!.x
+    get centerX() {
+        return coord.x(this.#centerCoordinate)
     }
-    set cx(value) {
-        this.#centerPoint!.x = value
+    set centerX(value) {
+        coord.x(this.#centerCoordinate, value)
     }
     @is("realNumber")
-    get cy() {
-        return this.#centerPoint!.y
+    get centerY() {
+        return coord.y(this.#centerCoordinate)
     }
-    set cy(value) {
-        this.#centerPoint!.y = value
+    set centerY(value) {
+        coord.y(this.#centerCoordinate, value)
     }
+    @is("coordinate")
+    get centerCoordinate() {
+        return coord.copy(this.#centerCoordinate)
+    }
+    set centerCoordinate(value) {
+        coord.assign(this.#centerCoordinate, value)
+    }
+    @sameOwner
     @is("point")
     get centerPoint() {
-        return this.#centerPoint!
+        return new Point(this.owner, this.#centerCoordinate)
     }
     set centerPoint(value) {
-        this.#centerPoint = value
+        coord.assign(this.#centerCoordinate, value.coordinate)
     }
 
     isSameAs(circle: Circle): boolean {
         if (this === circle) return true
-        let epsilon = this.options.epsilon
-        return this.centerPoint.isSameAs(circle.centerPoint) && math.equalTo(this.radius, circle.radius, epsilon)
+        let epsilon = this.owner.getOptions().epsilon
+        return coord.isSameAs(this.centerCoordinate, circle.centerCoordinate, epsilon) && math.equalTo(this.radius, circle.radius, epsilon)
     }
     isConcentricWithCircle(circle: Circle): boolean {
-        return this.centerPoint.isSameAs(circle.centerPoint)
+        let epsilon = this.owner.getOptions().epsilon
+        return coord.isSameAs(this.centerCoordinate, circle.centerCoordinate, epsilon)
     }
 
     // #region Positional relationships of circle to circle
     // (IdenticalTo)
     // IntersectedWith
-    // InternallyTangentWith
-    // ExternallyTangentWith
-    // TangentWith = InternallyTangentWith | ExternallyTangentWith
+    // InternallyTangentTo
+    // ExternallyTangentTo
+    // TangentTo = InternallyTangentTo | ExternallyTangentTo
     // WrappedInside
     // WrappingOutside
     // SeparatedFrom
 
     isIntersectedWithCircle(circle: Circle) {
-        let sd = circle.centerPoint.getSquaredDistanceFromPoint(this.centerPoint),
+        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
             ssr = (circle.radius + this.radius) ** 2,
             sdr = (circle.radius - this.radius) ** 2,
-            epsilon = this.options.epsilon
+            epsilon = this.owner.getOptions().epsilon
         return math.lessThan(sd, ssr, epsilon) && math.greaterThan(sd, sdr, epsilon)
     }
-    isInternallyTangentWithCircle(circle: Circle): boolean {
-        let sd = circle.centerPoint.getSquaredDistanceFromPoint(this.centerPoint),
+    isInternallyTangentToCircle(circle: Circle): boolean {
+        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
             sdr = (circle.radius - this.radius) ** 2,
-            epsilon = this.options.epsilon
+            epsilon = this.owner.getOptions().epsilon
         return math.equalTo(sd, sdr, epsilon)
     }
-    isExternallyTangentWithCircle(circle: Circle): boolean {
-        let sd = circle.centerPoint.getSquaredDistanceFromPoint(this.centerPoint),
+    isExternallyTangentToCircle(circle: Circle): boolean {
+        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
             ssr = (circle.radius + this.radius) ** 2,
-            epsilon = this.options.epsilon
+            epsilon = this.owner.getOptions().epsilon
         return math.equalTo(sd, ssr, epsilon)
     }
-    isTangentWithCircle(circle: Circle): boolean {
-        return this.isInternallyTangentWithCircle(circle) || this.isExternallyTangentWithCircle(circle)
+    isTangentToCircle(circle: Circle): boolean {
+        return this.isInternallyTangentToCircle(circle) || this.isExternallyTangentToCircle(circle)
     }
     isWrappingOutsideCircle(circle: Circle): boolean {
-        let sd = this.centerPoint.getSquaredDistanceFromPoint(circle.centerPoint),
+        let sd = this.centerPoint.getSquaredDistanceBetweenPoint(circle.centerPoint),
             sdr = (circle.radius - this.radius) ** 2,
-            epsilon = this.options.epsilon
+            epsilon = this.owner.getOptions().epsilon
         return math.greaterThan(this.radius, circle.radius, epsilon) && math.lessThan(sd, sdr, epsilon)
     }
     isWrappedInsideCircle(circle: Circle): boolean {
         return circle.isWrappingOutsideCircle(this)
     }
     isSeparatedFromCircle(circle: Circle): boolean {
-        let sd = circle.centerPoint.getSquaredDistanceFromPoint(this.centerPoint),
+        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
             ssr = (circle.radius + this.radius) ** 2,
-            epsilon = this.options.epsilon
+            epsilon = this.owner.getOptions().epsilon
         return math.greaterThan(sd, ssr, epsilon)
     }
     // #endregion
@@ -133,15 +156,28 @@ class Circle extends GeomObject {
     }
 
     getPointAtAngle(angle: number): Point {
-        let p = this.centerPoint,
+        let cc = this.centerCoordinate,
             r = this.radius
-        return new Point(vec2.add(p.getCoordinate(), [r * Math.cos(angle), r * Math.sin(angle)]))
+        return new Point(this.owner, vec2.add(cc, [r * Math.cos(angle), r * Math.sin(angle)]))
     }
     getAngleOfPoint(point: Point): number {
         if (!point.isOnCircle(this)) return NaN
-        let v = vec2.from(this.centerPoint.getCoordinate(), point.getCoordinate())
+        let v = vec2.from(this.centerCoordinate, point.coordinate)
         return angle.simplify(vec2.angle(v))
     }
+    // getArcBetweenPoints(point1:Point,point2:Point,positive= true):Arc{
+
+    // }
+    // getArcBetweenPoints2(point1:Point,point2:Point,large = true):Arc{
+
+    // }
+    // getArcsBetweenPoints(point1:Point,point2:Point){
+    //     let ret = {
+    //         minor: null, positive:null,  //Minor arc
+    //         major: null, positive:null   //major arc
+    //     }
+
+    // }
 
     getArcAngleBetweenPoints(point1: Point, point2: Point, positive = true): number {
         if (point1.isSameAs(point2)) return NaN
@@ -177,13 +213,13 @@ class Circle extends GeomObject {
     getTangentLineAtPoint(point: Point): Line | null {
         if (!point.isOnCircle(this)) return null
 
-        let { x: x1, y: y1 } = point,
-            { x: x2, y: y2 } = this.centerPoint,
+        let [x1, y1] = point.coordinate,
+            [x2, y2] = this.centerCoordinate,
             r = this.radius,
             a = x1 - x2,
             b = y1 - y2,
             c = -(x2 * (x1 - x2) + y2 * (y1 - y2) + r ** 2)
-        return new Line(a, b, c)
+        return new Line(this.owner, a, b, c)
     }
     getTangentLineAtAngle(angle: number): Line {
         throw new Error()
@@ -199,9 +235,9 @@ class Circle extends GeomObject {
 
         //设圆心为O，圆外一点为P，切线与圆的切点为Q
         let pO = this.centerPoint,
-            vO = new Vector(pO),
+            vO = new Vector(this.owner,pO),
             pP = point,
-            vOP = new Vector(pO, pP),
+            vOP = new Vector(this.owner,pO, pP),
             dist = pO.getDistanceBetweenPoint(pP),
             includedAngle = Math.asin(this.radius / dist),
             data: { [key: string]: any } = {
@@ -210,16 +246,16 @@ class Circle extends GeomObject {
             }
         util.forEach(data, element => {
             let vQ = vO.add(vOP.rotate(includedAngle).scalarMultiply(this.radius / dist)),
-                pQ = Point.fromVector(vQ)
+                pQ = Point.fromVector(this.owner,vQ)
             element.point = pQ
-            element.line = Line.fromPoints(pQ, pP)
+            element.line = Line.fromPoints(this.owner,pQ, pP)
         })
         return data
     }
 
     getInternallyTangentDataWithCircle(circle: Circle): object {
-        if (!this.isInternallyTangentWithCircle(circle)) return {}
-        let p = this.getPointAtAngle(new Vector(this.centerPoint, circle.centerPoint).angle),
+        if (!this.isInternallyTangentToCircle(circle)) return {}
+        let p = this.getPointAtAngle(new Vector(this.owner,this.centerPoint, circle.centerPoint).angle),
             l = this.getTangentLineAtPoint(p)
         return {
             point: p,
@@ -227,8 +263,8 @@ class Circle extends GeomObject {
         }
     }
     getExternallyTangentDataWithCircle(circle: Circle) {
-        if (!this.isExternallyTangentWithCircle(circle)) return null
-        let p = this.getPointAtAngle(new Vector(this.centerPoint, circle.centerPoint).angle),
+        if (!this.isExternallyTangentToCircle(circle)) return null
+        let p = this.getPointAtAngle(new Vector(this.owner,this.centerPoint, circle.centerPoint).angle),
             l = this.getTangentLineAtPoint(p)
         return {
             point: p,
@@ -241,8 +277,8 @@ class Circle extends GeomObject {
      * @returns {boolean}
      */
     isInsideCircle(circle: Circle): boolean {
-        let sd = circle.centerPoint.getSquaredDistanceFromPoint(this.centerPoint),
-            epsilon = this.options.epsilon
+        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
+            epsilon = this.owner.getOptions().epsilon
         return math.lessThan(sd, (circle.radius - this.radius) ** 2, epsilon)
     }
     /**
@@ -251,7 +287,7 @@ class Circle extends GeomObject {
      * @returns {boolean}
      */
     isOutsideCircle(circle: Circle): boolean {
-        let sd = circle.centerPoint.getSquaredDistanceFromPoint(this.centerPoint)
+        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint)
         return math.greaterThan(sd, (circle.radius + this.radius) ** 2)
     }
 
@@ -259,7 +295,7 @@ class Circle extends GeomObject {
         if (!this.isIntersectedWithCircle(circle)) return null
         let pO = this.centerPoint,
             pP = circle.centerPoint,
-            vOP = new Vector(pO, pP),
+            vOP = new Vector(this.owner,pO, pP),
             dist = pO.getDistanceBetweenPoint(pP),
             angle = Math.acos((this.radius ** 2 + dist ** 2 - circle.radius ** 2) / (2 * this.radius * dist)),
             baseAngle = vOP.angle,
@@ -289,12 +325,12 @@ class Circle extends GeomObject {
     //4.两圆相交。有2条公切线，其中：2条外公切线
     //5.两圆外切，有3条公切线，其中：1条两圆自有的外切切线，2条外公切线
     //6.两圆相离，有4条公切线，其中：2条外公切线，2条内公切线
-    static getCommonTangentDataOfTwoCircles(circle1: Circle, circle2: Circle) {
+    static getCommonTangentDataOfTwoCircles(owner:Geomtoy,circle1: Circle, circle2: Circle) {
         let data = [],
-            sd = circle1.centerPoint.getSquaredDistanceFromPoint(circle2.centerPoint), // 圆心距平方,
+            sd = circle1.centerPoint.getSquaredDistanceBetweenPoint(circle2.centerPoint), // 圆心距平方,
             radiusDiff = circle1.radius - circle2.radius, // 半径差
             radiusSum = circle1.radius + circle2.radius, //半径和
-            baseAngle = new Vector(circle2.centerPoint, circle1.centerPoint).angle
+            baseAngle = new Vector(owner,circle2.centerPoint, circle1.centerPoint).angle
 
         //情况3，重合，无限多切线
         if (sd == 0 && circle1.radius == circle2.radius) return null
@@ -330,11 +366,11 @@ class Circle extends GeomObject {
             p4 = circle2.getPointAtAngle(baseAngle - angle)
 
         data.push({
-            line: Line.fromPoints(p1, p2),
+            line: Line.fromPoints(owner,p1, p2),
             points: [p1, p2]
         })
         data.push({
-            line: Line.fromPoints(p3, p4),
+            line: Line.fromPoints(owner,p3, p4),
             points: [p3, p4]
         })
 
@@ -346,11 +382,11 @@ class Circle extends GeomObject {
                 p3 = circle1.getPointAtAngle(baseAngle - angle),
                 p4 = circle2.getPointAtAngle(baseAngle - angle)
             data.push({
-                line: Line.fromPoints(p1, p2),
+                line: Line.fromPoints(owner,p1, p2),
                 points: [p1, p2]
             })
             data.push({
-                line: Line.fromPoints(p3, p4),
+                line: Line.fromPoints(owner,p3, p4),
                 points: [p3, p4]
             })
         }
@@ -368,14 +404,14 @@ class Circle extends GeomObject {
      * @param {Point} point
      * @returns {Array<Circle> | null}
      */
-    static getCommonTangentCirclesOfTwoCirclesThroughPointNotOn(circle1: Circle, circle2: Circle, point: Point): Array<Circle> | null {
+    static getCommonTangentCirclesOfTwoCirclesThroughPointNotOn(owner:Geomtoy,circle1: Circle, circle2: Circle, point: Point): Array<Circle> | null {
         //如果点在其中一个圆上，并不一定能作出公切圆
         //比如半径一样的且相切的两个圆，在圆心连线垂线方向与圆的交点处，无法做出公切圆，此时公切圆的半径无穷大（切线）
         //而且点在其上的这个圆的反演图形是直线，无法求公切线，无法用反演做
 
         if (point.isOnCircle(circle1) || point.isOnCircle(circle2)) return null
 
-        let inversion = new Inversion(10000, point),
+        let inversion = new Inversion(owner,10000, point),
             ivCircle1 = inversion.invertCircle(circle1),
             ivCircle2 = inversion.invertCircle(circle2)
 
@@ -387,28 +423,38 @@ class Circle extends GeomObject {
     }
 
     getInscribedRegularPolygon(sideCount: number, angle = 0) {
-        return new RegularPolygon(this.radius, this.cx, this.cy, sideCount, angle)
+        return new RegularPolygon(this.owner,this.radius, this.centerX, this.centerY, sideCount, angle)
     }
 
     getGraphic(type: GraphicImplType): (SvgDirective | CanvasDirective)[] {
-        throw new Error("Method not implemented.")
+        let { x, y } = this.centerPoint,
+            g = new Graphic()
+
+        g.moveTo(x, y)
+        g.centerArcTo(x, y, this.radius, this.radius, 0, 2 * Math.PI, 0)
+        g.close()
+        return g.valueOf(type)
     }
 
     apply(transformation: Transformation): GeomObject {
         throw new Error("Method not implemented.")
     }
     clone() {
-        return new Circle(this.radius, this.centerPoint)
+        return new Circle(this.owner, this.radius, this.centerPoint)
     }
     toArray() {
-        return [this.radius, this.cx, this.cy]
+        return [this.radius, this.centerX, this.centerY]
     }
     toObject() {
-        return { radius: this.radius, cx: this.cx, cy: this.cy }
+        return { radius: this.radius, centerX: this.centerX, centerY: this.centerY }
     }
     toString() {
-        return `Circle(${this.radius}, ${this.cx}, ${this.cy})`
+        return `Circle(${this.radius}, ${this.centerX}, ${this.centerY})`
     }
 }
 
+/**
+ * 
+ * @category GeomObject
+ */
 export default Circle

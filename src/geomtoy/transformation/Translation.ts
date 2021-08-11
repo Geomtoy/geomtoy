@@ -1,4 +1,4 @@
-import type from "../utility/type"
+import util from "../utility"
 import Matrix from "./Matrix"
 import { is, sealed } from "../decorator"
 
@@ -11,7 +11,7 @@ class Translation extends Matrix {
     constructor()
     constructor(dx?: any, dy?: any) {
         super()
-        if (type.isNumber(dx) && type.isNumber(dy)) {
+        if (util.isNumber(dx) && util.isNumber(dy)) {
             Object.assign(this, { deltaX: dx, deltaY: dy })
             this.#translation()
             return this

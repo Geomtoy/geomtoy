@@ -1,58 +1,50 @@
+import Geomtoy from ".";
+import GeomObject from "./base/GeomObject";
 import Vector from "./Vector";
 import Segment from "./Segment";
 import Line from "./Line";
 import Circle from "./Circle";
-import GeomObject from "./base/GeomObject";
-import { Coordinate, GraphicImplType, CanvasDirective, SvgDirective } from "./types";
 import Transformation from "./transformation";
-declare class Point extends GeomObject {
+import { GraphicImplType, CanvasDirective, SvgDirective } from "./types";
+import { Visible } from "./interfaces";
+declare class Point extends GeomObject implements Visible {
     #private;
-    constructor(x: number, y: number);
-    constructor(position: Coordinate | Point | Vector);
-    constructor();
+    constructor(owner: Geomtoy, x: number, y: number);
+    constructor(owner: Geomtoy, position: [number, number]);
+    get name(): string;
+    get uuid(): string;
     get x(): number;
     set x(value: number);
     get y(): number;
     set y(value: number);
-    static get zero(): Point;
+    get coordinate(): [number, number];
+    set coordinate(value: [number, number]);
+    static zero(owner: Geomtoy): Point;
     /**
-     * Return a point from a coordinate
-     * @param {Coordinate} coordinate
+     * Determine a point from a coordinate.
+     * @param {[number, number]} coordinate
      * @returns {Point}
      */
-    static fromCoordinate(coordinate: Coordinate): Point;
+    static fromCoordinate(owner: Geomtoy, coordinate: [number, number]): Point;
     /**
-     * Return a point from a vector
+     * Determine a point from vector `vector`.
      * @param {Vector} vector
      * @returns {Point}
      */
-    static fromVector(vector: Vector): Point;
+    static fromVector(owner: Geomtoy, vector: Vector): Point;
     /**
-     * Whether point `this` is `Point.zero`
+     * Whether point `this` is `Point.zero()`.
      * @returns {boolean}
      */
     isZero(): boolean;
     /**
-     * Whether point `this` is the same as point `point`
+     * Whether point `this` is the same as point `point`.
      * @param {Point} point
      * @returns {boolean}
      */
     isSameAs(point: Point): boolean;
     /**
-     * Get coordinate from point `this`
-     * @returns {Coordinate}
-     */
-    getCoordinate(): Coordinate;
-    /**
-     * Walk point `this` with a `distance` towards the direction of the `angle`
-     * @param {number} angle
-     * @param {number} distance
-     * @returns {Point}
-     */
-    walk(angle: number, distance: number): Point;
-    walkSelf(angle: number, distance: number): this;
-    /**
-     * Move point `this` by the offset
+     * Move point `this` by offsets `offsetX` and `offsetY`.
      * @param {number} offsetX
      * @param {number} offsetY
      * @returns {Point}
@@ -60,40 +52,73 @@ declare class Point extends GeomObject {
     move(offsetX: number, offsetY: number): Point;
     moveSelf(offsetX: number, offsetY: number): this;
     /**
-     * Get the distance between point `this` and point `point`
+     * Move point `this` with distance `distance` along angle `angle`.
+     * @param {number} angle
+     * @param {number} distance
+     * @returns {Point}
+     */
+    moveAlongAngle(angle: number, distance: number): Point;
+    moveAlongAngleSelf(angle: number, distance: number): this;
+    /**
+     * Get the distance between point `this` and point `point`.
      * @param {Point} point
      * @returns {number}
      */
     getDistanceBetweenPoint(point: Point): number;
     /**
-     * Get the distance square between point `this` and point `point`
+     * Get the distance square between point `this` and point `point`.
      * @param {Point} point
      * @returns {number}
      */
-    getSquaredDistanceFromPoint(point: Point): number;
+    getSquaredDistanceBetweenPoint(point: Point): number;
     /**
-     * Get the distance between point `this` and line `line`
+     * Get the distance between point `this` and line `line`.
      * @param {Line} line
      * @returns {number}
      */
     getDistanceBetweenLine(line: Line): number;
     /**
-     * Get the signed distance between point `this` and line `line`
+     * Get the signed distance between point `this` and line `line`.
      * @param {Line} line
      * @returns {number}
      */
     getSignedDistanceBetweenLine(line: Line): number;
     /**
-     * Whether point `this` is lying on the same line determined by points `point1` and `point2` and point `this` is between points `point1` and `point2`
+     * Get the distance square between point `this` and line `line`.
+     * @param {Line} line
+     * @returns {number}
+     */
+    getSquaredDistanceBetweenLine(line: Line): number;
+    /**
+     * Get the distance between point `this` and segment `segment`.
+     * @param {Segment} segment
+     * @returns {number}
+     */
+    getDistanceBetweenSegment(segment: Segment): number;
+    /**
+     * Get the signed distance between point `this` and segment `segment`.
+     * @param {Segment} segment
+     * @returns {number}
+     */
+    getSignedDistanceBetweenSegment(segment: Segment): number;
+    /**
+     * Get the distance square between point `this` and segment `segment`
+     * @param {Segment} segment
+     * @returns {number}
+     */
+    getSquaredDistanceBetweenSegment(segment: Segment): number;
+    /**
+     * Whether point `this` is on the same line determined by points `point1` and `point2`,
+     * and point `this` is between points `point1` and `point2`
      * @param {Point} point1
      * @param {Point} point2
      * @param {boolean} allowEqual Allow point `this` to be equal to point `point1` or `point2`
      * @returns {boolean}
      */
     isBetweenPoints(point1: Point, point2: Point, allowEqual?: boolean): boolean;
-    isOutsideRectangle(): void;
-    isInsideRectangle(): void;
-    isOnRectangle(): void;
+    isOutsidePolygon(): void;
+    isInsidePolygon(): void;
+    isOnPolygon(): void;
     isOnLine(line: Line): boolean;
     isEndpointOfSegment(segment: Segment): boolean;
     isOnSegmentLyingLine(segment: Segment): boolean;
@@ -111,13 +136,13 @@ declare class Point extends GeomObject {
      * apply the transformation
      * @returns {Point}
      */
-    apply(t: Transformation): Point;
+    apply(transformation: Transformation): Point;
     clone(): Point;
+    toString(): string;
     toArray(): number[];
     toObject(): {
         x: number;
         y: number;
     };
-    toString(): string;
 }
 export default Point;
