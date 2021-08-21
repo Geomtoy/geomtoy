@@ -1,4 +1,8 @@
 const math = {
+    PI:Math.PI, // 884279719003555/281474976710656
+    Infinity:Number.POSITIVE_INFINITY, //Infinity, `Math.pow(2, 1024)`
+    Tan90:Math.tan(Math.PI/2), // 16331239353195370
+
     abs: Math.abs,
     hypot: Math.hypot,
     pow: Math.pow,
@@ -14,59 +18,12 @@ const math = {
     acos: Math.acos,
     asin: Math.asin,
     atan: Math.atan,
-    atan2: (y: number, x: number): number => {
-        // Note: Math.atan2 return the ANTICLOCKWISE angle, in the range of `[-Math.PI, Math.PI]`
-        // @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/atan2}
-        return -Math.atan2(y, x)
-    },
-    cos: (n: number) => {
-        n = n % (2 * Math.PI)
-        if (n < 0) n = -n // cos(a) = cos(-a)
-        switch (n / (Math.PI / 2)) {
-            // -0 === +0
-            case 0:
-                return 1
-            case 1:
-                return 0
-            case 2:
-                return -1
-            case 3:
-                return 0
-        }
-        return Math.cos(n)
-    },
-    sin: (n: number) => {
-        n = n % (2 * Math.PI)
-        if (n < 0) n = -n // sin(-a) = -sin(a)
-        switch (n / (Math.PI / 2)) {
-            // -0 === +0
-            case 0:
-                return 0
-            case 1:
-                return 1
-            case 2:
-                return 0
-            case 3:
-                return -1
-        }
-        return Math.sin(n)
-    },
-    tan: (n: number) => {
-        n = n % (2 * Math.PI)
-        if (n < 0) n = -n // tan(-a) = -tan(a)
-        switch (n / (Math.PI / 2)) {
-            // -0 === +0
-            case 0:
-                return 0
-            case 1:
-                return Infinity
-            case 2:
-                return 0
-            case 3:
-                return -Infinity
-        }
-        return Math.tan(n)
-    },
+    atan2: Math.atan2,
+    cos: Math.cos,
+    sec: (n: number) =>  1 / Math.cos(n),
+    sin: Math.sin,
+    csc: (n: number) =>  1 / math.sin(n),
+    tan:  Math.tan,
 
     /**
      * Lerp between `u` and `v` by `t`
@@ -76,7 +33,7 @@ const math = {
      * @param {number} t
      * @returns {number}
      */
-    lerp:(u: number, v: number, t: number): number=> {
+    lerp: (u: number, v: number, t: number): number => {
         return (1 - t) * u + t * v
     },
     /**
@@ -86,7 +43,7 @@ const math = {
      * @param {number} u
      * @returns {number}
      */
-    clamp: (n: number, l: number, u: number):number => {
+    clamp: (n: number, l: number, u: number): number => {
         if ((n - l) * (n - u) <= 0) return n
         if (n < l) return l < u ? l : u
         return l > u ? l : u

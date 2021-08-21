@@ -42,7 +42,7 @@ export default class SvgDotJs {
             }
         })
         path.plot(attrD)
-        return this.svgDotJsContainer
+        return path
     }
     clear() {
         this.svgDotJsContainer.clear()

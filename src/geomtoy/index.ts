@@ -120,7 +120,7 @@ function tailConstructorAndStaticMethods<T extends { new (...args: any): any }>(
             {} as { [key: string]: (...args: any) => any }
         )
 
-    return util.assign(constructorTailer, staticMethodsTailer as TailedStaticMethods<T>)
+    return Object.assign(constructorTailer, staticMethodsTailer as TailedStaticMethods<T>)
 }
 function isOptions(o: any): o is Options {
     let s: Options = o

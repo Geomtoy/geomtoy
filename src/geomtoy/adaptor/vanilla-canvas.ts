@@ -17,41 +17,46 @@ export default class VanillaCanvas {
         let gt = this.geomtoy.globalTransformation
         this.context.setTransform(gt.a, gt.b, gt.c, gt.d, gt.e, gt.f)
     }
+
     draw(object: GeomObject & Visible) {
-        let ds = object.getGraphic("svg"),
-            ct = this.context.getTransform()
+        this.context.save()
         this.setup()
-        this.context.beginPath()
+        let ds = object.getGraphic("canvas"),
+            path2D = new Path2D()
+
         ds.forEach(d => {
             if (d.type === "moveTo") {
-                this.context.moveTo(d.x, d.y)
+                path2D.moveTo(d.x, d.y)
             }
             if (d.type === "lineTo") {
-                this.context.lineTo(d.x, d.y)
+                path2D.lineTo(d.x, d.y)
             }
             if (d.type === "bezierCurveTo") {
-                this.context.bezierCurveTo(d.cp1x, d.cp1y, d.cp2x, d.cp2y, d.x, d.y)
+                path2D.bezierCurveTo(d.cp1x, d.cp1y, d.cp2x, d.cp2y, d.x, d.y)
             }
             if (d.type === "quadraticCurveTo") {
-                this.context.quadraticCurveTo(d.cpx, d.cpy, d.x, d.y)
+                path2D.quadraticCurveTo(d.cpx, d.cpy, d.x, d.y)
             }
             if (d.type === "arc") {
-                this.context.arc(d.x, d.y, d.r, d.startAngle, d.endAngle, d.anticlockwise)
+                path2D.arc(d.x, d.y, d.r, d.startAngle, d.endAngle, d.anticlockwise)
             }
             if (d.type === "ellipse") {
-                this.context.ellipse(d.x, d.y, d.rx, d.ry, d.xAxisRotation, d.startAngle, d.endAngle, d.anticlockwise)
+                path2D.ellipse(d.x, d.y, d.rx, d.ry, d.xAxisRotation, d.startAngle, d.endAngle, d.anticlockwise)
             }
             if (d.type === "closePath") {
-                this.context.closePath()
+                path2D.closePath()
             }
         })
-        this.context.fill()
-        this.context.stroke()
-        this.context.setTransform(ct)
-        return this.context
+        this.context.fill(path2D)
+        this.context.stroke(path2D)
+        this.context.restore()
+        return path2D
+    }
+
+    drawBatch(...objects: Array<GeomObject & Visible>) {
+        return objects.map(o => this.draw(o))
     }
     clear() {
         this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height)
-        return this.context
     }
 }

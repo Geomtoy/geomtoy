@@ -106,7 +106,7 @@ class Matrix {
     }
 
     resetToIdentity() {
-        util.assign(this, { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 })
+        Object.assign(this, { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 })
     }
 
     preMultiply(matrix: Matrix): Matrix {

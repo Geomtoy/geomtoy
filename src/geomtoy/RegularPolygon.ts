@@ -29,13 +29,13 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
     constructor(o: Geomtoy, a1: number, a2?: any, a3?: any, a4?: any, a5?: any) {
         super(o)
         if (util.isNumber(a2) && util.isNumber(a3)) {
-            return Object.seal(util.assign(this, { radius: a1, centerX: a2, centerY: a3, sideCount: a4, rotation: a5 ?? 0 }))
+            return Object.seal(Object.assign(this, { radius: a1, centerX: a2, centerY: a3, sideCount: a4, rotation: a5 ?? 0 }))
         }
         if (util.isCoordinate(a2)) {
-            return Object.seal(util.assign(this, { radius: a1, centerCoordinate: a2, sideCount: a3, rotation: a4 ?? 0 }))
+            return Object.seal(Object.assign(this, { radius: a1, centerCoordinate: a2, sideCount: a3, rotation: a4 ?? 0 }))
         }
         if (a2 instanceof Point) {
-            return Object.seal(util.assign(this, { radius: a1, centerPoint: a2, sideCount: a3, rotation: a4 ?? 0 }))
+            return Object.seal(Object.assign(this, { radius: a1, centerPoint: a2, sideCount: a3, rotation: a4 ?? 0 }))
         }
         throw new Error("[G]Arguments can NOT construct a `RegularPolygon`.")
     }
@@ -94,10 +94,10 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
     }
 
     get apothem() {
-        return this.radius * Math.cos(Math.PI / this.sideCount)
+        return this.radius * math.cos(Math.PI / this.sideCount)
     }
     get sideLength() {
-        return 2 * this.radius * Math.sin(Math.PI / this.sideCount)
+        return 2 * this.radius * math.sin(Math.PI / this.sideCount)
     }
     get centralAngle() {
         return (2 * Math.PI) / this.sideCount
@@ -120,11 +120,11 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
     }
 
     static fromApothemEtc(owner: Geomtoy, apothem: number, centerPoint: Point, sideCount: number, rotation: number = 0) {
-        let r = apothem / Math.cos(Math.PI / sideCount)
+        let r = apothem / math.cos(Math.PI / sideCount)
         return new RegularPolygon(owner, r, centerPoint, sideCount, rotation)
     }
     static fromSideLengthEtc(owner: Geomtoy, sideLength: number, centerPoint: Point, sideCount: number, rotation: number = 0) {
-        let r = sideLength / Math.sin(Math.PI / sideCount) / 2
+        let r = sideLength / math.sin(Math.PI / sideCount) / 2
         return new RegularPolygon(owner, r, centerPoint, sideCount, rotation)
     }
 
@@ -140,7 +140,7 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
         let ps = this.getPoints(),
             ls: Array<Line> = []
         util.forEach(util.range(this.sideCount), i => {
-            ls.push(Line.fromPoints(this.owner, util.nth(ps, i - this.sideCount)!, util.nth(ps, i - this.sideCount + 1)!))
+            ls.push(Line.fromTwoPoints(this.owner, util.nth(ps, i - this.sideCount)!, util.nth(ps, i - this.sideCount + 1)!))
         })
         return ls
     }

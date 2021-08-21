@@ -13,6 +13,7 @@ import Transformation from "./transformation"
 import Vector from "./Vector"
 import Geomtoy from "."
 import Polygon from "./Polygon"
+import coord from "./helper/coordinate"
 
 @sealed
 class Line extends GeomObject {
@@ -24,12 +25,15 @@ class Line extends GeomObject {
     #c: number = NaN
 
     constructor(owner: Geomtoy, a: number, b: number, c: number)
-    constructor(o: Geomtoy, a1: number, a2: number, a3: number) {
+    constructor(owner: Geomtoy, line: Line)
+    constructor(o: Geomtoy, a1: any, a2?: any, a3?: any) {
         super(o)
         if (util.isNumber(a1) && util.isNumber(a2) && util.isNumber(a3)) {
-            return Object.seal(util.assign(this, { a: a1, b: a2, c: a3 }))
+            return Object.seal(Object.assign(this, { a: a1, b: a2, c: a3 }))
         }
-
+        if (a1 instanceof Line) {
+            return new Line(o, a1.a, a1.b, a1.c)
+        }
         throw new Error("[G]Arguments can NOT construct a `Line`.")
     }
 
@@ -117,8 +121,7 @@ class Line extends GeomObject {
     }
     /**
      * Whether line `this` is the same as line `line`.
-     * @param {Line} line
-     * @returns {boolean}
+     * @param line
      */
     @validateOwner
     isSameAs(line: Line): boolean {
@@ -145,71 +148,41 @@ class Line extends GeomObject {
     }
 
     /**
-     * Determine a line from two points `point1` and `point2`.
-     * @param {Point} point1
-     * @param {Point} point2
-     * @returns {Line}
+     * Determine a line from two coordinates `coordinate1` and `coordinate2`.
+     * @param coordinate1
+     * @param coordinate2
      */
-    @validateOwner
-    static fromPoints(owner: Geomtoy, point1: Point, point2: Point): Line {
-        if (point1.isSameAs(point2)) {
-            throw new Error(`[G]The points \`point1\` and \`point2\` are the same, they can NOT determine a line.`)
+    static fromTwoCoordinates(owner: Geomtoy, coordinate1: [number, number], coordinate2: [number, number]): Line {
+        let epsilon = owner.getOptions().epsilon
+        if (coord.isSameAs(coordinate1, coordinate2, epsilon)) {
+            throw new Error("[G]The coordinates `coordinate1` and `coordinate2` are the same, they can NOT determine a `Line`.")
         }
-        let { x: x1, y: y1 } = point1,
-            { x: x2, y: y2 } = point2,
+        let [x1, y1] = coordinate1,
+            [x2, y2] = coordinate2,
             a = y2 - y1,
             b = x1 - x2,
             c = (x2 - x1) * y1 - (y2 - y1) * x1
         return new Line(owner, a, b, c)
     }
     /**
-     * Determine a line from segment `segment`, it is the underlying line of the segment.
-     * @param {Segment} segment
-     * @returns {Line}
+     * Determine a line from two points `point1` and `point2`.
+     * @param point1
+     * @param point2
      */
     @validateOwner
-    static fromSegment(owner: Geomtoy, segment: Segment): Line {
-        return Line.fromPoints(owner, segment.point1, segment.point2)
+    static fromTwoPoints(owner: Geomtoy, point1: Point, point2: Point): Line {
+        if (point1.isSameAs(point2)) {
+            throw new Error("[G]The points `point1` and `point2` are the same, they can NOT determine a `Line`.")
+        }
+        return Line.fromTwoCoordinates(owner, point1.coordinate, point2.coordinate)
     }
     /**
-     * Determine a line from vector `vector` with initial point set to `Point.zero()`.
-     * @param {Vector} vector
-     * @returns {Line}
+     * Determine a line from coordinate `coordinate` and slope `slope`.
+     * @param coordinate
+     * @param slope
      */
-    @validateOwner
-    static fromVector(owner: Geomtoy, vector: Vector): Line {
-        let { x, y } = vector
-        return Line.fromPoints(owner, Point.zero(owner), new Point(owner, x, y))
-    }
-    /**
-     * Determine a line from vector `vector` base on the initial and terminal point of it.
-     * @param {Vector} vector
-     * @returns {Line}
-     */
-    @validateOwner
-    static fromVector2(owner: Geomtoy, vector: Vector): Line {
-        return Line.fromPoints(owner, vector.point1, vector.point2)
-    }
-    /**
-     * Determine a line from point `point` and vector `vector`.
-     * @param {Point} point
-     * @param {Vector} vector
-     * @returns {Line}
-     */
-    @validateOwner
-    static fromPointAndVector(owner: Geomtoy, point: Point, vector: Vector): Line {
-        let { x, y } = vector
-        return Line.fromPoints(owner, point, new Point(owner, x, y))
-    }
-    /**
-     * Determine a line from point `point` and slope `slope`.
-     * @param {Point} point
-     * @param {number} slope
-     * @returns {Line}
-     */
-    @validateOwner
-    static fromPointAndSlope(owner: Geomtoy, point: Point, slope: number): Line {
-        let { x, y } = point
+    static fromCoordinateAndSlope(owner: Geomtoy, coordinate: [number, number], slope: number): Line {
+        let [x, y] = coordinate
         if (math.abs(slope) === Infinity) {
             let [a, b, c] = [1, 0, -x]
             return new Line(owner, a, b, c)
@@ -218,10 +191,18 @@ class Line extends GeomObject {
         return new Line(owner, a, b, c)
     }
     /**
+     * Determine a line from point `point` and slope `slope`.
+     * @param point
+     * @param slope
+     */
+    @validateOwner
+    static fromPointAndSlope(owner: Geomtoy, point: Point, slope: number): Line {
+        return Line.fromCoordinateAndSlope(owner, point.coordinate, slope)
+    }
+    /**
      * Determine a line from point `point` and angle `angle`.
-     * @param {Point} point
-     * @param {number} angle
-     * @returns {Line}
+     * @param point
+     * @param angle
      */
     @validateOwner
     static fromPointAndAngle(owner: Geomtoy, point: Point, angle: number): Line {
@@ -230,9 +211,8 @@ class Line extends GeomObject {
     }
     /**
      * Determine a line from x-intercept `xIntercept` and y-intercept `yIntercept`.
-     * @param {number} xIntercept
-     * @param {number} yIntercept
-     * @returns {Line}
+     * @param xIntercept
+     * @param yIntercept
      */
     static fromIntercepts(owner: Geomtoy, xIntercept: number, yIntercept: number): Line {
         if (math.abs(xIntercept) === Infinity && math.abs(yIntercept) === Infinity) {
@@ -244,13 +224,12 @@ class Line extends GeomObject {
         if (math.abs(yIntercept) === Infinity) {
             return Line.fromPointAndSlope(owner, new Point(owner, xIntercept, 0), Infinity)
         }
-        return Line.fromPoints(owner, new Point(owner, 0, yIntercept), new Point(owner, xIntercept, 0))
+        return Line.fromTwoPoints(owner, new Point(owner, 0, yIntercept), new Point(owner, xIntercept, 0))
     }
     /**
      * Determine a line from slope `slope` and x-intercept `xIntercept`.
      * @param {number} slope
      * @param {number} xIntercept
-     * @returns {Line}
      */
     static fromSlopeAndXIntercept(owner: Geomtoy, slope: number, xIntercept: number): Line {
         if (math.abs(slope) === Infinity && math.abs(xIntercept) === Infinity) {
@@ -262,7 +241,6 @@ class Line extends GeomObject {
      * Determine a line from slope `slope` and y-intercept `yIntercept`.
      * @param {number} slope
      * @param {number} yIntercept
-     * @returns {Line}
      */
     static fromSlopeAndYIntercept(owner: Geomtoy, slope: number, yIntercept: number): Line {
         if (math.abs(slope) === Infinity || math.abs(yIntercept) === Infinity) {
@@ -273,7 +251,6 @@ class Line extends GeomObject {
 
     /**
      * Simplify line `this`, convert `b` to 1, if "b=0", convert `a` to 1.
-     * @returns {Line}
      */
     simplify(): Line {
         return this.clone().simplifySelf()
@@ -282,14 +259,13 @@ class Line extends GeomObject {
         let { a, b, c } = this,
             epsilon = this.owner.getOptions().epsilon,
             d = math.equalTo(b, 0, epsilon) ? a : b
-        util.assign(this, { a: a / d, b: b / d, c: c / d })
+        Object.assign(this, { a: a / d, b: b / d, c: c / d })
         return this
     }
 
     /**
      * Get the point on line `this` where y is equal to `y`.
      * @param {number} y
-     * @returns {Point | null}
      */
     getPointWhereYEqualTo(y: number): Point | null {
         let l = new Line(this.owner, 0, 1, -y),
@@ -301,7 +277,6 @@ class Line extends GeomObject {
     /**
      * Get the point on line `this` where x is equal to `x`.
      * @param {number} x
-     * @returns {Point | null}
      */
     getPointWhereXEqualTo(x: number): Point | null {
         let l = new Line(this.owner, 1, 0, -x),
@@ -318,8 +293,7 @@ class Line extends GeomObject {
     // IntersectedWith
     /**
      * Whether line `this` is parallel(including identical) to line `line`.
-     * @param {Line} line
-     * @returns {boolean}
+     * @param line
      */
     @validateOwner
     isParallelToLine(line: Line): boolean {
@@ -333,8 +307,7 @@ class Line extends GeomObject {
     }
     /**
      * Whether line `this` is perpendicular to line `line`.
-     * @param {Line} line
-     * @returns {boolean}
+     * @param line
      */
     @validateOwner
     isPerpendicularToLine(line: Line): boolean {
@@ -347,8 +320,7 @@ class Line extends GeomObject {
     }
     /**
      * Whether line `this` is intersected with line `line`.
-     * @param {Line} line
-     * @returns {boolean}
+     * @param line
      */
     @validateOwner
     isIntersectedWithLine(line: Line): boolean {
@@ -356,8 +328,7 @@ class Line extends GeomObject {
     }
     /**
      * Get the intersection point with line `line`.
-     * @param {Line} line
-     * @returns {Point | null}
+     * @param line
      */
     @validateOwner
     getIntersectionPointWithLine(line: Line): Point | null {
@@ -378,8 +349,7 @@ class Line extends GeomObject {
     // SeparatedFrom
     /**
      * Whether line `this` is intersected with circle `circle`.
-     * @param {Circle} circle
-     * @returns {boolean}
+     * @param circle
      */
     @validateOwner
     isIntersectedWithCircle(circle: Circle): boolean {
@@ -388,8 +358,7 @@ class Line extends GeomObject {
     }
     /**
      * Get the intersection points of line `this` and circle `circle`.
-     * @param {Circle} circle
-     * @returns {[Point, Point] | null}
+     * @param circle
      */
     @validateOwner
     getIntersectionPointsWithCircle(circle: Circle): [Point, Point] | null {
@@ -406,8 +375,7 @@ class Line extends GeomObject {
     }
     /**
      * Whether line `this` is tangent to circle `circle`.
-     * @param {Circle} circle
-     * @returns {boolean}
+     * @param circle
      */
     @validateOwner
     isTangentToCircle(circle: Circle): boolean {
@@ -416,8 +384,7 @@ class Line extends GeomObject {
     }
     /**
      * Get the tangency point of line `this` and circle `circle`.
-     * @param {Circle} circle
-     * @returns {Point | null}
+     * @param circle
      */
     @validateOwner
     getTangencyPointToCircle(circle: Circle): Point | null {
@@ -426,8 +393,7 @@ class Line extends GeomObject {
     }
     /**
      * Whether line `this` is separated from circle `circle`.
-     * @param {Circle} circle
-     * @returns {boolean}
+     * @param circle
      */
     @validateOwner
     isSeparatedFromCircle(circle: Circle): boolean {
@@ -445,7 +411,6 @@ class Line extends GeomObject {
     /**
      * Whether line `this` is parallel to segment `segment`.
      * @param {Segment} segment
-     * @returns {boolean}
      */
     isParallelToSegment(segment: Segment): boolean {
         /* 
@@ -462,7 +427,6 @@ class Line extends GeomObject {
     /**
      * Whether line `this` is perpendicular to segment `segment`.
      * @param {Segment} segment
-     * @returns {boolean}
      */
     isPerpendicularToSegment(segment: Segment): boolean {
         /* 
@@ -479,7 +443,6 @@ class Line extends GeomObject {
     /**
      * Whether line `this` is collinear with segment `segment`.
      * @param {Segment} segment
-     * @returns {boolean}
      */
     isCollinearWithSegment(segment: Segment): boolean {
         let {
@@ -495,7 +458,6 @@ class Line extends GeomObject {
     /**
      * Whether line `this` is separated from segment `segment`.
      * @param {Segment} segment
-     * @returns {boolean}
      */
     isSeparatedFromSegment(segment: Segment): boolean {
         let {
@@ -511,7 +473,6 @@ class Line extends GeomObject {
     /**
      * Whether line `this` is intersected with segment `segment`.
      * @param {Segment} segment
-     * @returns {boolean}
      */
     isIntersectedWithSegment(segment: Segment): boolean {
         // If `line` is intersected with `segment`, the signed distance of endpoints of `segment` between `line` have different sign.
@@ -528,7 +489,6 @@ class Line extends GeomObject {
     /**
      * Get the intersection point of line `this` and segment `segment`
      * @param {Segment} segment
-     * @returns {Point | null}
      */
     getIntersectionPointWithSegment(segment: Segment): Point | null {
         if (!this.isIntersectedWithSegment(segment)) return null
@@ -545,7 +505,6 @@ class Line extends GeomObject {
     /**
      * 是否与`矩形rectangle`相交
      * @param {Rectangle} rectangle
-     * @returns {boolean | Array<Point>}
      */
     #isIntersectedWithPolygon(polygon: Polygon) {
         // let
@@ -574,39 +533,37 @@ class Line extends GeomObject {
     }
 
     /**
-     * Find the perpendicular line of line `this` from point `point`.
-     * @param {Point} point
-     * @returns {Line}
+     * Find the perpendicular line of line `this` from coordinate `coordinate`.
+     * @param coordinate
      */
-    getPerpendicularLineFromPoint(point: Point): Line {
-        // If two line are perpendicular to each other, the slope multiplication is equal to -1
+    getPerpendicularLineFromCoordinate(coordinate: [number, number]): Line {
         let k1 = this.slope,
+            // If two line are perpendicular to each other, the slope multiplication is equal to -1.
             k2 = k1 === Infinity ? 0 : k1 === 0 ? Infinity : -1 / k1
-        return Line.fromPointAndSlope(this.owner, point, k2)
+        return Line.fromCoordinateAndSlope(this.owner, coordinate, k2)
+    }
+    /**
+     * Find the perpendicular line of line `this` from point `point`.
+     * @param point
+     */
+    @validateOwner
+    getPerpendicularLineFromPoint(point: Point): Line {
+        return this.getPerpendicularLineFromCoordinate(point.coordinate)
     }
     /**
      * Find the perpendicular point(the foot of the perpendicular) on line `this` from point `point`.
-     * @description
-     * If point `point` is on line `line`, return itself(cloned).
-     * If point `point` is not on line `line`, return the perpendicular point.
-     * @param {Point} point
-     * @returns {Point}
+     * @param point
      */
     @validateOwner
     getPerpendicularPointFromPoint(point: Point): Point {
-        if (point.isOnLine(this)) return point.clone()
         let { a, b, c } = this,
-            { x: x1, y: y1 } = point,
-            d = -(a * x1 + b * y1 + c) / (a ** 2 + b ** 2),
-            x2 = d * a + x1,
-            y2 = d * b + y1
-        return new Point(this.owner, x2, y2)
+            { x, y } = point,
+            d = -(a * x + b * y + c) / (a ** 2 + b ** 2)
+        return new Point(this.owner, [d * a + x, d * b + y])
     }
-
     /**
-     * 若`直线this`与`直线line`平行，则返回它们之间的距离，否则返回null
-     * @param {Line} line
-     * @returns {number}
+     * 若`直线this`与`直线line`平行，则返回它们之间的距离，否则返回NaN
+     * @param line
      */
     @validateOwner
     getDistanceToParallelLine(line: Line): number {
@@ -619,7 +576,6 @@ class Line extends GeomObject {
     /**
      * Get graphic object of `this`
      * @param {GraphicImplType} type
-     * @returns {Array<SvgDirective | CanvasDirective>}
      */
     getGraphic(type: GraphicImplType): Array<SvgDirective | CanvasDirective> {
         let lowerBound = -this.owner.getOptions().graphic.lineRange,
@@ -645,7 +601,6 @@ class Line extends GeomObject {
         let g = new Graphic()
         g.moveTo(x1, y1)
         g.lineTo(x2, y2)
-        g.close()
         return g.valueOf(type)
     }
     @validateOwner
@@ -674,7 +629,7 @@ class Line extends GeomObject {
 }
 
 /**
- * 
+ *
  * @category GeomObject
  */
 export default Line

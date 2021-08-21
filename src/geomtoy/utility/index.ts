@@ -17,6 +17,7 @@ const util = {
     last: _.last,
     includes:_.includes,
     range: _.range,
+    sortBy:_.sortBy,
     uniqWith: _.uniqWith,
     // Type
     isInteger: _.isInteger,
@@ -36,11 +37,8 @@ const util = {
         return util.isArray(value) && value.length === 2 && util.every(value, v => util.isRealNumber(v) && v > 0)
     },
     // Object
-    defaults: _.defaults,
     defaultsDeep: _.defaultsDeep,
-    clone: _.clone,
-    cloneDeep: _.cloneDeep,
-    assign: _.assign,
+    cloneDeep: _.cloneDeep, 
     assignDeep: _.merge,
     // Other
     uuid: () => {

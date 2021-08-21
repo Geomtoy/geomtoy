@@ -12,6 +12,8 @@ import { is, sameOwner, sealed } from "./decorator"
 import Transformation from "./transformation"
 import Geomtoy from "."
 import coord from "./helper/coordinate"
+import Line from "./Line"
+import Ray from "./Ray"
 
 @sealed
 class Vector extends GeomObject {
@@ -28,23 +30,23 @@ class Vector extends GeomObject {
         super(o)
         if (util.isNumber(a1) && util.isNumber(a2)) {
             if (util.isNumber(a3) && util.isNumber(a4)) {
-                return Object.seal(util.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4 }))
+                return Object.seal(Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4 }))
             }
-            return Object.seal(util.assign(this, { point1Coordinate: [0, 0], x: a1, y: a2 }))
+            return Object.seal(Object.assign(this, { point1Coordinate: [0, 0], x: a1, y: a2 }))
         }
 
         if (util.isCoordinate(a1)) {
             if (util.isCoordinate(a2)) {
-                return Object.seal(util.assign(this, { point1Coordinate: a1, point2Coordinate: a2 }))
+                return Object.seal(Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2 }))
             }
-            return Object.seal(util.assign(this, { point1Coordinate: [0, 0], coordinate: a1 }))
+            return Object.seal(Object.assign(this, { point1Coordinate: [0, 0], coordinate: a1 }))
         }
 
         if (a1 instanceof Point) {
             if (a2 instanceof Point) {
-                return Object.seal(util.assign(this, { point1: a1, point2: a2 }))
+                return Object.seal(Object.assign(this, { point1: a1, point2: a2 }))
             }
-            return Object.seal(util.assign(this, { point1Coordinate: [0, 0], point: a1 }))
+            return Object.seal(Object.assign(this, { point1Coordinate: [0, 0], point: a1 }))
         }
         throw new Error("[G]Arguments can NOT construct a `Vector`.")
     }
@@ -138,7 +140,7 @@ class Vector extends GeomObject {
     }
 
     /**
-     * Get the angle of vector `this`, the result is in the interval `(-Math.PI, Math.PI]`.
+     * Get the angle of vector `this`, the result is in the interval `(-math.PI, math.PI]`.
      */
     get angle() {
         if (this.isZero()) return NaN
@@ -159,13 +161,13 @@ class Vector extends GeomObject {
     static fromPoint(owner: Geomtoy, point: Point): Vector {
         return new Vector(owner, point)
     }
-    static fromPoints(owner: Geomtoy, point1: Point, point2: Point): Vector {
+    static fromTwoPoints(owner: Geomtoy, point1: Point, point2: Point): Vector {
         return new Vector(owner, point1, point2)
     }
 
     static fromAngleAndMagnitude(owner: Geomtoy, angle: number, magnitude: number): Vector {
-        let x = magnitude * Math.cos(angle),
-            y = magnitude * Math.sin(angle)
+        let x = magnitude * math.cos(angle),
+            y = magnitude * math.sin(angle)
         return new Vector(owner, x, y)
     }
     static fromSegment(owner: Geomtoy, segment: Segment, reverse = false) {
@@ -221,37 +223,12 @@ class Vector extends GeomObject {
     }
 
     /**
-     * Angle from vector `this` to vector `vector`, in the interval `(-Math.PI, Math.PI]`
+     * Angle from vector `this` to vector `vector`, in the interval `(-math.PI, math.PI]`
      * @param {Vector} vector
      * @returns {number}
      */
-    angleTo(vector: Vector): number {
+    getAngleToVector(vector: Vector): number {
         return angle.simplify2(this.angle - vector.angle)
-    }
-
-    /**
-     * `向量this`到`向量v`的角差（另一种实现），记作theta，`(-Math.PI, Math.PI]`
-     * @param {Vector} v
-     * @returns {number}
-     */
-    #angleToAnotherImpl(vector: Vector): number {
-        if (this.isZero() || vector.isZero()) return NaN
-        let dotProduct = this.dotProduct(vector),
-            crossProduct = this.crossProduct(vector),
-            cosTheta = dotProduct / (this.magnitude * vector.magnitude),
-            a = Math.acos(cosTheta) //Math.acos，[0, Math.PI]
-
-        //点乘与夹角范围：
-        //dp>0      投影为正，夹角[0, Math.PI/2)
-        //dp==0     投影为0，夹角为Math.PI/2，正交
-        //dp<0      投影为负，夹角(Math.PI/2,Math.PI]
-
-        //利用叉乘来确定符号，注意叉乘参数有顺序之别
-        //cp>0      法向量大于0，`向量this`到`向量v`的正旋角 (0, Math.PI)
-        //cp==0     法向量为0，`向量this`到`向量v`的正旋角 0或Math.PI
-        //cp<0      法向量小于0，`向量this`到`向量v`的正旋角 (Math.PI, 2*Math.PI)
-        if (crossProduct < 0) a = -a //此处已经是正旋角，无论正旋角定义为顺时针还是逆时针都一样
-        return angle.simplify2(a)
     }
 
     simplify() {
@@ -259,6 +236,18 @@ class Vector extends GeomObject {
     }
     simplifySelf() {
         this.point1Coordinate = [0, 0]
+    }
+    toPoint() {
+        return new Point(this.owner, this.coordinate)
+    }
+    toLine() {
+        return Line.fromTwoCoordinates(this.owner, this.point1Coordinate, this.point2Coordinate)
+    }
+    toSegment() {
+        return new Segment(this.owner, this.point1Coordinate, this.point2Coordinate)
+    }
+    toRay() {
+        return new Ray(this.owner, this.point1Coordinate, this.angle)
     }
 
     dotProduct(vector: Vector): number {
@@ -306,7 +295,7 @@ class Vector extends GeomObject {
 
         g.moveTo(x1, y1)
         g.lineTo(x2, y2)
-        // g.centerArcTo(x, y, Vector.options.graphic.pointSize, Vector.options.graphic.pointSize, 0, 2 * Math.PI, 0)
+        // g.centerArcTo(x, y, Vector.options.graphic.pointSize, Vector.options.graphic.pointSize, 0, 2 * math.PI, 0)
         // g.close()
         return g.valueOf(type)
     }
@@ -321,9 +310,8 @@ class Vector extends GeomObject {
     }
 }
 
-
 /**
- * 
+ *
  * @category GeomObject
  */
 export default Vector

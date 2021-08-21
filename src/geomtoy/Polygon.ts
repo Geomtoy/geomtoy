@@ -26,10 +26,10 @@ class Polygon extends GeomObject {
         super(o)
         if (util.isArray(a1)) {
             if (util.isCoordinate(util.head(a1))) {
-                return Object.seal(util.assign(this, { pointCoordinates: a1 }))
+                return Object.seal(Object.assign(this, { pointCoordinates: a1 }))
             }
             if (util.head(a1) instanceof Point) {
-                return Object.seal(util.assign(this, { points: a1 }))
+                return Object.seal(Object.assign(this, { points: a1 }))
             }
         }
         throw new Error("[G]Arguments can NOT construct a `Polygon`.")
@@ -97,38 +97,32 @@ class Polygon extends GeomObject {
     isPointsConcyclic() {}
 
     getPerimeter() {
-        let i = -1,
+        let p = 0,
             l = this.getPointCount(),
-            ps = this.points,
-            dx,
-            dy,
-            b = ps[l - 1],
-            perimeter = 0
+            cs = this.pointCoordinates
 
-        while (++i < l) {
-            dx = b.x
-            dy = b.y
-            b = ps[i]
-            dx -= b.x
-            dy -= b.y
-            perimeter += Math.hypot(dx, dy)
-        }
-        return perimeter
+        util.forEach(util.range(l), index => {
+            let c1 = util.nth(cs, index - l)!,
+                c2 = util.nth(cs, index - l + 1)!
+            p += vec2.magnitude(vec2.from(c1, c2))
+        })
+        return p
     }
 
-    getArea(signed = false) {
+    getArea() {
         let a = 0,
             l = this.getPointCount(),
-            ps = this.points
-        for (let i = 0; i < l; i++) {
-            let j = i === 1 - 1 ? 0 : i + 1,
-                { x: x1, y: y1 } = ps[i],
-                { x: x2, y: y2 } = ps[j]
-            a += vec2.cross([x1, y1], [x2, y2])
-        }
-        return signed ? a / 2 : Math.abs(a / 2)
+            cs = this.pointCoordinates
+
+        util.forEach(util.range(l), index => {
+            let c1 = util.nth(cs, index - l)!,
+                c2 = util.nth(cs, index - l + 1)!
+            a += vec2.cross(c1, c2)
+        })
+        a = a / 2
+        return Math.abs(a)
     }
-    getMeanPoint() {
+    getCentroidPoint() {
         let sumX = 0,
             sumY = 0,
             l = this.getPointCount(),
@@ -141,7 +135,7 @@ class Polygon extends GeomObject {
         }
         return [sumX / l, sumY / l]
     }
-    getCentroidPoint() {
+    getWeightedCentroidPoint() {
         let a = 0,
             sumX = 0,
             sumY = 0,
@@ -157,14 +151,14 @@ class Polygon extends GeomObject {
             sumX += (x1 + x2) * cp
             sumY += (y1 + y2) * cp
         }
-        return new Point(this.owner,[sumX / a / 3, sumY / a / 3])
+        return new Point(this.owner, [sumX / a / 3, sumY / a / 3])
     }
 
     getBoundingRectangle() {
-        let minX = Infinity,
-            maxX = -Infinity,
-            minY = Infinity,
-            maxY = -Infinity
+        let minX = math.Infinity,
+            maxX = -math.Infinity,
+            minY = math.Infinity,
+            maxY = -math.Infinity
         util.forEach(this.points, (noUse, index, collection) => {
             let { x, y } = collection[index]
             if (x < minX) minX = x
@@ -172,7 +166,54 @@ class Polygon extends GeomObject {
             if (y < minY) minY = y
             if (y > maxY) maxY = y
         })
-        return new Rectangle(this.owner,minX, minY, maxX - minX, maxY - minY)
+        return new Rectangle(this.owner, minX, minY, maxX - minX, maxY - minY)
+    }
+
+    isPointOnPolygon(point: Point) {
+        let l = this.getPointCount(),
+            cs = this.pointCoordinates,
+            c = point.coordinate,
+            epsilon = this.owner.getOptions().epsilon,
+            ret = false
+        util.forEach(util.range(l), index => {
+            if (coord.isSameAs(c, cs[index], epsilon)) {
+                ret = true
+                return true // `point` is a vertex
+            }
+            let c1 = util.nth(cs, index - l)!,
+                c2 = util.nth(cs, index - l + 1)!
+            if (coord.y(c1) > coord.y(c) !== coord.y(c2) > coord.y(c)) {
+                let cp = vec2.cross(vec2.from(c1, c), vec2.from(c1, c2))
+                if (math.equalTo(cp, 0, epsilon)) {
+                    ret = true
+                    return true
+                }
+            }
+        })
+        return ret
+    }
+    isPointInsidePolygon(point: Point) {
+        let l = this.getPointCount(),
+            cs = this.pointCoordinates,
+            c = point.coordinate,
+            epsilon = this.owner.getOptions().epsilon,
+            ret = false
+        util.forEach(util.range(l), index => {
+            let c1 = util.nth(cs, index - l)!,
+                c2 = util.nth(cs, index - l + 1)!
+            if (coord.y(c1) > coord.y(c) !== coord.y(c2) > coord.y(c)) {
+                let cp = vec2.cross(vec2.from(c1, c), vec2.from(c1, c2))
+                if (math.lessThan(cp, 0, epsilon) !== coord.y(c2) < coord.y(c1)) {
+                    ret = true
+                    return true
+                }
+            }
+        })
+        return ret
+    }
+
+    isPointOutsidePolygon(point: Point) {
+        return !this.isPointInsidePolygon(point) && !this.isPointOnPolygon(point)
     }
 
     clone(): GeomObject {
@@ -190,7 +231,7 @@ class Polygon extends GeomObject {
 }
 
 /**
- * 
+ *
  * @category GeomObject
  */
 export default Polygon

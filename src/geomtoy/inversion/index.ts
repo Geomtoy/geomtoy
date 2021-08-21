@@ -25,13 +25,13 @@ class Inversion extends GeomObject {
     constructor(o: Geomtoy, a1: number, a2: any, a3?: any) {
         super(o)
         if (util.isNumber(a2) && util.isNumber(a3)) {
-            return Object.seal(util.assign(this, { power: a1, centerX: a2, centerY: a3 }))
+            return Object.seal(Object.assign(this, { power: a1, centerX: a2, centerY: a3 }))
         }
         if (util.isArray(a2)) {
-            return Object.seal(util.assign(this, { power: a1, centerCoordinate: a2 }))
+            return Object.seal(Object.assign(this, { power: a1, centerCoordinate: a2 }))
         }
         if (a2 instanceof Point) {
-            return Object.seal(util.assign(this, { power: a1, centerPoint: a2 }))
+            return Object.seal(Object.assign(this, { power: a1, centerPoint: a2 }))
         }
         throw new Error("[G]Arguments can NOT construct an `Inversion`.")
     }
@@ -103,7 +103,7 @@ class Inversion extends GeomObject {
         let v02 = vec2.from2(a, inversionDist),
             v0 = p0.coordinate,
             v2 = vec2.add(v0, v02)
-        return Point.fromCoordinate(this.owner, v2)
+        return new Point(this.owner, v2)
     }
 
     /**
@@ -152,7 +152,7 @@ class Inversion extends GeomObject {
             let pO = this.centerPoint,
                 pP = circle.centerPoint,
                 inversionDist = Math.abs((this.power / 2) * circle.radius),
-                lL = Line.fromPoints(this.owner, pO, pP),
+                lL = Line.fromTwoPoints(this.owner, pO, pP),
                 vOP = new Vector(this.owner, pO, pP),
                 angle
             //OP和OQ方向相反

@@ -1,3 +1,4 @@
+import util from "../utility"
 import math from "../utility/math"
 
 const coord = {
@@ -7,11 +8,11 @@ const coord = {
         c[1] = y
     },
     x(c: [number, number], x?: number) {
-        if (x) c[0] = x
+        if (x !== undefined) c[0] = x
         return c[0]
     },
     y(c: [number, number], y?: number) {
-        if (y) c[1] = y
+        if (y !== undefined) c[1] = y
         return c[1]
     },
     copy(c: [number, number]): [number, number] {
@@ -19,6 +20,9 @@ const coord = {
     },
     isSameAs(c1: [number, number], c2: [number, number], epsilon: number): boolean {
         return math.equalTo(coord.x(c1), coord.x(c2), epsilon) && math.equalTo(coord.y(c1), coord.y(c2), epsilon)
+    },
+    sort(cs: Array<[number, number]>) {
+        return util.sortBy(cs, [c => coord.x(c), c => coord.y(c)])
     }
 }
 export default coord

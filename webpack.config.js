@@ -11,11 +11,11 @@ const testCases = ((dir = "./test/case") => {
 
     _.forEach(entries, item => {
         let p = path.resolve(dir, item)
-        if (path.extname(p) === ".js") {
+        if (path.extname(p) === ".js" || path.extname(p) === ".ts") {
             tc.push({
-                name: path.basename(p).replace(".js", ""),
+                name: path.basename(p).replace(/\.(js|ts)/, ""),
                 js: p,
-                html: p.replace(".js", ".html")
+                html: p.replace(/\.(js|ts)/, ".html")
             })
         }
     })
@@ -78,7 +78,7 @@ module.exports = function (env, argv) {
                         new HtmlWebpackPlugin({
                             template: o.html,
                             filename: path.basename(o.html),
-                            chunks:[o.name] 
+                            chunks: [o.name]
                         })
                     )
                 })

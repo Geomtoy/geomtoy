@@ -3,6 +3,7 @@ import Translation from "./Translation"
 import Point from "../Point"
 import { is, sealed } from "../decorator"
 import util from "../utility"
+import math from "../utility/math"
 
 @sealed
 class Rotation extends Matrix {
@@ -48,10 +49,10 @@ class Rotation extends Matrix {
         let preTranslation = new Translation(this.#origin!.x, this.#origin!.y),
             postTranslation = new Translation(-this.#origin!.x, -this.#origin!.y)
 
-        this.a = Math.cos(this.#angle!)
-        this.b = -Math.sin(this.#angle!)
-        this.c = Math.sin(this.#angle!)
-        this.d = Math.cos(this.#angle!)
+        this.a = math.cos(this.#angle!)
+        this.b = -math.sin(this.#angle!)
+        this.c = math.sin(this.#angle!)
+        this.d = math.cos(this.#angle!)
 
         this.preMultiplySelf(preTranslation)
         this.postMultiplySelf(postTranslation)

@@ -19,10 +19,11 @@ export default class VanillaSvg {
         this.svgContainer.setAttribute("transform", `matrix(${gt.a} ${gt.b} ${gt.c} ${gt.d} ${gt.e} ${gt.f})`)
     }
     draw(object: GeomObject & Visible) {
-        let ds = object.getGraphic("svg"),
-            elemPath = document.createElementNS("http://www.w3.org/2000/svg", "path"),
-            attrD = ""
         this.setup()
+
+        let ds = object.getGraphic("svg"),
+            pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path"),
+            attrD = ""
 
         ds.forEach(d => {
             if (d.type === "M") {
@@ -44,12 +45,15 @@ export default class VanillaSvg {
                 attrD += `Z`
             }
         })
-        elemPath.setAttribute("d", attrD)
-        this.svgContainer.appendChild(elemPath)
-        return this.svgContainer
+        pathEl.setAttribute("d", attrD)
+        this.svgContainer.appendChild(pathEl)
+        return pathEl
     }
+    drawBatch(...objects: Array<GeomObject & Visible>) {
+        return objects.map(o => this.draw(o))
+    }
+
     clear() {
         this.svgContainer.innerHTML = ""
-        return this.svgContainer
     }
 }

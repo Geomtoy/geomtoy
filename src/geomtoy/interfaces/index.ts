@@ -2,7 +2,7 @@ import GeomObject from "../base/GeomObject"
 import Transformation from "../transformation"
 import { GraphicImplType, CanvasDirective, SvgDirective } from "../types"
 
-export interface AreaMeasurable {
+export interface AreaMeasurable { //ClosedShape?
     getPerimeter(): number
     getArea(): number
 }

@@ -1,4 +1,3 @@
-
 import vec2 from "./utility/vec2"
 import util from "./utility"
 import math from "./utility/math"
@@ -16,6 +15,9 @@ import Transformation from "./transformation"
 import Graphic from "./graphic"
 import { GraphicImplType, CanvasDirective, SvgDirective } from "./types"
 import { Visible } from "./interfaces"
+import Polygon from "./Polygon"
+import Triangle from "./Triangle"
+import Ray from "./Ray"
 
 @sealed
 class Point extends GeomObject implements Visible {
@@ -25,15 +27,18 @@ class Point extends GeomObject implements Visible {
     #coordinate: [number, number] = [NaN, NaN]
 
     constructor(owner: Geomtoy, x: number, y: number)
-    constructor(owner: Geomtoy, position: [number, number])
+    constructor(owner: Geomtoy, coordinate: [number, number])
+    constructor(owner: Geomtoy, point: Point)
     constructor(o: Geomtoy, a1: any, a2?: any) {
         super(o)
-
         if (util.isNumber(a1) && util.isNumber(a2)) {
-            return Object.seal(util.assign(this, { x: a1, y: a2 }))
+            return Object.seal(Object.assign(this, { x: a1, y: a2 }))
         }
         if (util.isCoordinate(a1)) {
-            return Object.seal(util.assign(this, { coordinate: coord.copy(a1) }))
+            return Object.seal(Object.assign(this, { coordinate: coord.copy(a1) }))
+        }
+        if (a1 instanceof Point) {
+            return new Point(o, a1.x, a1.y)
         }
         throw new Error("[G]Arguments can NOT construct a `Point`.")
     }
@@ -71,19 +76,57 @@ class Point extends GeomObject implements Visible {
     }
 
     /**
-     * Determine a point from a coordinate.
+     * Whether points `point1`, `point2`, `point3` are collinear.
      * @category Static
-     * @param {[number, number]} coordinate
-     * @returns {Point}
+     * @param point1
+     * @param point2
+     * @param point3
+     * @returns
      */
-    static fromCoordinate(owner: Geomtoy, coordinate: [number, number]): Point {
-        return new Point(owner, coordinate)
+    static isThreePointsCollinear(owner: Geomtoy, point1: Point, point2: Point, point3: Point) {
+        let [x1, y1] = point1.coordinate,
+            [x2, y2] = point2.coordinate,
+            [x3, y3] = point3.coordinate,
+            d = x1 * y2 + x2 * y3 + x3 * y1 - (x2 * y1 + x3 * y2 + x1 * y3) //cross product shorthand
+        return math.equalTo(d, 0, owner.getOptions().epsilon)
     }
+    /**
+     * Get the `n` equally dividing rays of the angle which is formed by points `vertex`, `leg1` and `leg2`.
+     * @description
+     * The angle is generated from `leg1` to `leg2` taking `vertex` as the center of rotation.
+     * If `n` is not an integer, return `null`.
+     * If any two in `vertex`, `leg1`, `leg2` are the same, return `null`.
+     * @param n
+     * @param vertex
+     * @param leg1
+     * @param leg2
+     */
+    static getAngleNEquallyDividingRaysFromThreePoints(owner: Geomtoy, n: number, vertex: Point, leg1: Point, leg2: Point): Array<Ray> | null {
+        if (!util.isInteger(n) || n < 2) return null
+
+        let c0 = vertex.coordinate,
+            c1 = leg1.coordinate,
+            c2 = leg2.coordinate,
+            epsilon = owner.getOptions().epsilon
+        if (coord.isSameAs(c0, c1, epsilon) || coord.isSameAs(c0, c2, epsilon) || coord.isSameAs(c1, c2, epsilon)) return null
+        let a1 = vec2.angle(vec2.from(c0, c1)),
+            a2 = vec2.angle(vec2.from(c0, c1)),
+            d = (a2 - a1) / n,
+            ret: Array<any> = []
+
+        util.forEach(util.range(1, n), i => {
+            ret.push(new Ray(owner, vertex, a1 + d * i))
+        })
+        return ret
+    }
+
+    //todo
+    static isFourPointsConcyclic(owner: Geomtoy, point1: Point, point2: Point, point3: Point, point4: Point) {}
     /**
      * Determine a point from vector `vector`.
      * @category Static
-     * @param {Vector} vector
-     * @returns {Point}
+     * @param vector
+     * @returns
      */
     static fromVector(owner: Geomtoy, vector: Vector): Point {
         return new Point(owner, vector.point2.coordinate)
@@ -135,6 +178,7 @@ class Point extends GeomObject implements Visible {
         this.y += distance * math.sin(angle)
         return this
     }
+
     /**
      * Get the distance between point `this` and point `point`.
      * @param {Point} point
@@ -218,10 +262,10 @@ class Point extends GeomObject implements Visible {
     /**
      * Whether point `this` is on the same line determined by points `point1` and `point2`,
      * and point `this` is between points `point1` and `point2`
-     * @param {Point} point1
-     * @param {Point} point2
-     * @param {boolean} allowEqual Allow point `this` to be equal to point `point1` or `point2`
-     * @returns {boolean}
+     * @param point1
+     * @param point2
+     * @param allowEqual Allow point `this` to be equal to point `point1` or `point2`
+     * @returns
      */
     isBetweenPoints(point1: Point, point2: Point, allowEqual: boolean = true): boolean {
         let c0 = this.coordinate,
@@ -240,13 +284,15 @@ class Point extends GeomObject implements Visible {
         return math.equalTo(cp, 0, epsilon) && math.greaterThan(dp, 0, epsilon) && math.lessThan(dp, sm, epsilon)
     }
 
+    isOnTriangle(triangle: Triangle) {}
+    isInsideTriangle(triangle: Triangle) {}
+    isOutsideTriangle(triangle: Triangle) {}
+
     isOutsidePolygon() {}
 
     isInsidePolygon() {}
 
-    isOnPolygon() {}
-
-
+    isOnPolygon(polygon: Polygon) {}
 
     isOnLine(line: Line): boolean {
         let { a, b, c } = line,
@@ -309,7 +355,7 @@ class Point extends GeomObject implements Visible {
      */
     apply(transformation: Transformation): Point {
         let c = transformation.get().transformCoordinate(this.coordinate)
-        return new Point(this.owner,c)
+        return new Point(this.owner, c)
     }
     clone() {
         return new Point(this.owner, this.x, this.y)
@@ -332,7 +378,7 @@ class Point extends GeomObject implements Visible {
 }
 
 /**
- * 
+ *
  * @category GeomObject
  */
 export default Point

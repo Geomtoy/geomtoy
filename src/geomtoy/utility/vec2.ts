@@ -1,16 +1,23 @@
 import math from "./math"
 
 const vec2 = {
+    // vector setup initial coordinate of u and terminal coordinate of v
     from([ux, uy]: [number, number], [vx, vy]: [number, number]): [number, number] {
         return vec2.subtract([vx, vy], [ux, uy])
     },
     from2(angle: number, magnitude: number): [number, number] {
-        let x = magnitude * Math.cos(angle),
-            y = magnitude * Math.sin(angle)
+        let x = magnitude * math.cos(angle),
+            y = magnitude * math.sin(angle)
         return [x, y]
     },
     angle([x, y]: [number, number]): number {
         return math.atan2(y, x)
+    },
+    //rotation angle from u to v
+    angleTo([ux, uy]: [number, number], [vx, vy]: [number, number]): number {
+        //sure, you can `return vec2.angle([vx, vy]) - vec2.angle([ux, uy])`
+        let sign = vec2.cross([ux, uy], [vx, vy]) >= 0 ? 1 : -1
+        return sign * math.acos(vec2.dot([ux, uy], [vx, vy]) / (vec2.magnitude([ux, uy]) * vec2.magnitude([vx, vy])))
     },
     magnitude([x, y]: [number, number]): number {
         return math.hypot(x, y)
@@ -33,6 +40,11 @@ const vec2 = {
     dot([ux, uy]: [number, number], [vx, vy]: [number, number]): number {
         return ux * vx + uy * vy
     },
+    project([ux, uy]: [number, number], [vx, vy]: [number, number]): [number, number] {
+        // return vec2.scalarMultiply(vec2.normalize([vx, vy]), vec2.dot([ux, uy], [vx, vy]) / vec2.magnitude([vx, vy]))
+        return vec2.scalarMultiply([vx, vy], vec2.dot([ux, uy], [vx, vy]) / vec2.dot([vx, vy], [vx, vy]))
+    },
+    // uxv!==vxu, uxv=-vxu
     cross([ux, uy]: [number, number], [vx, vy]: [number, number]): number {
         return ux * vy - uy * vx
     },
@@ -49,11 +61,11 @@ const vec2 = {
         return [y, x]
     },
     rotate([x, y]: [number, number], a: number): [number, number] {
-        return [x * math.cos(a) + y * math.sin(a), -x * math.sin(a) + y * math.cos(a)]
+        return [x * math.cos(a) - y * math.sin(a), x * math.sin(a) + y * math.cos(a)]
     },
     normalize([x, y]: [number, number]): [number, number] {
-        let norm = math.hypot(x, y)
-        return [x / norm, y / norm]
+        let magnitude = vec2.magnitude([x, y])
+        return [x / magnitude, y / magnitude]
     }
 }
 

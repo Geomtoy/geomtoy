@@ -1,3 +1,6 @@
+import Line from "../Line"
+import Point from "../Point"
+
 export * from "./graphic"
 
 // Geomtoy global options
@@ -12,9 +15,8 @@ export type Options = {
             foldback: number
         }
     }
-    fillRule: "nonzero" | "evenodd"
-    pathSampleRatio: 100,
-    coordinateSystem:{
+    pathSampleRatio: 100
+    coordinateSystem: {
         xAxisPositiveOnRight: boolean
         yAxisPositiveOnBottom: boolean
         originX: number
@@ -22,6 +24,13 @@ export type Options = {
         scale: number
     }
 }
+export type Direction = "positive" | "negative"
+
+export interface PointLineData {
+    line: Line
+    point: Point
+}
+
 export const defaultOptions: Options = {
     epsilon: 2 ** -11,
     graphic: {
@@ -33,9 +42,8 @@ export const defaultOptions: Options = {
             foldback: 1
         }
     },
-    fillRule: "evenodd",
     pathSampleRatio: 100,
-    coordinateSystem:{
+    coordinateSystem: {
         xAxisPositiveOnRight: true,
         yAxisPositiveOnBottom: true,
         originX: 0,
@@ -78,7 +86,6 @@ export enum RsSegmentToSegment {
     Intersected = 2 << 5,
     Separated = 2 << 6
 }
-
 
 export enum RsCircleToCircle {
     Intersected = 2,

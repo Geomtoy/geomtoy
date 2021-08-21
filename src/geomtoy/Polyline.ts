@@ -26,10 +26,10 @@ class Polyline extends GeomObject {
         super(o)
         if (util.isArray(a1)) {
             if (util.isCoordinate(util.head(a1))) {
-                return Object.seal(util.assign(this, { pointCoordinates: a1 }))
+                return Object.seal(Object.assign(this, { pointCoordinates: a1 }))
             }
             if (util.head(a1) instanceof Point) {
-                return Object.seal(util.assign(this, { points: a1 }))
+                return Object.seal(Object.assign(this, { points: a1 }))
             }
         }
         throw new Error("[G]Arguments can NOT construct a `Polyline`.")

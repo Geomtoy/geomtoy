@@ -59,6 +59,7 @@ class Transformation {
         this.#transformation.postMultiplySelf(t)
         return this
     }
+
 }
 
 export default Transformation

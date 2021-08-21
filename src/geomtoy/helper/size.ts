@@ -7,11 +7,11 @@ const size = {
         s[1] = h
     },
     width(s: [number, number], w?: number) {
-        if (w) s[0] = w
+        if (w !== undefined) s[0] = w
         return s[0]
     },
     height(s: [number, number], h?: number) {
-        if (h) s[1] = h
+        if (h !== undefined) s[1] = h
         return s[1]
     },
     copy(s: [number, number]): [number, number] {

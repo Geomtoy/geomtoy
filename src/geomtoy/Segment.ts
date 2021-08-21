@@ -12,6 +12,7 @@ import { is, sameOwner, sealed } from "./decorator"
 import Graphic from "./graphic"
 import Geomtoy from "."
 import coord from "./helper/coordinate"
+import Ray from "./Ray"
 
 @sealed
 class Segment extends GeomObject {
@@ -27,13 +28,13 @@ class Segment extends GeomObject {
     constructor(o: Geomtoy, a1: any, a2: any, a3?: any, a4?: any) {
         super(o)
         if (util.isNumber(a1) && util.isNumber(a2) && util.isNumber(a3) && util.isNumber(a4)) {
-            return Object.seal(util.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4 }))
+            return Object.seal(Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4 }))
         }
         if (util.isCoordinate(a1) && util.isCoordinate(a2)) {
-            return Object.seal(util.assign(this, { point1Coordinate: a1, point2Coordinate: a2 }))
+            return Object.seal(Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2 }))
         }
         if (a1 instanceof Point && a2 instanceof Point) {
-            return Object.seal(util.assign(this, { point1: a1, point2: a2 }))
+            return Object.seal(Object.assign(this, { point1: a1, point2: a2 }))
         }
         throw new Error("[G]Arguments can NOT construct a `Segment`.")
     }
@@ -113,7 +114,7 @@ class Segment extends GeomObject {
     }
 
     /**
-     * Get the angle of segment `this`, treated as a vector from `point1` to `point2`, the result is in the interval `(-Math.PI, Math.PI]`.
+     * Get the angle of segment `this`, treated as a vector from `point1` to `point2`, the result is in the interval `(-math.PI, math.PI]`.
      */
     get angle(): number {
         return vec2.angle(vec2.from(this.point1Coordinate, this.point2Coordinate))
@@ -131,26 +132,75 @@ class Segment extends GeomObject {
             throw new Error(`[G]The two endpoints of a segment should be distinct.`)
         }
     }
-
-    static fromPoints(owner: Geomtoy, point1: Point, point2: Point) {
-        return new Segment(owner, point1, point2)
+    static fromPointAndAngleAndLength(owner: Geomtoy, point: Point, angle: number, length: number) {
+        let p1 = point,
+            p2 = p1.moveAlongAngle(angle, length)
+        return new Segment(owner, p1, p2)
+    }
+    /**
+     * Get the `n` equally dividing rays of the angle which is formed by rays `ray1` and `ray2`.
+     * @description
+     * The angle is generated from `ray1` to `ray2` taking the common endpoint as the center of rotation.
+     * If `n` is not integer, return `null`.
+     * If `ray1` and `ray2` have different endpoint, return `null`.
+     * @param n
+     * @param ray1
+     * @param ray2
+     */
+    static getAngleNEquallyDividingRaysOfTwoRays(owner: Geomtoy, n: number, ray1: Ray, ray2: Ray): Array<Ray> | null {
+        if (!util.isInteger(n) || n < 2) return null
+        if (!ray1.isEndpointSameAs(ray2)) return null
+        let a1 = ray1.angle,
+            a2 = ray2.angle,
+            vertex = ray1.point,
+            d = (a2 - a1) / n,
+            ret: Array<Ray> = []
+        util.forEach(util.range(1, n), i => {
+            ret.push(new Ray(owner, vertex, a1 + d * i))
+        })
+        return ret
     }
 
+    /**
+     * Whether the two endpoints of segment `this` is the same as segment `segment` ignoring the order of the endpoints.
+     * @param segment
+     * @returns
+     */
     isSameAs(segment: Segment) {
-        let { point1Coordinate: c1, point2Coordinate: c2 } = this,
-            { point1Coordinate: c3, point2Coordinate: c4 } = segment,
-            epsilon = this.owner.getOptions().epsilon
-        return (coord.isSameAs(c1, c3, epsilon) && coord.isSameAs(c2, c4, epsilon)) || (coord.isSameAs(c1, c4, epsilon) && coord.isSameAs(c2, c3, epsilon))
+        let epsilon = this.owner.getOptions().epsilon,
+            cs1 = coord.sort([this.point1Coordinate, this.point2Coordinate]),
+            cs2 = coord.sort([segment.point1Coordinate, segment.point2Coordinate])
+        return coord.isSameAs(cs1[0], cs2[0], epsilon) && coord.isSameAs(cs1[1], cs2[1], epsilon)
     }
-
+    /**
+     * Whether the two endpoints of segment `this` is the same as segment `segment` considering the order of the endpoints.
+     * @param segment
+     * @returns
+     */
     isSameAs2(segment: Segment) {
-        let { point1Coordinate: c1, point2Coordinate: c2 } = this,
-            { point1Coordinate: c3, point2Coordinate: c4 } = segment,
-            epsilon = this.owner.getOptions().epsilon
-        return coord.isSameAs(c1, c3, epsilon) && coord.isSameAs(c2, c4, epsilon)
+        let epsilon = this.owner.getOptions().epsilon
+        return coord.isSameAs(this.point1Coordinate, segment.point1Coordinate, epsilon) && coord.isSameAs(this.point2Coordinate, segment.point2Coordinate, epsilon)
     }
-
-    getPerpendicularlyBisectingLine() {}
+    /**
+     * Get the middle point of segment `this`.
+     * @returns
+     */
+    getMiddlePoint() {
+        let [x1, y1] = this.point1Coordinate,
+            [x2, y2] = this.point2Coordinate
+        return new Point(this.owner, (x1 + x2) / 2, (y1 + y2) / 2)
+    }
+    /**
+     * Get the perpendicularly bisecting line of segment `this`.
+     * @returns
+     */
+    getPerpendicularlyBisectingLine() {
+        let [x1, y1] = this.point1Coordinate,
+            [x2, y2] = this.point2Coordinate,
+            k = (x1 - x2) / (y1 - y2),
+            p = this.getMiddlePoint()
+        return Line.fromPointAndSlope(this.owner, p, k)
+    }
 
     getIntersectionPointWithLine(line: Line) {
         return line.getIntersectionPointWithSegment(this)
@@ -254,7 +304,7 @@ class Segment extends GeomObject {
 
         //去掉相接的情况，相接uniq之后，元素个数为1，其余情况为2
         arrP = util.uniqWith(arrP, (i, j) => i.isSameAs(j))
-        if (arrP.length == 2) return new Segment(this.owner,arrP[0], arrP[1])
+        if (arrP.length == 2) return new Segment(this.owner, arrP[0], arrP[1])
 
         return false
     }
@@ -267,7 +317,7 @@ class Segment extends GeomObject {
         return null
     }
     /**
-     * `线段this`与`线段s`是否相交，相交不仅要求有且仅有一个点重合，且要求夹角不等于0或者Math.PI
+     * `线段this`与`线段s`是否相交，相交不仅要求有且仅有一个点重合，且要求夹角不等于0或者math.PI
      * 包含了不共线的相接和线段的端点在另一个线段上的特殊情况
      * @param {Segment} segment
      * @returns {boolean | Point} 交点
@@ -275,9 +325,9 @@ class Segment extends GeomObject {
     #isIntersectedWithSegment(segment: Segment) {
         if (this.isParallelToSegment(segment)) return false //相交的前提是不平行
 
-        let v1 = new Vector(this.owner,this.point1, this.point2),
-            v2 = new Vector(this.owner,segment.point1, segment.point2),
-            v3 = new Vector(this.owner,this.point1, segment.point1),
+        let v1 = new Vector(this.owner, this.point1, this.point2),
+            v2 = new Vector(this.owner, segment.point1, segment.point2),
+            v3 = new Vector(this.owner, this.point1, segment.point1),
             cp1 = v1.crossProduct(v2),
             cp2 = v3.crossProduct(v2),
             cp3 = v3.crossProduct(v1)
@@ -286,7 +336,7 @@ class Segment extends GeomObject {
         let t1 = cp3 / cp1,
             t2 = cp2 / cp1
         if (0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1) {
-            return Point.fromVector(this.owner,new Vector(this.owner,this.point1).add(v1.scalarMultiply(t2)))
+            return Point.fromVector(this.owner, new Vector(this.owner, this.point1).add(v1.scalarMultiply(t2)))
         }
         return false
     }
@@ -300,13 +350,6 @@ class Segment extends GeomObject {
         return null
     }
 
-    getMiddlePoint() {
-        let {
-            point1: { x: x1, y: y1 },
-            point2: { x: x2, y: y2 }
-        } = this
-        return new Point(this.owner, (x1 + x2) / 2, (y1 + y2) / 2)
-    }
     /**
      * Get the lerping(**lerp** here means **linear interpolation and extrapolation**) point of segment `this`.
      * @description
@@ -314,7 +357,7 @@ class Segment extends GeomObject {
      *      - If "weight=0", return `point1`.
      *      - If "weight=1", return `point2`.
      *      - If "0<weight<1", return a point between `point1` and `point2`.
-     * - When the `weight` is in the interval `(-Infinity, 0)` and `(1, Infinity)`, it is extrapolation:
+     * - When the `weight` is in the interval `(-math.Infinity, 0)` and `(1, math.Infinity)`, it is extrapolation:
      *      - If "weight<0", return a point exterior of `point1`.
      *      - If "weight>1", return a point exterior of `point2`.
      * @param {number} weight
@@ -336,7 +379,7 @@ class Segment extends GeomObject {
      * - When `line` is intersected with `this`, return a number in the interval `[0, 1]`:
      *      - If `line` passes through `point1`, return 0.
      *      - If `line` passes through `point2`, return 1.
-     * - When `line` is not parallel to and not intersected with `this`, return a number in the interval `(-Infinity, 0)` and `(1, Infinity)`.
+     * - When `line` is not parallel to and not intersected with `this`, return a number in the interval `(-math.Infinity, 0)` and `(1, math.Infinity)`.
      * @param {Line} line
      * @returns {number}
      */
@@ -355,10 +398,10 @@ class Segment extends GeomObject {
      * Get the division point of segment `this`.
      * @description
      * - When `lambda` is equal to -1, return `null`.
-     * - When `lambda` is in the interval `[0, Infinity]`, return a internal division point, a point between `point1` and `point2`:
+     * - When `lambda` is in the interval `[0, math.Infinity]`, return a internal division point, a point between `point1` and `point2`:
      *      - If "lambda=0", return `point1`.
-     *      - If "lambda=Infinity", return `point2`.
-     * - When `lambda` is in the interval `(-Infinity, -1)` and `(-1, 0)`, return a external division point:
+     *      - If "lambda=math.Infinity", return `point2`.
+     * - When `lambda` is in the interval `(-math.Infinity, -1)` and `(-1, 0)`, return a external division point:
      *      - If "-1<lambda<0", return a point exterior of `point1`.
      *      - If "lambda<-1", return a point exterior of `point2`.
      *
@@ -367,7 +410,7 @@ class Segment extends GeomObject {
      */
     getDivisionPoint(lambda: number): Point | null {
         if (lambda === -1) return null
-        if (math.abs(lambda) === Infinity) return this.point2.clone()
+        if (math.abs(lambda) === math.Infinity) return this.point2.clone()
         let {
                 point1: { x: x1, y: y1 },
                 point2: { x: x2, y: y2 }
@@ -381,22 +424,25 @@ class Segment extends GeomObject {
      * Get the division ratio `lambda` divided by line `line `.
      * @description
      * - When `line` is parallel to `this`, return `NaN`.
-     * - When `line` is intersected with `this`, return a number in the interval `[0, Infinity]`:
+     * - When `line` is intersected with `this`, return a number in the interval `[0, math.Infinity]`:
      *      - If `line` passes through `point1`, return 0.
-     *      - If `line` passes through `point2`, return `Infinity`.
-     * - When `line` is not parallel to and not intersected with `this`, return a number in the interval `(-Infinity, -1)` and `(-1, 0)`.
+     *      - If `line` passes through `point2`, return `math.Infinity`.
+     * - When `line` is not parallel to and not intersected with `this`, return a number in the interval `(-math.Infinity, -1)` and `(-1, 0)`.
      * @param {Line} line
      * @returns {number}
      */
     getDivisionRatioByLine(line: Line): number {
         if (line.isParallelToSegment(this)) return NaN
-        if (this.point2.isOnLine(line)) return Infinity
+        if (this.point2.isOnLine(line)) return math.Infinity
         let {
                 point1: { x: x1, y: y1 },
                 point2: { x: x2, y: y2 }
             } = this,
             { a, b, c } = line
         return -(a * x1 + b * y1 + c) / (a * x2 + b * y2 + c)
+    }
+    toLine(){
+        return Line.fromTwoCoordinates(this.owner,this.point1Coordinate,this.point2Coordinate)
     }
 
     getGraphic(type: GraphicImplType): (SvgDirective | CanvasDirective)[] {
@@ -423,9 +469,8 @@ class Segment extends GeomObject {
     }
 }
 
-
 /**
- * 
+ *
  * @category GeomObject
  */
 export default Segment
