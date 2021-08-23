@@ -113,9 +113,8 @@ const math = {
      * @param {number} a
      * @param {number} b
      * @param {number} c
-     * @returns {Array<number>}
      */
-    quadraticRoots(a: number, b: number, c: number): Array<number> {
+    quadraticRoots(a: number, b: number, c: number): number[] {
         let rs = [],
             dis = b ** 2 - 4 * a * c
         if (dis > 0) {

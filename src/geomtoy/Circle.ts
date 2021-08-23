@@ -11,7 +11,7 @@ import Vector from "./Vector"
 import Segment from "./Segment"
 import Inversion from "./inversion"
 import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
-import { is, sameOwner, sealed } from "./decorator"
+import { is, sealed } from "./decorator"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Graphic from "./graphic"
@@ -30,9 +30,6 @@ interface CommonTangentDataOfTwoCircles {}
 
 @sealed
 class Circle extends GeomObject {
-    #name = "Circle"
-    #uuid = util.uuid()
-
     #radius: number = NaN
     #centerCoordinate: [number, number] = [NaN, NaN]
 
@@ -42,21 +39,15 @@ class Circle extends GeomObject {
     constructor(o: Geomtoy, a1: number, a2: any, a3?: any) {
         super(o)
         if (util.isNumber(a2) && util.isNumber(a3)) {
-            return Object.seal(Object.assign(this, { radius: a1, centerX: a2, centerY: a3 }))
+            Object.assign(this, { radius: a1, centerX: a2, centerY: a3 })
         }
         if (util.isArray(a2)) {
-            return Object.seal(Object.assign(this, { radius: a1, centerCoordinate: a2 }))
+            Object.assign(this, { radius: a1, centerCoordinate: a2 })
         }
         if (a2 instanceof Point) {
-            return Object.seal(Object.assign(this, { radius: a1, centerPoint: a2 }))
+            Object.assign(this, { radius: a1, centerPoint: a2 })
         }
-        throw new Error("[G]Arguments can NOT construct a `Circle`.")
-    }
-    get name() {
-        return this.#name
-    }
-    get uuid() {
-        return this.#uuid
+        return Object.seal(this)
     }
 
     @is("positiveNumber")
@@ -87,7 +78,6 @@ class Circle extends GeomObject {
     set centerCoordinate(value) {
         coord.assign(this.#centerCoordinate, value)
     }
-    @sameOwner
     @is("point")
     get centerPoint() {
         return new Point(this.owner, this.#centerCoordinate)
@@ -96,10 +86,13 @@ class Circle extends GeomObject {
         coord.assign(this.#centerCoordinate, value.coordinate)
     }
 
-    get eccentricity(){
+    get eccentricity() {
         return 0
     }
 
+    isValid() {
+        return coord.isValid(this.centerCoordinate) && util.isRealNumber(this.radius) && this.radius > 0
+    }
 
     isSameAs(circle: Circle): boolean {
         if (this === circle) return true
@@ -160,7 +153,6 @@ class Circle extends GeomObject {
     }
     // #endregion
 
-    
     getPerimeter() {
         return 2 * Math.PI * this.radius
     }
@@ -195,7 +187,6 @@ class Circle extends GeomObject {
     // getArcBetweenPoints(point1:Point,point2:Point,positive = true):Arc{
 
     // }
-
 
     getArcAngleBetweenPoints(point1: Point, point2: Point, positive = true): number {
         if (point1.isSameAs(point2)) return NaN

@@ -12,6 +12,7 @@ import Polyline from "./Polyline"
 import Polygon from "./Polygon"
 import RegularPolygon from "./RegularPolygon"
 import Ellipse from "./Ellipse"
+import Ray from "./Ray"
 
 import Transformation from "./transformation"
 import Inversion from "./inversion"
@@ -21,11 +22,30 @@ import { Options, defaultOptions } from "./types"
 import VanillaCanvas from "./adaptor/vanilla-canvas"
 import VanillaSvg from "./adaptor/vanilla-svg"
 import SvgDotJs from "./adaptor/svg-dot-js"
+import GeomObject from "./base/GeomObject"
 
 type Tail<T extends any[]> = T extends [infer A, ...infer R] ? R : never
 // prettier-ignore
 type ConstructorOverloads<T> =
     T extends {
+        new(...args: infer A1): infer R1
+        new(...args: infer A2): infer R2
+        new(...args: infer A3): infer R3
+        new(...args: infer A4): infer R4
+        new(...args: infer A5): infer R5
+        new(...args: infer A6): infer R6
+        new(...args: infer A7): infer R7
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2,
+        new (...args: A3) => R3,
+        new (...args: A4) => R4,
+        new (...args: A5) => R5,
+        new (...args: A6) => R6,
+        new (...args: A7) => R7,
+    ]
+    : T extends {
         new(...args: infer A1): infer R1
         new(...args: infer A2): infer R2
         new(...args: infer A3): infer R3
@@ -94,8 +114,8 @@ type ConstructorOverloads<T> =
     : never
 // prettier-ignore
 type TailedStaticMethods<T extends { new (...args: any): any }> = {
-    [K in keyof T as T[K] extends (...arg: any) => any ? K : never]
-    : T[K] extends (...arg: any) => any ? (...arg: Tail<Parameters<T[K]>>) => ReturnType<T[K]> : never
+    [K in keyof T as T[K] extends (...args: any) => any ? K : never]
+    : T[K] extends (...args: any) => any ? (...args: Tail<Parameters<T[K]>>) => ReturnType<T[K]> : never
 }
 type TailedConstructor<T extends { new (...args: any): any }> = {
     (...arg: Tail<ConstructorParameters<ConstructorOverloads<T>[number]>>): InstanceType<T>
@@ -229,10 +249,19 @@ class Geomtoy {
         return util.cloneDeep(this.#options)
     }
     setOptions(options: Partial<Options> = {}) {
-        let tc = util.defaultsDeep(util.cloneDeep(options), util.cloneDeep(this.#options))
+        let tc = util.defaultsDeep(util.cloneDeep(options), util.cloneDeep(this.#options)) as Options
+        if (tc.epsilon > 2 ** -16) tc.epsilon = 2 ** -16
+        if (tc.epsilon < 2 ** -52) tc.epsilon = 2 ** -52
+
         if (!isOptions(tc)) throw new Error()
         util.assignDeep(this.#options, tc)
     }
+
+    adopt(object:GeomObject){
+        object.owner = this
+    }
+
+    
 }
 
 /**

@@ -6,7 +6,7 @@ import GeomObject from "./base/GeomObject"
 import { CanvasDirective, Direction, GraphicImplType, SvgDirective } from "./types"
 import Transformation from "./transformation"
 
-import { is, sameOwner, sealed } from "./decorator"
+import { is, sealed, validAndWithSameOwner } from "./decorator"
 import Geomtoy from "."
 import coord from "./helper/coordinate"
 import vec2 from "./utility/vec2"
@@ -19,10 +19,8 @@ import Polygon from "./Polygon"
 import Segment from "./Segment"
 
 @sealed
+@validAndWithSameOwner
 class Triangle extends GeomObject implements AreaMeasurable, Visible {
-    #name = "Triangle"
-    #uuid = util.uuid()
-
     #point1Coordinate: [number, number] = [NaN, NaN]
     #point2Coordinate: [number, number] = [NaN, NaN]
     #point3Coordinate: [number, number] = [NaN, NaN]
@@ -30,28 +28,20 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     constructor(owner: Geomtoy, point1X: number, point1Y: number, point2X: number, point2Y: number, point3X: number, point3Y: number)
     constructor(owner: Geomtoy, point1Coordinate: [number, number], point2Coordinate: [number, number], point3Coordinate: [number, number])
     constructor(owner: Geomtoy, point1: Point, point2: Point, point3: Point)
-    constructor(o: Geomtoy, a1: any, a2: any, a3: any, a4?: any, a5?: any, a6?: any) {
+    constructor(owner: Geomtoy)
+    constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any) {
         super(o)
         if (util.every([a1, a2, a3, a4, a5, a6], util.isNumber)) {
-            return Object.seal(Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4, point3X: a5, point3Y: a6 }))
+            Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4, point3X: a5, point3Y: a6 })
         }
-
         if (util.isCoordinate(a1) && util.isCoordinate(a2) && util.isCoordinate(a3)) {
-            return Object.seal(Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2, point3Coordinate: a3 }))
+            Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2, point3Coordinate: a3 })
         }
 
         if (a1 instanceof Point && a2 instanceof Point && a3 instanceof Point) {
-            return Object.seal(Object.assign(this, { point1: a1, point2: a2, point3: a3 }))
+            Object.assign(this, { point1: a1, point2: a2, point3: a3 })
         }
-
-        throw new Error("[G]Arguments can NOT construct a `Triangle`.")
-    }
-
-    get name() {
-        return this.#name
-    }
-    get uuid() {
-        return this.#uuid
+        return Object.seal(this)
     }
 
     @is("realNumber")
@@ -60,7 +50,6 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     }
     set point1X(value) {
         coord.x(this.#point1Coordinate, value)
-        this.#guard()
     }
     @is("realNumber")
     get point1Y() {
@@ -68,7 +57,6 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     }
     set point1Y(value) {
         coord.y(this.#point1Coordinate, value)
-        this.#guard()
     }
     @is("coordinate")
     get point1Coordinate() {
@@ -76,16 +64,13 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     }
     set point1Coordinate(value) {
         coord.assign(this.#point1Coordinate, value)
-        this.#guard()
     }
-    @sameOwner
     @is("point")
     get point1() {
         return new Point(this.owner, this.#point1Coordinate)
     }
     set point1(value) {
         coord.assign(this.#point1Coordinate, value.coordinate)
-        this.#guard()
     }
     @is("realNumber")
     get point2X() {
@@ -93,7 +78,6 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     }
     set point2X(value) {
         coord.x(this.#point2Coordinate, value)
-        this.#guard()
     }
     @is("realNumber")
     get point2Y() {
@@ -101,7 +85,6 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     }
     set point2Y(value) {
         coord.y(this.#point2Coordinate, value)
-        this.#guard()
     }
     @is("coordinate")
     get point2Coordinate() {
@@ -109,16 +92,13 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     }
     set point2Coordinate(value) {
         coord.assign(this.#point2Coordinate, value)
-        this.#guard()
     }
-    @sameOwner
     @is("point")
     get point2() {
         return new Point(this.owner, this.#point2Coordinate)
     }
     set point2(value) {
         coord.assign(this.#point2Coordinate, value.coordinate)
-        this.#guard()
     }
     @is("realNumber")
     get point3X() {
@@ -126,7 +106,6 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     }
     set point3X(value) {
         coord.x(this.#point3Coordinate, value)
-        this.#guard()
     }
     @is("realNumber")
     get point3Y() {
@@ -134,7 +113,6 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     }
     set point3Y(value) {
         coord.y(this.#point3Coordinate, value)
-        this.#guard()
     }
     @is("coordinate")
     get point3Coordinate() {
@@ -142,16 +120,13 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     }
     set point3Coordinate(value) {
         coord.assign(this.#point3Coordinate, value)
-        this.#guard()
     }
-    @sameOwner
     @is("point")
     get point3() {
         return new Point(this.owner, this.#point3Coordinate)
     }
     set point3(value) {
         coord.assign(this.#point3Coordinate, value.coordinate)
-        this.#guard()
     }
 
     get coordinates(): [[number, number], [number, number], [number, number]] {
@@ -197,16 +172,24 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
         return math.abs(vec2.angleTo(vec2.from(c3, c1), vec2.from(c3, c2)))
     }
 
-    #guard() {
-        let { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = this,
-            epsilon = this.owner.getOptions().epsilon
-        if (coord.isSameAs(c1, c2, epsilon) || coord.isSameAs(c1, c3, epsilon) || coord.isSameAs(c2, c3, epsilon)) {
-            throw new Error("[G]The three vertices of a `Triangle` should be distinct.")
-        }
-        if (math.equalTo(vec2.cross(vec2.from(c1, c2), vec2.from(c1, c3)), 0, epsilon)) {
-            throw new Error("[G]The three vertices of a `Triangle` should Not be collinear.")
-        }
+    static formingCondition = "The three vertices of a `Triangle` should not be collinear, or the sum of the length of any two sides is greater than the third side."
+
+    isValid() {
+        let c1 = this.#point1Coordinate,
+            c2 = this.#point2Coordinate,
+            c3 = this.#point3Coordinate,
+            epsilon = this.owner.getOptions().epsilon,
+            valid = true
+        valid &&= coord.isValid(c1)
+        valid &&= coord.isValid(c2)
+        valid &&= coord.isValid(c3)
+        // Do NOT use vector cross judgment, area judgment, lying on the same line judgment etc.
+        // None of these methods can guarantee that if triangle `this` is judged to be valid, its sub segment can all be valid.
+        // Use length judgment
+        valid &&= math.greaterThan(vec2.magnitude(vec2.from(c1, c2)) + vec2.magnitude(vec2.from(c2, c3)), vec2.magnitude(vec2.from(c3, c1)), epsilon)
+        return valid
     }
+
     /**
      * Whether the three vertices of triangle `this` is the same as triangle `triangle` ignoring the order of the vertices.
      * @param triangle
@@ -975,14 +958,24 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     clone() {
         return new Triangle(this.owner, this.point1Coordinate, this.point2Coordinate, this.point3Coordinate)
     }
-    toString(): string {
-        throw new Error("Method not implemented.")
+    toString() {
+        return [
+            `${this.name}(${this.uuid}){`,
+            `\tpoint1Coordinate: ${coord.toString(this.point1Coordinate)}`,
+            `\tpoint2Coordinate: ${coord.toString(this.point2Coordinate)}`,
+            `\tpoint3Coordinate: ${coord.toString(this.point3Coordinate)}`,
+            `} owned by Geomtoy(${this.owner.uuid})`
+        ].join("\n")
     }
-    toObject(): object {
-        throw new Error("Method not implemented.")
+    toArray() {
+        return [coord.copy(this.point1Coordinate), coord.copy(this.point2Coordinate), coord.copy(this.point3Coordinate)]
     }
-    toArray(): any[] {
-        throw new Error("Method not implemented.")
+    toObject() {
+        return {
+            point1Coordinate: coord.copy(this.point1Coordinate),
+            point2Coordinate: coord.copy(this.point2Coordinate),
+            point3Coordinate: coord.copy(this.point3Coordinate)
+        }
     }
 }
 

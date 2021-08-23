@@ -4,17 +4,15 @@ import Point from "./Point"
 import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
-import { is, sealed } from "./decorator"
+import { is, sealed, validAndWithSameOwner } from "./decorator"
 import math from "./utility/math"
 import Geomtoy from "."
 import coord from "./helper/coordinate"
 import size from "./helper/size"
 
 @sealed
+@validAndWithSameOwner
 class Rectangle extends GeomObject {
-    #name = "Rectangle"
-    #uuid = util.uuid()
-
     #originCoordinate: [number, number] = [NaN, NaN]
     #size: [number, number] = [NaN, NaN]
 
@@ -52,12 +50,6 @@ class Rectangle extends GeomObject {
             }
         }
         throw new Error(`[G]Arguments can NOT construct a rectangle.`)
-    }
-    get name() {
-        return this.#name
-    }
-    get uuid() {
-        return this.#uuid
     }
 
     @is("realNumber")
@@ -108,6 +100,11 @@ class Rectangle extends GeomObject {
     }
     set size(value) {
         size.assign(this.#size, value)
+    }
+
+    isValid() {
+        let epsilon = this.owner.getOptions().epsilon
+        return coord.isValid(this.originCoordinate) && size.isValid(this.size, epsilon)
     }
 
     static fromPoints(owner: Geomtoy, point1: Point, point2: Point) {
@@ -187,7 +184,7 @@ class Rectangle extends GeomObject {
         return this.clone().inflateSelf(size)
     }
     inflateSelf(size: [number, number]) {
-        let { originX: x, originY: y, width: w, height: h }  = this,
+        let { originX: x, originY: y, width: w, height: h } = this,
             [sw, sh] = size,
             nx = x - sw,
             ny = y - sh,
@@ -224,7 +221,7 @@ class Rectangle extends GeomObject {
     // }
 
     clone() {
-        return new Rectangle(this.owner,this.originCoordinate, this.size)
+        return new Rectangle(this.owner, this.originCoordinate, this.size)
     }
     apply(transformation: Transformation): GeomObject {
         throw new Error("Method not implemented.")
@@ -260,7 +257,7 @@ class Rectangle extends GeomObject {
 }
 
 /**
- * 
+ *
  * @category GeomObject
  */
 export default Rectangle

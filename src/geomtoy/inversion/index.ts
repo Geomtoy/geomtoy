@@ -1,7 +1,7 @@
 import util from "../utility"
 import vec2 from "../utility/vec2"
 import math from "../utility/math"
-import { is, sameOwner, sealed } from "../decorator"
+import { is, sealed, validAndWithSameOwner } from "../decorator"
 
 import Point from "../Point"
 import Circle from "../Circle"
@@ -12,10 +12,9 @@ import Geomtoy from ".."
 import coord from "../helper/coordinate"
 
 @sealed
+@validAndWithSameOwner
 class Inversion extends GeomObject {
-    #name = "Inversion"
-    #uuid = util.uuid()
-
+ 
     #power: number = NaN
     #centerCoordinate: [number, number] = [NaN, NaN]
 
@@ -34,12 +33,6 @@ class Inversion extends GeomObject {
             return Object.seal(Object.assign(this, { power: a1, centerPoint: a2 }))
         }
         throw new Error("[G]Arguments can NOT construct an `Inversion`.")
-    }
-    get name() {
-        return this.#name
-    }
-    get uuid() {
-        return this.#uuid
     }
 
     @is("nonZeroNumber")
@@ -70,7 +63,6 @@ class Inversion extends GeomObject {
     set centerCoordinate(value) {
         coord.assign(this.#centerCoordinate, value)
     }
-    @sameOwner
     @is("point")
     get centerPoint() {
         return new Point(this.owner, this.#centerCoordinate)
@@ -79,6 +71,9 @@ class Inversion extends GeomObject {
         coord.assign(this.#centerCoordinate, value.coordinate)
     }
 
+    isValid(): boolean {
+        throw new Error("Method not implemented.")
+    }
     /**
      * Find the inversion of point `point`
      * @param {Point} point

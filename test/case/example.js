@@ -3,13 +3,17 @@ import Geomtoy from "../../src/geomtoy"
 let canvas = document.querySelector("#canvas"),
     ctx = canvas.getContext("2d"),
     G = new Geomtoy(),
-    canvasDrawer = new Geomtoy.adapters.VanillaCanvas(ctx, G)
+      G1 = new Geomtoy(),
+    canvasDrawer = new Geomtoy.adapters.VanillaCanvas(ctx, G),
+    cWidth,
+    cHeight
 
 window.addEventListener("resize", () => {
     canvas.setAttribute("width", window.innerWidth)
     canvas.setAttribute("height", window.innerHeight)
+
     G.setOptions({
-        epsilon: 2**-4,
+        epsilon:2**-32,
         coordinateSystem: {
             scale: 12,
             originX: window.innerWidth / 2,
@@ -21,6 +25,8 @@ window.addEventListener("resize", () => {
             pointSize: 0.5
         }
     })
+    cWidth = window.innerWidth / G.getOptions().coordinateSystem.scale
+    cHeight = window.innerHeight / G.getOptions().coordinateSystem.scale
 })
 window.dispatchEvent(new Event("resize"))
 
@@ -77,14 +83,70 @@ let colors = {
     black: "#000000"
 }
 
-let p1 = G.Point(0, -25),
-    p2 = G.Point(-20, -25),
-    p3 = G.Point(15, -25)
+let gui = new dat.GUI()
+
+let p1 = G.Point(-25, -25),
+    // p2 = G.Point(2.5,2.45130082959499673300),
+    p2 = G.Point(2.5,2.46731498123892323270),
+    // p2 = G.Point(2.5,2.49995),
+    p3 = G.Point(25, 25)
+
+let guiP1 = gui.addFolder("point1")
+guiP1.open()
+guiP1
+    .add(p1, "x", -cWidth / 2, cWidth / 2, 0.1)
+    .listen()
+    .onChange(v => {
+        p1.x = v
+        draw()
+    })
+guiP1
+    .add(p1, "y", -cHeight / 2, cHeight / 2, 0.1)
+    .listen()
+    .onChange(v => {
+        p1.y = v
+        draw()
+    })
+let guiP2 = gui.addFolder("point2")
+guiP2.open()
+guiP2
+    .add(p2, "x", -cWidth / 2, cWidth / 2, 0.1)
+    .listen()
+    .onChange(v => {
+        p2.x = v
+        draw()
+    })
+guiP2
+    .add(p2, "y", -cHeight / 2, cHeight / 2, 0.1)
+    .listen()
+    .onChange(v => {
+        p2.y = v
+        draw()
+    })
+let guiP3 = gui.addFolder("point3")
+guiP3.open()
+guiP3
+    .add(p3, "x", -cWidth / 2, cWidth / 2, 0.1)
+    .listen()
+    .onChange(v => {
+        p3.x = v
+        draw()
+    })
+guiP3
+    .add(p3, "y", -cHeight / 2, cHeight / 2, 0.1)
+    .listen()
+    .onChange(v => {
+        p3.y = v
+        draw()
+    })
+
 touchable.push({ uuid: p1.uuid, geomObject: p1 })
 touchable.push({ uuid: p2.uuid, geomObject: p2 })
 touchable.push({ uuid: p3.uuid, geomObject: p3 })
 draw()
 window.addEventListener("resize", draw)
+
+
 
 function draw() {
     canvasDrawer.clear()
@@ -97,56 +159,56 @@ function draw() {
     touchable.filter(v => v.uuid === p2.uuid)[0].path2D = canvasDrawer.draw(p2)
     touchable.filter(v => v.uuid === p3.uuid)[0].path2D = canvasDrawer.draw(p3)
 
-    //introduce GeomObject.Empty implement with class decorator
-    // try {
-        let tri = G.Triangle(p1, p2, p3) 
-        canvasDrawer.draw(tri)
+    let tri = G.Triangle()
+    G.Line.fromTwoPoints(G.Point(1,1),G.Point(1,2))
+    
+    tri.point1 = p1
+    tri.point2 = p2
+    tri.point3 = p3 
+    tri.getIsogonalConjugatePointOfPoint(G1.Point())
+    
 
+    if (tri.isValid()) {
+        canvasDrawer.draw(tri)
         ctx.strokeStyle = colors.grey + "CC"
         canvasDrawer.drawBatch(...tri.getSideSegments().map(s => s.toLine()))
-
 
         ctx.strokeStyle = colors.red + "CC"
         canvasDrawer.drawBatch(...tri.getMedianSegments())
         canvasDrawer.draw(tri.getCentroidPoint())
-        canvasDrawer.draw(tri.getMedialTriangle())
-        canvasDrawer.draw(tri.getAntimedialTriangle())
+        // canvasDrawer.draw(tri.getMedialTriangle())
+        // canvasDrawer.draw(tri.getAntimedialTriangle())
 
         ctx.strokeStyle = colors.green + "CC"
         canvasDrawer.drawBatch(...tri.getAngleBisectingSegments())
-        canvasDrawer.draw(tri.getIncenterPoint())
-        canvasDrawer.draw(tri.getInscribedCircle())
+        // canvasDrawer.draw(tri.getIncenterPoint())
+        // canvasDrawer.draw(tri.getInscribedCircle())
 
         ctx.strokeStyle = colors.purple + "CC"
         canvasDrawer.drawBatch(...tri.getAltitudeSegments().map(s => s.toLine()))
         canvasDrawer.draw(tri.getOrthocenterPoint())
-        let ot = tri.getOrthicTriangle()
-        ot!== null && canvasDrawer.draw(ot)  
-        let pc = tri.getPolarCircle()
-        pc!== null && canvasDrawer.draw(pc) 
-        
+        // let ot = tri.getOrthicTriangle()
+        // ot !== null && canvasDrawer.draw(ot)
+        // let pc = tri.getPolarCircle()
+        // pc !== null && canvasDrawer.draw(pc)
+
         ctx.strokeStyle = colors.indigo + "CC"
         canvasDrawer.drawBatch(...tri.getPerpendicularlyBisectingSegments().map(s => s.toLine()))
-        canvasDrawer.draw(tri.getCircumcenterPoint())
-        canvasDrawer.draw(tri.getCircumscribedCircle())
+        // canvasDrawer.draw(tri.getCircumcenterPoint())
+        // canvasDrawer.draw(tri.getCircumscribedCircle())
 
-        
+        // ctx.strokeStyle = colors.teal + "CC"
+        // canvasDrawer.drawBatch(...tri.getEscenterPoints())
+        // canvasDrawer.drawBatch(...tri.getEscribedCircles())
 
-        ctx.strokeStyle = colors.teal + "CC"
-        canvasDrawer.drawBatch(...tri.getEscenterPoints())
-        canvasDrawer.drawBatch(...tri.getEscribedCircles())
+        // ctx.strokeStyle = colors.yellow + "CC"
+        // canvasDrawer.drawBatch(...tri.getSymmedianSegments())
+        // canvasDrawer.draw(tri.getLemoinePoint())
 
-
-        ctx.strokeStyle = colors.yellow + "CC"
-        canvasDrawer.drawBatch(...tri.getSymmedianSegments())
-        canvasDrawer.draw(tri.getLemoinePoint())
-
-
-        ctx.strokeStyle = colors.brown  + "CC"
-        ctx.globalCompositeOperation = "source-over"
-        canvasDrawer.draw(tri.getEulerLine())
-        canvasDrawer.draw(tri.getNinePointCenterPoint())
-        canvasDrawer.draw(tri.getNinePointCircle())
-
-    // } catch (e){console.error(e)}
+        // ctx.strokeStyle = colors.brown + "CC"
+        // ctx.globalCompositeOperation = "source-over"
+        // canvasDrawer.draw(tri.getEulerLine())
+        // canvasDrawer.draw(tri.getNinePointCenterPoint())
+        // canvasDrawer.draw(tri.getNinePointCircle())
+    }
 }

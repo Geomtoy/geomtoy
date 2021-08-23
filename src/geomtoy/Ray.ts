@@ -2,13 +2,14 @@ import vec2 from "./utility/vec2"
 import util from "./utility"
 import angle from "./utility/angle"
 import math from "./utility/math"
+import { is, sealed, validAndWithSameOwner } from "./decorator"
+
 
 import Point from "./Point"
 import Segment from "./Segment"
 import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
 import GeomObject from "./base/GeomObject"
 import Graphic from "./graphic"
-import { is, sameOwner, sealed } from "./decorator"
 import Transformation from "./transformation"
 import Geomtoy from "."
 import coord from "./helper/coordinate"
@@ -16,9 +17,10 @@ import { Visible } from "./interfaces"
 import Line from "./Line"
 
 @sealed
-class Ray extends GeomObject implements Visible {
+@validAndWithSameOwner
+class Ray extends GeomObject implements Visible { 
     #coordinate: [number, number] = [NaN, NaN]
-    #angle: number = NaN
+    #angle: number = 0
 
     constructor(owner: Geomtoy, x: number, y: number, angle: number)
     constructor(owner: Geomtoy, coordinate: [number, number], angle: number)
@@ -26,17 +28,17 @@ class Ray extends GeomObject implements Visible {
     constructor(o: Geomtoy, a1: any, a2: any, a3?: any) {
         super(o)
         if (util.isNumber(a1) && util.isNumber(a2)) {
-            return Object.seal(Object.assign(this, { x: a1, y: a2, angle: a3 }))
+            Object.assign(this, { x: a1, y: a2, angle: a3 })
         }
 
         if (util.isCoordinate(a1)) {
-            return Object.seal(Object.assign(this, { coordinate: a1, angle: a2 }))
+            Object.assign(this, { coordinate: a1, angle: a2 })
         }
 
         if (a1 instanceof Point) {
-            return Object.seal(Object.assign(this, { point: a1, angle: a2 }))
-        }
-        throw new Error("[G]Arguments can NOT construct a `Ray`.")
+            Object.assign(this, { point: a1, angle: a2 })
+        } 
+        return Object.seal(this)
     }
 
     @is("realNumber")
@@ -60,7 +62,6 @@ class Ray extends GeomObject implements Visible {
     set coordinate(value) {
         coord.assign(this.#coordinate, value)
     }
-    @sameOwner
     @is("point")
     get point() {
         return new Point(this.owner, this.#coordinate)
@@ -75,6 +76,11 @@ class Ray extends GeomObject implements Visible {
     set angle(value) {
         this.#angle = angle.simplify2(value)
     }
+
+    isValid(): boolean {
+        return coord.isValid(this.#coordinate)
+    }
+
     /**
      * Get the `n` section(equal) rays of the angle which is formed by rays `ray1` and `ray2`.
      * @description

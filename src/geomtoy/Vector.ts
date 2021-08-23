@@ -8,7 +8,7 @@ import Segment from "./Segment"
 import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
 import GeomObject from "./base/GeomObject"
 import Graphic from "./graphic"
-import { is, sameOwner, sealed } from "./decorator"
+import { is, sealed, validAndWithSameOwner } from "./decorator"
 import Transformation from "./transformation"
 import Geomtoy from "."
 import coord from "./helper/coordinate"
@@ -16,9 +16,10 @@ import Line from "./Line"
 import Ray from "./Ray"
 
 @sealed
+@validAndWithSameOwner
 class Vector extends GeomObject {
     #coordinate: [number, number] = [NaN, NaN]
-    #point1Coordinate: [number, number] = [NaN, NaN]
+    #point1Coordinate: [number, number] = [0, 0]
 
     constructor(owner: Geomtoy, x: number, y: number)
     constructor(owner: Geomtoy, point1X: number, point1Y: number, point2X: number, point2Y: number)
@@ -26,29 +27,30 @@ class Vector extends GeomObject {
     constructor(owner: Geomtoy, point1Coordinate: [number, number], point2Coordinate: [number, number])
     constructor(owner: Geomtoy, point: Point)
     constructor(owner: Geomtoy, point1: Point, point2: Point)
-    constructor(o: Geomtoy, a1: any, a2?: any, a3?: any, a4?: any) {
+    constructor(owner: Geomtoy)
+    constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any) {
         super(o)
         if (util.isNumber(a1) && util.isNumber(a2)) {
             if (util.isNumber(a3) && util.isNumber(a4)) {
-                return Object.seal(Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4 }))
+                Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4 })
             }
-            return Object.seal(Object.assign(this, { point1Coordinate: [0, 0], x: a1, y: a2 }))
+            Object.assign(this, { x: a1, y: a2 })
         }
 
         if (util.isCoordinate(a1)) {
             if (util.isCoordinate(a2)) {
-                return Object.seal(Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2 }))
+                Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2 })
             }
-            return Object.seal(Object.assign(this, { point1Coordinate: [0, 0], coordinate: a1 }))
+            Object.assign(this, { coordinate: a1 })
         }
 
         if (a1 instanceof Point) {
             if (a2 instanceof Point) {
-                return Object.seal(Object.assign(this, { point1: a1, point2: a2 }))
+                Object.assign(this, { point1: a1, point2: a2 })
             }
-            return Object.seal(Object.assign(this, { point1Coordinate: [0, 0], point: a1 }))
+            Object.assign(this, { point: a1 })
         }
-        throw new Error("[G]Arguments can NOT construct a `Vector`.")
+        return Object.seal(this)
     }
 
     @is("realNumber")
@@ -72,7 +74,6 @@ class Vector extends GeomObject {
     set coordinate(value) {
         coord.assign(this.#coordinate, value)
     }
-    @sameOwner
     @is("point")
     get point() {
         return new Point(this.owner, this.#coordinate)
@@ -101,7 +102,6 @@ class Vector extends GeomObject {
     set point1Coordinate(value) {
         coord.assign(this.#point1Coordinate, value)
     }
-    @sameOwner
     @is("point")
     get point1() {
         return new Point(this.owner, this.#point1Coordinate)
@@ -130,7 +130,6 @@ class Vector extends GeomObject {
     set point2Coordinate(value) {
         coord.assign(this.#coordinate, vec2.from(this.#point1Coordinate, value))
     }
-    @sameOwner
     @is("point")
     get point2() {
         return new Point(this.owner, this.point2Coordinate)
@@ -152,6 +151,10 @@ class Vector extends GeomObject {
     get magnitude(): number {
         if (this.isZero()) return 0
         return vec2.magnitude(this.coordinate)
+    }
+
+    isValid() {
+        return coord.isValid(this.#coordinate)
     }
 
     static zero(owner: Geomtoy) {
@@ -299,14 +302,24 @@ class Vector extends GeomObject {
         // g.close()
         return g.valueOf(type)
     }
+    toString() {
+        return [
+            `${this.name}(${this.uuid}){`,
+            `\tcoordinate: ${coord.toString(this.coordinate)}`,
+            `\tpoint1Coordinate: ${coord.toString(this.point1Coordinate)}`,
+            `\tpoint2Coordinate: ${coord.toString(this.point2Coordinate)}`,
+            `} owned by Geomtoy(${this.owner.uuid})`
+        ].join("\n")
+    }
     toArray() {
-        return []
+        return [coord.copy(this.coordinate), coord.copy(this.point1Coordinate), coord.copy(this.point2Coordinate)]
     }
     toObject() {
-        return {}
-    }
-    toString() {
-        return ""
+        return {
+            coordinate: coord.copy(this.coordinate),
+            point1Coordinate: coord.copy(this.point1Coordinate),
+            point2Coordinate: coord.copy(this.point2Coordinate)
+        }
     }
 }
 

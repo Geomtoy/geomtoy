@@ -1,12 +1,12 @@
 import math from "./utility/math"
 import util from "./utility"
+import { is, sealed, validAndWithSameOwner } from "./decorator"
 
 import Point from "./Point"
 import Segment from "./Segment"
 import Graphic from "./graphic"
 import Rectangle from "./Rectangle"
 import Circle from "./Circle"
-import { is, sealed, validateOwner } from "./decorator"
 import GeomObject from "./base/GeomObject"
 import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
 import Transformation from "./transformation"
@@ -16,32 +16,20 @@ import Polygon from "./Polygon"
 import coord from "./helper/coordinate"
 
 @sealed
+@validAndWithSameOwner
 class Line extends GeomObject {
-    #name = "Line"
-    #uuid = util.uuid()
-
     #a: number = NaN
     #b: number = NaN
     #c: number = NaN
 
     constructor(owner: Geomtoy, a: number, b: number, c: number)
-    constructor(owner: Geomtoy, line: Line)
-    constructor(o: Geomtoy, a1: any, a2?: any, a3?: any) {
+    constructor(owner: Geomtoy)
+    constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any) {
         super(o)
         if (util.isNumber(a1) && util.isNumber(a2) && util.isNumber(a3)) {
-            return Object.seal(Object.assign(this, { a: a1, b: a2, c: a3 }))
+            Object.assign(this, { a: a1, b: a2, c: a3 })
         }
-        if (a1 instanceof Line) {
-            return new Line(o, a1.a, a1.b, a1.c)
-        }
-        throw new Error("[G]Arguments can NOT construct a `Line`.")
-    }
-
-    get name() {
-        return this.#name
-    }
-    get uuid() {
-        return this.#uuid
+        return Object.seal(this)
     }
 
     @is("realNumber")
@@ -50,7 +38,6 @@ class Line extends GeomObject {
     }
     set a(value) {
         this.#a = value
-        this.#guard()
     }
     @is("realNumber")
     get b() {
@@ -58,7 +45,6 @@ class Line extends GeomObject {
     }
     set b(value) {
         this.#b = value
-        this.#guard()
     }
     @is("realNumber")
     get c() {
@@ -112,18 +98,18 @@ class Line extends GeomObject {
         return -(c / a)
     }
 
-    #guard() {
+    static formingCondition = "The `a` and `b` of a `Line` should not be equal to 0 at the same time."
+
+    isValid() {
         let { a, b } = this,
             epsilon = this.owner.getOptions().epsilon
-        if (math.equalTo(a, 0, epsilon) && math.equalTo(b, 0, epsilon)) {
-            throw new Error("[G]The `a` and `b` of a `Line` can NOT equal to 0 at the same time.")
-        }
+        return !(math.equalTo(a, 0, epsilon) && math.equalTo(b, 0, epsilon))
     }
+
     /**
      * Whether line `this` is the same as line `line`.
      * @param line
      */
-    @validateOwner
     isSameAs(line: Line): boolean {
         // If two lines "a1x+b1y+c1=0" and "a2x+b2y+c2=0" are identical then "a1/a2=b1/b2=c1/c2".
         // Use multiplication to avoid "a/b/c=0" situation.
@@ -169,7 +155,6 @@ class Line extends GeomObject {
      * @param point1
      * @param point2
      */
-    @validateOwner
     static fromTwoPoints(owner: Geomtoy, point1: Point, point2: Point): Line {
         if (point1.isSameAs(point2)) {
             throw new Error("[G]The points `point1` and `point2` are the same, they can NOT determine a `Line`.")
@@ -195,7 +180,6 @@ class Line extends GeomObject {
      * @param point
      * @param slope
      */
-    @validateOwner
     static fromPointAndSlope(owner: Geomtoy, point: Point, slope: number): Line {
         return Line.fromCoordinateAndSlope(owner, point.coordinate, slope)
     }
@@ -204,7 +188,6 @@ class Line extends GeomObject {
      * @param point
      * @param angle
      */
-    @validateOwner
     static fromPointAndAngle(owner: Geomtoy, point: Point, angle: number): Line {
         let slope = math.tan(angle)
         return Line.fromPointAndSlope(owner, point, slope)
@@ -295,7 +278,6 @@ class Line extends GeomObject {
      * Whether line `this` is parallel(including identical) to line `line`.
      * @param line
      */
-    @validateOwner
     isParallelToLine(line: Line): boolean {
         // If two lines "a1x+b1y+c1=0" and "a2x+b2y+c2=0" are parallel(including identical) then
         // "k1=-(a1/b1)" and "k2=-(a2/b2)", "k1=k2", "a1b2=b1a2"
@@ -309,7 +291,6 @@ class Line extends GeomObject {
      * Whether line `this` is perpendicular to line `line`.
      * @param line
      */
-    @validateOwner
     isPerpendicularToLine(line: Line): boolean {
         // If two lines "a1x+b1y+c1=0" and "a2x+b2y+c2=0" are perpendicular then
         // "k1=-(a1/b1)" and "k2=-(a2/b2)", "k1k2=-1", "a1a2=-b1b2"
@@ -322,7 +303,6 @@ class Line extends GeomObject {
      * Whether line `this` is intersected with line `line`.
      * @param line
      */
-    @validateOwner
     isIntersectedWithLine(line: Line): boolean {
         return !this.isParallelToLine(line)
     }
@@ -330,7 +310,6 @@ class Line extends GeomObject {
      * Get the intersection point with line `line`.
      * @param line
      */
-    @validateOwner
     getIntersectionPointWithLine(line: Line): Point | null {
         if (this.isParallelToLine(line)) return null
         let { a: a1, b: b1, c: c1 } = this,
@@ -351,7 +330,6 @@ class Line extends GeomObject {
      * Whether line `this` is intersected with circle `circle`.
      * @param circle
      */
-    @validateOwner
     isIntersectedWithCircle(circle: Circle): boolean {
         let epsilon = this.owner.getOptions().epsilon
         return math.lessThan(circle.centerPoint.getSquaredDistanceBetweenLine(this), circle.radius ** 2, epsilon)
@@ -360,7 +338,6 @@ class Line extends GeomObject {
      * Get the intersection points of line `this` and circle `circle`.
      * @param circle
      */
-    @validateOwner
     getIntersectionPointsWithCircle(circle: Circle): [Point, Point] | null {
         if (!this.isIntersectedWithCircle(circle)) return null
         let p0 = circle.centerPoint,
@@ -377,7 +354,6 @@ class Line extends GeomObject {
      * Whether line `this` is tangent to circle `circle`.
      * @param circle
      */
-    @validateOwner
     isTangentToCircle(circle: Circle): boolean {
         let epsilon = this.owner.getOptions().epsilon
         return math.equalTo(circle.centerPoint.getSquaredDistanceBetweenLine(this), circle.radius ** 2, epsilon)
@@ -386,7 +362,6 @@ class Line extends GeomObject {
      * Get the tangency point of line `this` and circle `circle`.
      * @param circle
      */
-    @validateOwner
     getTangencyPointToCircle(circle: Circle): Point | null {
         if (!this.isTangentToCircle(circle)) return null
         return this.getPerpendicularPointFromPoint(circle.centerPoint)
@@ -395,7 +370,6 @@ class Line extends GeomObject {
      * Whether line `this` is separated from circle `circle`.
      * @param circle
      */
-    @validateOwner
     isSeparatedFromCircle(circle: Circle): boolean {
         let epsilon = this.owner.getOptions().epsilon
         return math.greaterThan(circle.centerPoint.getSquaredDistanceBetweenLine(this), circle.radius ** 2, epsilon)
@@ -546,7 +520,6 @@ class Line extends GeomObject {
      * Find the perpendicular line of line `this` from point `point`.
      * @param point
      */
-    @validateOwner
     getPerpendicularLineFromPoint(point: Point): Line {
         return this.getPerpendicularLineFromCoordinate(point.coordinate)
     }
@@ -554,7 +527,6 @@ class Line extends GeomObject {
      * Find the perpendicular point(the foot of the perpendicular) on line `this` from point `point`.
      * @param point
      */
-    @validateOwner
     getPerpendicularPointFromPoint(point: Point): Point {
         let { a, b, c } = this,
             { x, y } = point,
@@ -565,7 +537,6 @@ class Line extends GeomObject {
      * 若`直线this`与`直线line`平行，则返回它们之间的距离，否则返回NaN
      * @param line
      */
-    @validateOwner
     getDistanceToParallelLine(line: Line): number {
         if (!this.isParallelToLine(line)) return NaN
         let l1 = this,
@@ -603,7 +574,6 @@ class Line extends GeomObject {
         g.lineTo(x2, y2)
         return g.valueOf(type)
     }
-    @validateOwner
     apply(transformation: Transformation): GeomObject {
         throw new Error("Method not implemented.")
     }

@@ -7,7 +7,7 @@ import Point from "./Point"
 import Circle from "./Circle"
 import Line from "./Line"
 import Polygon from "./Polygon"
-import { sealed, is, compared, sameOwner } from "./decorator"
+import { sealed, is, compared, validAndWithSameOwner } from "./decorator"
 import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
 import GeomObject from "./base/GeomObject"
 import { AreaMeasurable } from "./interfaces"
@@ -17,7 +17,9 @@ import Geomtoy from "."
 import coord from "./helper/coordinate"
 
 @sealed
-class RegularPolygon extends GeomObject implements AreaMeasurable {
+@validAndWithSameOwner
+class RegularPolygon extends GeomObject implements AreaMeasurable { 
+
     #radius: number = NaN
     #centerCoordinate: [number, number] = [NaN, NaN]
     #sideCount: number = NaN
@@ -38,7 +40,7 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
             return Object.seal(Object.assign(this, { radius: a1, centerPoint: a2, sideCount: a3, rotation: a4 ?? 0 }))
         }
         throw new Error("[G]Arguments can NOT construct a `RegularPolygon`.")
-    }
+    } 
 
     @is("realNumber")
     get centerX() {
@@ -61,7 +63,6 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
     set centerCoordinate(value) {
         coord.assign(this.#centerCoordinate, value)
     }
-    @sameOwner
     @is("point")
     get centerPoint() {
         return new Point(this.owner, this.#centerCoordinate)
@@ -117,6 +118,9 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
     get diagonalCount() {
         let n = this.sideCount
         return (n * (n - 3)) / 2
+    }
+    isValid(): boolean {
+        throw new Error("Method not implemented.")
     }
 
     static fromApothemEtc(owner: Geomtoy, apothem: number, centerPoint: Point, sideCount: number, rotation: number = 0) {
@@ -187,7 +191,7 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
 }
 
 /**
- * 
+ *
  * @category GeomObject
  */
 export default RegularPolygon

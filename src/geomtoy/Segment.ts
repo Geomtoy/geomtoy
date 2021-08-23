@@ -8,16 +8,15 @@ import Line from "./Line"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import { GraphicImplType, SvgDirective, CanvasDirective } from "./types"
-import { is, sameOwner, sealed } from "./decorator"
+import { is, sealed, validAndWithSameOwner } from "./decorator"
 import Graphic from "./graphic"
 import Geomtoy from "."
 import coord from "./helper/coordinate"
 import Ray from "./Ray"
 
 @sealed
-class Segment extends GeomObject {
-    #name = "Segment"
-    #uuid = util.uuid()
+@validAndWithSameOwner
+class Segment extends GeomObject { 
 
     #point1Coordinate: [number, number] = [NaN, NaN]
     #point2Coordinate: [number, number] = [NaN, NaN]
@@ -37,13 +36,7 @@ class Segment extends GeomObject {
             return Object.seal(Object.assign(this, { point1: a1, point2: a2 }))
         }
         throw new Error("[G]Arguments can NOT construct a `Segment`.")
-    }
-    get name() {
-        return this.#name
-    }
-    get uuid() {
-        return this.#uuid
-    }
+    } 
 
     @is("realNumber")
     get point1X() {
@@ -51,7 +44,6 @@ class Segment extends GeomObject {
     }
     set point1X(value) {
         coord.x(this.#point1Coordinate, value)
-        this.#guard()
     }
     @is("realNumber")
     get point1Y() {
@@ -59,7 +51,6 @@ class Segment extends GeomObject {
     }
     set point1Y(value) {
         coord.y(this.#point1Coordinate, value)
-        this.#guard()
     }
     @is("coordinate")
     get point1Coordinate() {
@@ -67,16 +58,13 @@ class Segment extends GeomObject {
     }
     set point1Coordinate(value) {
         coord.assign(this.#point1Coordinate, value)
-        this.#guard()
     }
-    @sameOwner
     @is("point")
     get point1() {
         return new Point(this.owner, this.#point1Coordinate)
     }
     set point1(value) {
         coord.assign(this.#point1Coordinate, value.coordinate)
-        this.#guard()
     }
 
     @is("realNumber")
@@ -85,7 +73,6 @@ class Segment extends GeomObject {
     }
     set point2X(value) {
         coord.x(this.#point2Coordinate, value)
-        this.#guard()
     }
     @is("realNumber")
     get point2Y() {
@@ -93,7 +80,6 @@ class Segment extends GeomObject {
     }
     set point2Y(value) {
         coord.y(this.#point2Coordinate, value)
-        this.#guard()
     }
     @is("coordinate")
     get point2Coordinate() {
@@ -101,18 +87,14 @@ class Segment extends GeomObject {
     }
     set point2Coordinate(value) {
         coord.assign(this.#point2Coordinate, value)
-        this.#guard()
     }
-    @sameOwner
     @is("point")
     get point2() {
         return new Point(this.owner, this.#point2Coordinate)
     }
     set point2(value) {
         coord.assign(this.#point2Coordinate, value.coordinate)
-        this.#guard()
     }
-
     /**
      * Get the angle of segment `this`, treated as a vector from `point1` to `point2`, the result is in the interval `(-math.PI, math.PI]`.
      */
@@ -126,12 +108,19 @@ class Segment extends GeomObject {
         return vec2.magnitude(vec2.from(this.point1Coordinate, this.point2Coordinate))
     }
 
-    #guard() {
-        let epsilon = this.owner.getOptions().epsilon
-        if (coord.isSameAs(this.#point1Coordinate, this.#point2Coordinate, epsilon)) {
-            throw new Error(`[G]The two endpoints of a segment should be distinct.`)
-        }
+    static formingCondition = "The two endpoints of a `Segment` should be distinct, or the length of a `Segment` should greater than 0."
+
+    isValid() {
+        let c1 = this.#point1Coordinate,
+            c2 = this.#point2Coordinate,
+            epsilon = this.owner.getOptions().epsilon,
+            valid = true
+        valid &&= coord.isValid(c1)
+        valid &&= coord.isValid(c2)
+        valid &&= !coord.isSameAs(c1, c2, epsilon)
+        return valid
     }
+
     static fromPointAndAngleAndLength(owner: Geomtoy, point: Point, angle: number, length: number) {
         let p1 = point,
             p2 = p1.moveAlongAngle(angle, length)
@@ -441,8 +430,8 @@ class Segment extends GeomObject {
             { a, b, c } = line
         return -(a * x1 + b * y1 + c) / (a * x2 + b * y2 + c)
     }
-    toLine(){
-        return Line.fromTwoCoordinates(this.owner,this.point1Coordinate,this.point2Coordinate)
+    toLine() {
+        return Line.fromTwoCoordinates(this.owner, this.point1Coordinate, this.point2Coordinate)
     }
 
     getGraphic(type: GraphicImplType): (SvgDirective | CanvasDirective)[] {

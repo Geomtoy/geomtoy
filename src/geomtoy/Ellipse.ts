@@ -3,7 +3,7 @@ import Point from "./Point"
 import Vector from "./Vector"
 import util from "./utility"
 import { GraphicImplType } from "./types"
-import { is, sameOwner, sealed } from "./decorator"
+import { is, sealed, validAndWithSameOwner } from "./decorator"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Geomtoy from "."
@@ -11,10 +11,8 @@ import { AreaMeasurable } from "./interfaces"
 import coord from "./helper/coordinate"
 
 @sealed
+@validAndWithSameOwner
 class Ellipse extends GeomObject implements AreaMeasurable {
-    #name = "Ellipse"
-    #uuid = util.uuid()
-
     #centerCoordinate: [number, number] = [NaN, NaN]
     #radiusX: number = NaN
     #radiusY: number = NaN
@@ -26,21 +24,15 @@ class Ellipse extends GeomObject implements AreaMeasurable {
     constructor(o: Geomtoy, a1: any, a2: any, a3: any, a4?: any, a5?: any) {
         super(o)
         if (util.isNumber(a1) && util.isNumber(a2)) {
-            return Object.seal(Object.assign(this, { centerX: a1, centerY: a2, radiusX: a3, radiusY: a4, rotation: a5 ?? 0 }))
+            Object.assign(this, { centerX: a1, centerY: a2, radiusX: a3, radiusY: a4, rotation: a5 ?? 0 })
         }
         if (util.isArray(a1)) {
-            return Object.seal(Object.assign(this, { centerCoordinate: a1, radiusX: a2, radiusY: a3, rotation: a4 ?? 0 }))
+            Object.assign(this, { centerCoordinate: a1, radiusX: a2, radiusY: a3, rotation: a4 ?? 0 })
         }
         if (a1 instanceof Point) {
-            return Object.seal(Object.assign(this, { centerPoint: a1, radiusX: a2, radiusY: a3, rotation: a4 ?? 0 }))
+            Object.assign(this, { centerPoint: a1, radiusX: a2, radiusY: a3, rotation: a4 ?? 0 })
         }
-        throw new Error("[G]Arguments can NOT construct an `Ellipse`.")
-    }
-    get name() {
-        return this.#name
-    }
-    get uuid() {
-        return this.#uuid
+        return Object.seal(this)
     }
 
     @is("realNumber")
@@ -64,7 +56,6 @@ class Ellipse extends GeomObject implements AreaMeasurable {
     set centerCoordinate(value) {
         coord.assign(this.#centerCoordinate, value)
     }
-    @sameOwner
     @is("point")
     get centerPoint() {
         return new Point(this.owner, this.#centerCoordinate)
@@ -94,6 +85,14 @@ class Ellipse extends GeomObject implements AreaMeasurable {
         this.#rotation = value
     }
 
+    isValid() {
+        let valid = true
+        valid &&= coord.isValid(this.centerCoordinate)
+        valid &&= util.isRealNumber(this.radiusX) && this.radiusX > 0
+        valid &&= util.isRealNumber(this.radiusY) && this.radiusY > 0
+        return valid
+    }
+    
     getEccentricity() {}
 
     clone(): GeomObject {
@@ -160,7 +159,7 @@ class Ellipse extends GeomObject implements AreaMeasurable {
 }
 
 /**
- * 
+ *
  * @category GeomObject
  */
 export default Ellipse

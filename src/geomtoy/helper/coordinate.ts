@@ -23,6 +23,12 @@ const coord = {
     },
     sort(cs: Array<[number, number]>) {
         return util.sortBy(cs, [c => coord.x(c), c => coord.y(c)])
+    },
+    isValid(c: [number, number]) {
+        return util.isRealNumber(c[0]) && util.isRealNumber(c[1])
+    },
+    toString(c: [number, number]) {
+        return `[${coord.x(c)}, ${coord.y(c)}]`
     }
 }
 export default coord

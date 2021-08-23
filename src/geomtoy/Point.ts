@@ -1,7 +1,7 @@
 import vec2 from "./utility/vec2"
 import util from "./utility"
 import math from "./utility/math"
-import { is, sealed } from "./decorator"
+import { is, sealed, validAndWithSameOwner } from "./decorator"
 import coord from "./helper/coordinate"
 
 import Geomtoy from "."
@@ -20,33 +20,22 @@ import Triangle from "./Triangle"
 import Ray from "./Ray"
 
 @sealed
+@validAndWithSameOwner
 class Point extends GeomObject implements Visible {
-    #name = "Point"
-    #uuid = util.uuid()
-
     #coordinate: [number, number] = [NaN, NaN]
 
     constructor(owner: Geomtoy, x: number, y: number)
     constructor(owner: Geomtoy, coordinate: [number, number])
-    constructor(owner: Geomtoy, point: Point)
-    constructor(o: Geomtoy, a1: any, a2?: any) {
+    constructor(owner: Geomtoy)
+    constructor(o: Geomtoy, a1?: any, a2?: any) {
         super(o)
         if (util.isNumber(a1) && util.isNumber(a2)) {
-            return Object.seal(Object.assign(this, { x: a1, y: a2 }))
+            Object.assign(this, { x: a1, y: a2 })
         }
         if (util.isCoordinate(a1)) {
-            return Object.seal(Object.assign(this, { coordinate: coord.copy(a1) }))
+            Object.assign(this, { coordinate: coord.copy(a1) })
         }
-        if (a1 instanceof Point) {
-            return new Point(o, a1.x, a1.y)
-        }
-        throw new Error("[G]Arguments can NOT construct a `Point`.")
-    }
-    get name() {
-        return this.#name
-    }
-    get uuid() {
-        return this.#uuid
+        return Object.seal(this)
     }
 
     @is("realNumber")
@@ -75,6 +64,9 @@ class Point extends GeomObject implements Visible {
         return new Point(owner, 0, 0)
     }
 
+    isValid() {
+        return coord.isValid(this.#coordinate)
+    }
     /**
      * Whether points `point1`, `point2`, `point3` are collinear.
      * @category Static
@@ -131,6 +123,7 @@ class Point extends GeomObject implements Visible {
     static fromVector(owner: Geomtoy, vector: Vector): Point {
         return new Point(owner, vector.point2.coordinate)
     }
+
     /**
      * Whether point `this` is `Point.zero()`.
      * @returns {boolean}
@@ -364,16 +357,15 @@ class Point extends GeomObject implements Visible {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
-            `\tx: ${this.x}`,
-            `\ty: ${this.y}`,
+            `\tcoordinate: ${coord.toString(this.coordinate)}`,
             `} owned by Geomtoy(${this.owner.uuid})`
         ].join("\n")
     }
     toArray() {
-        return [this.x, this.y]
+        return [coord.copy(this.coordinate)]
     }
     toObject() {
-        return { x: this.x, y: this.y }
+        return { coordinate: coord.copy(this.coordinate) }
     }
 }
 
