@@ -8,15 +8,14 @@
         "check-type": "tsc --watch",
         "build": "webpack build --node-env production",
         "serve": "webpack serve --progress --node-env development",
-        "doc": "typedoc"
+        "doc": "node ./typedoc.js"
     },
     "author": "Fish Eleven",
     "license": "MIT",
     "dependencies": {
         "@babel/runtime-corejs3": "^7.14.8",
         "@svgdotjs/svg.js": "^3.1.1",
-        "lodash": "^4.17.21",
-        "reflect-metadata": "^0.1.13"
+        "lodash": "^4.17.21"
     },
     "devDependencies": {
         "@babel/core": "^7.14.6",
