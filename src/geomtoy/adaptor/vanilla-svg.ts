@@ -1,12 +1,14 @@
 import Geomtoy from ".."
 import GeomObject from "../base/GeomObject"
 import { Visible } from "../interfaces"
-
+/**
+ * @category Adapter
+ */
 export default class VanillaSvg {
     svgContainer: SVGGElement | SVGSVGElement
     geomtoy: Geomtoy
 
-    constructor(svgContainer: any, geomtoy: Geomtoy) {
+    constructor(svgContainer: SVGGElement | SVGSVGElement, geomtoy: Geomtoy) {
         if (svgContainer instanceof SVGGElement || svgContainer instanceof SVGSVGElement) {
             this.svgContainer = svgContainer
             this.geomtoy = geomtoy
@@ -15,8 +17,8 @@ export default class VanillaSvg {
         throw new Error(`[G]Unable to initialize.`)
     }
     setup() {
-        let gt = this.geomtoy.globalTransformation
-        this.svgContainer.setAttribute("transform", `matrix(${gt.a} ${gt.b} ${gt.c} ${gt.d} ${gt.e} ${gt.f})`)
+        let [a,b,c,d,e,f] = this.geomtoy.globalTransformation.get()
+        this.svgContainer.setAttribute("transform", `matrix(${a} ${b} ${c} ${d} ${e} ${f})`)
     }
     draw(object: GeomObject & Visible) {
         this.setup()

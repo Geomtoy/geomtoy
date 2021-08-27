@@ -2,7 +2,7 @@ import vec2 from "./utility/vec2"
 import util from "./utility"
 import math from "./utility/math"
 import { is, sealed, validAndWithSameOwner } from "./decorator"
-import coord from "./helper/coordinate"
+import coord from "./utility/coordinate"
 
 import Geomtoy from "."
 import GeomObject from "./base/GeomObject"
@@ -342,7 +342,7 @@ class Point extends GeomObject implements Visible {
      * @returns {Point}
      */
     apply(transformation: Transformation): Point {
-        let c = transformation.get().transformCoordinate(this.coordinate)
+        let c = transformation.transformCoordinate(this.coordinate)
         return new Point(this.owner, c)
     }
     clone() {

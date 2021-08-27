@@ -4,12 +4,13 @@ import { CanvasDirective, GraphicDirectiveType, GraphicImplType, SvgDirective } 
 import util from "./utility"
 import math from "./utility/math"
 import angle from "./utility/angle"
+import coord from "./utility/coordinate"
+
 import { arcCenterToEndpointParameterization, arcEndpointToCenterParameterization } from "./graphic/helper"
 import Geomtoy from "."
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Graphic from "./graphic"
-import coord from "./helper/coordinate"
 import { Visible } from "./interfaces"
 
 @sealed

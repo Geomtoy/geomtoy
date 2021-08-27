@@ -11,7 +11,7 @@ import Graphic from "./graphic"
 import { is, sealed, validAndWithSameOwner } from "./decorator"
 import Transformation from "./transformation"
 import Geomtoy from "."
-import coord from "./helper/coordinate"
+import coord from "./utility/coordinate"
 import Line from "./Line"
 import Ray from "./Ray"
 
@@ -279,7 +279,7 @@ class Vector extends GeomObject {
         return new Vector(this.owner, this.point1Coordinate, this.coordinate)
     }
     apply(transformation: Transformation) {
-        let c = transformation.get().transformCoordinate(this.coordinate)
+        let c = transformation.transformCoordinate(this.coordinate)
         return new Vector(this.owner, this.point1Coordinate, c)
     }
 

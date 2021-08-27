@@ -1,5 +1,5 @@
-import util from "../utility"
-import math from "../utility/math"
+import util from "."
+import math from "./math"
 
 const size = {
     assign(s: [number, number], ref: [number, number]) {

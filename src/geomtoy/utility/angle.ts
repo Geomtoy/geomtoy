@@ -1,9 +1,11 @@
+import { Angle } from "./_type"
+
 const angle = {
     /**
      * Simplify angle `a` into the interval `[0, 2*Math.PI)`.
      * @param a
      */
-    simplify(a: number): number {
+    simplify(a: Angle): Angle {
         let t = a % (2 * Math.PI)
         return t < 0 ? t + 2 * Math.PI : t
     },
@@ -11,7 +13,7 @@ const angle = {
      * Simplify angle `a` into the interval `(-Math.PI, Math.PI]`
      * @param a
      */
-    simplify2(a: number): number {
+    simplify2(a: Angle): Angle {
         let t = angle.simplify(a)
         return t > Math.PI ? t - 2 * Math.PI : t
     },
@@ -19,14 +21,14 @@ const angle = {
      * Convert the unit of an angle from degree to radian
      * @param degree
      */
-    degreeToRadian(degree: number): number {
+    degreeToRadian(degree: Angle): Angle {
         return (degree * Math.PI) / 180
     },
     /**
      * Convert the unit of an angle from radian to degree
      * @param radian
      */
-    radianToDegree(radian: number): number {
+    radianToDegree(radian: Angle): Angle {
         return (radian * 180) / Math.PI
     }
 }

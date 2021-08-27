@@ -11,7 +11,7 @@ import GeomObject from "./base/GeomObject"
 import Graphic from "./graphic"
 import Transformation from "./transformation"
 import Geomtoy from "."
-import coord from "./helper/coordinate"
+import coord from "./utility/coordinate"
 import { Visible } from "./interfaces"
 import Line from "./Line"
 

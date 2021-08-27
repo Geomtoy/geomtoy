@@ -11,7 +11,7 @@ import { GraphicImplType, SvgDirective, CanvasDirective } from "./types"
 import { is, sealed, validAndWithSameOwner } from "./decorator"
 import Graphic from "./graphic"
 import Geomtoy from "."
-import coord from "./helper/coordinate"
+import coord from "./utility/coordinate"
 import Ray from "./Ray"
 
 @sealed

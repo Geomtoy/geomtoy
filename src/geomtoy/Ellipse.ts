@@ -8,7 +8,7 @@ import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Geomtoy from "."
 import { AreaMeasurable } from "./interfaces"
-import coord from "./helper/coordinate"
+import coord from "./utility/coordinate"
 
 @sealed
 @validAndWithSameOwner

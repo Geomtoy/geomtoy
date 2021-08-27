@@ -9,7 +9,7 @@ import Vector from "../Vector"
 import Line from "../Line"
 import GeomObject from "../base/GeomObject"
 import Geomtoy from ".."
-import coord from "../helper/coordinate"
+import coord from "../utility/coordinate"
 
 @sealed
 @validAndWithSameOwner

@@ -7,8 +7,8 @@ import Transformation from "./transformation"
 import { is, sealed, validAndWithSameOwner } from "./decorator"
 import math from "./utility/math"
 import Geomtoy from "."
-import coord from "./helper/coordinate"
-import size from "./helper/size"
+import coord from "./utility/coordinate"
+import size from "./utility/size"
 
 @sealed
 @validAndWithSameOwner

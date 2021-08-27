@@ -13,7 +13,7 @@ import Transformation from "./transformation"
 import Vector from "./Vector"
 import Geomtoy from "."
 import Polygon from "./Polygon"
-import coord from "./helper/coordinate"
+import coord from "./utility/coordinate"
 
 @sealed
 @validAndWithSameOwner

@@ -1,11 +1,13 @@
 import Geomtoy from ".."
 import GeomObject from "../base/GeomObject"
 import { Visible } from "../interfaces"
-
+/**
+ * @category Adapter
+ */
 export default class VanillaCanvas {
     context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
     geomtoy: Geomtoy
-    constructor(context: any, geomtoy: Geomtoy) {
+    constructor(context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, geomtoy: Geomtoy) {
         if (context instanceof CanvasRenderingContext2D || context instanceof OffscreenCanvasRenderingContext2D) {
             this.context = context
             this.geomtoy = geomtoy
@@ -14,8 +16,8 @@ export default class VanillaCanvas {
         throw new Error(`[G]Unable to initialize.`)
     }
     setup() {
-        let gt = this.geomtoy.globalTransformation
-        this.context.setTransform(gt.a, gt.b, gt.c, gt.d, gt.e, gt.f)
+        let [a,b,c,d,e,f] = this.geomtoy.globalTransformation.get()
+        this.context.setTransform(a, b, c, d, e, f)
     }
 
     draw(object: GeomObject & Visible) {

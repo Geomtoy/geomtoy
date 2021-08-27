@@ -14,7 +14,7 @@ import { AreaMeasurable } from "./interfaces"
 import Transformation from "./transformation"
 import Graphic from "./graphic"
 import Geomtoy from "."
-import coord from "./helper/coordinate"
+import coord from "./utility/coordinate"
 
 @sealed
 @validAndWithSameOwner

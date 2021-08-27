@@ -1,7 +1,9 @@
 import Geomtoy from ".."
 import GeomObject from "../base/GeomObject"
 import { Visible } from "../interfaces"
-
+/**
+ * @category Adapter
+ */
 export default class SvgDotJs {
     svgDotJsContainer: any
     geomtoy: Geomtoy
@@ -11,8 +13,8 @@ export default class SvgDotJs {
         this.geomtoy = geomtoy
     }
     setup() {
-        let gt = this.geomtoy.globalTransformation
-        this.svgDotJsContainer.attr("transform", `matrix(${gt.a} ${gt.b} ${gt.c} ${gt.d} ${gt.e} ${gt.f})`)
+        let [a,b,c,d,e,f] = this.geomtoy.globalTransformation.get()
+        this.svgDotJsContainer.attr("transform", `matrix(${a} ${b} ${c} ${d} ${e} ${f})`)
     }
     draw(object: GeomObject & Visible) {
         let ds = object.getGraphic("svg"),

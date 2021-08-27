@@ -16,6 +16,7 @@ let canvas = document.querySelector("#canvas"),
     }),
     canvasDrawer = new Geomtoy.adapters.VanillaCanvas(ctx, G)
 
+
 let gui = new dat.GUI(),
     points = {
         point1: { object: G.Point(-25, -12), controller: { x: undefined, y: undefined } },
@@ -73,7 +74,6 @@ window.addEventListener("resize", () => {
             originY: window.innerHeight / 2
         }
     })
-
     let cWidth = window.innerWidth / G.getOptions().coordinateSystem.scale,
         cHeight = window.innerHeight / G.getOptions().coordinateSystem.scale
 
@@ -95,7 +95,7 @@ let currentTouch = null,
     ]
 
 canvas.addEventListener("mousedown", function (e) {
-    let coord = G.globalTransformation.beforeTransformed([e.offsetX, e.offsetY])
+    let coord = G.globalTransformation.antitransformCoordinate([e.offsetX, e.offsetY])
     touchable.forEach(t => {
         if (ctx.isPointInPath(t.path2D, coord[0], coord[1])) {
             t.offset = [t.object.x - coord[0], t.object.y - coord[1]]
@@ -110,7 +110,7 @@ canvas.addEventListener("mouseup", function (e) {
 })
 
 canvas.addEventListener("mousemove", function (e) {
-    let coord = G.globalTransformation.beforeTransformed([e.offsetX, e.offsetY])
+    let coord = G.globalTransformation.antitransformCoordinate([e.offsetX, e.offsetY])
     if (dragging) {
         currentTouch.object.x = coord[0] + currentTouch.offset[0]
         currentTouch.object.y = coord[1] + currentTouch.offset[1]
@@ -152,7 +152,7 @@ function draw() {
     ctx.fillStyle = "#00000000"
     ctx.lineWidth = 0.25
     ctx.globalCompositeOperation = "destination-over"
-
+    canvasDrawer.draw(G.Point(0,0))
     let {
         point1: { object: p1 },
         point2: { object: p2 },

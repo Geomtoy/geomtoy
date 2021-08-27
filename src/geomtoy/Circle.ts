@@ -16,7 +16,7 @@ import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Graphic from "./graphic"
 import Geomtoy from "."
-import coord from "./helper/coordinate"
+import coord from "./utility/coordinate"
 
 interface TangentDataOfCircleWithPointOutside {
     [index: number]: {

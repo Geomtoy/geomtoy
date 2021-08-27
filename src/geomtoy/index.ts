@@ -3,6 +3,7 @@ import { sealed } from "./decorator"
 
 import Point from "./Point"
 import Line from "./Line"
+import Ray from "./Ray"
 import Segment from "./Segment"
 import Vector from "./Vector"
 import Triangle from "./Triangle"
@@ -12,12 +13,10 @@ import Polyline from "./Polyline"
 import Polygon from "./Polygon"
 import RegularPolygon from "./RegularPolygon"
 import Ellipse from "./Ellipse"
-import Ray from "./Ray"
 
 import Transformation from "./transformation"
 import Inversion from "./inversion"
 
-import Matrix from "./transformation/Matrix"
 import {
     Options,
     defaultOptions,
@@ -29,7 +28,7 @@ import {
     RecursivePartial,
     Factory
 } from "./types"
-import VanillaCanvas from "./adaptor/vanilla-canvas"
+import VanillaCanvas from "./adaptor/vanilla-canvas.js"
 import VanillaSvg from "./adaptor/vanilla-svg"
 import SvgDotJs from "./adaptor/svg-dot-js"
 import GeomObject from "./base/GeomObject"
@@ -96,12 +95,12 @@ function cloneOptions(target: Options) {
 @sealed
 class Geomtoy {
     #options: Options
-
-    #name = "Geomtoy"
     #uuid = util.uuid()
+    #globalTransformation = new Transformation(this)
 
     #Point = tailConstructorAndStaticMethods(this, Point) as any as Factory<typeof Point>
     #Line = tailConstructorAndStaticMethods(this, Line) as any as Factory<typeof Line>
+    #Ray = tailConstructorAndStaticMethods(this, Ray) as any as Factory<typeof Ray>
     #Segment = tailConstructorAndStaticMethods(this, Segment) as any as Factory<typeof Segment>
     #Vector = tailConstructorAndStaticMethods(this, Vector) as any as Factory<typeof Vector>
     #Triangle = tailConstructorAndStaticMethods(this, Triangle) as any as Factory<typeof Triangle>
@@ -128,18 +127,31 @@ class Geomtoy {
     }
 
     get name() {
-        return this.#name
+        return this.constructor.name
     }
     get uuid() {
         return this.#uuid
     }
     get globalTransformation() {
+        return this.#globalTransformation
+    }
+    #updateGlobalTransformation(){
         let { scale: sx, scale: sy, originX: tx, originY: ty, xAxisPositiveOnRight: xpr, yAxisPositiveOnBottom: ypb } = this.getOptions().coordinateSystem
         if (!xpr) sx = -sx
         if (!ypb) sy = -sy
-
         // If `sx` and `sy` have different sign, the positive rotation angle is anticlockwise, otherwise clockwise.
-        return Matrix.identity.postMultiplySelf(new Matrix(1, 0, 0, 1, tx, ty)).postMultiplySelf(new Matrix(sx, 0, 0, sy, 0, 0))
+        this.#globalTransformation.reset().translate(tx, ty).scale(sx, sy)
+    }
+    getOptions() {
+        return cloneOptions(this.#options)
+    }
+    setOptions(options: RecursivePartial<Options> = {}) {
+        assignOptions(this.#options, options)
+        applyOptionsRules(this.#options)
+        if(options.coordinateSystem) this.#updateGlobalTransformation()
+    }
+    adopt(object: GeomObject) {
+        object.owner = this
     }
 
     get Point() {
@@ -147,6 +159,9 @@ class Geomtoy {
     }
     get Line() {
         return this.#Line
+    }
+    get Ray() {
+        return this.#Ray
     }
     get Segment() {
         return this.#Segment
@@ -180,18 +195,6 @@ class Geomtoy {
     }
     get Inversion() {
         return this.#Inversion
-    }
-
-    getOptions() {
-        return cloneOptions(this.#options)
-    }
-    setOptions(options: RecursivePartial<Options> = {}) {
-        assignOptions(this.#options, options)
-        applyOptionsRules(this.#options)
-    }
-
-    adopt(object: GeomObject) {
-        object.owner = this
     }
 }
 

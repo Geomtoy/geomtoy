@@ -7,8 +7,8 @@ import GeomObject from "./base/GeomObject"
 import Geomtoy from "."
 import math from "./utility/math"
 import { is, sealed } from "./decorator"
-import coordArray from "./helper/coordinateArray"
-import coord from "./helper/coordinate"
+import coordArray from "./utility/coordinateArray"
+import coord from "./utility/coordinate"
 
 const minPointLength = 2
 @sealed

@@ -45,7 +45,7 @@ async function main() {
         media: "./media",
         sort: ["instance-first"],
         plugin: "none",
-        categoryOrder: ["Entry", "Base", "*"]
+        categoryOrder: ["Entry", "Base", "Adaptor", "*"]
     })
 
     app.converter.on(Converter.EVENT_CREATE_DECLARATION, (_context, reflection, node) => {
