@@ -10,7 +10,7 @@ import RegularPolygon from "./RegularPolygon"
 import Vector from "./Vector"
 import Segment from "./Segment"
 import Inversion from "./inversion"
-import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
+import { AngleData, AnglePointLineData, CanvasDirective, GraphicImplType, SvgDirective } from "./types"
 import { is, sealed } from "./decorator"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
@@ -38,7 +38,7 @@ class Circle extends GeomObject {
     constructor(owner: Geomtoy, radius: number, centerPoint: Point)
     constructor(o: Geomtoy, a1: number, a2: any, a3?: any) {
         super(o)
-        if (util.isNumber(a2) && util.isNumber(a3)) {
+        if (util.isNumber(a2)) {
             Object.assign(this, { radius: a1, centerX: a2, centerY: a3 })
         }
         if (util.isArray(a2)) {
@@ -237,12 +237,13 @@ class Circle extends GeomObject {
     /**
      * If point `point` is outside circle `this`, find the tangent line data of circle `this` through point `point`.
      * @description
-     * - If point `point` is outside circle `this`, return `TangentDataOfCircleWithPointOutside`
-     * - If point `point` is not outside circle `this`, return null
+     * The returns depends:
+     * - If `point` is outside `this`, return `TangentDataOfCircleWithPointOutside`
+     * - If `point` is not outside `this`, return null
      * @param {Point} point
      * @returns
      */
-    getTangentDataWithPointOutside(point: Point): TangentDataOfCircleWithPointOutside | null {
+    getTangentDataWithPointOutside(point: Point): AnglePointLineData[] | null {
         if (!point.isOutsideCircle(this)) return null
 
         //设圆心为O，圆外一点为P，切线与圆的切点为Q
@@ -252,16 +253,20 @@ class Circle extends GeomObject {
             v01 = vec2.from(v0, v1),
             dist = vec2.magnitude(v01),
             ia = math.acos(this.radius / dist),
-            data: any = [{ angle: -ia }, { angle: ia }]
+            // data:[{[key:string]:any},{[key:string]:any}] =[{ angle: -ia }, { angle: ia }]
+            angles =[ -ia, ia]
 
-        util.forEach(data, obj => {
-            let v02 = vec2.scalarMultiply(vec2.rotate(v01, ia), this.radius / dist),
+        let ret = angles.map(a => {
+            let v02 = vec2.scalarMultiply(vec2.rotate(v01, a), this.radius / dist),
                 v2 = vec2.add(v0, v02),
                 p2 = new Point(this.owner, v2)
-            obj.point = p2
-            obj.line = Line.fromTwoPoints(this.owner, p1, p2)
+            return {
+                angle:a,
+                point:p2,
+                line:Line.fromTwoPoints(this.owner, p1, p2)
+            }
         })
-        return data as TangentDataOfCircleWithPointOutside
+        return ret  
     }
 
     getInternallyTangentDataWithCircle(circle: Circle): object {
@@ -298,8 +303,9 @@ class Circle extends GeomObject {
      * @returns {boolean}
      */
     isOutsideCircle(circle: Circle): boolean {
-        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint)
-        return math.greaterThan(sd, (circle.radius + this.radius) ** 2)
+        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
+            epsilon = this.owner.getOptions().epsilon
+        return math.greaterThan(sd, (circle.radius + this.radius) ** 2, epsilon)
     }
 
     getIntersectionPointsWithCircle(circle: Circle) {
@@ -442,11 +448,11 @@ class Circle extends GeomObject {
     }
 
     getGraphic(type: GraphicImplType): (SvgDirective | CanvasDirective)[] {
-        let { x, y } = this.centerPoint,
+        let c = this.centerCoordinate,
             g = new Graphic()
 
-        g.moveTo(x, y)
-        g.centerArcTo(x, y, this.radius, this.radius, 0, 2 * Math.PI, 0)
+        g.moveTo(...c)
+        g.centerArcTo(...c, this.radius, this.radius, 0, 2 * Math.PI, 0)
         g.close()
         return g.valueOf(type)
     }

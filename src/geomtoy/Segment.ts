@@ -16,8 +16,7 @@ import Ray from "./Ray"
 
 @sealed
 @validAndWithSameOwner
-class Segment extends GeomObject { 
-
+class Segment extends GeomObject {
     #point1Coordinate: [number, number] = [NaN, NaN]
     #point2Coordinate: [number, number] = [NaN, NaN]
 
@@ -26,17 +25,17 @@ class Segment extends GeomObject {
     constructor(owner: Geomtoy, point1: Point, point2: Point)
     constructor(o: Geomtoy, a1: any, a2: any, a3?: any, a4?: any) {
         super(o)
-        if (util.isNumber(a1) && util.isNumber(a2) && util.isNumber(a3) && util.isNumber(a4)) {
+        if (util.isNumber(a1)) {
             return Object.seal(Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4 }))
         }
-        if (util.isCoordinate(a1) && util.isCoordinate(a2)) {
+        if (util.isArray(a1)) {
             return Object.seal(Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2 }))
         }
-        if (a1 instanceof Point && a2 instanceof Point) {
+        if (a1 instanceof Point) {
             return Object.seal(Object.assign(this, { point1: a1, point2: a2 }))
         }
         throw new Error("[G]Arguments can NOT construct a `Segment`.")
-    } 
+    }
 
     @is("realNumber")
     get point1X() {
@@ -276,34 +275,36 @@ class Segment extends GeomObject {
             return this.point2
         }
     }
+    isContainedBySegment(segment: Segment) {
+        if (!this.isCollinearToSegment(segment)) return false
+
+        let [c00, c01] = coord.sort([this.point1Coordinate, this.point2Coordinate]),
+            [c10, c11] = coord.sort([segment.point1Coordinate, segment.point2Coordinate]),
+            epsilon = this.owner.getOptions().epsilon
+        return coord.compare(c10, c00, epsilon) <= 0 && coord.compare(c11, c01, epsilon) >= 0
+    }
+
     /**
      * `线段this`与`线段s`是否有重合，即有部分重合的一段(线段)
      * @param {Segment} s
      * @returns {boolean | Segment} 重合部分
      */
-    #isOverlappedWithSegment(segment: Segment) {
-        if (!this.isCollinearToSegment(segment)) return false //重合的前提是共线
-
-        let arrP = []
-
-        if (this.point1.isBetweenPoints(segment.point1, segment.point2)) arrP.push(this.point1)
-        if (this.point2.isBetweenPoints(segment.point1, segment.point2)) arrP.push(this.point2)
-        if (segment.point1.isBetweenPoints(this.point1, this.point2)) arrP.push(segment.point1)
-        if (segment.point2.isBetweenPoints(this.point1, this.point2)) arrP.push(segment.point2)
-
-        //去掉相接的情况，相接uniq之后，元素个数为1，其余情况为2
-        arrP = util.uniqWith(arrP, (i, j) => i.isSameAs(j))
-        if (arrP.length == 2) return new Segment(this.owner, arrP[0], arrP[1])
-
-        return false
-    }
     isOverlappedWithSegment(segment: Segment) {
-        return Boolean(this.#isOverlappedWithSegment(segment))
+        if (!this.isCollinearToSegment(segment)) return false
+
+        let [c00, c01] = coord.sort([this.point1Coordinate, this.point2Coordinate]),
+            [c10, c11] = coord.sort([segment.point1Coordinate, segment.point2Coordinate]),
+            epsilon = this.owner.getOptions().epsilon
+
+        if (coord.compare(c00, c10, epsilon) <= 0) {
+            return math.greaterThan(vec2.squaredMagnitude(vec2.from(c00, c01)), vec2.squaredMagnitude(vec2.from(c00, c10)), epsilon)
+        } else return math.greaterThan(vec2.squaredMagnitude(vec2.from(c10, c11)), vec2.squaredMagnitude(vec2.from(c10, c00)), epsilon)
     }
-    getOverlapSegmentWithSegment(segment: Segment) {
-        let ret = this.#isOverlappedWithSegment(segment)
-        if (ret) return ret
-        return null
+    getOverlapSegmentWithSegment(segment: Segment): Segment | null {
+        if (!this.isOverlappedWithSegment(segment)) return null
+
+        let cs = coord.sort([this.point1Coordinate, this.point2Coordinate, segment.point1Coordinate, segment.point2Coordinate])
+        return new Segment(this.owner, util.nth(cs, 1)!, util.nth(cs, 2)!)
     }
     /**
      * `线段this`与`线段s`是否相交，相交不仅要求有且仅有一个点重合，且要求夹角不等于0或者math.PI
@@ -319,9 +320,10 @@ class Segment extends GeomObject {
             v3 = new Vector(this.owner, this.point1, segment.point1),
             cp1 = v1.crossProduct(v2),
             cp2 = v3.crossProduct(v2),
-            cp3 = v3.crossProduct(v1)
+            cp3 = v3.crossProduct(v1),
+            epsilon = this.owner.getOptions().epsilon
 
-        if (math.equalTo(cp1, 0)) return false
+        if (math.equalTo(cp1, 0,epsilon)) return false
         let t1 = cp3 / cp1,
             t2 = cp2 / cp1
         if (0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1) {

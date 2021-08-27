@@ -29,11 +29,11 @@ class Point extends GeomObject implements Visible {
     constructor(owner: Geomtoy)
     constructor(o: Geomtoy, a1?: any, a2?: any) {
         super(o)
-        if (util.isNumber(a1) && util.isNumber(a2)) {
+        if (util.isNumber(a1)) {
             Object.assign(this, { x: a1, y: a2 })
         }
-        if (util.isCoordinate(a1)) {
-            Object.assign(this, { coordinate: coord.copy(a1) })
+        if (util.isArray(a1)) {
+            Object.assign(this, { coordinate: a1 })
         }
         return Object.seal(this)
     }
@@ -103,13 +103,8 @@ class Point extends GeomObject implements Visible {
         if (coord.isSameAs(c0, c1, epsilon) || coord.isSameAs(c0, c2, epsilon) || coord.isSameAs(c1, c2, epsilon)) return null
         let a1 = vec2.angle(vec2.from(c0, c1)),
             a2 = vec2.angle(vec2.from(c0, c1)),
-            d = (a2 - a1) / n,
-            ret: Array<any> = []
-
-        util.forEach(util.range(1, n), i => {
-            ret.push(new Ray(owner, vertex, a1 + d * i))
-        })
-        return ret
+            d = (a2 - a1) / n
+        return util.range(1, n).map(i=>new Ray(owner, vertex, a1 + d * i))
     }
 
     //todo

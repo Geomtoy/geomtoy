@@ -7,7 +7,6 @@ async function main() {
 
     // If you want TypeDoc to load tsconfig.json / typedoc.json files
     app.options.addReader(new TypeDoc.TSConfigReader())
-    // app.options.addReader(new TypeDoc.TypeDocReader())
 
     app.bootstrap({
         name: "Geomtoy",
@@ -31,7 +30,6 @@ async function main() {
             "./src/geomtoy/transformation/index.ts",
             "./src/geomtoy/inversion",
 
-
             "./src/geomtoy/adaptor/svg-dot-js.ts",
             "./src/geomtoy/adaptor/vanilla-canvas.ts",
             "./src/geomtoy/adaptor/vanilla-svg.ts",
@@ -39,17 +37,15 @@ async function main() {
             "./src/geomtoy/interfaces",
             "./src/geomtoy/types"
         ],
+        includeVersion: true,
         excludePrivate: true,
         disableSources: true,
-        readme: "./README.md",
+        readme: "none",
         includes: "./fragments",
         media: "./media",
         sort: ["instance-first"],
-        plugin: "typedoc-plugin-markdown",
+        plugin: "none",
         categoryOrder: ["Entry", "Base", "*"]
-        // hideBreadcrumbs:true,
-        // hideInPageTOC:true,
-        // namedAnchors:true
     })
 
     app.converter.on(Converter.EVENT_CREATE_DECLARATION, (_context, reflection, node) => {
@@ -91,22 +87,24 @@ async function main() {
         const project = _context.project
         const modules = (project.children ?? []).filter(c => c.kindOf(ReflectionKind.Module))
 
-        // let baseModule = new DeclarationReflection("Base", ReflectionKind.Module, project)
-        // let classesModule = new DeclarationReflection("Classes", ReflectionKind.Module, project)
-        // let typesModule = new DeclarationReflection("Types/Interfaces/Enums", ReflectionKind.Module, project)
+        let classesModule = new DeclarationReflection("Classes", ReflectionKind.Namespace, project)
+        let interfacesModule = new DeclarationReflection("Interfaces", ReflectionKind.Namespace, project)
+        let enumsModule = new DeclarationReflection("Enumerations", ReflectionKind.Namespace, project)
+        let typesModule = new DeclarationReflection("Type aliases", ReflectionKind.Namespace, project)
 
-        // baseModule.children = []
-        // baseModule.parent = project
+        classesModule.children = []
+        classesModule.parent = project
+        interfacesModule.children = []
+        interfacesModule.parent = project
+        enumsModule.children = []
+        enumsModule.parent = project
+        typesModule.children = []
+        typesModule.parent = project
 
-        // classesModule.children = []
-        // classesModule.parent = project
-
-        // typesModule.children = []
-        // typesModule.parent = project
-
-        // project.registerReflection(baseModule)
-        // project.registerReflection(classesModule)
-        // project.registerReflection(typesModule)
+        project.registerReflection(classesModule)
+        project.registerReflection(interfacesModule)
+        project.registerReflection(enumsModule)
+        project.registerReflection(typesModule)
 
         if (modules.length > 0) {
             project.children = []
@@ -116,34 +114,30 @@ async function main() {
                 for (const ref of reflections) {
                     // skip ReferenceReflection @see {@link https://typedoc.org/api/classes/ReferenceReflection.html}
                     if (ref.kindOf(ReflectionKind.Reference)) continue
-                    // if (ref.kindOf(ReflectionKind.Class)) {
-                    //     if (ref.name === "GeomObject" || ref.name === "Geomtoy") {
-                    //         ref.parent = baseModule
-                    //         baseModule.children.push(ref)
-                    //     } else {
-                    //         ref.parent = classesModule
-                    //         classesModule.children.push(ref)
-                    //     }
-                    // }
-
-                    // if (
-                    //     ref.kindOf(ReflectionKind.TypeAlias) ||
-                    //     ref.kindOf(ReflectionKind.TypeLiteral) ||
-                    //     ref.kindOf(ReflectionKind.Interface) ||
-                    //     ref.kindOf(ReflectionKind.Enum)
-                    // ) {
-                    //     ref.parent = typesModule
-                    //     typesModule.children.push(ref)
-                    // }
-                    ref.parent = project
-                    project.children.push(ref)
+                    if (ref.kindOf(ReflectionKind.Class)) {
+                        ref.parent = classesModule
+                        classesModule.children.push(ref)
+                    }
+                    if (ref.kindOf(ReflectionKind.Interface)) {
+                        ref.parent = interfacesModule
+                        interfacesModule.children.push(ref)
+                    }
+                    if (ref.kindOf(ReflectionKind.Enum)) {
+                        ref.parent = enumsModule
+                        enumsModule.children.push(ref)
+                    }
+                    if (ref.kindOf(ReflectionKind.TypeAlias) || ref.kindOf(ReflectionKind.TypeLiteral)) {
+                        ref.parent = typesModule
+                        typesModule.children.push(ref)
+                    }
                 }
                 module.children = undefined
                 project.removeReflection(module)
             }
-            // project.children.push(baseModule)
-            // project.children.push(classesModule)
-            // project.children.push(typesModule)
+            project.children.push(classesModule)
+            project.children.push(interfacesModule)
+            project.children.push(enumsModule)
+            project.children.push(typesModule)
         }
     })
 

@@ -1,7 +1,10 @@
 import Line from "../Line"
 import Point from "../Point"
+import Ray from "../Ray"
+import Segment from "../Segment"
 
 export * from "./graphic"
+export * from "./geomtoy"
 
 // Geomtoy global options
 export type Options = {
@@ -15,7 +18,7 @@ export type Options = {
             foldback: number
         }
     }
-    pathSampleRatio: 100
+    pathSampleRatio: number
     coordinateSystem: {
         xAxisPositiveOnRight: boolean
         yAxisPositiveOnBottom: boolean
@@ -24,15 +27,8 @@ export type Options = {
         scale: number
     }
 }
-export type Direction = "positive" | "negative"
-
-export interface PointLineData {
-    line: Line
-    point: Point
-}
-
 export const defaultOptions: Options = {
-    epsilon: 2 ** -11,
+    epsilon: 2 ** -32,
     graphic: {
         pointSize: 2,
         lineRange: 2 ** 10,
@@ -51,6 +47,20 @@ export const defaultOptions: Options = {
         scale: 1
     }
 }
+
+export type LineData = { line: Line }
+export type PointData = { point: Point }
+export type AngleData = { angle: number }
+export type SegmentData = { segment: Segment }
+export type RayData = { ray: Ray }
+
+export type PointLineData = LineData & PointData
+export type AnglePointLineData = AngleData & PointLineData
+export type SegmentLineData = SegmentData & LineData
+export type SegmentRayLineData = SegmentData & RayData & LineData
+
+
+export type Direction = "positive" | "negative"
 
 // Relationship here only means the positional relationship not belonging relationship.
 // So if it is a special belonging, equaling object of other objects, it is not a positional relationship

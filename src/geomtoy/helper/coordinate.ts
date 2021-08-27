@@ -19,11 +19,18 @@ const coord = {
         return [...c]
     },
     isSameAs(c1: [number, number], c2: [number, number], epsilon: number): boolean {
-        return math.equalTo(coord.x(c1), coord.x(c2), epsilon) && math.equalTo(coord.y(c1), coord.y(c2), epsilon)
+        return math.equalTo(c1[0], c2[0], epsilon) && math.equalTo(c1[1], c2[1], epsilon)
     },
-    sort(cs: Array<[number, number]>) {
-        return util.sortBy(cs, [c => coord.x(c), c => coord.y(c)])
+    // x first comparison
+    compare(c1: [number, number], c2: [number, number], epsilon: number): number {
+        let d0 = math.compare(c1[0], c2[0], epsilon),
+            d1= math.compare(c1[0], c2[0], epsilon)
+        return d0===0? d1 : d0
     },
+    sort(cs: [number, number][]) {
+        return util.sort(cs, (c1, c2) => (c1[0] == c2[0] ? c1[1] - c2[1] : c1[0] - c2[0]))
+    },
+    //
     isValid(c: [number, number]) {
         return util.isRealNumber(c[0]) && util.isRealNumber(c[1])
     },

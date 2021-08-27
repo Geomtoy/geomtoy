@@ -85,24 +85,13 @@ class Matrix {
         this.#f = value
     }
 
-    isSameAs(matrix: Matrix): boolean {
-        if (matrix === this) return true
-        return (
-            math.equalTo(this.a, matrix.a) &&
-            math.equalTo(this.b, matrix.b) &&
-            math.equalTo(this.c, matrix.c) &&
-            math.equalTo(this.d, matrix.d) &&
-            math.equalTo(this.e, matrix.e) &&
-            math.equalTo(this.f, matrix.f)
-        )
-    }
-
     static get identity(): Matrix {
         return new Matrix(1, 0, 0, 1, 0, 0)
     }
 
     isIdentity(): boolean {
-        return this.isSameAs(Matrix.identity)
+        let { a, b, c, d, e, f } = this
+        return a === 1 && b === 0 && c === 0 && d === 1 && e === 0 && f === 0
     }
 
     resetToIdentity() {
@@ -257,8 +246,7 @@ class Matrix {
     }
     inverseSelf(): Matrix | boolean {
         let det = this.determinant()
-
-        if (math.equalTo(det, 0)) return false
+        if (det === 0) return false
         //
         // B = A* (adjoint matrix)
         // b11 b12 b13

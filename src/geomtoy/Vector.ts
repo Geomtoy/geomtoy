@@ -30,20 +30,18 @@ class Vector extends GeomObject {
     constructor(owner: Geomtoy)
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any) {
         super(o)
-        if (util.isNumber(a1) && util.isNumber(a2)) {
-            if (util.isNumber(a3) && util.isNumber(a4)) {
+        if (util.isNumber(a1)) {
+            if (util.isNumber(a3)) {
                 Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4 })
             }
             Object.assign(this, { x: a1, y: a2 })
         }
-
-        if (util.isCoordinate(a1)) {
-            if (util.isCoordinate(a2)) {
+        if (util.isArray(a1)) {
+            if (util.isArray(a2)) {
                 Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2 })
             }
             Object.assign(this, { coordinate: a1 })
         }
-
         if (a1 instanceof Point) {
             if (a2 instanceof Point) {
                 Object.assign(this, { point1: a1, point2: a2 })

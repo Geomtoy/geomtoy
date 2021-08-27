@@ -4,7 +4,6 @@ import angle from "./utility/angle"
 import math from "./utility/math"
 import { is, sealed, validAndWithSameOwner } from "./decorator"
 
-
 import Point from "./Point"
 import Segment from "./Segment"
 import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
@@ -18,26 +17,25 @@ import Line from "./Line"
 
 @sealed
 @validAndWithSameOwner
-class Ray extends GeomObject implements Visible { 
+class Ray extends GeomObject implements Visible {
     #coordinate: [number, number] = [NaN, NaN]
-    #angle: number = 0
+    #angle: number = NaN
 
     constructor(owner: Geomtoy, x: number, y: number, angle: number)
     constructor(owner: Geomtoy, coordinate: [number, number], angle: number)
     constructor(owner: Geomtoy, point: Point, angle: number)
-    constructor(o: Geomtoy, a1: any, a2: any, a3?: any) {
+    constructor(owner: Geomtoy)
+    constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any) {
         super(o)
-        if (util.isNumber(a1) && util.isNumber(a2)) {
+        if (util.isNumber(a1)) {
             Object.assign(this, { x: a1, y: a2, angle: a3 })
         }
-
-        if (util.isCoordinate(a1)) {
+        if (util.isArray(a1)) {
             Object.assign(this, { coordinate: a1, angle: a2 })
         }
-
         if (a1 instanceof Point) {
             Object.assign(this, { point: a1, angle: a2 })
-        } 
+        }
         return Object.seal(this)
     }
 
@@ -106,7 +104,7 @@ class Ray extends GeomObject implements Visible {
 
     isSameAs(ray: Ray) {
         let epsilon = this.owner.getOptions().epsilon
-        return coord.isSameAs(this.coordinate, ray.coordinate, epsilon) && math.equalTo(this.angle, ray.angle), epsilon
+        return coord.isSameAs(this.coordinate, ray.coordinate, epsilon) && math.equalTo(this.angle, ray.angle, epsilon), epsilon
     }
     isEndpointSameAs(ray: Ray) {
         let epsilon = this.owner.getOptions().epsilon

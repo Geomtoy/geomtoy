@@ -23,7 +23,7 @@ class Ellipse extends GeomObject implements AreaMeasurable {
     constructor(owner: Geomtoy, centerPoint: Point, radiusX: number, radiusY: number, rotation?: number)
     constructor(o: Geomtoy, a1: any, a2: any, a3: any, a4?: any, a5?: any) {
         super(o)
-        if (util.isNumber(a1) && util.isNumber(a2)) {
+        if (util.isNumber(a1)) {
             Object.assign(this, { centerX: a1, centerY: a2, radiusX: a3, radiusY: a4, rotation: a5 ?? 0 })
         }
         if (util.isArray(a1)) {

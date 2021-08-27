@@ -31,14 +31,13 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     constructor(owner: Geomtoy)
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any) {
         super(o)
-        if (util.every([a1, a2, a3, a4, a5, a6], util.isNumber)) {
+        if (util.isNumber(a1)) {
             Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4, point3X: a5, point3Y: a6 })
         }
-        if (util.isCoordinate(a1) && util.isCoordinate(a2) && util.isCoordinate(a3)) {
+        if (util.isArray(a1)) {
             Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2, point3Coordinate: a3 })
         }
-
-        if (a1 instanceof Point && a2 instanceof Point && a3 instanceof Point) {
+        if (a1 instanceof Point) {
             Object.assign(this, { point1: a1, point2: a2, point3: a3 })
         }
         return Object.seal(this)
@@ -185,7 +184,7 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
         valid &&= coord.isValid(c3)
         // Do NOT use vector cross judgment, area judgment, lying on the same line judgment etc.
         // None of these methods can guarantee that if triangle `this` is judged to be valid, its sub segment can all be valid.
-        // Use length judgment
+        valid &&= !coord.isSameAs(c1, c2, epsilon) && !coord.isSameAs(c2, c3, epsilon) && !coord.isSameAs(c3, c1, epsilon)
         valid &&= math.greaterThan(vec2.magnitude(vec2.from(c1, c2)) + vec2.magnitude(vec2.from(c2, c3)), vec2.magnitude(vec2.from(c3, c1)), epsilon)
         return valid
     }
@@ -259,7 +258,7 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     getSymmedianSegments() {
         let ls = [this.side1Length, this.side2Length, this.side3Length],
             cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate]
-        return util.map(util.range(3), i => {
+        return util.map(util.range(0, 3), i => {
             let c0 = cs[i],
                 c1 = cs[(i + 1) % 3],
                 c2 = cs[(i + 2) % 3],
@@ -276,7 +275,7 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     getAngleBisectingSegments(): [Segment, Segment, Segment] {
         let ls = [this.side1Length, this.side2Length, this.side3Length],
             cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate]
-        return util.map(util.range(3), i => {
+        return util.map(util.range(0, 3), i => {
             let c0 = cs[i],
                 c1 = cs[(i + 1) % 3],
                 c2 = cs[(i + 2) % 3],
@@ -292,7 +291,7 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
      */
     getPerpendicularlyBisectingSegments(): [Segment, Segment, Segment] {
         let cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate]
-        return util.map(util.range(3), i => {
+        return util.map(util.range(0, 3), i => {
             let c0 = cs[i],
                 c1 = cs[(i + 1) % 3],
                 c2 = cs[(i + 2) % 3],
@@ -320,8 +319,8 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
      * @param triangle
      */
     isCongruentWithTriangle(triangle: Triangle) {
-        let [al1, al2, al3] = util.sortBy([this.side1Length, this.side2Length, this.side3Length]),
-            [bl1, bl2, bl3] = util.sortBy([triangle.side1Length, triangle.side2Length, triangle.side3Length]),
+        let [al1, al2, al3] = util.sort([this.side1Length, this.side2Length, this.side3Length], (a, b) => a - b),
+            [bl1, bl2, bl3] = util.sort([triangle.side1Length, triangle.side2Length, triangle.side3Length], (a, b) => a - b),
             epsilon = this.owner.getOptions().epsilon
         return math.equalTo(al1, bl1, epsilon) && math.equalTo(al2, bl2, epsilon) && math.equalTo(al3, bl3, epsilon)
     }
@@ -330,8 +329,8 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
      * @param triangle
      */
     isSimilarWithTriangle(triangle: Triangle) {
-        let [aa1, aa2, aa3] = util.sortBy([this.angle1, this.angle2, this.angle3]),
-            [ba1, ba2, ba3] = util.sortBy([triangle.angle1, triangle.angle2, triangle.angle3]),
+        let [aa1, aa2, aa3] = util.sort([this.angle1, this.angle2, this.angle3],(a, b) => a - b),
+            [ba1, ba2, ba3] = util.sort([triangle.angle1, triangle.angle2, triangle.angle3],(a, b) => a - b),
             epsilon = this.owner.getOptions().epsilon
         return math.equalTo(aa1, ba1, epsilon) && math.equalTo(aa2, ba2, epsilon) && math.equalTo(aa3, ba3, epsilon)
     }
@@ -350,7 +349,7 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
      * Whether triangle `this` is an acute triangle.
      */
     isAcuteTriangle() {
-        let [a, b, c] = util.sortBy([this.side1Length, this.side2Length, this.side3Length]),
+        let [a, b, c] = util.sort([this.side1Length, this.side2Length, this.side3Length],(a, b) => a - b),
             epsilon = this.owner.getOptions().epsilon
         return math.greaterThan(a ** 2 + b ** 2, c ** 2, epsilon)
     }
@@ -358,7 +357,7 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
      * Whether triangle `this` is a right triangle.
      */
     isRightTriangle() {
-        let [a, b, c] = util.sortBy([this.side1Length, this.side2Length, this.side3Length]),
+        let [a, b, c] = util.sort([this.side1Length, this.side2Length, this.side3Length],(a, b) => a - b),
             epsilon = this.owner.getOptions().epsilon
         return math.equalTo(a ** 2 + b ** 2, c ** 2, epsilon)
     }
@@ -366,7 +365,7 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
      * Whether triangle `this` is an obtuse triangle.
      */
     isObtuseTriangle() {
-        let [a, b, c] = util.sortBy([this.side1Length, this.side2Length, this.side3Length]),
+        let [a, b, c] = util.sort([this.side1Length, this.side2Length, this.side3Length],(a, b) => a - b),
             epsilon = this.owner.getOptions().epsilon
         return math.lessThan(a ** 2 + b ** 2, c ** 2, epsilon)
     }
@@ -413,7 +412,7 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
         return Math.abs(a)
     }
     asPolygon() {
-        return new Polygon(this.owner, this.point1Coordinate, this.point2Coordinate, this.point3Coordinate)
+        return new Polygon(this.owner, [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate])
     }
 
     // #region using trilinear

@@ -30,10 +30,10 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
     constructor(owner: Geomtoy, radius: number, centerPosition: Point, sideCount: number, rotation?: number)
     constructor(o: Geomtoy, a1: number, a2?: any, a3?: any, a4?: any, a5?: any) {
         super(o)
-        if (util.isNumber(a2) && util.isNumber(a3)) {
+        if (util.isNumber(a2)) {
             return Object.seal(Object.assign(this, { radius: a1, centerX: a2, centerY: a3, sideCount: a4, rotation: a5 ?? 0 }))
         }
-        if (util.isCoordinate(a2)) {
+        if (util.isArray(a2)) {
             return Object.seal(Object.assign(this, { radius: a1, centerCoordinate: a2, sideCount: a3, rotation: a4 ?? 0 }))
         }
         if (a2 instanceof Point) {
@@ -134,7 +134,7 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
 
     getPoints() {
         let ps: Array<Point> = []
-        util.forEach(util.range(this.sideCount), i => {
+        util.forEach(util.range(0,this.sideCount), i => {
             let p = this.centerPoint.moveAlongAngle(((2 * Math.PI) / this.sideCount) * i + this.rotation, this.radius)
             ps.push(p)
         })
@@ -143,7 +143,7 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
     getLines() {
         let ps = this.getPoints(),
             ls: Array<Line> = []
-        util.forEach(util.range(this.sideCount), i => {
+        util.forEach(util.range(0,this.sideCount), i => {
             ls.push(Line.fromTwoPoints(this.owner, util.nth(ps, i - this.sideCount)!, util.nth(ps, i - this.sideCount + 1)!))
         })
         return ls

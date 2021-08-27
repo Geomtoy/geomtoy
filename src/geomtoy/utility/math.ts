@@ -1,7 +1,7 @@
 const math = {
-    PI:Math.PI, // 884279719003555/281474976710656
-    Infinity:Number.POSITIVE_INFINITY, //Infinity, `Math.pow(2, 1024)`
-    Tan90:Math.tan(Math.PI/2), // 16331239353195370
+    PI: Math.PI, // 884279719003555/281474976710656
+    Infinity: Number.POSITIVE_INFINITY, //Infinity, `Math.pow(2, 1024)`
+    Tan90: Math.tan(Math.PI / 2), // 16331239353195370
 
     abs: Math.abs,
     hypot: Math.hypot,
@@ -20,10 +20,10 @@ const math = {
     atan: Math.atan,
     atan2: Math.atan2,
     cos: Math.cos,
-    sec: (n: number) =>  1 / Math.cos(n),
+    sec: (n: number) => 1 / Math.cos(n),
     sin: Math.sin,
-    csc: (n: number) =>  1 / math.sin(n),
-    tan:  Math.tan,
+    csc: (n: number) => 1 / math.sin(n),
+    tan: Math.tan,
 
     /**
      * Lerp between `u` and `v` by `t`
@@ -66,9 +66,8 @@ const math = {
      * @param {number} a
      * @param {number} b
      * @param {number} epsilon
-     * @returns {boolean}
      */
-    equalTo(a: number, b: number, epsilon: number = Number.EPSILON): boolean {
+    equalTo(a: number, b: number, epsilon: number): boolean {
         if (math.abs(a - b) <= epsilon) return true
         return math.abs(a - b) <= (math.abs(a) < math.abs(b) ? math.abs(b) : math.abs(a)) * epsilon
     },
@@ -77,23 +76,25 @@ const math = {
      * @param {number} a
      * @param {number} b
      * @param {number} epsilon
-     * @returns {boolean}
      */
-    greaterThan(a: number, b: number, epsilon: number = Number.EPSILON): boolean {
+    greaterThan(a: number, b: number, epsilon: number): boolean {
         if (math.abs(a - b) <= epsilon) return false
         return a - b > (math.abs(a) < math.abs(b) ? math.abs(b) : math.abs(a)) * epsilon
     },
-
     /**
      * Is number `a` definitely less than number `b`
      * @param {number} a
      * @param {number} b
      * @param {number} epsilon
-     * @returns {boolean}
      */
-    lessThan(a: number, b: number, epsilon: number = Number.EPSILON): boolean {
+    lessThan(a: number, b: number, epsilon: number): boolean {
         if (math.abs(b - a) <= epsilon) return false
         return b - a > (math.abs(a) < math.abs(b) ? math.abs(b) : math.abs(a)) * epsilon
+    },
+    compare(a: number, b: number, epsilon: number): number {
+        let d = a - b,
+            r = math.abs(a) < math.abs(b) ? math.abs(b) : math.abs(a)
+        return math.abs(d) <= epsilon ? 0 : d > r * epsilon ? 1 : -d > r * epsilon ? -1 : 0
     },
     /**
      * Strictly determine the sign of a number

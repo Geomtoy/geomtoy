@@ -18,109 +18,21 @@ import Transformation from "./transformation"
 import Inversion from "./inversion"
 
 import Matrix from "./transformation/Matrix"
-import { Options, defaultOptions } from "./types"
+import {
+    Options,
+    defaultOptions,
+    Tail,
+    TailedConstructorAndStaticMethods,
+    ConstructorOverloads,
+    TailedConstructor,
+    TailedStaticMethods,
+    RecursivePartial,
+    Factory
+} from "./types"
 import VanillaCanvas from "./adaptor/vanilla-canvas"
 import VanillaSvg from "./adaptor/vanilla-svg"
 import SvgDotJs from "./adaptor/svg-dot-js"
 import GeomObject from "./base/GeomObject"
-
-type Tail<T extends any[]> = T extends [infer A, ...infer R] ? R : never
-// prettier-ignore
-type ConstructorOverloads<T> =
-    T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-        new(...args: infer A5): infer R5
-        new(...args: infer A6): infer R6
-        new(...args: infer A7): infer R7
-    }
-    ? [
-        new (...args: A1) => R1,
-        new (...args: A2) => R2,
-        new (...args: A3) => R3,
-        new (...args: A4) => R4,
-        new (...args: A5) => R5,
-        new (...args: A6) => R6,
-        new (...args: A7) => R7,
-    ]
-    : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-        new(...args: infer A5): infer R5
-        new(...args: infer A6): infer R6
-    }
-    ? [
-        new (...args: A1) => R1,
-        new (...args: A2) => R2,
-        new (...args: A3) => R3,
-        new (...args: A4) => R4,
-        new (...args: A5) => R5,
-        new (...args: A6) => R6,
-    ]
-    : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-        new(...args: infer A5): infer R5
-    }
-    ? [
-        new (...args: A1) => R1,
-        new (...args: A2) => R2,
-        new (...args: A3) => R3,
-        new (...args: A4) => R4,
-        new (...args: A5) => R5
-    ]
-    : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-    }
-    ? [
-        new (...args: A1) => R1,
-        new (...args: A2) => R2,
-        new (...args: A3) => R3,
-        new (...args: A4) => R4
-    ]
-    : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-    }
-    ? [
-        new (...args: A1) => R1,
-        new (...args: A2) => R2,
-        new (...args: A3) => R3
-    ]
-    : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-    }
-    ? [
-        new (...args: A1) => R1,
-        new (...args: A2) => R2
-    ]
-    : T extends {
-        new(...args: infer A1): infer R1
-    }
-    ? [
-        new (...args: A1) => R1
-    ]
-    : never
-// prettier-ignore
-type TailedStaticMethods<T extends { new (...args: any): any }> = {
-    [K in keyof T as T[K] extends (...args: any) => any ? K : never]
-    : T[K] extends (...args: any) => any ? (...args: Tail<Parameters<T[K]>>) => ReturnType<T[K]> : never
-}
-type TailedConstructor<T extends { new (...args: any): any }> = {
-    (...arg: Tail<ConstructorParameters<ConstructorOverloads<T>[number]>>): InstanceType<T>
-}
-type TailedConstructorAndStaticMethods<T extends { new (...args: any): any }> = TailedStaticMethods<T> & TailedConstructor<T>
 
 function tailConstructorAndStaticMethods<T extends { new (...args: any): any }>(owner: Geomtoy, ctor: T): TailedConstructorAndStaticMethods<T> {
     // Use arrow function to define tailed constructor and static methods to avoid user trying to `new`(create instance of) them
@@ -131,28 +43,54 @@ function tailConstructorAndStaticMethods<T extends { new (...args: any): any }>(
     let constructorTailer: TailedConstructor<T> = (...args: Tail<ConstructorParameters<ConstructorOverloads<T>[number]>>) => {
             return new ctor(owner, ...(args as Tail<ConstructorParameters<T>>))
         },
-        staticMethodsTailer = util.transform(
+        staticMethodsTailer = util.reduce(
             // DO use `Object.getOwnPropertyNames` to retrieve all enumerable and non-enumerable property names,
             // for static methods defined as function like `static method(){}` is non-enumerable,
             // and static methods defined as variable like `static method = function(){} or () => {}` is enumerable
             util.filter(Object.getOwnPropertyNames(ctor as Record<string, any>), name => util.isFunction((ctor as Record<string, any>)[name])),
-            (result, name) => (result[name] = tailFunction((ctor as Record<string, any>)[name])),
+            (result, name) => {
+                result[name] = tailFunction((ctor as Record<string, any>)[name])
+                return result
+            },
             {} as { [key: string]: (...args: any) => any }
         )
-
     return Object.assign(constructorTailer, staticMethodsTailer as TailedStaticMethods<T>)
 }
-function isOptions(o: any): o is Options {
-    let s: Options = o
-    return (
-        typeof s.epsilon === "number" &&
-        typeof s.graphic.pointSize === "number" &&
-        typeof s.coordinateSystem.xAxisPositiveOnRight === "boolean" &&
-        typeof s.coordinateSystem.yAxisPositiveOnBottom === "boolean" &&
-        typeof s.coordinateSystem.originX === "number" &&
-        typeof s.coordinateSystem.originY === "number" &&
-        typeof s.coordinateSystem.scale === "number"
-    )
+
+function assignOptions(target: Options, source: RecursivePartial<Options>) {
+    function assignOptionsInner(target: { [key: string]: any }, source: { [key: string]: any }) {
+        for (const key in target) {
+            if (util.isPlainObject(target[key])) {
+                if (util.isPlainObject(source[key])) {
+                    assignOptionsInner(target[key], source[key])
+                }
+            } else {
+                if (Object.prototype.toString.call(target[key]) === Object.prototype.toString.call(source[key])) {
+                    target[key] = source[key]
+                }
+            }
+        }
+    }
+    assignOptionsInner(target, source)
+}
+function applyOptionsRules(target: Options) {
+    if (target.epsilon > 2 ** -16) target.epsilon = 2 ** -16
+    if (target.epsilon < 2 ** -52) target.epsilon = 2 ** -52
+}
+
+function cloneOptions(target: Options) {
+    function cloneOptionsInner(target: Options) {
+        let ret: { [key: string]: any } = {}
+        for (const key in target) {
+            if (util.isPlainObject((target as any)[key])) {
+                ret[key] = cloneOptionsInner((target as any)[key])
+            } else {
+                ret[key] = (target as any)[key]
+            }
+        }
+        return ret
+    }
+    return cloneOptionsInner(target) as Options
 }
 
 @sealed
@@ -162,25 +100,24 @@ class Geomtoy {
     #name = "Geomtoy"
     #uuid = util.uuid()
 
-    #Point: TailedConstructorAndStaticMethods<typeof Point> = tailConstructorAndStaticMethods(this, Point)
-    #Line: TailedConstructorAndStaticMethods<typeof Line> = tailConstructorAndStaticMethods(this, Line)
-    #Segment: TailedConstructorAndStaticMethods<typeof Segment> = tailConstructorAndStaticMethods(this, Segment)
-    #Vector: TailedConstructorAndStaticMethods<typeof Vector> = tailConstructorAndStaticMethods(this, Vector)
-    #Triangle: TailedConstructorAndStaticMethods<typeof Triangle> = tailConstructorAndStaticMethods(this, Triangle)
-    #Circle: TailedConstructorAndStaticMethods<typeof Circle> = tailConstructorAndStaticMethods(this, Circle)
-    #Rectangle: TailedConstructorAndStaticMethods<typeof Rectangle> = tailConstructorAndStaticMethods(this, Rectangle)
-    #Polyline: TailedConstructorAndStaticMethods<typeof Polyline> = tailConstructorAndStaticMethods(this, Polyline)
-    #Polygon: TailedConstructorAndStaticMethods<typeof Polygon> = tailConstructorAndStaticMethods(this, Polygon)
-    #RegularPolygon: TailedConstructorAndStaticMethods<typeof RegularPolygon> = tailConstructorAndStaticMethods(this, RegularPolygon)
-    #Ellipse: TailedConstructorAndStaticMethods<typeof Ellipse> = tailConstructorAndStaticMethods(this, Ellipse)
-    #Transformation: TailedConstructorAndStaticMethods<typeof Transformation> = tailConstructorAndStaticMethods(this, Transformation)
-    #Inversion: TailedConstructorAndStaticMethods<typeof Inversion> = tailConstructorAndStaticMethods(this, Inversion)
+    #Point = tailConstructorAndStaticMethods(this, Point) as any as Factory<typeof Point>
+    #Line = tailConstructorAndStaticMethods(this, Line) as any as Factory<typeof Line>
+    #Segment = tailConstructorAndStaticMethods(this, Segment) as any as Factory<typeof Segment>
+    #Vector = tailConstructorAndStaticMethods(this, Vector) as any as Factory<typeof Vector>
+    #Triangle = tailConstructorAndStaticMethods(this, Triangle) as any as Factory<typeof Triangle>
+    #Circle = tailConstructorAndStaticMethods(this, Circle) as any as Factory<typeof Circle>
+    #Rectangle = tailConstructorAndStaticMethods(this, Rectangle) as any as Factory<typeof Rectangle>
+    #Polyline = tailConstructorAndStaticMethods(this, Polyline) as any as Factory<typeof Polyline>
+    #Polygon = tailConstructorAndStaticMethods(this, Polygon) as any as Factory<typeof Polygon>
+    #RegularPolygon = tailConstructorAndStaticMethods(this, RegularPolygon) as any as Factory<typeof RegularPolygon>
+    #Ellipse = tailConstructorAndStaticMethods(this, Ellipse) as any as Factory<typeof Ellipse>
+    #Transformation = tailConstructorAndStaticMethods(this, Transformation) as any as Factory<typeof Transformation>
+    #Inversion = tailConstructorAndStaticMethods(this, Inversion) as any as Factory<typeof Inversion>
 
-    constructor(options: Partial<Options> = {}) {
-        let tc = util.defaultsDeep(util.cloneDeep(options), defaultOptions)
-        if (!isOptions(tc)) throw new Error()
-        this.#options = tc
-
+    constructor(options: RecursivePartial<Options> = {}) {
+        this.#options = cloneOptions(defaultOptions)
+        assignOptions(this.#options, options)
+        applyOptionsRules(this.#options)
         return Object.seal(this)
     }
 
@@ -246,22 +183,16 @@ class Geomtoy {
     }
 
     getOptions() {
-        return util.cloneDeep(this.#options)
+        return cloneOptions(this.#options)
     }
-    setOptions(options: Partial<Options> = {}) {
-        let tc = util.defaultsDeep(util.cloneDeep(options), util.cloneDeep(this.#options)) as Options
-        if (tc.epsilon > 2 ** -16) tc.epsilon = 2 ** -16
-        if (tc.epsilon < 2 ** -52) tc.epsilon = 2 ** -52
-
-        if (!isOptions(tc)) throw new Error()
-        util.assignDeep(this.#options, tc)
+    setOptions(options: RecursivePartial<Options> = {}) {
+        assignOptions(this.#options, options)
+        applyOptionsRules(this.#options)
     }
 
-    adopt(object:GeomObject){
+    adopt(object: GeomObject) {
         object.owner = this
     }
-
-    
 }
 
 /**

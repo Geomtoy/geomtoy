@@ -26,7 +26,7 @@ class Line extends GeomObject {
     constructor(owner: Geomtoy)
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any) {
         super(o)
-        if (util.isNumber(a1) && util.isNumber(a2) && util.isNumber(a3)) {
+        if (util.isNumber(a1)) {
             Object.assign(this, { a: a1, b: a2, c: a3 })
         }
         return Object.seal(this)

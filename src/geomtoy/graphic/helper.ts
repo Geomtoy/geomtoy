@@ -53,7 +53,6 @@ function arcCenterToEndpointParameterization({
 
     return { x1, y1, x2, y2, rx, ry, largeArcFlag, sweepFlag, xAxisRotation }
 }
-
 function arcEndpointToCenterParameterization({
     x1,
     y1,

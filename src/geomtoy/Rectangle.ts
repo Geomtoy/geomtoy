@@ -24,32 +24,25 @@ class Rectangle extends GeomObject {
     constructor(owner: Geomtoy, originPoint: Point, size: [number, number])
     constructor(o: Geomtoy, a1: any, a2: any, a3?: any, a4?: any) {
         super(o)
-        if (util.isNumber(a1) && util.isNumber(a2)) {
-            if (util.isNumber(a3) && util.isNumber(a4)) {
-                return Object.seal(Object.assign(this, { originX: a1, originY: a2, width: a3, height: a4 }))
+        if (util.isNumber(a1)) {
+            if (util.isNumber(a3)) {
+                Object.assign(this, { originX: a1, originY: a2, width: a3, height: a4 })
             }
-            if (util.isArray(a3)) {
-                return Object.seal(Object.assign(this, { originX: a1, originY: a2, size: a3 }))
-            }
+            Object.assign(this, { originX: a1, originY: a2, size: a3 })
         }
         if (util.isArray(a1)) {
-            if (util.isNumber(a2) && util.isNumber(a3)) {
-                return Object.seal(Object.assign(this, { originCoordinate: a1, width: a2, height: a3 }))
+            if (util.isNumber(a2)) {
+                Object.assign(this, { originCoordinate: a1, width: a2, height: a3 })
             }
-            if (util.isArray(a2)) {
-                return Object.seal(Object.assign(this, { originCoordinate: a1, size: a2 }))
-            }
+            Object.assign(this, { originCoordinate: a1, size: a2 })
         }
-
         if (a1 instanceof Point) {
-            if (util.isNumber(a2) && util.isNumber(a3)) {
-                return Object.seal(Object.assign(this, { originPoint: a1, width: a2, height: a3 }))
+            if (util.isNumber(a2)) {
+                Object.assign(this, { originPoint: a1, width: a2, height: a3 })
             }
-            if (util.isArray(a2)) {
-                return Object.seal(Object.assign(this, { originPoint: a1, size: a2 }))
-            }
+            Object.assign(this, { originPoint: a1, size: a2 })
         }
-        throw new Error(`[G]Arguments can NOT construct a rectangle.`)
+        return Object.seal(this)
     }
 
     @is("realNumber")

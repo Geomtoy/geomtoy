@@ -23,7 +23,7 @@ class Polyline extends GeomObject {
     constructor(o: Geomtoy, a1?: any) {
         super(o)
 
-        if (util.isCoordinate(util.head(a1))) {
+        if (util.isArray(util.head(a1))) {
             Object.assign(this, { pointCoordinates: a1 })
         }
         if (util.head(a1) instanceof Point) {
