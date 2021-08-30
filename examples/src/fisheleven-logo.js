@@ -1,7 +1,4 @@
-import { Circle, SVG } from "@svgdotjs/svg.js"
-import _ from "lodash"
 import Geomtoy from "../../src/geomtoy"
-import Point from "../../src/geomtoy/Point"
 
 class myAdapter {
     constructor(svgDotJsContainer, geomtoy) {
@@ -9,8 +6,8 @@ class myAdapter {
         this.geomtoy = geomtoy
     }
     setup() {
-        let gt = this.geomtoy.globalTransformation
-        this.svgDotJsContainer.attr("transform", `matrix(${gt.a} ${gt.b} ${gt.c} ${gt.d} ${gt.e} ${gt.f})`)
+        let [a, b, c, d, e, f] = this.geomtoy.globalTransformation.get()
+        this.svgDotJsContainer.attr("transform", `matrix(${a} ${b} ${c} ${d} ${e} ${f})`)
     }
     async draw(object, { duration = 500, delay = 0 } = {}) {
         this.setup()
@@ -90,7 +87,7 @@ Promise.resolve("Let's begin")
         let centerPoint = G.Point(radius + prePadding, radius + prePadding)
         data.centerPoint = centerPoint
         await sketchD.draw(centerPoint)
- 
+
         let initCircle = G.Circle(radius, data.centerPoint)
         data.initCircle = initCircle
         console.log(data)
@@ -103,12 +100,12 @@ Promise.resolve("Let's begin")
         data.heptagonNQuarterPoints = []
         data.heptagonPEighthPoints = []
         data.heptagonNEighthPoints = []
-        let heptagon = new G.RegularPolygon(radius, data.centerPoint, seven, -Math.PI / 2),
-            heptagonOffset = new G.RegularPolygon(radius, data.centerPoint, seven, Math.PI / seven - Math.PI / 2),
-            heptagonPQuarter = new G.RegularPolygon(radius, data.centerPoint, seven, Math.PI / seven / 2 - Math.PI / 2),
-            heptagonNQuarter = new G.RegularPolygon(radius, data.centerPoint, seven, -Math.PI / seven / 2 - Math.PI / 2),
-            heptagonPEighth = new G.RegularPolygon(radius, data.centerPoint, seven, Math.PI / seven / 4 - Math.PI / 2),
-            heptagonNEighth = new G.RegularPolygon(radius, data.centerPoint, seven, -Math.PI / seven / 4 - Math.PI / 2)
+        let heptagon = G.RegularPolygon(radius, data.centerPoint, seven, -Math.PI / 2),
+            heptagonOffset = G.RegularPolygon(radius, data.centerPoint, seven, Math.PI / seven - Math.PI / 2),
+            heptagonPQuarter = G.RegularPolygon(radius, data.centerPoint, seven, Math.PI / seven / 2 - Math.PI / 2),
+            heptagonNQuarter = G.RegularPolygon(radius, data.centerPoint, seven, -Math.PI / seven / 2 - Math.PI / 2),
+            heptagonPEighth = G.RegularPolygon(radius, data.centerPoint, seven, Math.PI / seven / 4 - Math.PI / 2),
+            heptagonNEighth = G.RegularPolygon(radius, data.centerPoint, seven, -Math.PI / seven / 4 - Math.PI / 2)
         data.heptagonPoints = heptagon.getPoints()
         data.heptagonOffsetPoints = heptagonOffset.getPoints()
         data.heptagonPQuarterPoints = heptagonPQuarter.getPoints()
@@ -121,267 +118,267 @@ Promise.resolve("Let's begin")
 
         let heptagonDraw = await sketchD.draw(heptagon)
         heptagonDraw.stroke({ color: colors[0] })
-         
+
         let promises = _.range(seven).map(async index => {
             await sketchD.draw(data.heptagonPoints[index])
-            await sketchStrokeD.draw(new G.Segment(data.centerPoint, data.heptagonPoints[index]))
+            await sketchStrokeD.draw(G.Segment(data.centerPoint, data.heptagonPoints[index]))
             await sketchD.draw(data.heptagonOffsetPoints[index])
-            await sketchStrokeD.draw(new G.Segment(data.centerPoint, data.heptagonOffsetPoints[index]))
+            await sketchStrokeD.draw(G.Segment(data.centerPoint, data.heptagonOffsetPoints[index]))
             await Promise.all([sketchD.draw(data.heptagonPQuarterPoints[index]), sketchD.draw(data.heptagonNQuarterPoints[index])])
             await Promise.all([
-                sketchStrokeD.draw(new G.Segment(data.centerPoint, data.heptagonPQuarterPoints[index])),
-                sketchStrokeD.draw(new G.Segment(data.centerPoint, data.heptagonNQuarterPoints[index]))
+                sketchStrokeD.draw(G.Segment(data.centerPoint, data.heptagonPQuarterPoints[index])),
+                sketchStrokeD.draw(G.Segment(data.centerPoint, data.heptagonNQuarterPoints[index]))
             ])
             await Promise.all([sketchD.draw(data.heptagonPEighthPoints[index]), sketchD.draw(data.heptagonNEighthPoints[index])])
             await Promise.all([
-                sketchStrokeD.draw(new G.Segment(data.centerPoint, data.heptagonPEighthPoints[index])),
-                sketchStrokeD.draw(new G.Segment(data.centerPoint, data.heptagonNEighthPoints[index]))
+                sketchStrokeD.draw(G.Segment(data.centerPoint, data.heptagonPEighthPoints[index])),
+                sketchStrokeD.draw(G.Segment(data.centerPoint, data.heptagonNEighthPoints[index]))
             ])
         })
         await Promise.all(promises)
     })
 
-// .then(async () => {
-//     data.heptagonC1 = {
-//         intPoints: [],
-//         circles: []
-//     }
-//     let promises = _.range(seven).map(async index => {
-//         let lA = G.Line.fromPoints(_.nth(data.heptagonOffsetPoints, index - 1), data.centerPoint), //use _.nth to get index -1
-//             lB = G.Line.fromPoints(_.nth(data.heptagonOffsetPoints, index), data.centerPoint),
-//             lC = new G.Circle(radius, data.centerPoint).getTangentLineAtPoint(_.nth(data.heptagonPoints, index)),
-//             pA = lA.getIntersectionPointWithLine(lC),
-//             pB = lB.getIntersectionPointWithLine(lC),
-//             triangle = new G.Triangle(pA, pB, data.centerPoint),
-//             c = triangle.getInscribedCircle()
-//         await triangle.draw(sketchStrokeGroup)
-//         await c.draw(sketchGroup)
-//         data.heptagonC1.circles[index] = c
+    .then(async () => {
+        data.heptagonC1 = {
+            intPoints: [],
+            circles: []
+        }
+        let promises = _.range(seven).map(async index => {
+            let lA = G.Line.fromTwoPoints(_.nth(data.heptagonOffsetPoints, index - 1), data.centerPoint), //use _.nth to get index -1
+                lB = G.Line.fromTwoPoints(_.nth(data.heptagonOffsetPoints, index), data.centerPoint),
+                lC = G.Circle(radius, data.centerPoint).getTangentLineAtPoint(_.nth(data.heptagonPoints, index)),
+                pA = lA.getIntersectionPointWithLine(lC),
+                pB = lB.getIntersectionPointWithLine(lC),
+                triangle = G.Triangle(pA, pB, data.centerPoint),
+                c = triangle.getInscribedCircle()
+            await sketchStrokeD.draw(triangle)
+            await sketchD.draw(c)
+            data.heptagonC1.circles[index] = c
 
-//         let ps = G.Line.fromPoints(_.nth(data.heptagonPoints, index), data.centerPoint).getIntersectionPointsWithCircle(c)
-//         data.heptagonC1.intPoints[index] = _.find(ps, p => !p.isSameAs(_.nth(data.heptagonPoints, index)))
-//         await data.heptagonC1.intPoints[index].draw(sketchGroup)
-//     })
-//     await Promise.all(promises)
-// })
-// .then(async () => {
-//     data.heptagonC2 = {
-//         intPoints: [],
-//         circles: []
-//     }
-//     let promises = _.range(seven).map(async index => {
-//         let lA = G.Line.fromPoints(data.heptagonPEighthPoints[index], data.centerPoint),
-//             lB = G.Line.fromPoints(data.heptagonNEighthPoints[index], data.centerPoint),
-//             lC = new G.Circle(radius, data.centerPoint).getTangentLineAtPoint(_.nth(data.heptagonPoints, index)),
-//             pA = lA.getIntersectionPointWithLine(lC),
-//             pB = lB.getIntersectionPointWithLine(lC),
-//             triangle = new G.Triangle(pA, pB, data.centerPoint),
-//             c = triangle.getInscribedCircle()
+            let ps = G.Line.fromTwoPoints(_.nth(data.heptagonPoints, index), data.centerPoint).getIntersectionPointsWithCircle(c)
+            data.heptagonC1.intPoints[index] = _.find(ps, p => !p.isSameAs(_.nth(data.heptagonPoints, index)))
+            await sketchD.draw(data.heptagonC1.intPoints[index])
+        })
+        await Promise.all(promises)
+    })
+    .then(async () => {
+        data.heptagonC2 = {
+            intPoints: [],
+            circles: []
+        }
+        let promises = _.range(seven).map(async index => {
+            let lA = G.Line.fromTwoPoints(data.heptagonPEighthPoints[index], data.centerPoint),
+                lB = G.Line.fromTwoPoints(data.heptagonNEighthPoints[index], data.centerPoint),
+                lC = G.Circle(radius, data.centerPoint).getTangentLineAtPoint(_.nth(data.heptagonPoints, index)),
+                pA = lA.getIntersectionPointWithLine(lC),
+                pB = lB.getIntersectionPointWithLine(lC),
+                triangle = G.Triangle(pA, pB, data.centerPoint),
+                c = triangle.getInscribedCircle()
 
-//         await triangle.draw(sketchStrokeGroup)
-//         await c.draw(sketchGroup)
-//         data.heptagonC2.circles[index] = c
+            await sketchStrokeD.draw(triangle)
+            await sketchD.draw(c)
+            data.heptagonC2.circles[index] = c
 
-//         let ps = G.Line.fromPoints(_.nth(data.heptagonPoints, index), data.centerPoint).getIntersectionPointsWithCircle(c)
-//         data.heptagonC2.intPoints[index] = _.find(ps, p => !p.isSameAs(data.heptagonPoints[index]))
-//         await data.heptagonC2.intPoints[index].draw(sketchGroup)
-//     })
-//     await Promise.all(promises)
-// })
-// .then(async () => {
-//     data.heptagonC3 = {
-//         intPoints: [],
-//         circles: []
-//     }
-//     let promises = _.range(seven).map(async index => {
-//         let lA = G.Line.fromPoints(data.heptagonPQuarterPoints[index], data.centerPoint),
-//             lB = G.Line.fromPoints(data.heptagonNQuarterPoints[index], data.centerPoint),
-//             lC = data.heptagonC2.circles[index].getTangentLineAtPoint(data.heptagonC2.intPoints[index]),
-//             pA = lA.getIntersectionPointWithLine(lC),
-//             pB = lB.getIntersectionPointWithLine(lC),
-//             triangle = new G.Triangle(pA, pB, data.centerPoint),
-//             c = triangle.getInscribedCircle()
+            let ps = G.Line.fromTwoPoints(_.nth(data.heptagonPoints, index), data.centerPoint).getIntersectionPointsWithCircle(c)
+            data.heptagonC2.intPoints[index] = _.find(ps, p => !p.isSameAs(data.heptagonPoints[index]))
+            await sketchD.draw(data.heptagonC2.intPoints[index])
+        })
+        await Promise.all(promises)
+    })
+    .then(async () => {
+        data.heptagonC3 = {
+            intPoints: [],
+            circles: []
+        }
+        let promises = _.range(seven).map(async index => {
+            let lA = G.Line.fromTwoPoints(data.heptagonPQuarterPoints[index], data.centerPoint),
+                lB = G.Line.fromTwoPoints(data.heptagonNQuarterPoints[index], data.centerPoint),
+                lC = data.heptagonC2.circles[index].getTangentLineAtPoint(data.heptagonC2.intPoints[index]),
+                pA = lA.getIntersectionPointWithLine(lC),
+                pB = lB.getIntersectionPointWithLine(lC),
+                triangle = G.Triangle(pA, pB, data.centerPoint),
+                c = triangle.getInscribedCircle()
 
-//         await triangle.draw(sketchStrokeGroup)
-//         await c.draw(sketchGroup)
-//         data.heptagonC3.circles[index] = c
+            await sketchStrokeD.draw(triangle)
+            await sketchD.draw(c)
+            data.heptagonC3.circles[index] = c
 
-//         let ps = G.Line.fromPoints(data.heptagonC2.intPoints[index], data.centerPoint).getIntersectionPointsWithCircle(c)
-//         data.heptagonC3.intPoints[index] = _.find(ps, p => !p.isSameAs(data.heptagonC2.intPoints[index]))
-//         await data.heptagonC3.intPoints[index].draw(sketchGroup)
-//     })
-//     await Promise.all(promises)
-// })
-// .then(async () => {
-//     data.heptagonC4 = {
-//         intPointLists: [],
-//         circles: []
-//     }
-//     data.gap = null
+            let ps = G.Line.fromTwoPoints(data.heptagonC2.intPoints[index], data.centerPoint).getIntersectionPointsWithCircle(c)
+            data.heptagonC3.intPoints[index] = _.find(ps, p => !p.isSameAs(data.heptagonC2.intPoints[index]))
+            await sketchD.draw(data.heptagonC3.intPoints[index])
+        })
+        await Promise.all(promises)
+    })
+    .then(async () => {
+        data.heptagonC4 = {
+            intPointLists: [],
+            circles: []
+        }
+        data.gap = null
 
-//     let promises = _.range(seven).map(async index => {
-//         let p = new G.Point(data.heptagonC3.circles[index].cx, data.heptagonC3.circles[index].cy),
-//             c = new G.Circle(data.heptagonC2.circles[index].radius, p),
-//             l = G.Line.fromPoints(data.centerPoint, data.heptagonPoints[index]),
-//             ps = l.getIntersectionPointsWithCircle(c)
+        let promises = _.range(seven).map(async index => {
+            let p = G.Point(data.heptagonC3.circles[index].centerX, data.heptagonC3.circles[index].centerY),
+                c = G.Circle(data.heptagonC2.circles[index].radius, p),
+                l = G.Line.fromTwoPoints(data.centerPoint, data.heptagonPoints[index]),
+                ps = l.getIntersectionPointsWithCircle(c)
 
-//         ps = _.sortBy(ps, p => p.getDistanceFromPoint(data.centerPoint)) //ascending order
+            ps = _.sortBy(ps, p => p.getDistanceBetweenPoint(data.centerPoint)) //ascending order
 
-//         await p.draw(sketchGroup)
-//         await c.draw(sketchGroup)
-//         await ps[0].draw(sketchGroup)
-//         await ps[1].draw(sketchGroup)
+            await sketchD.draw(p)
+            await sketchD.draw(c)
+            await sketchD.draw(ps[0])
+            await sketchD.draw(ps[1])
 
-//         data.heptagonC4.circles[index] = c
-//         data.heptagonC4.intPointLists[index] = ps
-//     })
-//     //gap
-//     await Promise.all(promises).then(() => {
-//         data.gap = data.heptagonC3.circles[0].radius - data.heptagonC4.circles[0].radius
-//     })
-// })
-// .then(async () => {
-//     data.heptagonC5 = {
-//         circles: []
-//     }
-//     let promises = _.range(seven).map(async index => {
-//         let pA = data.heptagonC1.intPoints[index],
-//             pB = data.heptagonC3.intPoints[index],
-//             r = pA.getDistanceFromPoint(pB) / 2,
-//             mp = new G.Segment(pA, pB).getMiddlePoint()
+            data.heptagonC4.circles[index] = c
+            data.heptagonC4.intPointLists[index] = ps
+        })
+        //gap
+        await Promise.all(promises).then(() => {
+            data.gap = data.heptagonC3.circles[0].radius - data.heptagonC4.circles[0].radius
+        })
+    })
+    .then(async () => {
+        data.heptagonC5 = {
+            circles: []
+        }
+        let promises = _.range(seven).map(async index => {
+            let pA = data.heptagonC1.intPoints[index],
+                pB = data.heptagonC3.intPoints[index],
+                r = pA.getDistanceBetweenPoint(pB) / 2,
+                mp = G.Segment(pA, pB).getMiddlePoint()
 
-//         let c = new G.Circle(r, mp)
-//         await c.draw(sketchGroup)
-//         data.heptagonC5.circles[index] = c
-//     })
-//     await Promise.all(promises)
-// })
-// .then(async () => {
-//     data.heptagonC6 = {
-//         circles: []
-//     }
-//     let promises = _.range(seven).map(async index => {
-//         let pA = data.heptagonPoints[index],
-//             pB = data.heptagonC3.intPoints[index],
-//             r = pA.getDistanceFromPoint(pB) / 2,
-//             mp = new G.Segment(pA, pB).getMiddlePoint()
+            let c = G.Circle(r, mp)
+            await sketchD.draw(c)
+            data.heptagonC5.circles[index] = c
+        })
+        await Promise.all(promises)
+    })
+    .then(async () => {
+        data.heptagonC6 = {
+            circles: []
+        }
+        let promises = _.range(seven).map(async index => {
+            let pA = data.heptagonPoints[index],
+                pB = data.heptagonC3.intPoints[index],
+                r = pA.getDistanceBetweenPoint(pB) / 2,
+                mp = G.Segment(pA, pB).getMiddlePoint()
 
-//         let c = new G.Circle(r, mp)
-//         await c.draw(sketchGroup)
-//         data.heptagonC6.circles[index] = c
-//     })
-//     await Promise.all(promises)
-// })
-// .then(async () => {
-//     data.heptagonC7 = {
-//         intPoints: [],
-//         circles: []
-//     }
-//     let promises = _.range(seven).map(async index => {
-//         let p = data.heptagonOffsetPoints[index],
-//             r = data.heptagonC5.circles[index].radius,
-//             l = G.Line.fromPoints(p, data.centerPoint),
-//             ps1 = l.getIntersectionPointsWithCircle(new G.Circle(r, p)),
-//             ps2 = l.getIntersectionPointsWithCircle(new G.Circle(2 * r, p))
+            let c = G.Circle(r, mp)
+            await sketchD.draw(c)
+            data.heptagonC6.circles[index] = c
+        })
+        await Promise.all(promises)
+    })
+    .then(async () => {
+        data.heptagonC7 = {
+            intPoints: [],
+            circles: []
+        }
+        let promises = _.range(seven).map(async index => {
+            let p = data.heptagonOffsetPoints[index],
+                r = data.heptagonC5.circles[index].radius,
+                l = G.Line.fromTwoPoints(p, data.centerPoint),
+                ps1 = l.getIntersectionPointsWithCircle(G.Circle(r, p)),
+                ps2 = l.getIntersectionPointsWithCircle(G.Circle(2 * r, p))
 
-//         ps1 = _.sortBy(ps1, p => p.getDistanceFromPoint(data.centerPoint)) //ascending order
-//         ps2 = _.sortBy(ps2, p => p.getDistanceFromPoint(data.centerPoint)) //ascending order
+            ps1 = _.sortBy(ps1, p => p.getDistanceBetweenPoint(data.centerPoint)) //ascending order
+            ps2 = _.sortBy(ps2, p => p.getDistanceBetweenPoint(data.centerPoint)) //ascending order
 
-//         let center = ps1[0],
-//             c = new G.Circle(r, center)
-//         await c.draw(sketchGroup)
+            let center = ps1[0],
+                c = G.Circle(r, center)
+            await sketchD.draw(c)
 
-//         data.heptagonC7.intPoints[index] = ps2[0]
-//         data.heptagonC7.circles[index] = c
-//     })
-//     await Promise.all(promises)
-// })
-// .then(async () => {
-//     data.innerBorderC1 = null
-//     data.innerBorderC2 = null
+            data.heptagonC7.intPoints[index] = ps2[0]
+            data.heptagonC7.circles[index] = c
+        })
+        await Promise.all(promises)
+    })
+    .then(async () => {
+        data.innerBorderC1 = null
+        data.innerBorderC2 = null
 
-//     let r1 = radius - data.heptagonC1.circles[0].radius * 2,
-//         r2 = r1 - data.gap,
-//         c1 = new G.Circle(r1, data.centerPoint),
-//         c2 = new G.Circle(r2, data.centerPoint)
+        let r1 = radius - data.heptagonC1.circles[0].radius * 2,
+            r2 = r1 - data.gap,
+            c1 = G.Circle(r1, data.centerPoint),
+            c2 = G.Circle(r2, data.centerPoint)
 
-//     await c1.draw(sketchStrokeGroup)
-//     await c2.draw(sketchGroup)
+        await sketchStrokeD.draw(c1)
+        await sketchD.draw(c2)
 
-//     data.innerBorderC1 = c1
-//     data.innerBorderC2 = c2
-// })
-// .then(async () => {
-//     data.outerBorderC1 = null
-//     data.outerBorderC2 = null
+        data.innerBorderC1 = c1
+        data.innerBorderC2 = c2
+    })
+    .then(async () => {
+        data.outerBorderC1 = null
+        data.outerBorderC2 = null
 
-//     let r1 = radius + data.gap,
-//         r2 = r1 + data.gap,
-//         c1 = new G.Circle(r1, data.centerPoint),
-//         c2 = new G.Circle(r2, data.centerPoint)
+        let r1 = radius + data.gap,
+            r2 = r1 + data.gap,
+            c1 = G.Circle(r1, data.centerPoint),
+            c2 = G.Circle(r2, data.centerPoint)
 
-//     await c1.draw(sketchGroup)
-//     await c2.draw(sketchGroup)
+        await sketchD.draw(c1)
+        await sketchD.draw(c2)
 
-//     data.outerBorderC1 = c1
-//     data.outerBorderC2 = c2
-// })
-// .then(async () => {
-//     data.trianglePoints = []
-//     data.triangleC1 = {
-//         intPoints: [],
-//         circles: []
-//     }
-//     data.triangleC2 = {
-//         tanPoints: [],
-//         circles: []
-//     }
+        data.outerBorderC1 = c1
+        data.outerBorderC2 = c2
+    })
+    .then(async () => {
+        data.trianglePoints = []
+        data.triangleC1 = {
+            intPoints: [],
+            circles: []
+        }
+        data.triangleC2 = {
+            tanPoints: [],
+            circles: []
+        }
 
-//     let triangle = data.innerBorderC2.getInscribedRegularPolygon(three, Math.PI / 2),
-//         triangleDraw = await triangle.draw(sketchGroup)
-//     triangleDraw.stroke({ color: colors[1] })
-//     data.trianglePoints = triangle.points
+        let triangle = data.innerBorderC2.getInscribedRegularPolygon(three, Math.PI / 2),
+            triangleDraw = await sketchD .draw(triangle)
+        triangleDraw.stroke({ color: colors[1] })
+        data.trianglePoints = triangle.getPoints()
 
-//     let promises1 = _.range(three).map(async index => {
-//         await data.trianglePoints[index].draw(sketchGroup)
+        let promises1 = _.range(three).map(async index => {
+            await sketchD.draw(data.trianglePoints[index])
 
-//         let l = G.Line.fromPoints(data.trianglePoints[index], data.centerPoint),
-//             psWithIBC1 = l.getIntersectionPointsWithCircle(data.innerBorderC1)
+            let l = G.Line.fromTwoPoints(data.trianglePoints[index], data.centerPoint),
+                psWithIBC1 = l.getIntersectionPointsWithCircle(data.innerBorderC1)
 
-//         psWithIBC1 = _.sortBy(psWithIBC1, p => p.getDistanceFromPoint(data.trianglePoints[index]))
-//         psWithIBC1[0].draw(sketchGroup)
+            psWithIBC1 = _.sortBy(psWithIBC1, p => p.getDistanceBetweenPoint(data.trianglePoints[index]))
+            await sketchD.draw( psWithIBC1[0])
 
-//         let c = new G.Circle(psWithIBC1[0].getDistanceFromPoint(data.centerPoint) / 2, new G.Segment(psWithIBC1[0], data.centerPoint).getMiddlePoint())
-//         await c.draw(sketchGroup)
-//         await c.centerPoint.draw(sketchGroup)
+            let c =  G.Circle(psWithIBC1[0].getDistanceBetweenPoint(data.centerPoint) / 2,  G.Segment(psWithIBC1[0], data.centerPoint).getMiddlePoint())
+            await sketchD.draw(c)
+            await sketchD.draw(c.centerPoint)
 
-//         let ps = c.getIntersectionPointsWithCircle(data.innerBorderC2)
-//         await ps[0].draw(sketchGroup)
-//         await ps[1].draw(sketchGroup)
+            let ps = c.getIntersectionPointsWithCircle(data.innerBorderC2)
+            await sketchD.draw(ps[0])
+            await sketchD.draw(ps[1])
 
-//         data.triangleC1.circles[index] = c
-//         data.triangleC1.intPoints[index] = ps[0]
-//     })
+            data.triangleC1.circles[index] = c
+            data.triangleC1.intPoints[index] = ps[0]
+        })
 
-//     await Promise.all(promises1)
+        await Promise.all(promises1)
 
-//     let promises2 = _.range(three).map(async index => {
-//         let commonTangentCircles = G.Circle.getCommonTangentCirclesOfTwoCirclesThroughPointNotOn(
-//             _.nth(data.triangleC1.circles, index - 1),
-//             _.nth(data.triangleC1.circles, index - 2),
-//             data.trianglePoints[index]
-//         )
+        let promises2 = _.range(three).map(async index => {
+            let commonTangentCircles = G.Circle.getCommonTangentCirclesOfTwoCirclesThroughPointNotOn(
+                _.nth(data.triangleC1.circles, index - 1),
+                _.nth(data.triangleC1.circles, index - 2),
+                data.trianglePoints[index]
+            )
 
-//         data.triangleC2.circles[index] = commonTangentCircles[1]
-//         await commonTangentCircles[1].draw(sketchGroup)
+            data.triangleC2.circles[index] = commonTangentCircles[1]
+            await sketchD.draw(commonTangentCircles[1])
 
-//         let etData = commonTangentCircles[1].getExternallyTangentDataWithCircle(_.nth(data.triangleC1.circles, index - 2))
-//         data.triangleC2.tanPoints[index] = etData.point
-//         await etData.point.draw(sketchGroup)
-//     })
+            let etData = commonTangentCircles[1].getExternallyTangentDataWithCircle(_.nth(data.triangleC1.circles, index - 2))
+            data.triangleC2.tanPoints[index] = etData.point
+            await sketchD.draw(etData.point)
+        })
 
-//     await Promise.all(promises2)
-// })
+        await Promise.all(promises2)
+    })
 // .then(async () => {
 //     data.quadrilateralPoints = []
 //     data.quadrilateral = {
@@ -389,7 +386,7 @@ Promise.resolve("Let's begin")
 //         int2Points: []
 //     }
 
-//     let quadrilateral = new G.RegularPolygon(radius + data.gap * 2, data.centerPoint, four, Math.PI / 2),
+//     let quadrilateral =  G.RegularPolygon(radius + data.gap * 2, data.centerPoint, four, Math.PI / 2),
 //         quadrilateralDraw = await quadrilateral.draw(sketchGroup)
 
 //     quadrilateralDraw.stroke({ color: colors[2] })
@@ -398,7 +395,7 @@ Promise.resolve("Let's begin")
 
 //     let promises1 = _.range(four).map(async index => {
 //         let ps = ls[index].getIntersectionPointsWithCircle(data.outerBorderC1)
-//         ps = _.sortBy(ps, p => (new G.Vector(data.centerPoint, p).angle + 1.5 * Math.PI) % (2 * Math.PI))
+//         ps = _.sortBy(ps, p => ( G.Vector(data.centerPoint, p).angle + 1.5 * Math.PI) % (2 * Math.PI))
 //         await ps[0].draw(sketchGroup)
 //         await ps[1].draw(sketchGroup)
 
@@ -414,7 +411,7 @@ Promise.resolve("Let's begin")
 //         } else {
 //             toIndex = index + (four - 1)
 //         }
-//         let l = G.Line.fromPoints(_.nth(data.quadrilateral.int1Points, index), _.nth(data.quadrilateral.int1Points, toIndex)),
+//         let l = G.Line.fromTwoPoints(_.nth(data.quadrilateral.int1Points, index), _.nth(data.quadrilateral.int1Points, toIndex)),
 //             ps = l.getIntersectionPointsWithCircle(data.outerBorderC2)
 
 //         ps = _.sortBy(ps, p => (new G.Vector(data.centerPoint, p).angle + 1.5 * Math.PI) % (2 * Math.PI))
@@ -537,9 +534,9 @@ Promise.resolve("Let's begin")
 
 //     _.range(four).forEach(index => {
 //         let l =
-//             int2ps[index * 2].getDistanceFromPoint(int1ps[index * 2]) +
+//             int2ps[index * 2].getDistanceBetweenPoint(int1ps[index * 2]) +
 //             oc1.getArcLengthBetween(int1ps[index * 2], int1ps[index * 2 + 1], false) +
-//             int1ps[index * 2 + 1].getDistanceFromPoint(int2ps[index * 2 + 1]) +
+//             int1ps[index * 2 + 1].getDistanceBetweenPoint(int2ps[index * 2 + 1]) +
 //             oc2.getArcLengthBetween(int2ps[index * 2 + 1], int2ps[index * 2], true)
 
 //         imageGroup

@@ -10,7 +10,7 @@
         "alwaysStrict": true,
         // "noUnusedLocals": true,
         // "noUnusedParameters": true,
-        // TODO Even the typescript official example code to demonstrate parameter decorator with `TypedPropertyDescriptor<Function>` will have warnings if following flag is `true`
+        //! Even the typescript official example code to demonstrate parameter decorator with `TypedPropertyDescriptor<Function>` will have warnings if following flag is `true`
         "strictFunctionTypes": false,
         "noImplicitAny": true,
         "allowSyntheticDefaultImports": true,
@@ -22,5 +22,5 @@
         "stripInternal": true
     },
     "exclude": ["./node_modules"],
-    "include": ["./src", "./test/case"]
+    "include": ["./src", "./test", "./examples/src"]
 }

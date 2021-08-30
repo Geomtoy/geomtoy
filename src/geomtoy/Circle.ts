@@ -10,28 +10,21 @@ import RegularPolygon from "./RegularPolygon"
 import Vector from "./Vector"
 import Segment from "./Segment"
 import Inversion from "./inversion"
-import { AngleData, AnglePointLineData, CanvasDirective, GraphicImplType, SvgDirective } from "./types"
+import { AnglePointLineData, CanvasDirective, Direction, GraphicImplType, PointLineData, PointsLineData, SvgDirective } from "./types"
 import { is, sealed } from "./decorator"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Graphic from "./graphic"
 import Geomtoy from "."
 import coord from "./utility/coordinate"
-
-interface TangentDataOfCircleWithPointOutside {
-    [index: number]: {
-        // the angle from line(`point` to center of `circle`) to tangent point radius, positive if tangent point radius is on the positive rotation direction
-        angle: number
-        line: Line
-        point: Point
-    }
-}
-interface CommonTangentDataOfTwoCircles {}
+import { AreaMeasurable, Visible } from "./interfaces"
+import Arc from "./Arc"
 
 @sealed
-class Circle extends GeomObject {
+class Circle extends GeomObject implements AreaMeasurable, Visible {
     #radius: number = NaN
     #centerCoordinate: [number, number] = [NaN, NaN]
+    #windingDirection: Direction = "positive"
 
     constructor(owner: Geomtoy, radius: number, centerX: number, centerY: number)
     constructor(owner: Geomtoy, radius: number, centerCoordinate: [number, number])
@@ -86,12 +79,23 @@ class Circle extends GeomObject {
         coord.assign(this.#centerCoordinate, value.coordinate)
     }
 
+    get diameter() {
+        return this.radius * 2
+    }
     get eccentricity() {
         return 0
     }
 
     isValid() {
         return coord.isValid(this.centerCoordinate) && util.isRealNumber(this.radius) && this.radius > 0
+    }
+
+    getWindingDirection(): Direction {
+        return this.#windingDirection
+    }
+
+    setWindingDirection(direction: Direction) {
+        this.#windingDirection = direction
     }
 
     isSameAs(circle: Circle): boolean {
@@ -110,25 +114,23 @@ class Circle extends GeomObject {
     // InternallyTangentTo
     // ExternallyTangentTo
     // TangentTo = InternallyTangentTo | ExternallyTangentTo
-    // WrappedInside
-    // WrappingOutside
+    // ContainedBy(or Containing)
     // SeparatedFrom
-
     isIntersectedWithCircle(circle: Circle) {
-        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
+        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this.#centerCoordinate)),
             ssr = (circle.radius + this.radius) ** 2,
             sdr = (circle.radius - this.radius) ** 2,
             epsilon = this.owner.getOptions().epsilon
         return math.lessThan(sd, ssr, epsilon) && math.greaterThan(sd, sdr, epsilon)
     }
     isInternallyTangentToCircle(circle: Circle): boolean {
-        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
+        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this.#centerCoordinate)),
             sdr = (circle.radius - this.radius) ** 2,
             epsilon = this.owner.getOptions().epsilon
         return math.equalTo(sd, sdr, epsilon)
     }
     isExternallyTangentToCircle(circle: Circle): boolean {
-        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
+        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this.#centerCoordinate)),
             ssr = (circle.radius + this.radius) ** 2,
             epsilon = this.owner.getOptions().epsilon
         return math.equalTo(sd, ssr, epsilon)
@@ -136,17 +138,14 @@ class Circle extends GeomObject {
     isTangentToCircle(circle: Circle): boolean {
         return this.isInternallyTangentToCircle(circle) || this.isExternallyTangentToCircle(circle)
     }
-    isWrappingOutsideCircle(circle: Circle): boolean {
-        let sd = this.centerPoint.getSquaredDistanceBetweenPoint(circle.centerPoint),
+    isContainedByCircle(circle: Circle): boolean {
+        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this.#centerCoordinate)),
             sdr = (circle.radius - this.radius) ** 2,
             epsilon = this.owner.getOptions().epsilon
-        return math.greaterThan(this.radius, circle.radius, epsilon) && math.lessThan(sd, sdr, epsilon)
-    }
-    isWrappedInsideCircle(circle: Circle): boolean {
-        return circle.isWrappingOutsideCircle(this)
+        return math.greaterThan(circle.radius, this.radius, epsilon) && math.lessThan(sd, sdr, epsilon)
     }
     isSeparatedFromCircle(circle: Circle): boolean {
-        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
+        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this.#centerCoordinate)),
             ssr = (circle.radius + this.radius) ** 2,
             epsilon = this.owner.getOptions().epsilon
         return math.greaterThan(sd, ssr, epsilon)
@@ -165,55 +164,19 @@ class Circle extends GeomObject {
             r = this.radius
         return new Point(this.owner, vec2.add(cc, vec2.from2(angle, r)))
     }
-    getAngleOfPoint(point: Point): number {
-        if (!point.isOnCircle(this)) return NaN
-        let v = vec2.from(this.centerCoordinate, point.coordinate)
-        return angle.simplify(vec2.angle(v))
+
+
+    // todo
+    getArcBetweenAngle(startAngle: number, endAngle: number, positive = true): null | Arc {
+        let epsilon = this.owner.getOptions().epsilon
+        if (math.equalTo(angle.simplify(startAngle), angle.simplify(endAngle), epsilon)) return null
+        return new Arc(this.owner, this.centerCoordinate, this.radius, this.radius, startAngle, endAngle, positive)
     }
-    // getArcBetweenPoints(point1:Point,point2:Point,positive= true):Arc{
-
-    // }
-    // getArcBetweenPoints2(point1:Point,point2:Point,large = true):Arc{
-
-    // }
-    // getArcsBetweenPoints(point1:Point,point2:Point){
-    //     let ret = {
-    //         minor: null, positive:null,  //Minor arc
-    //         major: null, positive:null   //major arc
-    //     }
-
-    // }
-
-    // getArcBetweenPoints(point1:Point,point2:Point,positive = true):Arc{
-
-    // }
-
-    getArcAngleBetweenPoints(point1: Point, point2: Point, positive = true): number {
-        if (point1.isSameAs(point2)) return NaN
-        let a1 = this.getAngleOfPoint(point1),
-            a2 = this.getAngleOfPoint(point2)
-        if (a1 > a2) {
-            if (positive) {
-                return 2 * Math.PI + (a1 - a2)
-            } else {
-                return a1 - a2
-            }
-        } else {
-            if (positive) {
-                return a2 - a1
-            } else {
-                return -2 * Math.PI + (a2 - a1)
-            }
-        }
+    getChordSegmentBetweenAngle(startAngle: number, endAngle: number) {
+        let cc = this.centerCoordinate,
+            r = this.radius
+        return new Segment(this.owner, vec2.add(cc, vec2.from2(startAngle, r)), vec2.add(cc, vec2.from2(endAngle, r)))
     }
-
-    getArcLengthBetweenPoints(point1: Point, point2: Point, positive = true) {
-        if (point1.isSameAs(point2)) return NaN
-
-        let angle = this.getArcAngleBetweenPoints(point1, point2, positive)
-        return this.getPerimeter() * (math.abs(angle) / (2 * Math.PI))
-    }
-
     /**
      * 若`点point`在`圆this`上，则求过`点point`的`圆this`的切线
      * @param {Point} point
@@ -238,50 +201,48 @@ class Circle extends GeomObject {
      * If point `point` is outside circle `this`, find the tangent line data of circle `this` through point `point`.
      * @description
      * The returns depends:
-     * - If `point` is outside `this`, return `TangentDataOfCircleWithPointOutside`
-     * - If `point` is not outside `this`, return null
-     * @param {Point} point
+     * - If `point` is outside `this`, return the tangent data.
+     * - If `point` is not outside `this`, return null.
+     * @param point
      * @returns
      */
-    getTangentDataWithPointOutside(point: Point): AnglePointLineData[] | null {
+    getTangentDataWithPointOutside(point: Point): [AnglePointLineData, AnglePointLineData] | null {
         if (!point.isOutsideCircle(this)) return null
 
-        //设圆心为O，圆外一点为P，切线与圆的切点为Q
         let p1 = point,
             v0 = this.centerCoordinate,
             v1 = point.coordinate,
             v01 = vec2.from(v0, v1),
             dist = vec2.magnitude(v01),
             ia = math.acos(this.radius / dist),
-            // data:[{[key:string]:any},{[key:string]:any}] =[{ angle: -ia }, { angle: ia }]
-            angles =[ -ia, ia]
+            angles = [-ia, ia]
 
         let ret = angles.map(a => {
             let v02 = vec2.scalarMultiply(vec2.rotate(v01, a), this.radius / dist),
                 v2 = vec2.add(v0, v02),
                 p2 = new Point(this.owner, v2)
             return {
-                angle:a,
-                point:p2,
-                line:Line.fromTwoPoints(this.owner, p1, p2)
+                angle: a,
+                point: p2,
+                line: Line.fromTwoPoints(this.owner, p1, p2)
             }
         })
-        return ret  
+        return ret as [AnglePointLineData, AnglePointLineData]
     }
 
-    getInternallyTangentDataWithCircle(circle: Circle): object {
-        if (!this.isInternallyTangentToCircle(circle)) return {}
+    getInternallyTangentDataWithCircle(circle: Circle): PointLineData | null {
+        if (!this.isInternallyTangentToCircle(circle)) return null
         let p = this.getPointAtAngle(new Vector(this.owner, this.centerPoint, circle.centerPoint).angle),
-            l = this.getTangentLineAtPoint(p)
+            l = this.getTangentLineAtPoint(p)!
         return {
             point: p,
             line: l
         }
     }
-    getExternallyTangentDataWithCircle(circle: Circle) {
+    getExternallyTangentDataWithCircle(circle: Circle): PointLineData | null {
         if (!this.isExternallyTangentToCircle(circle)) return null
         let p = this.getPointAtAngle(new Vector(this.owner, this.centerPoint, circle.centerPoint).angle),
-            l = this.getTangentLineAtPoint(p)
+            l = this.getTangentLineAtPoint(p)!
         return {
             point: p,
             line: l
@@ -292,17 +253,16 @@ class Circle extends GeomObject {
      * @param {Circle} circle
      * @returns {boolean}
      */
-    isInsideCircle(circle: Circle): boolean {
+    isInsideCircle(circle: Circle) {
         let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
             epsilon = this.owner.getOptions().epsilon
         return math.lessThan(sd, (circle.radius - this.radius) ** 2, epsilon)
     }
     /**
      * `圆this`是否在`圆circle`的外部，包含circle
-     * @param {Circle} circle
-     * @returns {boolean}
+     * @param circle
      */
-    isOutsideCircle(circle: Circle): boolean {
+    isOutsideCircle(circle: Circle) {
         let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
             epsilon = this.owner.getOptions().epsilon
         return math.greaterThan(sd, (circle.radius + this.radius) ** 2, epsilon)
@@ -346,8 +306,8 @@ class Circle extends GeomObject {
     //4.两圆相交。有2条公切线，其中：2条外公切线
     //5.两圆外切，有3条公切线，其中：1条两圆自有的外切切线，2条外公切线
     //6.两圆相离，有4条公切线，其中：2条外公切线，2条内公切线
-    static getCommonTangentDataOfTwoCircles(owner: Geomtoy, circle1: Circle, circle2: Circle) {
-        let data = [],
+    static getCommonTangentDataOfTwoCircles(owner: Geomtoy, circle1: Circle, circle2: Circle): PointsLineData[] | null {
+        let data: PointsLineData[] = [],
             sd = circle1.centerPoint.getSquaredDistanceBetweenPoint(circle2.centerPoint), // 圆心距平方,
             radiusDiff = circle1.radius - circle2.radius, // 半径差
             radiusSum = circle1.radius + circle2.radius, //半径和
@@ -360,22 +320,17 @@ class Circle extends GeomObject {
 
         //情况2，内切，1条两圆自有的内切切线
         if (sd == radiusDiff ** 2) {
-            let selfTanData = circle1.getInternallyTangentDataWithCircle(circle2)
-
+            let selfTanData = circle1.getInternallyTangentDataWithCircle(circle2)!
             data.push({
-                // @ts-ignore
                 line: selfTanData.line,
-                // @ts-ignore
                 points: [selfTanData.point]
             })
         }
         // 情况5，外切，1条两圆自有的相切切线
         if (sd == radiusSum ** 2) {
-            let selfTanData = circle1.getExternallyTangentDataWithCircle(circle2)
+            let selfTanData = circle1.getExternallyTangentDataWithCircle(circle2)!
             data.push({
-                // @ts-ignore
                 line: selfTanData.line,
-                // @ts-ignore
                 points: [selfTanData.point]
             })
         }

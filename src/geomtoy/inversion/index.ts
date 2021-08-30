@@ -14,7 +14,6 @@ import coord from "../utility/coordinate"
 @sealed
 @validAndWithSameOwner
 class Inversion extends GeomObject {
- 
     #power: number = NaN
     #centerCoordinate: [number, number] = [NaN, NaN]
 
@@ -71,8 +70,8 @@ class Inversion extends GeomObject {
         coord.assign(this.#centerCoordinate, value.coordinate)
     }
 
-    isValid(): boolean {
-        throw new Error("Method not implemented.")
+    isValid() {
+        return coord.isValid(this.centerCoordinate) && util.isRealNumber(this.power) && this.power !== 0
     }
     /**
      * Find the inversion of point `point`
@@ -118,7 +117,7 @@ class Inversion extends GeomObject {
             dist = pP.getDistanceBetweenPoint(pO),
             inversionDist = Math.abs(this.power / dist),
             radius = inversionDist / 2,
-            vOP = new Vector(this.owner,pO, pP),
+            vOP = new Vector(this.owner, pO, pP),
             angle
 
         //OP和OQ，OM方向相反

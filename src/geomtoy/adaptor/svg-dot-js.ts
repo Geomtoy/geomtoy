@@ -13,7 +13,7 @@ export default class SvgDotJs {
         this.geomtoy = geomtoy
     }
     setup() {
-        let [a,b,c,d,e,f] = this.geomtoy.globalTransformation.get()
+        let [a, b, c, d, e, f] = this.geomtoy.globalTransformation.get()
         this.svgDotJsContainer.attr("transform", `matrix(${a} ${b} ${c} ${d} ${e} ${f})`)
     }
     draw(object: GeomObject & Visible) {

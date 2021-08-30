@@ -1,7 +1,7 @@
+import { is, sealed, validAndWithSameOwner } from "./decorator"
 import vec2 from "./utility/vec2"
 import util from "./utility"
 import math from "./utility/math"
-import { is, sealed, validAndWithSameOwner } from "./decorator"
 import coord from "./utility/coordinate"
 
 import Geomtoy from "."

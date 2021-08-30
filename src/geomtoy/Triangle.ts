@@ -188,6 +188,25 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
         valid &&= math.greaterThan(vec2.magnitude(vec2.from(c1, c2)) + vec2.magnitude(vec2.from(c2, c3)), vec2.magnitude(vec2.from(c3, c1)), epsilon)
         return valid
     }
+    /**
+     * Get the winding direction of vertices of triangle `this`.
+     */
+    getWindingDirection(): Direction {
+        let { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = this,
+            cp = vec2.cross(vec2.from(c1, c2), vec2.from(c1, c3))
+        if (cp < 0) {
+            return "negative"
+        }
+        return "positive"
+    }
+
+    static equilateralTriangleFromSegment(owner: Geomtoy, segment: Segment, positive = true) {
+        let c1 = segment.point1Coordinate,
+            c2 = segment.point2Coordinate,
+            v3 = vec2.rotate(vec2.from(c1, c2), positive ? Math.PI / 3 : -Math.PI / 3),
+            c3 = vec2.add(c1, v3)
+        return new Triangle(owner, c1, c2, c3)
+    }
 
     /**
      * Whether the three vertices of triangle `this` is the same as triangle `triangle` ignoring the order of the vertices.
@@ -211,17 +230,7 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
             coord.isSameAs(this.point3Coordinate, triangle.point3Coordinate, epsilon)
         )
     }
-    /**
-     * Get the winding direction of vertices of triangle `this`.
-     */
-    getWindingDirection(): Direction {
-        let { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = this,
-            cp = vec2.cross(vec2.from(c1, c2), vec2.from(c1, c3))
-        if (cp < 0) {
-            return "negative"
-        }
-        return "positive"
-    }
+
     /**
      * Get the sides as segments of triangle `this`.
      */
@@ -329,8 +338,8 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
      * @param triangle
      */
     isSimilarWithTriangle(triangle: Triangle) {
-        let [aa1, aa2, aa3] = util.sort([this.angle1, this.angle2, this.angle3],(a, b) => a - b),
-            [ba1, ba2, ba3] = util.sort([triangle.angle1, triangle.angle2, triangle.angle3],(a, b) => a - b),
+        let [aa1, aa2, aa3] = util.sort([this.angle1, this.angle2, this.angle3], (a, b) => a - b),
+            [ba1, ba2, ba3] = util.sort([triangle.angle1, triangle.angle2, triangle.angle3], (a, b) => a - b),
             epsilon = this.owner.getOptions().epsilon
         return math.equalTo(aa1, ba1, epsilon) && math.equalTo(aa2, ba2, epsilon) && math.equalTo(aa3, ba3, epsilon)
     }
@@ -349,7 +358,7 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
      * Whether triangle `this` is an acute triangle.
      */
     isAcuteTriangle() {
-        let [a, b, c] = util.sort([this.side1Length, this.side2Length, this.side3Length],(a, b) => a - b),
+        let [a, b, c] = util.sort([this.side1Length, this.side2Length, this.side3Length], (a, b) => a - b),
             epsilon = this.owner.getOptions().epsilon
         return math.greaterThan(a ** 2 + b ** 2, c ** 2, epsilon)
     }
@@ -357,7 +366,7 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
      * Whether triangle `this` is a right triangle.
      */
     isRightTriangle() {
-        let [a, b, c] = util.sort([this.side1Length, this.side2Length, this.side3Length],(a, b) => a - b),
+        let [a, b, c] = util.sort([this.side1Length, this.side2Length, this.side3Length], (a, b) => a - b),
             epsilon = this.owner.getOptions().epsilon
         return math.equalTo(a ** 2 + b ** 2, c ** 2, epsilon)
     }
@@ -365,7 +374,7 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
      * Whether triangle `this` is an obtuse triangle.
      */
     isObtuseTriangle() {
-        let [a, b, c] = util.sort([this.side1Length, this.side2Length, this.side3Length],(a, b) => a - b),
+        let [a, b, c] = util.sort([this.side1Length, this.side2Length, this.side3Length], (a, b) => a - b),
             epsilon = this.owner.getOptions().epsilon
         return math.lessThan(a ** 2 + b ** 2, c ** 2, epsilon)
     }
@@ -563,6 +572,9 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     }
     /**
      * Get the orthic triangle of triangle `this`.
+     * @description
+     * - If triangle `this` is right triangle, return null
+     * - Else return the orthic triangle.
      */
     getOrthicTriangle() {
         if (this.isRightTriangle()) return null

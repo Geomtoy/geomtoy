@@ -1,13 +1,14 @@
 module.exports = {
-    targets: ">1%, not ie 11",
-    presets: ["@babel/preset-env", "@babel/preset-typescript"],
-    plugins: [
+    presets: [
         [
-            "@babel/plugin-transform-runtime",
+            "@babel/preset-env",
             {
-                corejs: 3
+                bugfixes: true
             }
         ],
+        "@babel/preset-typescript"
+    ],
+    plugins: [
         [
             "@babel/plugin-proposal-decorators",
             {

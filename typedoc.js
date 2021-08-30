@@ -1,6 +1,7 @@
 const TypeDoc = require("typedoc")
 const { Converter, ReflectionKind, DeclarationReflection, ReflectionFlag } = require("typedoc")
 const ts = require("typescript")
+const fs = require("fs/promises")
 
 async function main() {
     const app = new TypeDoc.Application()
@@ -145,11 +146,16 @@ async function main() {
     if (project) {
         // Project may not have converted correctly
         const outputDir = "docs"
-
         // Rendered docs
         await app.generateDocs(project, outputDir)
-        // Alternatively generate JSON output
-        // await app.generateJson(project, outputDir + "/documentation.json");
+
+        // Modify the theme classes
+        let path = outputDir + "/assets/css/main.css",
+            css = await fs.readFile(path, "utf-8")
+        css = css.replace(/dl\.tsd-comment-tags dt {\s*(float: left;)([\s\S]+?)}/, function ($0, $1, $2) {
+            return `dl.tsd-comment-tags dt {\n  display: inline-block;${$2}}`
+        })
+        await fs.writeFile(path, css)
     }
 }
 

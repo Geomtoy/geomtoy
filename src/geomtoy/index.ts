@@ -28,7 +28,7 @@ import {
     RecursivePartial,
     Factory
 } from "./types"
-import VanillaCanvas from "./adaptor/vanilla-canvas.js"
+import VanillaCanvas from "./adaptor/vanilla-canvas"
 import VanillaSvg from "./adaptor/vanilla-svg"
 import SvgDotJs from "./adaptor/svg-dot-js"
 import GeomObject from "./base/GeomObject"
@@ -98,20 +98,20 @@ class Geomtoy {
     #uuid = util.uuid()
     #globalTransformation = new Transformation(this)
 
-    #Point = tailConstructorAndStaticMethods(this, Point) as any as Factory<typeof Point>
-    #Line = tailConstructorAndStaticMethods(this, Line) as any as Factory<typeof Line>
-    #Ray = tailConstructorAndStaticMethods(this, Ray) as any as Factory<typeof Ray>
-    #Segment = tailConstructorAndStaticMethods(this, Segment) as any as Factory<typeof Segment>
-    #Vector = tailConstructorAndStaticMethods(this, Vector) as any as Factory<typeof Vector>
-    #Triangle = tailConstructorAndStaticMethods(this, Triangle) as any as Factory<typeof Triangle>
-    #Circle = tailConstructorAndStaticMethods(this, Circle) as any as Factory<typeof Circle>
-    #Rectangle = tailConstructorAndStaticMethods(this, Rectangle) as any as Factory<typeof Rectangle>
-    #Polyline = tailConstructorAndStaticMethods(this, Polyline) as any as Factory<typeof Polyline>
-    #Polygon = tailConstructorAndStaticMethods(this, Polygon) as any as Factory<typeof Polygon>
-    #RegularPolygon = tailConstructorAndStaticMethods(this, RegularPolygon) as any as Factory<typeof RegularPolygon>
-    #Ellipse = tailConstructorAndStaticMethods(this, Ellipse) as any as Factory<typeof Ellipse>
-    #Transformation = tailConstructorAndStaticMethods(this, Transformation) as any as Factory<typeof Transformation>
-    #Inversion = tailConstructorAndStaticMethods(this, Inversion) as any as Factory<typeof Inversion>
+    #Point = tailConstructorAndStaticMethods(this, Point)// as any as Factory<typeof Point>
+    #Line = tailConstructorAndStaticMethods(this, Line)// as any as Factory<typeof Line>
+    #Ray = tailConstructorAndStaticMethods(this, Ray)// as any as Factory<typeof Ray>
+    #Segment = tailConstructorAndStaticMethods(this, Segment)// as any as Factory<typeof Segment>
+    #Vector = tailConstructorAndStaticMethods(this, Vector)// as any as Factory<typeof Vector>
+    #Triangle = tailConstructorAndStaticMethods(this, Triangle)// as any as Factory<typeof Triangle>
+    #Circle = tailConstructorAndStaticMethods(this, Circle)// as any as Factory<typeof Circle>
+    #Rectangle = tailConstructorAndStaticMethods(this, Rectangle)// as any as Factory<typeof Rectangle>
+    #Polyline = tailConstructorAndStaticMethods(this, Polyline)// as any as Factory<typeof Polyline>
+    #Polygon = tailConstructorAndStaticMethods(this, Polygon)// as any as Factory<typeof Polygon>
+    #RegularPolygon = tailConstructorAndStaticMethods(this, RegularPolygon)// as any as Factory<typeof RegularPolygon>
+    #Ellipse = tailConstructorAndStaticMethods(this, Ellipse)// as any as Factory<typeof Ellipse>
+    #Transformation = tailConstructorAndStaticMethods(this, Transformation)// as any as Factory<typeof Transformation>
+    #Inversion = tailConstructorAndStaticMethods(this, Inversion)// as any as Factory<typeof Inversion>
 
     constructor(options: RecursivePartial<Options> = {}) {
         this.#options = cloneOptions(defaultOptions)

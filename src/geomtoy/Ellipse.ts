@@ -2,7 +2,7 @@ import Graphic from "./graphic"
 import Point from "./Point"
 import Vector from "./Vector"
 import util from "./utility"
-import { GraphicImplType } from "./types"
+import { Direction, GraphicImplType } from "./types"
 import { is, sealed, validAndWithSameOwner } from "./decorator"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
@@ -17,6 +17,7 @@ class Ellipse extends GeomObject implements AreaMeasurable {
     #radiusX: number = NaN
     #radiusY: number = NaN
     #rotation: number = NaN
+    #windingDirection: Direction = "positive"
 
     constructor(owner: Geomtoy, centerX: number, centerY: number, radiusX: number, radiusY: number, rotation?: number)
     constructor(owner: Geomtoy, centerCoordinate: [number, number], radiusX: number, radiusY: number, rotation?: number)
@@ -92,7 +93,13 @@ class Ellipse extends GeomObject implements AreaMeasurable {
         valid &&= util.isRealNumber(this.radiusY) && this.radiusY > 0
         return valid
     }
-    
+    getWindingDirection() {
+        return this.#windingDirection
+    }
+    setWindingDirection(direction :Direction){
+        this.#windingDirection = direction
+    }
+
     getEccentricity() {}
 
     clone(): GeomObject {

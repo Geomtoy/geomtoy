@@ -48,17 +48,28 @@ export const defaultOptions: Options = {
     }
 }
 
-export type LineData = { line: Line }
-export type PointData = { point: Point }
-export type AngleData = { angle: number }
-export type SegmentData = { segment: Segment }
-export type RayData = { ray: Ray }
-
-export type PointLineData = LineData & PointData
-export type AnglePointLineData = AngleData & PointLineData
-export type SegmentLineData = SegmentData & LineData
-export type SegmentRayLineData = SegmentData & RayData & LineData
-
+export type PointLineData = {
+    point: Point
+    line: Line
+}
+export type PointsLineData = {
+    points: Point[]
+    line: Line
+}
+export type AnglePointLineData = {
+    angle: number
+    point: Point
+    line: Line
+}
+export type SegmentLineData = {
+    segment: Segment
+    line: Line
+}
+export type SegmentRayLineData = {
+    segment: Segment
+    ray: Ray
+    line: Line
+}
 
 export type Direction = "positive" | "negative"
 

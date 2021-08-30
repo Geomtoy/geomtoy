@@ -8,7 +8,7 @@ import Circle from "./Circle"
 import Line from "./Line"
 import Polygon from "./Polygon"
 import { sealed, is, compared, validAndWithSameOwner } from "./decorator"
-import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
+import { CanvasDirective, Direction, GraphicImplType, SvgDirective } from "./types"
 import GeomObject from "./base/GeomObject"
 import { AreaMeasurable } from "./interfaces"
 import Transformation from "./transformation"
@@ -18,12 +18,12 @@ import coord from "./utility/coordinate"
 
 @sealed
 @validAndWithSameOwner
-class RegularPolygon extends GeomObject implements AreaMeasurable { 
-
+class RegularPolygon extends GeomObject implements AreaMeasurable {
     #radius: number = NaN
     #centerCoordinate: [number, number] = [NaN, NaN]
     #sideCount: number = NaN
     #rotation: number = NaN
+    #windingDirection: Direction = "positive"
 
     constructor(owner: Geomtoy, radius: number, centerX: number, centerY: number, sideCount: number, rotation?: number)
     constructor(owner: Geomtoy, radius: number, centerCoordinate: [number, number], sideCount: number, rotation?: number)
@@ -40,7 +40,7 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
             return Object.seal(Object.assign(this, { radius: a1, centerPoint: a2, sideCount: a3, rotation: a4 ?? 0 }))
         }
         throw new Error("[G]Arguments can NOT construct a `RegularPolygon`.")
-    } 
+    }
 
     @is("realNumber")
     get centerX() {
@@ -119,9 +119,20 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
         let n = this.sideCount
         return (n * (n - 3)) / 2
     }
-    isValid(): boolean {
-        throw new Error("Method not implemented.")
+    isValid() {
+        let valid = true
+        valid &&= coord.isValid(this.centerCoordinate)
+        valid &&= util.isRealNumber(this.radius) && this.radius > 0
+        valid &&= util.isInteger(this.sideCount) && this.sideCount >= 3
+        return valid
     }
+    getWindingDirection() {
+        return this.#windingDirection
+    }
+    setWindingDirection(direction :Direction){
+        this.#windingDirection = direction
+    }
+
 
     static fromApothemEtc(owner: Geomtoy, apothem: number, centerPoint: Point, sideCount: number, rotation: number = 0) {
         let r = apothem / math.cos(Math.PI / sideCount)
@@ -134,7 +145,7 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
 
     getPoints() {
         let ps: Array<Point> = []
-        util.forEach(util.range(0,this.sideCount), i => {
+        util.forEach(util.range(0, this.sideCount), i => {
             let p = this.centerPoint.moveAlongAngle(((2 * Math.PI) / this.sideCount) * i + this.rotation, this.radius)
             ps.push(p)
         })
@@ -143,7 +154,7 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
     getLines() {
         let ps = this.getPoints(),
             ls: Array<Line> = []
-        util.forEach(util.range(0,this.sideCount), i => {
+        util.forEach(util.range(0, this.sideCount), i => {
             ls.push(Line.fromTwoPoints(this.owner, util.nth(ps, i - this.sideCount)!, util.nth(ps, i - this.sideCount + 1)!))
         })
         return ls
@@ -191,7 +202,6 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
 }
 
 /**
- *
  * @category GeomObject
  */
 export default RegularPolygon
