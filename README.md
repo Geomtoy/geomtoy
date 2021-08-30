@@ -1,6 +1,6 @@
 # Geomtoy
 
-![logo](./media/logo.png)
+![logo](./logo.png)
 
 > A lightweight 2D geometric computing library
 
