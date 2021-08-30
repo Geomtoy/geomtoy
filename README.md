@@ -1,6 +1,8 @@
 # Geomtoy
 
-![logo](./logo.png)
+<p align="center" width="100%">
+    <img alt="logo" src="./logo.png" style="max-height:300px;">
+</p>
 
 > A lightweight 2D geometric computing library
 
