@@ -7,7 +7,7 @@ import Vector from "./Vector"
 import Line from "./Line"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
-import { GraphicImplType, SvgDirective, CanvasDirective } from "./types"
+import { GraphicImplType, SvgCommand, CanvasCommand } from "./types"
 import { is, sealed, validAndWithSameOwner } from "./decorator"
 import Graphic from "./graphic"
 import Geomtoy from "."
@@ -436,7 +436,7 @@ class Segment extends GeomObject {
         return Line.fromTwoCoordinates(this.owner, this.point1Coordinate, this.point2Coordinate)
     }
 
-    getGraphic(type: GraphicImplType): (SvgDirective | CanvasDirective)[] {
+    getGraphic(type: GraphicImplType): (SvgCommand | CanvasCommand)[] {
         let g = new Graphic()
         g.moveTo(...this.point1Coordinate)
         g.lineTo(...this.point2Coordinate)

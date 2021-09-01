@@ -13,7 +13,7 @@ import Circle from "./Circle"
 import Transformation from "./transformation"
 
 import Graphic from "./graphic"
-import { GraphicImplType, CanvasDirective, SvgDirective } from "./types"
+import { GraphicImplType, CanvasCommand, SvgCommand } from "./types"
 import { Visible } from "./interfaces"
 import Polygon from "./Polygon"
 import Triangle from "./Triangle"
@@ -326,9 +326,9 @@ class Point extends GeomObject implements Visible {
     /**
      * Get graphic object of `this`
      * @param {GraphicImplType} type
-     * @returns {Array<SvgDirective | CanvasDirective>}
+     * @returns {Array<SvgCommand | CanvasCommand>}
      */
-    getGraphic(type: GraphicImplType): Array<SvgDirective | CanvasDirective> {
+    getGraphic(type: GraphicImplType): Array<SvgCommand | CanvasCommand> {
         let { x, y } = this,
             g = new Graphic(),
             pointSize = this.owner.getOptions().graphic.pointSize

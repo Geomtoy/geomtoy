@@ -5,7 +5,7 @@ import math from "./utility/math"
 
 import Point from "./Point"
 import Segment from "./Segment"
-import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
+import { CanvasCommand, GraphicImplType, SvgCommand } from "./types"
 import GeomObject from "./base/GeomObject"
 import Graphic from "./graphic"
 import { is, sealed, validAndWithSameOwner } from "./decorator"
@@ -287,9 +287,9 @@ class Vector extends GeomObject {
     /**
      * Get graphic object of `this`
      * @param {GraphicImplType} type
-     * @returns {Array<SvgDirective | CanvasDirective>}
+     * @returns {Array<SvgCommand | CanvasCommand>}
      */
-    getGraphic(type: GraphicImplType): Array<SvgDirective | CanvasDirective> {
+    getGraphic(type: GraphicImplType): Array<SvgCommand | CanvasCommand> {
         let [x1, y1] = this.point1Coordinate,
             [x2, y2] = this.point2Coordinate,
             g = new Graphic()

@@ -8,7 +8,7 @@ import Graphic from "./graphic"
 import Rectangle from "./Rectangle"
 import Circle from "./Circle"
 import GeomObject from "./base/GeomObject"
-import { CanvasDirective, GraphicImplType, SvgDirective } from "./types"
+import { CanvasCommand, GraphicImplType, SvgCommand } from "./types"
 import Transformation from "./transformation"
 import Vector from "./Vector"
 import Geomtoy from "."
@@ -548,7 +548,7 @@ class Line extends GeomObject {
      * Get graphic object of `this`
      * @param {GraphicImplType} type
      */
-    getGraphic(type: GraphicImplType): Array<SvgDirective | CanvasDirective> {
+    getGraphic(type: GraphicImplType): Array<SvgCommand | CanvasCommand> {
         let lowerBound = -this.owner.getOptions().graphic.lineRange,
             upperBound = this.owner.getOptions().graphic.lineRange,
             { a, b, c } = this,

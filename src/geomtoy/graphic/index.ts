@@ -1,18 +1,18 @@
 import util from "../utility"
-import { GraphicDirectiveType, GraphicImplType, GraphicDirective, SvgDirectiveType, SvgDirective, CanvasDirectiveType, CanvasDirective } from "../types"
+import { GraphicCommandType, GraphicImplType, GraphicCommand, SvgCommandType, SvgCommand, CanvasCommandType, CanvasCommand } from "../types"
 import { arcCenterToEndpointParameterization, arcEndpointToCenterParameterization } from "./helper"
 import angle from "../utility/angle"
 
-export { GraphicDirectiveType }
+export { GraphicCommandType }
 
 export default class Graphic {
-    directives: Array<GraphicDirective>
+    commands: Array<GraphicCommand>
     currentX: number
     currentY: number
     startX: number
     startY: number
     constructor() {
-        this.directives = []
+        this.commands = []
         this.currentX = 0
         this.currentY = 0
         this.startX = 0
@@ -25,8 +25,8 @@ export default class Graphic {
         this.startX = x
         this.startY = y
         // prettier-ignore
-        this.directives.push({
-            type: GraphicDirectiveType.MoveTo,
+        this.commands.push({
+            type: GraphicCommandType.MoveTo,
             x,
             y,
             currentX: x,
@@ -38,8 +38,8 @@ export default class Graphic {
         this.currentX = x
         this.currentY = y
         // prettier-ignore
-        this.directives.push({
-            type: GraphicDirectiveType.LineTo,
+        this.commands.push({
+            type: GraphicCommandType.LineTo,
             x,
             y,
             currentX: x,
@@ -51,8 +51,8 @@ export default class Graphic {
         this.currentX = x
         this.currentY = y
         // prettier-ignore
-        this.directives.push({
-            type: GraphicDirectiveType.BezierCurveTo,
+        this.commands.push({
+            type: GraphicCommandType.BezierCurveTo,
             cp1x,
             cp1y,
             cp2x,
@@ -68,8 +68,8 @@ export default class Graphic {
         this.currentX = x
         this.currentY = y
         // prettier-ignore
-        this.directives.push({
-            type: GraphicDirectiveType.QuadraticBezierCurveTo,
+        this.commands.push({
+            type: GraphicCommandType.QuadraticBezierCurveTo,
             cpx,
             cpy,
             x,
@@ -94,8 +94,8 @@ export default class Graphic {
 
         this.currentX = x2
         this.currentX = y2
-        this.directives.push({
-            type: GraphicDirectiveType.ArcTo,
+        this.commands.push({
+            type: GraphicCommandType.ArcTo,
             cx,
             cy,
             rx: correctedRx,
@@ -133,8 +133,8 @@ export default class Graphic {
 
         this.currentX = x2
         this.currentY = y2
-        this.directives.push({
-            type: GraphicDirectiveType.ArcTo,
+        this.commands.push({
+            type: GraphicCommandType.ArcTo,
             cx,
             cy,
             rx: correctedRx,
@@ -158,99 +158,99 @@ export default class Graphic {
         this.currentX = this.startX
         this.currentY = this.startY
         // prettier-ignore
-        this.directives.push({ 
-            type: GraphicDirectiveType.Close,
+        this.commands.push({ 
+            type: GraphicCommandType.Close,
             currentX: this.currentX,
             currentY: this.currentY
         })
         return this
     }
  
-    valueOf(type: GraphicImplType): Array<SvgDirective | CanvasDirective> {
-        let retArray: Array<SvgDirective | CanvasDirective> = []
+    valueOf(type: GraphicImplType): Array<SvgCommand | CanvasCommand> {
+        let retArray: Array<SvgCommand | CanvasCommand> = []
 
         if (type === "canvas") {
-            util.forEach(this.directives, (d, index, collection) => {
-                if (d.type === GraphicDirectiveType.MoveTo) {
-                    let { x, y } = d
-                    retArray.push({ type: CanvasDirectiveType.MoveTo, x, y })
+            util.forEach(this.commands, (cmd, index, collection) => {
+                if (cmd.type === GraphicCommandType.MoveTo) {
+                    let { x, y } = cmd
+                    retArray.push({ type: CanvasCommandType.MoveTo, x, y })
                     return
                 }
-                if (d.type === GraphicDirectiveType.LineTo) {
-                    let { x, y } = d
-                    retArray.push({ type: CanvasDirectiveType.LineTo, x, y })
+                if (cmd.type === GraphicCommandType.LineTo) {
+                    let { x, y } = cmd
+                    retArray.push({ type: CanvasCommandType.LineTo, x, y })
                     return
                 }
-                if (d.type === GraphicDirectiveType.BezierCurveTo) {
-                    let { cp1x, cp1y, cp2x, cp2y, x, y } = d
-                    retArray.push({ type: CanvasDirectiveType.BezierCurveTo, cp1x, cp1y, cp2x, cp2y, x, y })
+                if (cmd.type === GraphicCommandType.BezierCurveTo) {
+                    let { cp1x, cp1y, cp2x, cp2y, x, y } = cmd
+                    retArray.push({ type: CanvasCommandType.BezierCurveTo, cp1x, cp1y, cp2x, cp2y, x, y })
                     return
                 }
-                if (d.type === GraphicDirectiveType.QuadraticBezierCurveTo) {
-                    let { cpx, cpy, x, y } = d
-                    retArray.push({ type: CanvasDirectiveType.QuadraticCurveTo, cpx, cpy, x, y })
+                if (cmd.type === GraphicCommandType.QuadraticBezierCurveTo) {
+                    let { cpx, cpy, x, y } = cmd
+                    retArray.push({ type: CanvasCommandType.QuadraticCurveTo, cpx, cpy, x, y })
                     return
                 }
-                if (d.type === GraphicDirectiveType.ArcTo) {
-                    let { x1, y1, cx, cy, rx, ry, startAngle, endAngle, xAxisRotation, anticlockwise } = d
-                    let prevDirective = collection[index - 1],
-                        { currentX: prevCurrentX, currentY: prevCurrentY } = prevDirective
+                if (cmd.type === GraphicCommandType.ArcTo) {
+                    let { x1, y1, cx, cy, rx, ry, startAngle, endAngle, xAxisRotation, anticlockwise } = cmd
+                    let prevCommand = collection[index - 1],
+                        { currentX: prevCurrentX, currentY: prevCurrentY } = prevCommand
 
                     // Adjust the starting point of the arc, although canvas will do the same, we make it explicitly
                     if (x1 !== prevCurrentX || y1 !== prevCurrentY) {
-                        if (prevDirective.type !== GraphicDirectiveType.MoveTo) {
-                            retArray.push({ type: CanvasDirectiveType.LineTo, x: x1, y: y1 })
+                        if (prevCommand.type !== GraphicCommandType.MoveTo) {
+                            retArray.push({ type: CanvasCommandType.LineTo, x: x1, y: y1 })
                         } else {
-                            retArray.push({ type: CanvasDirectiveType.MoveTo, x: x1, y: y1 })
+                            retArray.push({ type: CanvasCommandType.MoveTo, x: x1, y: y1 })
                         }
                     }
                     if (rx === ry && xAxisRotation === 0) {
-                        retArray.push({ type: CanvasDirectiveType.Arc, x: cx, y: cy, r: rx, startAngle, endAngle, anticlockwise })
+                        retArray.push({ type: CanvasCommandType.Arc, x: cx, y: cy, r: rx, startAngle, endAngle, anticlockwise })
                     } else {
-                        retArray.push({ type: CanvasDirectiveType.Ellipse, x: cx, y: cy, rx, ry, startAngle, endAngle, xAxisRotation, anticlockwise })
+                        retArray.push({ type: CanvasCommandType.Ellipse, x: cx, y: cy, rx, ry, startAngle, endAngle, xAxisRotation, anticlockwise })
                     }
                     return
                 }
-                if (d.type === GraphicDirectiveType.Close) {
-                    retArray.push({ type: CanvasDirectiveType.ClosePath })
+                if (cmd.type === GraphicCommandType.Close) {
+                    retArray.push({ type: CanvasCommandType.ClosePath })
                 }
             })
         }
 
         if (type === "svg") {
-            util.forEach(this.directives, (d, index, collection) => {
-                if (d.type === GraphicDirectiveType.MoveTo) {
-                    let { x, y } = d
-                    retArray.push({ type: SvgDirectiveType.M, x, y })
+            util.forEach(this.commands, (cmd, index, collection) => {
+                if (cmd.type === GraphicCommandType.MoveTo) {
+                    let { x, y } = cmd
+                    retArray.push({ type: SvgCommandType.M, x, y })
                     return
                 }
-                if (d.type === GraphicDirectiveType.LineTo) {
-                    let { x, y } = d
-                    retArray.push({ type: SvgDirectiveType.L, x, y })
+                if (cmd.type === GraphicCommandType.LineTo) {
+                    let { x, y } = cmd
+                    retArray.push({ type: SvgCommandType.L, x, y })
                     return
                 }
-                if (d.type === GraphicDirectiveType.BezierCurveTo) {
-                    let { cp1x, cp1y, cp2x, cp2y, x, y } = d
-                    retArray.push({ type: SvgDirectiveType.C, cp1x, cp1y, cp2x, cp2y, x, y })
+                if (cmd.type === GraphicCommandType.BezierCurveTo) {
+                    let { cp1x, cp1y, cp2x, cp2y, x, y } = cmd
+                    retArray.push({ type: SvgCommandType.C, cp1x, cp1y, cp2x, cp2y, x, y })
                     return
                 }
-                if (d.type === GraphicDirectiveType.QuadraticBezierCurveTo) {
-                    let { cpx, cpy, x, y } = d
-                    retArray.push({ type: SvgDirectiveType.Q, cpx, cpy, x, y })
+                if (cmd.type === GraphicCommandType.QuadraticBezierCurveTo) {
+                    let { cpx, cpy, x, y } = cmd
+                    retArray.push({ type: SvgCommandType.Q, cpx, cpy, x, y })
                     return
                 }
-                if (d.type === GraphicDirectiveType.ArcTo) {
-                    let { x1, y1, x2, y2, rx, ry, cx, cy, largeArcFlag, sweepFlag, xAxisRotation, startAngle, endAngle, anticlockwise } = d
-                    let prevDirective = collection[index - 1],
-                        { currentX: prevCurrentX, currentY: prevCurrentY } = prevDirective,
+                if (cmd.type === GraphicCommandType.ArcTo) {
+                    let { x1, y1, x2, y2, rx, ry, cx, cy, largeArcFlag, sweepFlag, xAxisRotation, startAngle, endAngle, anticlockwise } = cmd
+                    let prevCommand = collection[index - 1],
+                        { currentX: prevCurrentX, currentY: prevCurrentY } = prevCommand,
                         xAxisRotationInDegree = angle.radianToDegree(xAxisRotation)
 
                     // Adjust the start point of arc
                     if (x1 !== prevCurrentX || y1 !== prevCurrentY) {
-                        if (prevDirective.type !== GraphicDirectiveType.MoveTo) {
-                            retArray.push({ type: SvgDirectiveType.L, x: x1, y: y1 })
+                        if (prevCommand.type !== GraphicCommandType.MoveTo) {
+                            retArray.push({ type: SvgCommandType.L, x: x1, y: y1 })
                         } else {
-                            retArray.push({ type: SvgDirectiveType.M, x: x1, y: y1 })
+                            retArray.push({ type: SvgCommandType.M, x: x1, y: y1 })
                         }
                     }
 
@@ -259,15 +259,15 @@ export default class Graphic {
                         let midAngle = (startAngle - endAngle) / 2,
                             midParam = arcCenterToEndpointParameterization({ cx, cy, rx, ry, startAngle, endAngle: midAngle, xAxisRotation, anticlockwise }),
                             endParam = arcCenterToEndpointParameterization({ cx, cy, rx, ry, startAngle: midAngle, endAngle, xAxisRotation, anticlockwise })
-                        retArray.push({ type: SvgDirectiveType.A, x: midParam.x2, y: midParam.y2, rx, ry, largeArcFlag, sweepFlag, xAxisRotation: xAxisRotationInDegree })
-                        retArray.push({ type: SvgDirectiveType.A, x: endParam.x2, y: endParam.y2, rx, ry, largeArcFlag, sweepFlag, xAxisRotation: xAxisRotationInDegree })
+                        retArray.push({ type: SvgCommandType.A, x: midParam.x2, y: midParam.y2, rx, ry, largeArcFlag, sweepFlag, xAxisRotation: xAxisRotationInDegree })
+                        retArray.push({ type: SvgCommandType.A, x: endParam.x2, y: endParam.y2, rx, ry, largeArcFlag, sweepFlag, xAxisRotation: xAxisRotationInDegree })
                     } else {
-                        retArray.push({ type: SvgDirectiveType.A, x: x2, y: y2, rx, ry, largeArcFlag, sweepFlag, xAxisRotation: xAxisRotationInDegree })
+                        retArray.push({ type: SvgCommandType.A, x: x2, y: y2, rx, ry, largeArcFlag, sweepFlag, xAxisRotation: xAxisRotationInDegree })
                     }
                     return
                 }
-                if (d.type === GraphicDirectiveType.Close) {
-                    retArray.push({ type: SvgDirectiveType.Z })
+                if (cmd.type === GraphicCommandType.Close) {
+                    retArray.push({ type: SvgCommandType.Z })
                 }
             })
         }

@@ -1,6 +1,6 @@
 export type GraphicImplType = "canvas" | "svg"
 
-export const enum GraphicDirectiveType {
+export const enum GraphicCommandType {
     MoveTo,
     LineTo,
     BezierCurveTo,
@@ -9,30 +9,30 @@ export const enum GraphicDirectiveType {
     Close
 }
 
-export type GraphicDirective =
-    | GraphicMoveToDirective
-    | GraphicLineToDirective
-    | GraphicBezierCurveToDirective
-    | GraphicQuadraticBezierCurveToDirective
-    | GraphicArcToDirective
-    | GraphicCloseDirective
+export type GraphicCommand =
+    | GraphicMoveToCommand
+    | GraphicLineToCommand
+    | GraphicBezierCurveToCommand
+    | GraphicQuadraticBezierCurveToCommand
+    | GraphicArcToCommand
+    | GraphicCloseCommand
 
-export type GraphicMoveToDirective = {
-    type: GraphicDirectiveType.MoveTo
+export type GraphicMoveToCommand = {
+    type: GraphicCommandType.MoveTo
     x: number
     y: number
     currentX: number
     currentY: number
 }
-export type GraphicLineToDirective = {
-    type: GraphicDirectiveType.LineTo
+export type GraphicLineToCommand = {
+    type: GraphicCommandType.LineTo
     x: number
     y: number
     currentX: number
     currentY: number
 }
-export type GraphicBezierCurveToDirective = {
-    type: GraphicDirectiveType.BezierCurveTo
+export type GraphicBezierCurveToCommand = {
+    type: GraphicCommandType.BezierCurveTo
     cp1x: number
     cp1y: number
     cp2x: number
@@ -42,8 +42,8 @@ export type GraphicBezierCurveToDirective = {
     currentX: number
     currentY: number
 }
-export type GraphicQuadraticBezierCurveToDirective = {
-    type: GraphicDirectiveType.QuadraticBezierCurveTo
+export type GraphicQuadraticBezierCurveToCommand = {
+    type: GraphicCommandType.QuadraticBezierCurveTo
     cpx: number
     cpy: number
     x: number
@@ -51,8 +51,8 @@ export type GraphicQuadraticBezierCurveToDirective = {
     currentX: number
     currentY: number
 }
-export type GraphicArcToDirective = {
-    type: GraphicDirectiveType.ArcTo
+export type GraphicArcToCommand = {
+    type: GraphicCommandType.ArcTo
     cx: number
     cy: number
     rx: number
@@ -72,14 +72,14 @@ export type GraphicArcToDirective = {
     currentX: number
     currentY: number
 }
-export type GraphicCloseDirective = {
-    type: GraphicDirectiveType.Close
+export type GraphicCloseCommand = {
+    type: GraphicCommandType.Close
     currentX: number
     currentY: number
 }
 
-//#region Svg directives
-export const enum SvgDirectiveType {
+//#region Svg commands
+export const enum SvgCommandType {
     M = "M",
     L = "L",
     C = "C",
@@ -87,20 +87,20 @@ export const enum SvgDirectiveType {
     A = "A",
     Z = "Z"
 }
-export type SvgDirective = SvgMDirective | SvgLDirective | SvgCDirective | SvgQDirective | SvgADirective | SvgZDirective
+export type SvgCommand = SvgMCommand | SvgLCommand | SvgCCommand | SvgQCommand | SvgACommand | SvgZCommand
 
-export type SvgMDirective = {
-    type: SvgDirectiveType.M
+export type SvgMCommand = {
+    type: SvgCommandType.M
     x: number
     y: number
 }
-export type SvgLDirective = {
-    type: SvgDirectiveType.L
+export type SvgLCommand = {
+    type: SvgCommandType.L
     x: number
     y: number
 }
-export type SvgCDirective = {
-    type: SvgDirectiveType.C
+export type SvgCCommand = {
+    type: SvgCommandType.C
     x: number
     y: number
     cp1x: number
@@ -108,15 +108,15 @@ export type SvgCDirective = {
     cp2x: number
     cp2y: number
 }
-export type SvgQDirective = {
-    type: SvgDirectiveType.Q
+export type SvgQCommand = {
+    type: SvgCommandType.Q
     x: number
     y: number
     cpx: number
     cpy: number
 }
-export type SvgADirective = {
-    type: SvgDirectiveType.A
+export type SvgACommand = {
+    type: SvgCommandType.A
     x: number
     y: number
     rx: number
@@ -125,13 +125,13 @@ export type SvgADirective = {
     sweepFlag: boolean
     xAxisRotation: number
 }
-export type SvgZDirective = {
-    type: SvgDirectiveType.Z
+export type SvgZCommand = {
+    type: SvgCommandType.Z
 }
 //#endregion
 
-//#region Canvas directives
-export const enum CanvasDirectiveType {
+//#region Canvas commands
+export const enum CanvasCommandType {
     MoveTo = "moveTo",
     LineTo = "lineTo",
     BezierCurveTo = "bezierCurveTo",
@@ -140,27 +140,27 @@ export const enum CanvasDirectiveType {
     Ellipse = "ellipse",
     ClosePath = "closePath"
 }
-export type CanvasDirective =
-    | CanvasMoveToDirective
-    | CanvasLineToDirective
-    | CanvasBezierCurveToDirective
-    | CanvasQuadraticCurveToDirective
-    | CanvasArcDirective
-    | CanvasEllipseDirective
-    | CanvasClosePathDirective
+export type CanvasCommand =
+    | CanvasMoveToCommand
+    | CanvasLineToCommand
+    | CanvasBezierCurveToCommand
+    | CanvasQuadraticCurveToCommand
+    | CanvasArcCommand
+    | CanvasEllipseCommand
+    | CanvasClosePathCommand
 
-export type CanvasMoveToDirective = {
-    type: CanvasDirectiveType.MoveTo
+export type CanvasMoveToCommand = {
+    type: CanvasCommandType.MoveTo
     x: number
     y: number
 }
-export type CanvasLineToDirective = {
-    type: CanvasDirectiveType.LineTo
+export type CanvasLineToCommand = {
+    type: CanvasCommandType.LineTo
     x: number
     y: number
 }
-export type CanvasBezierCurveToDirective = {
-    type: CanvasDirectiveType.BezierCurveTo
+export type CanvasBezierCurveToCommand = {
+    type: CanvasCommandType.BezierCurveTo
     x: number
     y: number
     cp1x: number
@@ -168,15 +168,15 @@ export type CanvasBezierCurveToDirective = {
     cp2x: number
     cp2y: number
 }
-export type CanvasQuadraticCurveToDirective = {
-    type: CanvasDirectiveType.QuadraticCurveTo
+export type CanvasQuadraticCurveToCommand = {
+    type: CanvasCommandType.QuadraticCurveTo
     x: number
     y: number
     cpx: number
     cpy: number
 }
-export type CanvasArcDirective = {
-    type: CanvasDirectiveType.Arc
+export type CanvasArcCommand = {
+    type: CanvasCommandType.Arc
     x: number
     y: number
     r: number
@@ -184,8 +184,8 @@ export type CanvasArcDirective = {
     endAngle: number
     anticlockwise: boolean
 }
-export type CanvasEllipseDirective = {
-    type: CanvasDirectiveType.Ellipse
+export type CanvasEllipseCommand = {
+    type: CanvasCommandType.Ellipse
     x: number
     y: number
     rx: number
@@ -195,7 +195,7 @@ export type CanvasEllipseDirective = {
     xAxisRotation: number
     anticlockwise: boolean
 }
-export type CanvasClosePathDirective = {
-    type: CanvasDirectiveType.ClosePath
+export type CanvasClosePathCommand = {
+    type: CanvasCommandType.ClosePath
 }
 //#endregion

@@ -31,9 +31,9 @@ class Transformation extends GeomObject {
         return this
     }
     /**
-     * Clear transformation `this`.
+     * Reset transformation `this` by the identity matrix.
      */
-    clear() {
+    reset() {
         this.#matrix.toIdentity()
         return this
     }
@@ -184,7 +184,7 @@ class Transformation extends GeomObject {
      * Decompose transformation `this`.
      * @description The return object (if named `o`) means transformation `this` is equal to
      * ```javascript
-     * this.clear().translate(o.translateX, o.translateY).rotate(o.rotation).scale(o.scaleX, o.scaleY).skew(o.skewX, o.skewY)
+     * this.reset().translate(o.translateX, o.translateY).rotate(o.rotation).scale(o.scaleX, o.scaleY).skew(o.skewX, o.skewY)
      * ```
      * @see https://frederic-wang.fr/decomposition-of-2d-transform-matrices.html
      */

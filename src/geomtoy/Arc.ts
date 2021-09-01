@@ -1,6 +1,6 @@
 import Point from "./Point"
 import { is, sealed, validAndWithSameOwner } from "./decorator"
-import { CanvasDirective, GraphicDirectiveType, GraphicImplType, SvgDirective } from "./types"
+import { CanvasCommand, GraphicCommandType, GraphicImplType, SvgCommand } from "./types"
 import util from "./utility"
 import math from "./utility/math"
 import angle from "./utility/angle"
@@ -137,7 +137,7 @@ class Arc extends GeomObject implements Visible {
         return new Arc(owner, cx, cy, rx, ry, startAngle, endAngle, positive, rotation)
     }
     getLength() {}
-    getGraphic(type: GraphicImplType): (SvgDirective | CanvasDirective)[] {
+    getGraphic(type: GraphicImplType): (SvgCommand | CanvasCommand)[] {
         let c = this.centerCoordinate,
             g = new Graphic()
         g.moveTo(...c)
