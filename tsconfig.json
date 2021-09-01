@@ -2,15 +2,11 @@
     "compilerOptions": {
         "target": "ES2015",
         "moduleResolution": "node",
-        "noEmit": true,
-        // "declaration": true,
-        // "emitDeclarationOnly": true,
-        // "declarationDir": "./declarations/",
         "allowJs": true,
         "alwaysStrict": true,
         // "noUnusedLocals": true,
         // "noUnusedParameters": true,
-        //! Even the typescript official example code to demonstrate parameter decorator with `TypedPropertyDescriptor<Function>` will have warnings if following flag is `true`
+        // !Even the typescript official example code to demonstrate parameter decorator with `TypedPropertyDescriptor<Function>` will have warnings if following flag is `true`
         "strictFunctionTypes": false,
         "noImplicitAny": true,
         "allowSyntheticDefaultImports": true,
@@ -21,6 +17,5 @@
         "emitDecoratorMetadata": true,
         "stripInternal": true
     },
-    "exclude": ["./node_modules"],
-    "include": ["./src", "./test", "./examples/src"]
+    "exclude": ["./node_modules"]
 }

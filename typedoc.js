@@ -1,12 +1,12 @@
-const TypeDoc = require("typedoc")
-const { Converter, ReflectionKind, DeclarationReflection, ReflectionFlag } = require("typedoc")
-const ts = require("typescript")
-const fs = require("fs/promises")
+const TypeDoc = require("typedoc"),
+    { Converter, ReflectionKind, DeclarationReflection } = require("typedoc"),
+    ts = require("typescript"),
+    fs = require("fs/promises"),
+    path = require("path")
 
 async function main() {
     const app = new TypeDoc.Application()
-
-    // If you want TypeDoc to load tsconfig.json / typedoc.json files
+ 
     app.options.addReader(new TypeDoc.TSConfigReader())
 
     app.bootstrap({
@@ -42,9 +42,24 @@ async function main() {
         excludePrivate: true,
         disableSources: true,
         readme: "none",
-        includes: "./fragments",
+        includes: "./includes",
         media: "./media",
         sort: ["instance-first"],
+        markedOptions: {
+            mangle: false,
+            walkTokens(token) {
+                if (token.type === "escape" && token.text === "\\") {
+                    // unescape "\\" for latex
+                    token.text = "\\\\"
+                }
+                if (token.type === "em" && token.raw.match(/^_[^_]+_$/)) {
+                    // unescape "_" for latex, so we should not use `_` to `italic` in markdown nor use `*` to `multiply` in latex
+                    token.text = token.raw
+                    token.type = "text"
+                    delete token.tokens
+                }
+            }
+        },
         plugin: "none",
         categoryOrder: ["Entry", "Base", "Adaptor", "*"]
     })
@@ -149,13 +164,47 @@ async function main() {
         // Rendered docs
         await app.generateDocs(project, outputDir)
 
-        // Modify the theme classes
-        let path = outputDir + "/assets/css/main.css",
-            css = await fs.readFile(path, "utf-8")
-        css = css.replace(/dl\.tsd-comment-tags dt {\s*(float: left;)([\s\S]+?)}/, function ($0, $1, $2) {
-            return `dl.tsd-comment-tags dt {\n  display: inline-block;${$2}}`
+        // Begin mod
+        const docCssPath = outputDir + "/assets/css/main.css",
+            docJsPath = outputDir + "/assets/js/main.js",
+            docAssetDir = outputDir + "/assets/"
+
+        const katexCssPath = "./node_modules/katex/dist/katex.min.css",
+            katexJsPath = "./node_modules/katex/dist/katex.min.js",
+            katexAutoRenderPath = "./node_modules/katex/dist/contrib/auto-render.min.js",
+            katexFontDir = "./node_modules/katex/dist/fonts"
+
+        let docCss = await fs.readFile(docCssPath, "utf-8"),
+            docJs = await fs.readFile(docJsPath, "utf-8")
+        // Modify the bad theme classes
+        docCss = docCss.replace(/dl\.tsd-comment-tags dt {\s*(float: left;)([\s\S]+?)}/, function (m0, m1, m2) {
+            return `dl.tsd-comment-tags dt {\n  display: inline-block;${m2}}`
         })
-        await fs.writeFile(path, css)
+        // Add Katex css and js
+        let katexCss = await fs.readFile(katexCssPath, "utf-8"),
+            katexJs = await fs.readFile(katexJsPath, "utf-8"),
+            katexAutoRenderJs = await fs.readFile(katexAutoRenderPath, "utf-8")
+        docCss += katexCss
+        docJs +=
+            katexJs +
+            katexAutoRenderJs +
+            `;(function(){
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                ]
+            })
+        })()`
+        await fs.writeFile(docCssPath, docCss)
+        await fs.writeFile(docJsPath, docJs)
+        // Copy Katex fonts
+        // await fs.cp(katexFontDir,docAssetDir + "/fonts")
+        await fs.mkdir(path.resolve(docAssetDir, "css/fonts"))
+        const fonts = await fs.readdir(katexFontDir)
+        fonts.forEach(async fontName => {
+            await fs.copyFile(path.resolve(katexFontDir, fontName), path.resolve(docAssetDir, "css/fonts", fontName))
+        })
     }
 }
 

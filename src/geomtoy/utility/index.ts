@@ -42,7 +42,7 @@ const util = {
     sort: <T>(arr: ArrayLike<T>, cb: (a: T, b: T) => number): T[] => {
         return Array.prototype.sort.call([...arr], cb)
     },
-    
+
     // range generator
     range: (start: number, stop: number, step = 1): number[] => {
         //prettier-ignore

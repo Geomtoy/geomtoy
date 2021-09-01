@@ -10,10 +10,9 @@ class Matrix {
     static get identity() {
         return new Matrix(1, 0, 0, 1, 0, 0)
     }
-    resetToIdentity() {
+    toIdentity() {
         Object.assign(this, { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 })
     }
-
     preMultiply(matrix: Matrix) {
         return this.clone().preMultiplySelf(matrix)
     }
@@ -47,28 +46,15 @@ class Matrix {
         Object.assign(this, { a, b, c, d, e, f })
         return this
     }
-    /**
-     * Transform the coordinate with the current transformation
-     * to the coordinate corresponding to the identity matrix (in the initial state without transformation),
-     * and the visual position of the coordinate will not change.
-     * @param  coordinate
-     */
     transformCoordinate(coordinate: [number, number]): [number, number] {
         let { a, b, c, d, e, f } = this,
             [x, y] = coordinate,
             [xp, yp] = mat3.dotVec3([a, c, e, b, d, f, 0, 0, 1], [x, y, 1])
         return [xp, yp]
     }
-    /**
-     * Transform the coordinate corresponding to the identity matrix (in the initial state without transformation)
-     * to the coordinate with the current transformation,
-     * and the visual position of the coordinate will not change.
-     * @param coordinate
-     */
     antitransformCoordinate(coordinate: [number, number]): [number, number] {
         return this.invert().transformCoordinate(coordinate)
     }
-
     clone(): Matrix {
         let { a, b, c, d, e, f } = this
         return new Matrix(a, b, c, d, e, f)

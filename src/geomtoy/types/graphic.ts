@@ -1,6 +1,6 @@
 export type GraphicImplType = "canvas" | "svg"
 
-export enum GraphicDirectiveType {
+export const enum GraphicDirectiveType {
     MoveTo,
     LineTo,
     BezierCurveTo,
@@ -73,7 +73,7 @@ export type GraphicCloseDirective = {
 }
 
 //#region Svg directives
-export enum SvgDirectiveType {
+export const enum SvgDirectiveType {
     M = "M",
     L = "L",
     C = "C",
@@ -125,7 +125,7 @@ export type SvgZDirective = {
 //#endregion
 
 //#region Canvas directives
-export enum CanvasDirectiveType {
+export const enum CanvasDirectiveType {
     MoveTo = "moveTo",
     LineTo = "lineTo",
     BezierCurveTo = "bezierCurveTo",

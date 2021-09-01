@@ -221,7 +221,7 @@ class Point extends GeomObject implements Visible {
     }
     /**
      * Get the signed distance between point `this` and segment `segment`.
-     * @summary [[include:Line.md]]
+     * @summary [[include:Matrix.md]]
      * @param {Segment} segment
      * @returns {number}
      */

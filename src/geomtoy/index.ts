@@ -140,7 +140,7 @@ class Geomtoy {
         if (!xpr) sx = -sx
         if (!ypb) sy = -sy
         // If `sx` and `sy` have different sign, the positive rotation angle is anticlockwise, otherwise clockwise.
-        this.#globalTransformation.reset().translate(tx, ty).scale(sx, sy)
+        this.#globalTransformation.clear().translate(tx, ty).scale(sx, sy)
     }
     getOptions() {
         return cloneOptions(this.#options)

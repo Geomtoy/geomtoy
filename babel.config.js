@@ -6,7 +6,12 @@ module.exports = {
                 bugfixes: true
             }
         ],
-        "@babel/preset-typescript"
+        [
+            "@babel/preset-typescript",
+            {
+                optimizeConstEnums: true
+            }
+        ]
     ],
     plugins: [
         [
