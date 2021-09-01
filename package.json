@@ -8,7 +8,7 @@
         "doc": "node ./typedoc.js",
         "build": "npm run bundle-js && npm run emit-dts && npm run bundle-dts",
         "serve": "rollup --config --watch",
-        "check": "tsc --project tsconfig.check.json  --watch",
+        "check": "tsc --watch",
         "emit-dts": "tsc --project tsconfig.emit-dts.json",
         "bundle-dts": "rollup --config --environment TASK:bundle-dts",
         "bundle-js": "rollup --config --environment TASK:bundle-js"

@@ -16,7 +16,8 @@
         "strictPropertyInitialization": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "stripInternal": true
+        "stripInternal": true,
+        "noEmit": true
     },
-    "include": null
+    "include": ["./src", "./test", "./examples/src"]
 }

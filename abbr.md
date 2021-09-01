@@ -24,6 +24,12 @@ ry = radius y
 util = utility
 alt = alternative
 
+
+decl = declaration
+doc = document
+src = source
+dist = distribution
+
 ### plus
 triangle
 quadrilateral
@@ -38,3 +44,5 @@ decagon
 >There are only two hard things in Computer Science: cache invalidation and naming things.
 >
 >-- Phil Karlton
+
+

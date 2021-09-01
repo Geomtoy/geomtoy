@@ -47,7 +47,7 @@ switch (task) {
 
     case "bundle-dts": {
         config = {
-            input: path.resolve(pkg.config.declsGenDir, pkg.config.srcIndex.replace(/\.js$/, ".d.ts")),
+            input: path.resolve(pkg.config.declsGenDir, pkg.config.srcIndex.replace(/\.ts$/, ".d.ts")),
             output: {
                 file: path.resolve(pkg.config.distDir, pkg.name + ".d.ts"),
                 format: "esm"
