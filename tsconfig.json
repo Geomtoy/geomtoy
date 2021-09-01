@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "target": "ES2015",
+        "module": "ES2015",
         "moduleResolution": "node",
         "allowJs": true,
         "alwaysStrict": true,
@@ -17,5 +18,5 @@
         "emitDecoratorMetadata": true,
         "stripInternal": true
     },
-    "exclude": ["./node_modules"]
+    "include": null
 }

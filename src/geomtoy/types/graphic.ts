@@ -9,7 +9,13 @@ export const enum GraphicDirectiveType {
     Close
 }
 
-export type GraphicDirective = GraphicMoveToDirective | GraphicLineToDirective | GraphicBezierCurveToDirective | GraphicQuadraticBezierCurveToDirective | GraphicArcToDirective | GraphicCloseDirective
+export type GraphicDirective =
+    | GraphicMoveToDirective
+    | GraphicLineToDirective
+    | GraphicBezierCurveToDirective
+    | GraphicQuadraticBezierCurveToDirective
+    | GraphicArcToDirective
+    | GraphicCloseDirective
 
 export type GraphicMoveToDirective = {
     type: GraphicDirectiveType.MoveTo

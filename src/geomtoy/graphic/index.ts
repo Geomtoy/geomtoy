@@ -165,10 +165,7 @@ export default class Graphic {
         })
         return this
     }
-
-    static canvasDirectiveType = CanvasDirectiveType
-    static svgDirectiveType = SvgDirectiveType
-
+ 
     valueOf(type: GraphicImplType): Array<SvgDirective | CanvasDirective> {
         let retArray: Array<SvgDirective | CanvasDirective> = []
 
