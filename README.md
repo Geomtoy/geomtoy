@@ -43,13 +43,7 @@ let distance = g.Point(100,120).getDistanceFrom(g.Point(20,30))
 
 ## Roadmap
 - [x] Support basic geometric objects
-- [ ] Support all conic curves
-- [ ] Support basic spirals
 
-
-- [ ] Fill rule: `nonzero` | `evenodd` support, used in the determination of `Polygon` positional relationships with point and in boolean operations too(future).
-- [ ] Boolean operations.
-- [ ] 
 
 ### Transformation
 
