@@ -1,16 +1,16 @@
 import Point from "./Point"
 import { is, sealed, validAndWithSameOwner } from "./decorator"
-import { CanvasCommand, GraphicCommandType, GraphicImplType, SvgCommand } from "./types"
+import { CanvasCommand, GraphicsCommandType, GraphicsImplType, SvgCommand } from "./types"
 import util from "./utility"
 import math from "./utility/math"
 import angle from "./utility/angle"
 import coord from "./utility/coordinate"
 
-import { arcCenterToEndpointParameterization, arcEndpointToCenterParameterization } from "./graphic/helper"
+import { arcCenterToEndpointParameterization, arcEndpointToCenterParameterization } from "./graphics/helper"
 import Geomtoy from "."
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
-import Graphic from "./graphic"
+import Graphics from "./graphics"
 import { Visible } from "./interfaces"
 
 @sealed
@@ -137,9 +137,9 @@ class Arc extends GeomObject implements Visible {
         return new Arc(owner, cx, cy, rx, ry, startAngle, endAngle, positive, rotation)
     }
     getLength() {}
-    getGraphic(type: GraphicImplType): (SvgCommand | CanvasCommand)[] {
+    getGraphics(type: GraphicsImplType): (SvgCommand | CanvasCommand)[] {
         let c = this.centerCoordinate,
-            g = new Graphic()
+            g = new Graphics()
         g.moveTo(...c)
         g.centerArcTo(...c, this.radiusX, this.radiusY, this.startAngle, this.endAngle, this.rotation, this.positive)
         return g.valueOf(type)

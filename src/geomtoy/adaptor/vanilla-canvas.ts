@@ -23,7 +23,7 @@ export default class VanillaCanvas {
     draw(object: GeomObject & Visible) {
         this.context.save()
         this.setup()
-        let ds = object.getGraphic("canvas"),
+        let ds = object.getGraphics("canvas"),
             path2D = new Path2D()
 
         ds.forEach(d => {

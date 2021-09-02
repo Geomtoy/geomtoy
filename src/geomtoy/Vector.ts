@@ -5,9 +5,9 @@ import math from "./utility/math"
 
 import Point from "./Point"
 import Segment from "./Segment"
-import { CanvasCommand, GraphicImplType, SvgCommand } from "./types"
+import { CanvasCommand, GraphicsImplType, SvgCommand } from "./types"
 import GeomObject from "./base/GeomObject"
-import Graphic from "./graphic"
+import Graphics from "./graphics"
 import { is, sealed, validAndWithSameOwner } from "./decorator"
 import Transformation from "./transformation"
 import Geomtoy from "."
@@ -285,18 +285,18 @@ class Vector extends GeomObject {
 
     //todo
     /**
-     * Get graphic object of `this`
-     * @param {GraphicImplType} type
+     * Get graphics object of `this`
+     * @param {GraphicsImplType} type
      * @returns {Array<SvgCommand | CanvasCommand>}
      */
-    getGraphic(type: GraphicImplType): Array<SvgCommand | CanvasCommand> {
+    getGraphics(type: GraphicsImplType): Array<SvgCommand | CanvasCommand> {
         let [x1, y1] = this.point1Coordinate,
             [x2, y2] = this.point2Coordinate,
-            g = new Graphic()
+            g = new Graphics()
 
         g.moveTo(x1, y1)
         g.lineTo(x2, y2)
-        // g.centerArcTo(x, y, Vector.options.graphic.pointSize, Vector.options.graphic.pointSize, 0, 2 * math.PI, 0)
+        // g.centerArcTo(x, y, Vector.options.graphics.pointSize, Vector.options.graphics.pointSize, 0, 2 * math.PI, 0)
         // g.close()
         return g.valueOf(type)
     }

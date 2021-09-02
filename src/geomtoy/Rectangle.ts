@@ -1,7 +1,7 @@
 import util from "./utility"
 
 import Point from "./Point"
-import { CanvasCommand, GraphicImplType, SvgCommand } from "./types"
+import { CanvasCommand, GraphicsImplType, SvgCommand } from "./types"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import { is, sealed, validAndWithSameOwner } from "./decorator"
@@ -220,7 +220,7 @@ class Rectangle extends GeomObject {
         throw new Error("Method not implemented.")
     }
 
-    getGraphic(type: GraphicImplType): (SvgCommand | CanvasCommand)[] {
+    getGraphics(type: GraphicsImplType): (SvgCommand | CanvasCommand)[] {
         throw new Error("Method not implemented.")
     }
     toString(): string {

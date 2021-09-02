@@ -1,8 +1,8 @@
-import Graphic from "./graphic"
+import Graphics from "./graphics"
 import Point from "./Point"
 import Vector from "./Vector"
 import util from "./utility"
-import { Direction, GraphicImplType } from "./types"
+import { Direction, GraphicsImplType } from "./types"
 import { is, sealed, validAndWithSameOwner } from "./decorator"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
@@ -115,14 +115,14 @@ class Ellipse extends GeomObject implements AreaMeasurable {
         throw new Error("Method not implemented.")
     }
 
-    getGraphic(type: GraphicImplType) {
+    getGraphics(type: GraphicsImplType) {
         let x = this.centerPoint.x,
             y = this.centerPoint.y,
             rx = this.radiusX,
             ry = this.radiusY,
-            g = new Graphic()
+            g = new Graphics()
         g.moveTo(0, 0)
-            //let graphic decide the start point itself
+            //let graphics decide the start point itself
             .centerArcTo(x, y, rx, ry, 0, 2 * Math.PI, 0)
         return g.valueOf(type)
     }
@@ -143,7 +143,7 @@ class Ellipse extends GeomObject implements AreaMeasurable {
         throw new Error("Method not implemented.")
     }
 
-    getGraphicAlt(type: GraphicImplType) {
+    getGraphicsAlt(type: GraphicsImplType) {
         /**
          * @see https://www.tinaja.com/glib/ellipse4.pdf
          */
@@ -154,7 +154,7 @@ class Ellipse extends GeomObject implements AreaMeasurable {
             ry = this.radiusY,
             ox = rx * kappa, // x axis control point offset
             oy = ry * kappa // y axis control point offset
-        let g = new Graphic()
+        let g = new Graphics()
         g.moveTo(x - rx, y)
             .bezierCurveTo(x - rx, y - oy, x - ox, y - ry, x, y - ry)
             .bezierCurveTo(x + ox, y - ry, x + rx, y - oy, x + rx, y)

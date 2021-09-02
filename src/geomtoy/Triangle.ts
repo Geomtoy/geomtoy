@@ -3,7 +3,7 @@ import util from "./utility"
 import Point from "./Point"
 import Circle from "./Circle"
 import GeomObject from "./base/GeomObject"
-import { CanvasCommand, Direction, GraphicImplType, SvgCommand } from "./types"
+import { CanvasCommand, Direction, GraphicsImplType, SvgCommand } from "./types"
 import Transformation from "./transformation"
 
 import { is, sealed, validAndWithSameOwner } from "./decorator"
@@ -14,7 +14,7 @@ import { AreaMeasurable, Visible } from "./interfaces"
 import math from "./utility/math"
 import Line from "./Line"
 import { Cartesian, Trilinear } from "./helper/CoordinateSystem"
-import Graphic from "./graphic"
+import Graphics from "./graphics"
 import Polygon from "./Polygon"
 import Segment from "./Segment"
 
@@ -955,8 +955,8 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     apply(transformation: Transformation): GeomObject {
         throw new Error("Method not implemented.")
     }
-    getGraphic(type: GraphicImplType): Array<SvgCommand | CanvasCommand> {
-        let g = new Graphic(),
+    getGraphics(type: GraphicsImplType): Array<SvgCommand | CanvasCommand> {
+        let g = new Graphics(),
             c1 = this.point1Coordinate,
             c2 = this.point2Coordinate,
             c3 = this.point3Coordinate

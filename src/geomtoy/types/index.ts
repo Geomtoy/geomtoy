@@ -3,13 +3,13 @@ import Point from "../Point"
 import Ray from "../Ray"
 import Segment from "../Segment"
 
-export * from "./graphic"
+export * from "./graphics"
 export * from "./geomtoy"
 
 // Geomtoy global options
 export type Options = {
     epsilon: number
-    graphic: {
+    graphics: {
         pointSize: number
         lineRange: number
         vectorArrow: {
@@ -29,7 +29,7 @@ export type Options = {
 }
 export const defaultOptions: Options = {
     epsilon: 2 ** -32,
-    graphic: {
+    graphics: {
         pointSize: 2,
         lineRange: 2 ** 10,
         vectorArrow: {

@@ -10,11 +10,11 @@ import RegularPolygon from "./RegularPolygon"
 import Vector from "./Vector"
 import Segment from "./Segment"
 import Inversion from "./inversion"
-import { AnglePointLineData, CanvasCommand, Direction, GraphicImplType, PointLineData, PointsLineData, SvgCommand } from "./types"
+import { AnglePointLineData, CanvasCommand, Direction, GraphicsImplType, PointLineData, PointsLineData, SvgCommand } from "./types"
 import { is, sealed } from "./decorator"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
-import Graphic from "./graphic"
+import Graphics from "./graphics"
 import Geomtoy from "."
 import coord from "./utility/coordinate"
 import { AreaMeasurable, Visible } from "./interfaces"
@@ -402,9 +402,9 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
         return new RegularPolygon(this.owner, this.radius, this.centerX, this.centerY, sideCount, angle)
     }
 
-    getGraphic(type: GraphicImplType): (SvgCommand | CanvasCommand)[] {
+    getGraphics(type: GraphicsImplType): (SvgCommand | CanvasCommand)[] {
         let c = this.centerCoordinate,
-            g = new Graphic()
+            g = new Graphics()
 
         g.moveTo(...c)
         g.centerArcTo(...c, this.radius, this.radius, 0, 2 * Math.PI, 0)

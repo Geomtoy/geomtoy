@@ -17,7 +17,7 @@ export default class SvgDotJs {
         this.svgDotJsContainer.attr("transform", `matrix(${a} ${b} ${c} ${d} ${e} ${f})`)
     }
     draw(object: GeomObject & Visible) {
-        let ds = object.getGraphic("svg"),
+        let ds = object.getGraphics("svg"),
             path = this.svgDotJsContainer.path(),
             attrD = ""
 

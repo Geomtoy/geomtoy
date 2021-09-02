@@ -1,6 +1,6 @@
-export type GraphicImplType = "canvas" | "svg"
+export type GraphicsImplType = "canvas" | "svg"
 
-export const enum GraphicCommandType {
+export const enum GraphicsCommandType {
     MoveTo,
     LineTo,
     BezierCurveTo,
@@ -9,30 +9,30 @@ export const enum GraphicCommandType {
     Close
 }
 
-export type GraphicCommand =
-    | GraphicMoveToCommand
-    | GraphicLineToCommand
-    | GraphicBezierCurveToCommand
-    | GraphicQuadraticBezierCurveToCommand
-    | GraphicArcToCommand
-    | GraphicCloseCommand
+export type GraphicsCommand =
+    | GraphicsMoveToCommand
+    | GraphicsLineToCommand
+    | GraphicsBezierCurveToCommand
+    | GraphicsQuadraticBezierCurveToCommand
+    | GraphicsArcToCommand
+    | GraphicsCloseCommand
 
-export type GraphicMoveToCommand = {
-    type: GraphicCommandType.MoveTo
+export type GraphicsMoveToCommand = {
+    type: GraphicsCommandType.MoveTo
     x: number
     y: number
     currentX: number
     currentY: number
 }
-export type GraphicLineToCommand = {
-    type: GraphicCommandType.LineTo
+export type GraphicsLineToCommand = {
+    type: GraphicsCommandType.LineTo
     x: number
     y: number
     currentX: number
     currentY: number
 }
-export type GraphicBezierCurveToCommand = {
-    type: GraphicCommandType.BezierCurveTo
+export type GraphicsBezierCurveToCommand = {
+    type: GraphicsCommandType.BezierCurveTo
     cp1x: number
     cp1y: number
     cp2x: number
@@ -42,8 +42,8 @@ export type GraphicBezierCurveToCommand = {
     currentX: number
     currentY: number
 }
-export type GraphicQuadraticBezierCurveToCommand = {
-    type: GraphicCommandType.QuadraticBezierCurveTo
+export type GraphicsQuadraticBezierCurveToCommand = {
+    type: GraphicsCommandType.QuadraticBezierCurveTo
     cpx: number
     cpy: number
     x: number
@@ -51,8 +51,8 @@ export type GraphicQuadraticBezierCurveToCommand = {
     currentX: number
     currentY: number
 }
-export type GraphicArcToCommand = {
-    type: GraphicCommandType.ArcTo
+export type GraphicsArcToCommand = {
+    type: GraphicsCommandType.ArcTo
     cx: number
     cy: number
     rx: number
@@ -72,8 +72,8 @@ export type GraphicArcToCommand = {
     currentX: number
     currentY: number
 }
-export type GraphicCloseCommand = {
-    type: GraphicCommandType.Close
+export type GraphicsCloseCommand = {
+    type: GraphicsCommandType.Close
     currentX: number
     currentY: number
 }

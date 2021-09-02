@@ -8,11 +8,11 @@ import Circle from "./Circle"
 import Line from "./Line"
 import Polygon from "./Polygon"
 import { sealed, is, compared, validAndWithSameOwner } from "./decorator"
-import { CanvasCommand, Direction, GraphicImplType, SvgCommand } from "./types"
+import { CanvasCommand, Direction, GraphicsImplType, SvgCommand } from "./types"
 import GeomObject from "./base/GeomObject"
 import { AreaMeasurable } from "./interfaces"
 import Transformation from "./transformation"
-import Graphic from "./graphic"
+import Graphics from "./graphics"
 import Geomtoy from "."
 import coord from "./utility/coordinate"
 
@@ -189,8 +189,8 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
     toArray(): any[] {
         throw new Error("Method not implemented.")
     }
-    getGraphic(type: GraphicImplType): (SvgCommand | CanvasCommand)[] {
-        let g = new Graphic(),
+    getGraphics(type: GraphicsImplType): (SvgCommand | CanvasCommand)[] {
+        let g = new Graphics(),
             ps = this.getPoints()
         g.moveTo(...util.head(ps)?.coordinate!)
         util.forEach(util.range(1, this.sideCount), i => {

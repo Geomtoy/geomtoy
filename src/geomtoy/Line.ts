@@ -4,11 +4,11 @@ import { is, sealed, validAndWithSameOwner } from "./decorator"
 
 import Point from "./Point"
 import Segment from "./Segment"
-import Graphic from "./graphic"
+import Graphics from "./graphics"
 import Rectangle from "./Rectangle"
 import Circle from "./Circle"
 import GeomObject from "./base/GeomObject"
-import { CanvasCommand, GraphicImplType, SvgCommand } from "./types"
+import { CanvasCommand, GraphicsImplType, SvgCommand } from "./types"
 import Transformation from "./transformation"
 import Vector from "./Vector"
 import Geomtoy from "."
@@ -545,12 +545,12 @@ class Line extends GeomObject {
     }
 
     /**
-     * Get graphic object of `this`
-     * @param {GraphicImplType} type
+     * Get graphics object of `this`
+     * @param {GraphicsImplType} type
      */
-    getGraphic(type: GraphicImplType): Array<SvgCommand | CanvasCommand> {
-        let lowerBound = -this.owner.getOptions().graphic.lineRange,
-            upperBound = this.owner.getOptions().graphic.lineRange,
+    getGraphics(type: GraphicsImplType): Array<SvgCommand | CanvasCommand> {
+        let lowerBound = -this.owner.getOptions().graphics.lineRange,
+            upperBound = this.owner.getOptions().graphics.lineRange,
             { a, b, c } = this,
             x1,
             x2,
@@ -569,7 +569,7 @@ class Line extends GeomObject {
             y1 = -(a / b) * x1 - c / b
             y2 = -(a / b) * x2 - c / b
         }
-        let g = new Graphic()
+        let g = new Graphics()
         g.moveTo(x1, y1)
         g.lineTo(x2, y2)
         return g.valueOf(type)

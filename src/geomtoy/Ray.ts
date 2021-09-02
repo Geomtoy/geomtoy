@@ -6,9 +6,9 @@ import { is, sealed, validAndWithSameOwner } from "./decorator"
 
 import Point from "./Point"
 import Segment from "./Segment"
-import { CanvasCommand, GraphicImplType, SvgCommand } from "./types"
+import { CanvasCommand, GraphicsImplType, SvgCommand } from "./types"
 import GeomObject from "./base/GeomObject"
-import Graphic from "./graphic"
+import Graphics from "./graphics"
 import Transformation from "./transformation"
 import Geomtoy from "."
 import coord from "./utility/coordinate"
@@ -122,7 +122,7 @@ class Ray extends GeomObject implements Visible {
     apply(transformation: Transformation): GeomObject {
         throw new Error("Method not implemented.")
     }
-    getGraphic(type: GraphicImplType): (SvgCommand | CanvasCommand)[] {
+    getGraphics(type: GraphicsImplType): (SvgCommand | CanvasCommand)[] {
         throw new Error("Method not implemented.")
     }
 

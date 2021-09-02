@@ -23,7 +23,7 @@ export default class VanillaSvg {
     draw(object: GeomObject & Visible) {
         this.setup()
 
-        let ds = object.getGraphic("svg"),
+        let ds = object.getGraphics("svg"),
             pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path"),
             attrD = ""
 

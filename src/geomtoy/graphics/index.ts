@@ -1,12 +1,12 @@
 import util from "../utility"
-import { GraphicCommandType, GraphicImplType, GraphicCommand, SvgCommandType, SvgCommand, CanvasCommandType, CanvasCommand } from "../types"
+import { GraphicsCommandType, GraphicsImplType, GraphicsCommand, SvgCommandType, SvgCommand, CanvasCommandType, CanvasCommand } from "../types"
 import { arcCenterToEndpointParameterization, arcEndpointToCenterParameterization } from "./helper"
 import angle from "../utility/angle"
 
-export { GraphicCommandType }
+export { GraphicsCommandType }
 
-export default class Graphic {
-    commands: Array<GraphicCommand>
+export default class Graphics {
+    commands: Array<GraphicsCommand>
     currentX: number
     currentY: number
     startX: number
@@ -19,14 +19,14 @@ export default class Graphic {
         this.startY = 0
     }
 
-    moveTo(x: number, y: number): Graphic {
+    moveTo(x: number, y: number): Graphics {
         this.currentX = x
         this.currentY = y
         this.startX = x
         this.startY = y
         // prettier-ignore
         this.commands.push({
-            type: GraphicCommandType.MoveTo,
+            type: GraphicsCommandType.MoveTo,
             x,
             y,
             currentX: x,
@@ -34,12 +34,12 @@ export default class Graphic {
         })
         return this
     }
-    lineTo(x: number, y: number): Graphic {
+    lineTo(x: number, y: number): Graphics {
         this.currentX = x
         this.currentY = y
         // prettier-ignore
         this.commands.push({
-            type: GraphicCommandType.LineTo,
+            type: GraphicsCommandType.LineTo,
             x,
             y,
             currentX: x,
@@ -47,12 +47,12 @@ export default class Graphic {
         })
         return this
     }
-    bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): Graphic {
+    bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): Graphics {
         this.currentX = x
         this.currentY = y
         // prettier-ignore
         this.commands.push({
-            type: GraphicCommandType.BezierCurveTo,
+            type: GraphicsCommandType.BezierCurveTo,
             cp1x,
             cp1y,
             cp2x,
@@ -64,12 +64,12 @@ export default class Graphic {
         })
         return this
     }
-    quadraticBezierCurveTo(cpx: number, cpy: number, x: number, y: number): Graphic {
+    quadraticBezierCurveTo(cpx: number, cpy: number, x: number, y: number): Graphics {
         this.currentX = x
         this.currentY = y
         // prettier-ignore
         this.commands.push({
-            type: GraphicCommandType.QuadraticBezierCurveTo,
+            type: GraphicsCommandType.QuadraticBezierCurveTo,
             cpx,
             cpy,
             x,
@@ -79,7 +79,7 @@ export default class Graphic {
         })
         return this
     }
-    centerArcTo(cx: number, cy: number, rx: number, ry: number, startAngle: number, endAngle: number, xAxisRotation: number, anticlockwise: boolean = false): Graphic {
+    centerArcTo(cx: number, cy: number, rx: number, ry: number, startAngle: number, endAngle: number, xAxisRotation: number, anticlockwise: boolean = false): Graphics {
         // prettier-ignore
         let {
             x1,
@@ -95,7 +95,7 @@ export default class Graphic {
         this.currentX = x2
         this.currentX = y2
         this.commands.push({
-            type: GraphicCommandType.ArcTo,
+            type: GraphicsCommandType.ArcTo,
             cx,
             cy,
             rx: correctedRx,
@@ -115,7 +115,7 @@ export default class Graphic {
         })
         return this
     }
-    endpointArcTo(x: number, y: number, rx: number, ry: number, largeArcFlag: boolean, sweepFlag: boolean, xAxisRotation: number): Graphic {
+    endpointArcTo(x: number, y: number, rx: number, ry: number, largeArcFlag: boolean, sweepFlag: boolean, xAxisRotation: number): Graphics {
         let x1 = this.currentX,
             y1 = this.currentY,
             x2 = x,
@@ -134,7 +134,7 @@ export default class Graphic {
         this.currentX = x2
         this.currentY = y2
         this.commands.push({
-            type: GraphicCommandType.ArcTo,
+            type: GraphicsCommandType.ArcTo,
             cx,
             cy,
             rx: correctedRx,
@@ -154,51 +154,51 @@ export default class Graphic {
         })
         return this
     }
-    close(): Graphic {
+    close(): Graphics {
         this.currentX = this.startX
         this.currentY = this.startY
         // prettier-ignore
         this.commands.push({ 
-            type: GraphicCommandType.Close,
+            type: GraphicsCommandType.Close,
             currentX: this.currentX,
             currentY: this.currentY
         })
         return this
     }
  
-    valueOf(type: GraphicImplType): Array<SvgCommand | CanvasCommand> {
+    valueOf(type: GraphicsImplType): Array<SvgCommand | CanvasCommand> {
         let retArray: Array<SvgCommand | CanvasCommand> = []
 
         if (type === "canvas") {
             util.forEach(this.commands, (cmd, index, collection) => {
-                if (cmd.type === GraphicCommandType.MoveTo) {
+                if (cmd.type === GraphicsCommandType.MoveTo) {
                     let { x, y } = cmd
                     retArray.push({ type: CanvasCommandType.MoveTo, x, y })
                     return
                 }
-                if (cmd.type === GraphicCommandType.LineTo) {
+                if (cmd.type === GraphicsCommandType.LineTo) {
                     let { x, y } = cmd
                     retArray.push({ type: CanvasCommandType.LineTo, x, y })
                     return
                 }
-                if (cmd.type === GraphicCommandType.BezierCurveTo) {
+                if (cmd.type === GraphicsCommandType.BezierCurveTo) {
                     let { cp1x, cp1y, cp2x, cp2y, x, y } = cmd
                     retArray.push({ type: CanvasCommandType.BezierCurveTo, cp1x, cp1y, cp2x, cp2y, x, y })
                     return
                 }
-                if (cmd.type === GraphicCommandType.QuadraticBezierCurveTo) {
+                if (cmd.type === GraphicsCommandType.QuadraticBezierCurveTo) {
                     let { cpx, cpy, x, y } = cmd
                     retArray.push({ type: CanvasCommandType.QuadraticCurveTo, cpx, cpy, x, y })
                     return
                 }
-                if (cmd.type === GraphicCommandType.ArcTo) {
+                if (cmd.type === GraphicsCommandType.ArcTo) {
                     let { x1, y1, cx, cy, rx, ry, startAngle, endAngle, xAxisRotation, anticlockwise } = cmd
                     let prevCommand = collection[index - 1],
                         { currentX: prevCurrentX, currentY: prevCurrentY } = prevCommand
 
                     // Adjust the starting point of the arc, although canvas will do the same, we make it explicitly
                     if (x1 !== prevCurrentX || y1 !== prevCurrentY) {
-                        if (prevCommand.type !== GraphicCommandType.MoveTo) {
+                        if (prevCommand.type !== GraphicsCommandType.MoveTo) {
                             retArray.push({ type: CanvasCommandType.LineTo, x: x1, y: y1 })
                         } else {
                             retArray.push({ type: CanvasCommandType.MoveTo, x: x1, y: y1 })
@@ -211,7 +211,7 @@ export default class Graphic {
                     }
                     return
                 }
-                if (cmd.type === GraphicCommandType.Close) {
+                if (cmd.type === GraphicsCommandType.Close) {
                     retArray.push({ type: CanvasCommandType.ClosePath })
                 }
             })
@@ -219,27 +219,27 @@ export default class Graphic {
 
         if (type === "svg") {
             util.forEach(this.commands, (cmd, index, collection) => {
-                if (cmd.type === GraphicCommandType.MoveTo) {
+                if (cmd.type === GraphicsCommandType.MoveTo) {
                     let { x, y } = cmd
                     retArray.push({ type: SvgCommandType.M, x, y })
                     return
                 }
-                if (cmd.type === GraphicCommandType.LineTo) {
+                if (cmd.type === GraphicsCommandType.LineTo) {
                     let { x, y } = cmd
                     retArray.push({ type: SvgCommandType.L, x, y })
                     return
                 }
-                if (cmd.type === GraphicCommandType.BezierCurveTo) {
+                if (cmd.type === GraphicsCommandType.BezierCurveTo) {
                     let { cp1x, cp1y, cp2x, cp2y, x, y } = cmd
                     retArray.push({ type: SvgCommandType.C, cp1x, cp1y, cp2x, cp2y, x, y })
                     return
                 }
-                if (cmd.type === GraphicCommandType.QuadraticBezierCurveTo) {
+                if (cmd.type === GraphicsCommandType.QuadraticBezierCurveTo) {
                     let { cpx, cpy, x, y } = cmd
                     retArray.push({ type: SvgCommandType.Q, cpx, cpy, x, y })
                     return
                 }
-                if (cmd.type === GraphicCommandType.ArcTo) {
+                if (cmd.type === GraphicsCommandType.ArcTo) {
                     let { x1, y1, x2, y2, rx, ry, cx, cy, largeArcFlag, sweepFlag, xAxisRotation, startAngle, endAngle, anticlockwise } = cmd
                     let prevCommand = collection[index - 1],
                         { currentX: prevCurrentX, currentY: prevCurrentY } = prevCommand,
@@ -247,7 +247,7 @@ export default class Graphic {
 
                     // Adjust the start point of arc
                     if (x1 !== prevCurrentX || y1 !== prevCurrentY) {
-                        if (prevCommand.type !== GraphicCommandType.MoveTo) {
+                        if (prevCommand.type !== GraphicsCommandType.MoveTo) {
                             retArray.push({ type: SvgCommandType.L, x: x1, y: y1 })
                         } else {
                             retArray.push({ type: SvgCommandType.M, x: x1, y: y1 })
@@ -266,7 +266,7 @@ export default class Graphic {
                     }
                     return
                 }
-                if (cmd.type === GraphicCommandType.Close) {
+                if (cmd.type === GraphicsCommandType.Close) {
                     retArray.push({ type: SvgCommandType.Z })
                 }
             })
