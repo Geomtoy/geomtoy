@@ -6,7 +6,19 @@ export const enum GraphicsCommandType {
     BezierCurveTo,
     QuadraticBezierCurveTo,
     ArcTo,
-    Close
+    Close,
+    Text
+}
+
+export type TextCommand = {
+    type: GraphicsCommandType.Text
+    x: number
+    y: number
+    text: string
+    fontSize: number
+    fontFamily: string
+    fontWeight: string | number
+    fontStyle: string
 }
 
 export type GraphicsCommand =

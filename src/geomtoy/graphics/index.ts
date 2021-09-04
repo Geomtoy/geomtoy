@@ -170,7 +170,7 @@ export default class Graphics {
         let retArray: Array<SvgCommand | CanvasCommand> = []
 
         if (type === "canvas") {
-            util.forEach(this.commands, (cmd, index, collection) => {
+            this.commands.forEach((cmd, index, collection) => {
                 if (cmd.type === GraphicsCommandType.MoveTo) {
                     let { x, y } = cmd
                     retArray.push({ type: CanvasCommandType.MoveTo, x, y })
@@ -201,7 +201,8 @@ export default class Graphics {
                         if (prevCommand.type !== GraphicsCommandType.MoveTo) {
                             retArray.push({ type: CanvasCommandType.LineTo, x: x1, y: y1 })
                         } else {
-                            retArray.push({ type: CanvasCommandType.MoveTo, x: x1, y: y1 })
+                            prevCommand.x = x1
+                            prevCommand.y = y1
                         }
                     }
                     if (rx === ry && xAxisRotation === 0) {
