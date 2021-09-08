@@ -1,6 +1,6 @@
 import GeomObject from "../base/GeomObject"
 import Transformation from "../transformation"
-import { GraphicsImplType, CanvasCommand, SvgCommand, Direction } from "../types"
+import { GraphicsImplType, GraphicsCommand, Direction } from "../types"
 
 export interface AreaMeasurable {
     //ClosedShape?
@@ -16,5 +16,5 @@ export interface LengthMeasurable {
 
 export interface Visible {
     apply(transformation: Transformation): GeomObject
-    getGraphics(type: GraphicsImplType): Array<SvgCommand | CanvasCommand>
+    getGraphics(): GraphicsCommand[]
 }

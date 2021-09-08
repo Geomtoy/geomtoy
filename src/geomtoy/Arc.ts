@@ -1,12 +1,11 @@
 import Point from "./Point"
-import { is, sealed, validAndWithSameOwner } from "./decorator"
-import { CanvasCommand, GraphicsCommandType, GraphicsImplType, SvgCommand } from "./types"
+import { assertIsBoolean, assertIsPositiveNumber, assertIsRealNumber, sealed, validAndWithSameOwner } from "./decorator"
 import util from "./utility"
 import math from "./utility/math"
 import angle from "./utility/angle"
 import coord from "./utility/coordinate"
 
-import { arcCenterToEndpointParameterization, arcEndpointToCenterParameterization } from "./graphics/helper"
+import { arcEndpointToCenterParameterization } from "./graphics/helper"
 import Geomtoy from "."
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
@@ -41,74 +40,74 @@ class Arc extends GeomObject implements Visible {
         }
         return Object.seal(this)
     }
-    @is("realNumber")
     get centerX() {
         return coord.x(this.#centerCoordinate)
     }
     set centerX(value) {
+        assertIsRealNumber(value, "centerX")
         coord.x(this.#centerCoordinate, value)
     }
-    @is("realNumber")
     get centerY() {
         return coord.y(this.#centerCoordinate)
     }
     set centerY(value) {
+        assertIsRealNumber(value, "centerY")
         coord.y(this.#centerCoordinate, value)
     }
-    @is("coordinate")
     get centerCoordinate() {
         return coord.copy(this.#centerCoordinate)
     }
     set centerCoordinate(value) {
+        assertIsRealNumber(value, "centerCoordinate")
         coord.assign(this.#centerCoordinate, value)
     }
-    @is("point")
     get centerPoint() {
         return new Point(this.owner, this.#centerCoordinate)
     }
     set centerPoint(value) {
+        assertIsRealNumber(value, "centerPoint")
         coord.assign(this.#centerCoordinate, value.coordinate)
     }
-    @is("positiveNumber")
     get radiusX() {
         return this.#radiusX
     }
     set radiusX(value) {
+        assertIsPositiveNumber(value, "radiusX")
         this.#radiusX = value
     }
-    @is("positiveNumber")
     get radiusY() {
         return this.#radiusY
     }
     set radiusY(value) {
+        assertIsPositiveNumber(value, "radiusY")
         this.#radiusY = value
     }
-    @is("realNumber")
     get startAngle() {
         return this.#startAngle
     }
     set startAngle(value) {
+        assertIsRealNumber(value, "startAngle")
         this.#startAngle = angle.simplify(value)
     }
-    @is("realNumber")
     get endAngle() {
         return this.#endAngle
     }
     set endAngle(value) {
+        assertIsRealNumber(value, "endAngle")
         this.#endAngle = angle.simplify(value)
     }
-    @is("boolean")
     get positive() {
         return this.#positive
     }
     set positive(value) {
+        assertIsBoolean(value, "positive")
         this.#positive = value
     }
-    @is("realNumber")
     get rotation() {
         return this.#rotation
     }
     set rotation(value) {
+        assertIsRealNumber(value, "rotation")
         this.#rotation = value
     }
 
@@ -122,27 +121,35 @@ class Arc extends GeomObject implements Visible {
         return valid
     }
 
-    static fromTwoPointsEtc(owner: Geomtoy, point1: Point, point2: Point, radiusX: number, radiusY: number, largeArcFlag: boolean, sweepFlag: boolean, rotation: number) {
+    static fromTwoPointsEtc(owner: Geomtoy, point1: Point, point2: Point, radiusX: number, radiusY: number, largeArc: boolean, positive: boolean, rotation: number) {
         let [x1, y1] = point1.coordinate,
             [x2, y2] = point2.coordinate,
             {
-                cx,
-                cy,
-                rx,
-                ry,
+                centerX: cx,
+                centerY: cy,
+                radiusX: rx,
+                radiusY: ry,
                 startAngle,
-                endAngle,
-                anticlockwise: positive
-            } = arcEndpointToCenterParameterization({ x1, y1, x2, y2, rx: radiusX, ry: radiusY, largeArcFlag, sweepFlag, xAxisRotation: rotation })
+                endAngle
+            } = arcEndpointToCenterParameterization({
+                point1X: x1,
+                point1Y: y1,
+                point2X: x2,
+                point2Y: y2,
+                radiusX,
+                radiusY,
+                largeArcFlag: largeArc,
+                sweepFlag: positive,
+                xAxisRotation: rotation
+            })
         return new Arc(owner, cx, cy, rx, ry, startAngle, endAngle, positive, rotation)
     }
     getLength() {}
-    getGraphics(type: GraphicsImplType): (SvgCommand | CanvasCommand)[] {
+    getGraphics() {
         let c = this.centerCoordinate,
             g = new Graphics()
-        g.moveTo(...c)
-        g.centerArcTo(...c, this.radiusX, this.radiusY, this.startAngle, this.endAngle, this.rotation, this.positive)
-        return g.valueOf(type)
+        g.centerArcTo(...c, this.radiusX, this.radiusY, this.rotation, this.startAngle, this.endAngle, this.positive)
+        return g.commands
     }
     apply(transformation: Transformation): GeomObject {
         throw new Error("Method not implemented.")

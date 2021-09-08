@@ -15,13 +15,13 @@
     },
     "author": "Fish Eleven",
     "config": {
-        "umdName":"Geomtoy",
+        "umdName": "Geomtoy",
         "srcDir": "src/geomtoy",
         "srcIndex": "index.ts",
-        "examplesDir":"examples",
+        "examplesDir": "examples",
         "docsGenDir": "docs",
-        "docsIncludesDir":"includes",
-        "docsMediaDir":"media",
+        "docsIncludesDir": "includes",
+        "docsMediaDir": "media",
         "declsGenDir": "decls",
         "distDir": "dist"
     },
@@ -42,6 +42,6 @@
         "rollup-plugin-serve": "^1.1.0",
         "rollup-plugin-terser": "^7.0.2",
         "typedoc": "^0.21.4",
-        "typescript": "^4.3.5"
+        "typescript": "^4.4.2"
     }
 }

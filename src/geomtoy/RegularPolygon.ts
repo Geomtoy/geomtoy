@@ -7,8 +7,17 @@ import Point from "./Point"
 import Circle from "./Circle"
 import Line from "./Line"
 import Polygon from "./Polygon"
-import { sealed, is, compared, validAndWithSameOwner } from "./decorator"
-import { CanvasCommand, Direction, GraphicsImplType, SvgCommand } from "./types"
+import {
+    sealed,
+    validAndWithSameOwner,
+    assertIsRealNumber,
+    assertIsCoordinate,
+    assertIsPoint,
+    assertIsPositiveNumber,
+    assertIsInteger,
+    assertComparison
+} from "./decorator"
+import { Direction, GraphicsCommand } from "./types"
 import GeomObject from "./base/GeomObject"
 import { AreaMeasurable } from "./interfaces"
 import Transformation from "./transformation"
@@ -42,55 +51,55 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
         throw new Error("[G]Arguments can NOT construct a `RegularPolygon`.")
     }
 
-    @is("realNumber")
     get centerX() {
         return coord.x(this.#centerCoordinate)
     }
     set centerX(value) {
+        assertIsRealNumber(value, "centerX")
         coord.x(this.#centerCoordinate, value)
     }
-    @is("realNumber")
     get centerY() {
         return coord.y(this.#centerCoordinate)
     }
     set centerY(value) {
+        assertIsRealNumber(value, "centerY")
         coord.y(this.#centerCoordinate, value)
     }
-    @is("coordinate")
     get centerCoordinate() {
         return this.#centerCoordinate
     }
     set centerCoordinate(value) {
+        assertIsCoordinate(value, "centerCoordinate")
         coord.assign(this.#centerCoordinate, value)
     }
-    @is("point")
     get centerPoint() {
         return new Point(this.owner, this.#centerCoordinate)
     }
     set centerPoint(value) {
+        assertIsPoint(value, "centerPoint")
         coord.assign(this.#centerCoordinate, value.coordinate)
     }
-    @is("positiveNumber")
     get radius() {
         return this.#radius
     }
     set radius(value) {
+        assertIsPositiveNumber(value, "radius")
         this.#radius = value
     }
-    @compared("ge", 3)
-    @is("integer")
-    @is("positiveNumber")
     get sideCount() {
         return this.#sideCount
     }
     set sideCount(value) {
+        assertIsRealNumber(value, "sideCount")
+        assertIsInteger(value, "sideCount")
+        assertComparison(value, "sideCount", "ge", 3)
         this.#sideCount = value
     }
-    @is("realNumber")
     get rotation() {
         return this.#rotation
     }
     set rotation(value) {
+        assertIsRealNumber(value,"rotation")
         this.#rotation = value
     }
 
@@ -129,10 +138,9 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
     getWindingDirection() {
         return this.#windingDirection
     }
-    setWindingDirection(direction :Direction){
+    setWindingDirection(direction: Direction) {
         this.#windingDirection = direction
     }
-
 
     static fromApothemEtc(owner: Geomtoy, apothem: number, centerPoint: Point, sideCount: number, rotation: number = 0) {
         let r = apothem / math.cos(Math.PI / sideCount)
@@ -189,15 +197,15 @@ class RegularPolygon extends GeomObject implements AreaMeasurable {
     toArray(): any[] {
         throw new Error("Method not implemented.")
     }
-    getGraphics(type: GraphicsImplType): (SvgCommand | CanvasCommand)[] {
-        let g = new Graphics(),
-            ps = this.getPoints()
+    getGraphics(): GraphicsCommand[] {
+        const g = new Graphics()
+        const ps = this.getPoints()
         g.moveTo(...util.head(ps)?.coordinate!)
         util.forEach(util.range(1, this.sideCount), i => {
             g.lineTo(...ps[i].coordinate)
         })
         g.close()
-        return g.valueOf(type)
+        return g.commands
     }
 }
 

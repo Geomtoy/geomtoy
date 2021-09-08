@@ -6,7 +6,7 @@ import Rectangle from "./Rectangle"
 import GeomObject from "./base/GeomObject"
 import Geomtoy from "."
 import math from "./utility/math"
-import { is, sealed } from "./decorator"
+import { assertIsCoordinateArray, assertIsPointArray, sealed } from "./decorator"
 import coordArray from "./utility/coordinateArray"
 import coord from "./utility/coordinate"
 
@@ -33,19 +33,18 @@ class Polyline extends GeomObject {
         return Object.seal(this)
     }
 
-    @is("pointArray")
     get points() {
         return util.map(this.#pointCoordinates, c => new Point(this.owner, c))
     }
     set points(value) {
+        assertIsPointArray(value, "points")
         this.#pointCoordinates = util.map(value, p => p.coordinate)
     }
-
-    @is("coordinateArray")
     get pointCoordinates() {
         return this.#pointCoordinates
     }
     set pointCoordinates(value) {
+        assertIsCoordinateArray(value, "pointCoordinates")
         this.#pointCoordinates = util.map(value, c => coord.copy(c))
     }
 

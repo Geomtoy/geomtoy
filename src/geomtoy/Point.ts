@@ -1,4 +1,4 @@
-import { is, sealed, validAndWithSameOwner } from "./decorator"
+import { assertIsCoordinate, assertIsRealNumber, sealed, validAndWithSameOwner } from "./decorator"
 import vec2 from "./utility/vec2"
 import util from "./utility"
 import math from "./utility/math"
@@ -13,7 +13,7 @@ import Circle from "./Circle"
 import Transformation from "./transformation"
 
 import Graphics from "./graphics"
-import { GraphicsImplType, CanvasCommand, SvgCommand } from "./types"
+import { GraphicsCommand } from "./types"
 import { Visible } from "./interfaces"
 import Polygon from "./Polygon"
 import Triangle from "./Triangle"
@@ -38,25 +38,25 @@ class Point extends GeomObject implements Visible {
         return Object.seal(this)
     }
 
-    @is("realNumber")
     get x() {
         return coord.x(this.#coordinate)
     }
     set x(value) {
+        assertIsRealNumber(value, "x")
         coord.x(this.#coordinate, value)
     }
-    @is("realNumber")
     get y() {
         return coord.y(this.#coordinate)
     }
     set y(value) {
+        assertIsRealNumber(value, "y")
         coord.y(this.#coordinate, value)
     }
-    @is("coordinate")
     get coordinate() {
         return coord.copy(this.#coordinate)
     }
     set coordinate(value) {
+        assertIsCoordinate(value, "coordinate")
         coord.assign(this.#coordinate, value)
     }
 
@@ -104,7 +104,7 @@ class Point extends GeomObject implements Visible {
         let a1 = vec2.angle(vec2.from(c0, c1)),
             a2 = vec2.angle(vec2.from(c0, c1)),
             d = (a2 - a1) / n
-        return util.range(1, n).map(i=>new Ray(owner, vertex, a1 + d * i))
+        return util.range(1, n).map(i => new Ray(owner, vertex, a1 + d * i))
     }
 
     //todo
@@ -323,19 +323,15 @@ class Point extends GeomObject implements Visible {
         return math.greaterThan(sd, sr, epsilon)
     }
 
-    /**
-     * Get graphics object of `this`
-     * @param {GraphicsImplType} type
-     * @returns {Array<SvgCommand | CanvasCommand>}
-     */
-    getGraphics(type: GraphicsImplType): Array<SvgCommand | CanvasCommand> {
-        let { x, y } = this,
-            g = new Graphics(),
-            pointSize = this.owner.getOptions().graphics.pointSize
-        g.moveTo(x, y)
-        g.centerArcTo(x, y, pointSize, pointSize, 0, 2 * Math.PI, 0)
+    getGraphics(): GraphicsCommand[] {
+        const g = new Graphics()
+        const c = this.coordinate
+        const scale = this.owner.scale
+        const pointSize = this.owner.getOptions().graphics.pointSize / scale
+
+        g.centerArcTo(...c, pointSize, pointSize, 0, 0, 2 * Math.PI)
         g.close()
-        return g.valueOf(type)
+        return g.commands
     }
     /**
      * apply the transformation

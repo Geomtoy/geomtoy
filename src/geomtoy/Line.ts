@@ -1,6 +1,6 @@
 import math from "./utility/math"
 import util from "./utility"
-import { is, sealed, validAndWithSameOwner } from "./decorator"
+import { assertIsRealNumber, sealed, validAndWithSameOwner } from "./decorator"
 
 import Point from "./Point"
 import Segment from "./Segment"
@@ -8,9 +8,8 @@ import Graphics from "./graphics"
 import Rectangle from "./Rectangle"
 import Circle from "./Circle"
 import GeomObject from "./base/GeomObject"
-import { CanvasCommand, GraphicsImplType, SvgCommand } from "./types"
+import { GraphicsCommand } from "./types"
 import Transformation from "./transformation"
-import Vector from "./Vector"
 import Geomtoy from "."
 import Polygon from "./Polygon"
 import coord from "./utility/coordinate"
@@ -32,25 +31,25 @@ class Line extends GeomObject {
         return Object.seal(this)
     }
 
-    @is("realNumber")
     get a() {
         return this.#a
     }
     set a(value) {
+        assertIsRealNumber(value, "a")
         this.#a = value
     }
-    @is("realNumber")
     get b() {
         return this.#b
     }
     set b(value) {
+        assertIsRealNumber(value, "b")
         this.#b = value
     }
-    @is("realNumber")
     get c() {
         return this.#c
     }
     set c(value) {
+        assertIsRealNumber(value, "c")
         this.#c = value
     }
 
@@ -544,13 +543,31 @@ class Line extends GeomObject {
         return Math.abs(l1.c - l2.c) / Math.hypot(l1.a, l1.b)
     }
 
-    /**
-     * Get graphics object of `this`
-     * @param {GraphicsImplType} type
-     */
-    getGraphics(type: GraphicsImplType): Array<SvgCommand | CanvasCommand> {
-        let lowerBound = -this.owner.getOptions().graphics.lineRange,
-            upperBound = this.owner.getOptions().graphics.lineRange,
+    getIntersectionPointsWithRectangle(rectangle: Rectangle): Point[] {
+        const { originX: x, originY: y, width: w, height: h } = rectangle
+
+        const s1 = new Segment(this.owner, [x, y], [x + w, y]),
+            s2 = new Segment(this.owner, [x + w, y], [x + w, y + h]),
+            s3 = new Segment(this.owner, [x + w, y + h], [x, y + h]),
+            s4 = new Segment(this.owner, [x, y + h], [x, y]),
+            ret1 = this.getIntersectionPointWithSegment(s1),
+            ret2 = this.getIntersectionPointWithSegment(s2),
+            ret3 = this.getIntersectionPointWithSegment(s3),
+            ret4 = this.getIntersectionPointWithSegment(s4)
+
+        return [ret1, ret2, ret3, ret4].filter(v => v !== null) as Point[]
+    }
+
+    getGraphics(): GraphicsCommand[] {
+        let bbox = this.owner.getBoundingBox(),
+            lowerBoundX = bbox[0],
+            upperBoundX = bbox[0] + bbox[2],
+            lowerBoundY = bbox[1],
+            upperBoundY = bbox[1] + bbox[3],
+            // lowerBoundX = - this.owner.getOptions().graphics.lineRange,
+            // upperBoundX =  this.owner.getOptions().graphics.lineRange,
+            // lowerBoundY = - this.owner.getOptions().graphics.lineRange,
+            // upperBoundY =  this.owner.getOptions().graphics.lineRange,
             { a, b, c } = this,
             x1,
             x2,
@@ -559,20 +576,21 @@ class Line extends GeomObject {
         //x=-(b/a)y-c/a
         //y=-(a/b)x-c/b
         if (this.b === 0) {
-            y1 = lowerBound
-            y2 = upperBound
+            y1 = lowerBoundY
+            y2 = upperBoundY
             x1 = -(b / a) * y1 - c / a
             x2 = -(b / a) * y2 - c / a
         } else {
-            x1 = lowerBound
-            x2 = upperBound
+            x1 = lowerBoundX
+            x2 = upperBoundX
             y1 = -(a / b) * x1 - c / b
             y2 = -(a / b) * x2 - c / b
         }
-        let g = new Graphics()
+        const g = new Graphics()
         g.moveTo(x1, y1)
         g.lineTo(x2, y2)
-        return g.valueOf(type)
+
+        return g.commands
     }
     apply(transformation: Transformation): GeomObject {
         throw new Error("Method not implemented.")

@@ -190,95 +190,95 @@ export function validAndWithSameOwner(constructor: new (...args: any[]) => any) 
     })
 }
 
-export function is(
-    t:
-        | "realNumber"
-        | "integer"
-        | "positiveNumber"
-        | "nonZeroNumber"
-        | "negativeNumber"
-        | "coordinate"
-        | "coordinateArray"
-        | "size"
-        | "boolean"
-        | "point"
-        | "pointArray"
-        | "line"
-        | "ellipse"
-) {
-    return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-        let set = descriptor.set!,
-            name = target.constructor.name
-        descriptor.set = function (value: any) {
-            if (t === "realNumber" && !util.isRealNumber(value)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be a real number(number excluding \`Infinity\` and \`NaN\`).`)
-            }
-            if (t === "integer" && !util.isInteger(value)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be an integer.`)
-            }
-            if (t === "positiveNumber" && !util.isRealNumber(value) && !(value > 0)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be a positive number.`)
-            }
-            if (t === "negativeNumber" && !util.isRealNumber(value) && !(value < 0)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be a negative number.`)
-            }
-            if (t === "nonZeroNumber" && !util.isRealNumber(value) && !(value === 0)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be a nonzero number.`)
-            }
-            if (t === "coordinate" && !util.isCoordinate(value)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be a coordinate.`)
-            }
-            if (t === "coordinateArray" && !util.isArray(value) && !util.every(value, c => util.isCoordinate(c))) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be an array of coordinate.`)
-            }
-            if (t === "size" && !util.isSize(value)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be a size.`)
-            }
-            if (t === "boolean" && !util.isBoolean(value)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be a boolean.`)
-            }
-            if (t === "point" && !(value instanceof Point)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be a \`Point\`.`)
-            }
-            if (t === "pointArray" && !util.isArray(value) && !util.every(value, p => p instanceof Point)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be an array of \`Point\`.`)
-            }
-            if (t === "line" && !(value instanceof Line)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be a \`Line\`.`)
-            }
-            if (t === "ellipse" && !(value instanceof Ellipse)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be an \`Ellipse\`.`)
-            }
-
-            set.call(this, value)
-        }
+export function assertCondition(condition: any, msg?: string): asserts condition {
+    if (!condition) {
+        throw new TypeError(`[G]${msg}`)
     }
 }
 
-export function compared(t: "gt" | "lt" | "eq" | "ge" | "le" | "ne", n: number) {
-    return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-        let set = descriptor.set!,
-            name = target.constructor.name
-        descriptor.set = function (value: any) {
-            if (t === "gt" && !(value > n)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be greater than ${n}.`)
-            }
-            if (t === "lt" && !(value < n)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be less than ${n}.`)
-            }
-            if (t === "eq" && !(value === n)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be equal to ${n}.`)
-            }
-            if (t === "ge" && !(value >= n)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be greater than or equal to ${n}.`)
-            }
-            if (t === "le" && !(value <= n)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should be less than or equal to ${n}.`)
-            }
-            if (t === "ne" && !(value !== n)) {
-                throw new Error(`[G]The \`${propertyKey}\` of ${article(name)} should not be equal to ${n}.`)
-            }
-            set.call(this, value)
-        }
+export function assertIsRealNumber(value: any, p: string): asserts value is number {
+    if (!util.isRealNumber(value)) {
+        throw new TypeError(`[G]The \`${p}\` should be a real number(number excluding \`Infinity\` and \`NaN\`).`)
+    }
+}
+export function assertIsInteger(value: any, p: string): asserts value is number {
+    if (!util.isInteger(value)) {
+        throw new TypeError(`[G]The \`${p}\` should be an integer.`)
+    }
+}
+export function assertIsPositiveNumber(value: any, p: string): asserts value is number {
+    if (!util.isPositiveNumber(value)) {
+        throw new TypeError(`[G]The \`${p}\` should be a positive number.`)
+    }
+}
+export function assertIsNegativeNumber(value: any, p: string): asserts value is number {
+    if (!util.isNegativeNumber(value)) {
+        throw new TypeError(`[G]The \`${p}\` should be a negative number.`)
+    }
+}
+export function assertIsNonZeroNumber(value: any, p: string): asserts value is number {
+    if (!util.isNonZeroNumber(value)) {
+        throw new TypeError(`[G]The \`${p}\` should be a nonzero number.`)
+    }
+}
+export function assertIsCoordinate(value: any, p: string): asserts value is [number, number] {
+    if (!util.isCoordinate(value)) {
+        throw new TypeError(`[G]The \`${p}\` should be a coordinate.`)
+    }
+}
+export function assertIsCoordinateArray(value: any, p: string): asserts value is [number, number][] {
+    if (!(util.isArray(value) && util.every(value, c => util.isCoordinate(c)))) {
+        throw new TypeError(`[G]The \`${p}\` should be an array of coordinate.`)
+    }
+}
+export function assertIsPoint(value: any, p: string): asserts value is Point {
+    if (!(value instanceof Point)) {
+        throw new Error(`[G]The \`${p}\` should be a \`Point\`.`)
+    }
+}
+export function assertIsPointArray(value: any, p: string): asserts value is Point[] {
+    if (!(util.isArray(value) && util.every(value, p => p instanceof Point))) {
+        throw new Error(`[G]The \`${p}\`  an array of \`Point\`.`)
+    }
+}
+export function assertIsSize(value: any, p: string): asserts value is [number, number] {
+    if (!util.isSize(value)) {
+        throw new TypeError(`[G]The \`${p}\` should be a size.`)
+    }
+}
+export function assertIsBoolean(value: any, p: string): asserts value is boolean {
+    if (!util.isBoolean(value)) {
+        throw new TypeError(`[G]The \`${p}\` should be a boolean.`)
+    }
+}
+export function assertIsString(value: any, p: string): asserts value is string {
+    if (!util.isString(value)) {
+        throw new TypeError(`[G]The \`${p}\` should be a string.`)
+    }
+}
+export function assertIsLine(value: any, p: string): asserts value is Line {
+    if (!(value instanceof Line)) {
+        throw new TypeError(`[G]The \`${p}\`  should be a \`Line\`.`)
+    }
+}
+
+export function assertComparison(value: any, p: string, t: "gt" | "lt" | "eq" | "ge" | "le" | "ne", n: number) {
+    if (t === "gt" && !(value > n)) {
+        throw new TypeError(`[G]The \`${p}\` should be greater than ${n}.`)
+    }
+    if (t === "lt" && !(value < n)) {
+        throw new TypeError(`[G]The \`${p}\` should be less than ${n}.`)
+    }
+    if (t === "eq" && !(value === n)) {
+        throw new TypeError(`[G]The \`${p}\` should be equal to ${n}.`)
+    }
+    if (t === "ge" && !(value >= n)) {
+        throw new TypeError(`[G]The \`${p}\` should be greater than or equal to ${n}.`)
+    }
+    if (t === "le" && !(value <= n)) {
+        throw new TypeError(`[G]The \`${p}\` should be less than or equal to ${n}.`)
+    }
+    if (t === "ne" && !(value !== n)) {
+        throw new TypeError(`[G]The \`${p}\` should not be equal to ${n}.`)
     }
 }

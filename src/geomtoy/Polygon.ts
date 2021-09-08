@@ -6,7 +6,7 @@ import Rectangle from "./Rectangle"
 import GeomObject from "./base/GeomObject"
 import Geomtoy from "."
 import math from "./utility/math"
-import { is, sealed } from "./decorator"
+import { assertIsCoordinateArray, assertIsPointArray, sealed } from "./decorator"
 import coordArray from "./utility/coordinateArray"
 import coord from "./utility/coordinate"
 
@@ -31,19 +31,18 @@ class Polygon extends GeomObject {
         return Object.seal(this)
     }
 
-    @is("pointArray")
     get points() {
         return util.map(this.#pointCoordinates, c => new Point(this.owner, c))
     }
     set points(value) {
+        assertIsPointArray(value, "points")
         this.#pointCoordinates = util.map(value, p => p.coordinate)
     }
-
-    @is("coordinateArray")
     get pointCoordinates() {
         return this.#pointCoordinates
     }
     set pointCoordinates(value) {
+        assertIsCoordinateArray(value, "pointCoordinates")
         this.#pointCoordinates = util.map(value, c => coord.copy(c))
     }
 
@@ -56,7 +55,7 @@ class Polygon extends GeomObject {
 
         let epsilon = this.owner.getOptions().epsilon,
             uniques: [number, number][] = [[NaN, NaN]]
-        return cs.some(c=>{
+        return cs.some(c => {
             if (uniques.every(uc => !coord.isSameAs(uc, c, epsilon))) uniques.push(c)
             if (uniques.length > minPointLength) return true
         })
@@ -92,7 +91,7 @@ class Polygon extends GeomObject {
             l = this.getPointCount(),
             cs = this.pointCoordinates
 
-        util.forEach(util.range(0,l), index => {
+        util.forEach(util.range(0, l), index => {
             let c1 = util.nth(cs, index - l)!,
                 c2 = util.nth(cs, index - l + 1)!
             p += vec2.magnitude(vec2.from(c1, c2))
@@ -105,7 +104,7 @@ class Polygon extends GeomObject {
             l = this.getPointCount(),
             cs = this.pointCoordinates
 
-        util.forEach(util.range(0,l), index => {
+        util.forEach(util.range(0, l), index => {
             let c1 = util.nth(cs, index - l)!,
                 c2 = util.nth(cs, index - l + 1)!
             a += vec2.cross(c1, c2)
@@ -166,7 +165,7 @@ class Polygon extends GeomObject {
             c = point.coordinate,
             epsilon = this.owner.getOptions().epsilon,
             ret = false
-        util.forEach(util.range(0,l), index => {
+        util.forEach(util.range(0, l), index => {
             if (coord.isSameAs(c, cs[index], epsilon)) {
                 ret = true
                 return true // `point` is a vertex
@@ -189,7 +188,7 @@ class Polygon extends GeomObject {
             c = point.coordinate,
             epsilon = this.owner.getOptions().epsilon,
             ret = false
-        util.forEach(util.range(0,l), index => {
+        util.forEach(util.range(0, l), index => {
             let c1 = util.nth(cs, index - l)!,
                 c2 = util.nth(cs, index - l + 1)!
             if (coord.y(c1) > coord.y(c) !== coord.y(c2) > coord.y(c)) {

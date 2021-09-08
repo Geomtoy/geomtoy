@@ -7,8 +7,8 @@ import Vector from "./Vector"
 import Line from "./Line"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
-import { GraphicsImplType, SvgCommand, CanvasCommand } from "./types"
-import { is, sealed, validAndWithSameOwner } from "./decorator"
+import { GraphicsCommand } from "./types"
+import { assertIsCoordinate, assertIsPoint, assertIsRealNumber, sealed, validAndWithSameOwner } from "./decorator"
 import Graphics from "./graphics"
 import Geomtoy from "."
 import coord from "./utility/coordinate"
@@ -37,61 +37,60 @@ class Segment extends GeomObject {
         throw new Error("[G]Arguments can NOT construct a `Segment`.")
     }
 
-    @is("realNumber")
     get point1X() {
         return coord.x(this.#point1Coordinate)
     }
     set point1X(value) {
+        assertIsRealNumber(value, "point1X")
         coord.x(this.#point1Coordinate, value)
     }
-    @is("realNumber")
     get point1Y() {
         return coord.y(this.#point1Coordinate)
     }
     set point1Y(value) {
+        assertIsRealNumber(value, "point1Y")
         coord.y(this.#point1Coordinate, value)
     }
-    @is("coordinate")
     get point1Coordinate() {
         return coord.copy(this.#point1Coordinate)
     }
     set point1Coordinate(value) {
+        assertIsCoordinate(value, "point1Coordinate")
         coord.assign(this.#point1Coordinate, value)
     }
-    @is("point")
     get point1() {
         return new Point(this.owner, this.#point1Coordinate)
     }
     set point1(value) {
+        assertIsPoint(value, "point1")
         coord.assign(this.#point1Coordinate, value.coordinate)
     }
-
-    @is("realNumber")
     get point2X() {
         return coord.x(this.#point2Coordinate)
     }
     set point2X(value) {
+        assertIsRealNumber(value, "point2X")
         coord.x(this.#point2Coordinate, value)
     }
-    @is("realNumber")
     get point2Y() {
         return coord.y(this.#point2Coordinate)
     }
     set point2Y(value) {
+        assertIsRealNumber(value, "point2Y")
         coord.y(this.#point2Coordinate, value)
     }
-    @is("coordinate")
     get point2Coordinate() {
         return coord.copy(this.#point2Coordinate)
     }
     set point2Coordinate(value) {
+        assertIsCoordinate(value, "point2Coordinate")
         coord.assign(this.#point2Coordinate, value)
     }
-    @is("point")
     get point2() {
         return new Point(this.owner, this.#point2Coordinate)
     }
     set point2(value) {
+        assertIsPoint(value, "point2")
         coord.assign(this.#point2Coordinate, value.coordinate)
     }
     /**
@@ -323,7 +322,7 @@ class Segment extends GeomObject {
             cp3 = v3.crossProduct(v1),
             epsilon = this.owner.getOptions().epsilon
 
-        if (math.equalTo(cp1, 0,epsilon)) return false
+        if (math.equalTo(cp1, 0, epsilon)) return false
         let t1 = cp3 / cp1,
             t2 = cp2 / cp1
         if (0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1) {
@@ -436,11 +435,12 @@ class Segment extends GeomObject {
         return Line.fromTwoCoordinates(this.owner, this.point1Coordinate, this.point2Coordinate)
     }
 
-    getGraphics(type: GraphicsImplType): (SvgCommand | CanvasCommand)[] {
-        let g = new Graphics()
-        g.moveTo(...this.point1Coordinate)
-        g.lineTo(...this.point2Coordinate)
-        return g.valueOf(type)
+    getGraphics(): GraphicsCommand[] {
+        const g = new Graphics()
+        const { point1Coordinate: c1, point2Coordinate: c2 } = this
+        g.moveTo(...c1)
+        g.lineTo(...c2)
+        return g.commands
     }
     toArray() {
         return [this.point1.x, this.point1.y, this.point2.x, this.point2.y]

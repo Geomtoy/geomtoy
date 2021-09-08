@@ -5,7 +5,7 @@ import interact from "./assets/interact"
 
 const canvas = document.querySelector("#canvas")
 const svg = document.querySelector("#svg")
-const G = new Geomtoy({
+const G = new Geomtoy(1000,1000,{
     epsilon: 2 ** -32,
     coordinateSystem: {
         scale: 4,
@@ -13,7 +13,7 @@ const G = new Geomtoy({
         yAxisPositiveOnBottom: true
     },
     graphics: {
-        pointSize: 2
+        pointSize: 4
     }
 })
 const canvasRenderer = new Geomtoy.adapters.VanillaCanvas(canvas, G, { lineJoin: "round" })
@@ -48,6 +48,7 @@ const gui = new dat.GUI()
 const setting = {
     renderer: "svg"
 }
+console.log(touchables.point1.object)
 gui.add(setting, "renderer", ["canvas", "svg"])
     .listen()
     .onChange(value => showRender(value))
@@ -76,6 +77,8 @@ function draw(renderer) {
     renderer.clear()
 
     renderer.stroke(colors.black)
+    renderer.fill("#00000000")
+
     touchables.point1.path = renderer.draw(touchables.point1.object)
     touchables.point2.path = renderer.draw(touchables.point2.object)
     touchables.point3.path = renderer.draw(touchables.point3.object)
@@ -85,4 +88,7 @@ function draw(renderer) {
 
     renderer.stroke(colors.red + "80")
     renderer.drawBehind(G.Triangle(p1, p2, p3))
+
+    renderer.draw(G.Circle(20,p1))
+
 }

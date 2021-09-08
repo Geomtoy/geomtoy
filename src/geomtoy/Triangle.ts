@@ -3,10 +3,10 @@ import util from "./utility"
 import Point from "./Point"
 import Circle from "./Circle"
 import GeomObject from "./base/GeomObject"
-import { CanvasCommand, Direction, GraphicsImplType, SvgCommand } from "./types"
+import { Direction, GraphicsCommand } from "./types"
 import Transformation from "./transformation"
 
-import { is, sealed, validAndWithSameOwner } from "./decorator"
+import { assertIsCoordinate, assertIsPoint, assertIsRealNumber, sealed, validAndWithSameOwner } from "./decorator"
 import Geomtoy from "."
 import coord from "./utility/coordinate"
 import vec2 from "./utility/vec2"
@@ -43,88 +43,88 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
         return Object.seal(this)
     }
 
-    @is("realNumber")
     get point1X() {
         return coord.x(this.#point1Coordinate)
     }
     set point1X(value) {
+        assertIsRealNumber(value, "point1X")
         coord.x(this.#point1Coordinate, value)
     }
-    @is("realNumber")
     get point1Y() {
         return coord.y(this.#point1Coordinate)
     }
     set point1Y(value) {
+        assertIsRealNumber(value, "point1Y")
         coord.y(this.#point1Coordinate, value)
     }
-    @is("coordinate")
     get point1Coordinate() {
         return coord.copy(this.#point1Coordinate)
     }
     set point1Coordinate(value) {
+        assertIsCoordinate(value, "point1Coordinate")
         coord.assign(this.#point1Coordinate, value)
     }
-    @is("point")
     get point1() {
         return new Point(this.owner, this.#point1Coordinate)
     }
     set point1(value) {
+        assertIsPoint(value, "point1")
         coord.assign(this.#point1Coordinate, value.coordinate)
     }
-    @is("realNumber")
     get point2X() {
         return coord.x(this.#point2Coordinate)
     }
     set point2X(value) {
+        assertIsRealNumber(value, "point2X")
         coord.x(this.#point2Coordinate, value)
     }
-    @is("realNumber")
     get point2Y() {
         return coord.y(this.#point2Coordinate)
     }
     set point2Y(value) {
+        assertIsRealNumber(value, "point2Y")
         coord.y(this.#point2Coordinate, value)
     }
-    @is("coordinate")
     get point2Coordinate() {
         return coord.copy(this.#point2Coordinate)
     }
     set point2Coordinate(value) {
+        assertIsCoordinate(value, "point2Coordinate")
         coord.assign(this.#point2Coordinate, value)
     }
-    @is("point")
     get point2() {
         return new Point(this.owner, this.#point2Coordinate)
     }
     set point2(value) {
+        assertIsPoint(value, "point2")
         coord.assign(this.#point2Coordinate, value.coordinate)
     }
-    @is("realNumber")
     get point3X() {
         return coord.x(this.#point3Coordinate)
     }
     set point3X(value) {
+        assertIsRealNumber(value, "point3X")
         coord.x(this.#point3Coordinate, value)
     }
-    @is("realNumber")
     get point3Y() {
         return coord.y(this.#point3Coordinate)
     }
     set point3Y(value) {
+        assertIsRealNumber(value, "point3Y")
         coord.y(this.#point3Coordinate, value)
     }
-    @is("coordinate")
     get point3Coordinate() {
         return coord.copy(this.#point3Coordinate)
     }
     set point3Coordinate(value) {
+        assertIsCoordinate(value, "point3Coordinate")
         coord.assign(this.#point3Coordinate, value)
     }
-    @is("point")
     get point3() {
         return new Point(this.owner, this.#point3Coordinate)
     }
     set point3(value) {
+        assertIsPoint(value, "point3")
         coord.assign(this.#point3Coordinate, value.coordinate)
     }
 
@@ -207,6 +207,7 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
             c3 = vec2.add(c1, v3)
         return new Triangle(owner, c1, c2, c3)
     }
+    static fromThreeIntersectedLines(owner: Geomtoy, lines: Line[]) {}
 
     /**
      * Whether the three vertices of triangle `this` is the same as triangle `triangle` ignoring the order of the vertices.
@@ -955,16 +956,14 @@ class Triangle extends GeomObject implements AreaMeasurable, Visible {
     apply(transformation: Transformation): GeomObject {
         throw new Error("Method not implemented.")
     }
-    getGraphics(type: GraphicsImplType): Array<SvgCommand | CanvasCommand> {
-        let g = new Graphics(),
-            c1 = this.point1Coordinate,
-            c2 = this.point2Coordinate,
-            c3 = this.point3Coordinate
+    getGraphics(): GraphicsCommand[] {
+        const g = new Graphics()
+        const { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = this
         g.moveTo(...c1)
         g.lineTo(...c2)
         g.lineTo(...c3)
         g.close()
-        return g.valueOf(type)
+        return g.commands
     }
     clone() {
         return new Triangle(this.owner, this.point1Coordinate, this.point2Coordinate, this.point3Coordinate)

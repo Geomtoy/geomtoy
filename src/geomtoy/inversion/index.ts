@@ -1,7 +1,7 @@
 import util from "../utility"
 import vec2 from "../utility/vec2"
 import math from "../utility/math"
-import { is, sealed, validAndWithSameOwner } from "../decorator"
+import { assertIsCoordinate, assertIsNonZeroNumber, assertIsPoint, assertIsRealNumber, sealed, validAndWithSameOwner } from "../decorator"
 
 import Point from "../Point"
 import Circle from "../Circle"
@@ -34,39 +34,39 @@ class Inversion extends GeomObject {
         throw new Error("[G]Arguments can NOT construct an `Inversion`.")
     }
 
-    @is("nonZeroNumber")
     get power() {
         return this.#power
     }
     set power(value) {
+        assertIsNonZeroNumber(value, "power")
         this.#power = value
     }
-    @is("realNumber")
     get centerX() {
         return coord.x(this.#centerCoordinate)
     }
     set centerX(value) {
+        assertIsRealNumber(value, "centerX")
         coord.x(this.#centerCoordinate, value)
     }
-    @is("realNumber")
     get centerY() {
         return coord.y(this.#centerCoordinate)
     }
     set centerY(value) {
+        assertIsRealNumber(value, "centerY")
         coord.y(this.#centerCoordinate, value)
     }
-    @is("coordinate")
     get centerCoordinate() {
         return coord.copy(this.#centerCoordinate)
     }
     set centerCoordinate(value) {
+        assertIsCoordinate(value, "centerCoordinate")
         coord.assign(this.#centerCoordinate, value)
     }
-    @is("point")
     get centerPoint() {
         return new Point(this.owner, this.#centerCoordinate)
     }
     set centerPoint(value) {
+        assertIsPoint(value, "centerPoint")
         coord.assign(this.#centerCoordinate, value.coordinate)
     }
 

@@ -2,11 +2,11 @@ import vec2 from "./utility/vec2"
 import util from "./utility"
 import angle from "./utility/angle"
 import math from "./utility/math"
-import { is, sealed, validAndWithSameOwner } from "./decorator"
+import { assertIsCoordinate, assertIsPoint, assertIsRealNumber, sealed, validAndWithSameOwner } from "./decorator"
 
 import Point from "./Point"
 import Segment from "./Segment"
-import { CanvasCommand, GraphicsImplType, SvgCommand } from "./types"
+import { GraphicsCommand } from "./types"
 import GeomObject from "./base/GeomObject"
 import Graphics from "./graphics"
 import Transformation from "./transformation"
@@ -39,39 +39,39 @@ class Ray extends GeomObject implements Visible {
         return Object.seal(this)
     }
 
-    @is("realNumber")
     get x() {
         return coord.x(this.#coordinate)
     }
     set x(value) {
+        assertIsRealNumber(value, "x")
         coord.x(this.#coordinate, value)
     }
-    @is("realNumber")
     get y() {
         return coord.y(this.#coordinate)
     }
     set y(value) {
+        assertIsRealNumber(value, "y")
         coord.y(this.#coordinate, value)
     }
-    @is("coordinate")
     get coordinate() {
         return coord.copy(this.#coordinate)
     }
     set coordinate(value) {
+        assertIsCoordinate(value, "coordinate")
         coord.assign(this.#coordinate, value)
     }
-    @is("point")
     get point() {
         return new Point(this.owner, this.#coordinate)
     }
     set point(value) {
+        assertIsPoint(value, "point")
         coord.assign(this.#coordinate, value.coordinate)
     }
-    @is("realNumber")
     get angle() {
         return this.#angle
     }
     set angle(value) {
+        assertIsRealNumber(value, "angle")
         this.#angle = angle.simplify2(value)
     }
 
@@ -122,7 +122,7 @@ class Ray extends GeomObject implements Visible {
     apply(transformation: Transformation): GeomObject {
         throw new Error("Method not implemented.")
     }
-    getGraphics(type: GraphicsImplType): (SvgCommand | CanvasCommand)[] {
+    getGraphics(): GraphicsCommand[] {
         throw new Error("Method not implemented.")
     }
 

@@ -92,7 +92,7 @@ const util = {
     isNaN: Number.isNaN,
     isFinite: Number.isFinite,
     isArray: Array.isArray,
-    isPlainObject: (v: any) => {
+    isPlainObject: (v: any): v is { [key: string]: any } => {
         if (Object.prototype.toString.call(v) !== "[object Object]") return false
         let proto = Object.getPrototypeOf(v)
         return proto === Object.getPrototypeOf({}) || proto === null
@@ -102,13 +102,22 @@ const util = {
         return t == "[object Function]" || t == "[object AsyncFunction]" || t == "[object GeneratorFunction]"
     },
     // concrete
-    isRealNumber: (v: any) => {
+    isRealNumber: (v: any): v is number => {
         return util.isNumber(v) && !util.isNaN(v) && util.isFinite(v)
     },
-    isCoordinate: (v: any) => {
+    isPositiveNumber: (v: any): v is number => {
+        return util.isRealNumber(v) && v > 0
+    },
+    isNegativeNumber: (v: any): v is number => {
+        return util.isRealNumber(v) && v < 0
+    },
+    isNonZeroNumber: (v: any): v is number => {
+        return util.isRealNumber(v) && v !== 0
+    },
+    isCoordinate: (v: any): v is [number, number] => {
         return util.isArray(v) && v.length === 2 && util.every(v, util.isRealNumber)
     },
-    isSize: (v: any) => {
+    isSize: (v: any): v is number => {
         return util.isArray(v) && v.length === 2 && util.every(v, v => util.isRealNumber(v) && v > 0)
     },
     // #endregion

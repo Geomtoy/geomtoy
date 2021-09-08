@@ -6,48 +6,6 @@ import Segment from "../Segment"
 export * from "./graphics"
 export * from "./geomtoy"
 
-// Geomtoy global options
-export type Options = {
-    epsilon: number
-    graphics: {
-        pointSize: number
-        lineRange: number
-        vectorArrow: {
-            width: number
-            length: number
-            foldback: number
-        }
-    }
-    pathSampleRatio: number
-    coordinateSystem: {
-        xAxisPositiveOnRight: boolean
-        yAxisPositiveOnBottom: boolean
-        originX: number
-        originY: number
-        scale: number
-    }
-}
-export const defaultOptions: Options = {
-    epsilon: 2 ** -32,
-    graphics: {
-        pointSize: 2,
-        lineRange: 2 ** 10,
-        vectorArrow: {
-            width: 5,
-            length: 10,
-            foldback: 1
-        }
-    },
-    pathSampleRatio: 100,
-    coordinateSystem: {
-        xAxisPositiveOnRight: true,
-        yAxisPositiveOnBottom: true,
-        originX: 0,
-        originY: 0,
-        scale: 1
-    }
-}
-
 export type PointLineData = {
     point: Point
     line: Line

@@ -2,8 +2,8 @@ import Graphics from "./graphics"
 import Point from "./Point"
 import Vector from "./Vector"
 import util from "./utility"
-import { Direction, GraphicsImplType } from "./types"
-import { is, sealed, validAndWithSameOwner } from "./decorator"
+import { Direction } from "./types"
+import { assertIsCoordinate, assertIsPoint, assertIsPositiveNumber, assertIsRealNumber, sealed, validAndWithSameOwner } from "./decorator"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Geomtoy from "."
@@ -36,53 +36,53 @@ class Ellipse extends GeomObject implements AreaMeasurable {
         return Object.seal(this)
     }
 
-    @is("realNumber")
     get centerX() {
         return coord.x(this.#centerCoordinate)
     }
     set centerX(value) {
+        assertIsRealNumber(value, "centerX")
         coord.x(this.#centerCoordinate, value)
     }
-    @is("realNumber")
     get centerY() {
         return coord.y(this.#centerCoordinate)
     }
     set centerY(value) {
+        assertIsRealNumber(value, "centerY")
         coord.y(this.#centerCoordinate, value)
     }
-    @is("coordinate")
     get centerCoordinate() {
         return coord.copy(this.#centerCoordinate)
     }
     set centerCoordinate(value) {
+        assertIsCoordinate(value, "centerCoordinate")
         coord.assign(this.#centerCoordinate, value)
     }
-    @is("point")
     get centerPoint() {
         return new Point(this.owner, this.#centerCoordinate)
     }
     set centerPoint(value) {
+        assertIsPoint(value, "centerPoint")
         coord.assign(this.#centerCoordinate, value.coordinate)
     }
-    @is("positiveNumber")
     get radiusX() {
         return this.#radiusX
     }
     set radiusX(value) {
+        assertIsPositiveNumber(value, "radiusX")
         this.#radiusX = value
     }
-    @is("positiveNumber")
     get radiusY() {
         return this.#radiusY
     }
     set radiusY(value) {
+        assertIsPositiveNumber(value, "radiusY")
         this.#radiusY = value
     }
-    @is("realNumber")
     get rotation() {
         return this.#rotation
     }
     set rotation(value) {
+        assertIsRealNumber(value, "rotation")
         this.#rotation = value
     }
 
@@ -96,7 +96,7 @@ class Ellipse extends GeomObject implements AreaMeasurable {
     getWindingDirection() {
         return this.#windingDirection
     }
-    setWindingDirection(direction :Direction){
+    setWindingDirection(direction: Direction) {
         this.#windingDirection = direction
     }
 
@@ -115,16 +115,11 @@ class Ellipse extends GeomObject implements AreaMeasurable {
         throw new Error("Method not implemented.")
     }
 
-    getGraphics(type: GraphicsImplType) {
-        let x = this.centerPoint.x,
-            y = this.centerPoint.y,
-            rx = this.radiusX,
-            ry = this.radiusY,
-            g = new Graphics()
-        g.moveTo(0, 0)
-            //let graphics decide the start point itself
-            .centerArcTo(x, y, rx, ry, 0, 2 * Math.PI, 0)
-        return g.valueOf(type)
+    getGraphics() {
+        const { centerX, centerY, radiusX, radiusY, rotation } = this
+        const g = new Graphics()
+        g.centerArcTo(centerX, centerY, radiusX, radiusY, rotation, 0, 2 * Math.PI)
+        return g.commands
     }
 
     //https://www.coder.work/article/1220553
@@ -143,25 +138,23 @@ class Ellipse extends GeomObject implements AreaMeasurable {
         throw new Error("Method not implemented.")
     }
 
-    getGraphicsAlt(type: GraphicsImplType) {
+    getGraphicsAlt() {
         /**
          * @see https://www.tinaja.com/glib/ellipse4.pdf
          */
         const kappa = 0.551784 //or 0.5522848
-        let x = this.centerPoint.x,
-            y = this.centerPoint.y,
-            rx = this.radiusX,
-            ry = this.radiusY,
-            ox = rx * kappa, // x axis control point offset
-            oy = ry * kappa // y axis control point offset
-        let g = new Graphics()
-        g.moveTo(x - rx, y)
-            .bezierCurveTo(x - rx, y - oy, x - ox, y - ry, x, y - ry)
-            .bezierCurveTo(x + ox, y - ry, x + rx, y - oy, x + rx, y)
-            .bezierCurveTo(x + rx, y + oy, x + ox, y + ry, x, y + ry)
-            .bezierCurveTo(x - ox, y + ry, x - rx, y + oy, x - rx, y)
+        const { centerX: cx, centerY: cy, radiusX: rx, radiusY: ry, rotation } = this
+        const ox = rx * kappa // x axis control point offset
+        const oy = ry * kappa // y axis control point offset
 
-        return g.valueOf(type)
+        let g = new Graphics()
+        g.moveTo(cx - rx, cy)
+            .bezierCurveTo(cx - rx, cy - oy, cx - ox, cy - ry, cx, cy - ry)
+            .bezierCurveTo(cx + ox, cy - ry, cx + rx, cy - oy, cx + rx, cy)
+            .bezierCurveTo(cx + rx, cy + oy, cx + ox, cy + ry, cx, cy + ry)
+            .bezierCurveTo(cx - ox, cy + ry, cx - rx, cy + oy, cx - rx, cy)
+
+        return g.commands
     }
 }
 

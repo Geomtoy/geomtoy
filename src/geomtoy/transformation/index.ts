@@ -34,7 +34,11 @@ class Transformation extends GeomObject {
      * Reset transformation `this` by the identity matrix.
      */
     reset() {
-        this.#matrix.toIdentity()
+        this.#matrix.identitySelf()
+        return this
+    }
+    invert(){
+        this.#matrix.invertSelf()
         return this
     }
     /**

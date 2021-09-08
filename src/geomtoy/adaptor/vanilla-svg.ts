@@ -6,10 +6,10 @@ import { Visible } from "../interfaces"
  * @category Adapter
  */
 export default class VanillaSvg {
-    svg: SVGSVGElement
+    container: SVGSVGElement
     geomtoy: Geomtoy
 
-    private _gEl: SVGGElement
+    private gEl: SVGGElement
 
     private _stroke: string = "#000000FF"
     private _strokeDash: number[] = []
@@ -17,41 +17,39 @@ export default class VanillaSvg {
     private _strokeWidth: number = 1
     private _fill: string = "#000000FF"
 
-    private _lineJoin: "bevel" | "miter" | "round" = "miter"
-    private _miterLimit: number = 10
-    private _lineCap: "butt" | "round" | "square" = "butt"
+    private _lineJoin: "bevel" | "miter" | "round"
+    private _miterLimit: number
+    private _lineCap: "butt" | "round" | "square"
 
-    constructor(svg: SVGSVGElement, geomtoy: Geomtoy, options?: { lineJoin: "bevel" | "miter" | "round"; miterLimit: number; lineCap: "butt" | "round" | "square" }) {
-        if (svg instanceof SVGSVGElement) {
-            this.svg = svg
+    constructor(container: SVGSVGElement, geomtoy: Geomtoy, options?: { lineJoin?: "bevel" | "miter" | "round"; miterLimit?: number; lineCap?: "butt" | "round" | "square" }) {
+        if (container instanceof SVGSVGElement) {
+            this.container = container
             this.geomtoy = geomtoy
 
-            this._gEl = document.createElementNS("http://www.w3.org/2000/svg", "g")
-            this._gEl.setAttribute("id", "geomtoy")
-            this.svg.append(this._gEl)
+            this.gEl = document.createElementNS("http://www.w3.org/2000/svg", "g")
+            this.gEl.setAttribute("id", "geomtoy")
+            this.container.append(this.gEl)
 
-            this._lineJoin = options?.lineJoin ?? this._lineJoin
-            this._lineCap = options?.lineCap ?? this._lineCap
-            this._miterLimit = options?.miterLimit ?? this._miterLimit
+            this._lineJoin = options?.lineJoin ?? "miter"
+            this._lineCap = options?.lineCap ?? "butt"
+            this._miterLimit = options?.miterLimit ?? 10
 
             return this
         }
         throw new Error(`[G]Unable to initialize.`)
     }
-    zoom() {}
-    pan() {}
 
     setup() {
         let [a, b, c, d, e, f] = this.geomtoy.globalTransformation.get()
-        this._gEl.setAttribute("transform", `matrix(${a} ${b} ${c} ${d} ${e} ${f})`)
-        this._gEl.setAttribute("stroke-linejoin", this._lineJoin)
-        this._gEl.setAttribute("stroke-miterlimit", this._miterLimit.toString())
-        this._gEl.setAttribute("stroke-linecap", this._lineCap)
+        this.gEl.setAttribute("transform", `matrix(${a} ${b} ${c} ${d} ${e} ${f})`)
+        this.gEl.setAttribute("stroke-linejoin", this._lineJoin)
+        this.gEl.setAttribute("stroke-miterlimit", this._miterLimit.toString())
+        this.gEl.setAttribute("stroke-linecap", this._lineCap)
     }
 
     private _draw(object: GeomObject & Visible, func: Function) {
         this.setup()
-        let ds = object.getGraphics("svg"),
+        let ds = object.getGraphics(),
             pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path"),
             attrD = ""
 
@@ -62,22 +60,22 @@ export default class VanillaSvg {
         pathEl.setAttribute("fill", this._fill)
 
         ds.forEach(d => {
-            if (d.type === "M") {
+            if (d.type === "moveTo") {
                 attrD += `M${d.x},${d.y}`
             }
-            if (d.type === "L") {
+            if (d.type === "lineTo") {
                 attrD += `L${d.x},${d.y}`
             }
-            if (d.type === "C") {
-                attrD += `C${d.cp1x},${d.cp1y} ${d.cp2x},${d.cp2y} ${d.x},${d.y}`
+            if (d.type === "bezierCurveTo") {
+                attrD += `C${d.controlPoint1X},${d.controlPoint1Y} ${d.controlPoint2X},${d.controlPoint2Y} ${d.x},${d.y}`
             }
-            if (d.type === "Q") {
-                attrD += `C${d.cpx},${d.cpy} ${d.x},${d.y}`
+            if (d.type === "quadraticBezierCurveTo") {
+                attrD += `Q${d.controlPointX},${d.controlPointY} ${d.x},${d.y}`
             }
-            if (d.type === "A") {
-                attrD += `A${d.rx} ${d.ry} ${d.xAxisRotation} ${d.largeArcFlag ? 1 : 0} ${d.sweepFlag ? 1 : 0} ${d.x},${d.y}`
+            if (d.type === "arcTo") {
+                attrD += `A${d.radiusX} ${d.radiusY} ${d.xAxisRotation} ${d.largeArc ? 1 : 0} ${d.positive ? 1 : 0} ${d.x},${d.y}`
             }
-            if (d.type === "Z") {
+            if (d.type === "close") {
                 attrD += `Z`
             }
         })
@@ -102,14 +100,14 @@ export default class VanillaSvg {
         this._fill = fill
     }
     isPointInFill(pathEl: SVGPathElement, x: number, y: number) {
-        const point = this.svg.createSVGPoint() || new DOMPoint()
+        const point = this.container.createSVGPoint() || new DOMPoint()
         point.x = x
         point.y = y
         // typescript inheritance error here: `SVGPathElement` inherited from `SVGGraphicsElement`
         return (pathEl as any as SVGGeometryElement).isPointInFill(point)
     }
     isPointInStroke(pathEl: SVGPathElement, x: number, y: number) {
-        const point = this.svg.createSVGPoint() || new DOMPoint()
+        const point = this.container.createSVGPoint() || new DOMPoint()
         point.x = x
         point.y = y
         // typescript inheritance error here: `SVGPathElement` inherited from `SVGGraphicsElement`
@@ -117,12 +115,12 @@ export default class VanillaSvg {
     }
     draw(object: GeomObject & Visible) {
         return this._draw(object, (pathEl: SVGPathElement) => {
-            this._gEl.append(pathEl)
+            this.gEl.append(pathEl)
         })
     }
     drawBehind(object: GeomObject & Visible) {
         return this._draw(object, (pathEl: SVGPathElement) => {
-            this._gEl.prepend(pathEl)
+            this.gEl.prepend(pathEl)
         })
     }
     drawBatch(...objects: Array<GeomObject & Visible>) {
@@ -132,6 +130,6 @@ export default class VanillaSvg {
         return objects.map(o => this.drawBehind(o))
     }
     clear() {
-        this._gEl.innerHTML = ""
+        this.gEl.innerHTML = ""
     }
 }

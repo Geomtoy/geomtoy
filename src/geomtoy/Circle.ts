@@ -10,8 +10,8 @@ import RegularPolygon from "./RegularPolygon"
 import Vector from "./Vector"
 import Segment from "./Segment"
 import Inversion from "./inversion"
-import { AnglePointLineData, CanvasCommand, Direction, GraphicsImplType, PointLineData, PointsLineData, SvgCommand } from "./types"
-import { is, sealed } from "./decorator"
+import { GraphicsCommand, Direction, AnglePointLineData, PointLineData, PointsLineData } from "./types"
+import { assertIsCoordinate, assertIsPoint, assertIsPositiveNumber, assertIsRealNumber, sealed } from "./decorator"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Graphics from "./graphics"
@@ -43,39 +43,39 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
         return Object.seal(this)
     }
 
-    @is("positiveNumber")
     get radius() {
         return this.#radius
     }
     set radius(value) {
+        assertIsPositiveNumber(value, "radius")
         this.#radius = value
     }
-    @is("realNumber")
     get centerX() {
         return coord.x(this.#centerCoordinate)
     }
     set centerX(value) {
+        assertIsRealNumber(value, "centerX")
         coord.x(this.#centerCoordinate, value)
     }
-    @is("realNumber")
     get centerY() {
         return coord.y(this.#centerCoordinate)
     }
     set centerY(value) {
+        assertIsRealNumber(value, "centerY")
         coord.y(this.#centerCoordinate, value)
     }
-    @is("coordinate")
     get centerCoordinate() {
         return coord.copy(this.#centerCoordinate)
     }
     set centerCoordinate(value) {
+        assertIsCoordinate(value, "centerCoordinate")
         coord.assign(this.#centerCoordinate, value)
     }
-    @is("point")
     get centerPoint() {
         return new Point(this.owner, this.#centerCoordinate)
     }
     set centerPoint(value) {
+        assertIsPoint(value, "centerPoint")
         coord.assign(this.#centerCoordinate, value.coordinate)
     }
 
@@ -164,7 +164,6 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
             r = this.radius
         return new Point(this.owner, vec2.add(cc, vec2.from2(angle, r)))
     }
-
 
     // todo
     getArcBetweenAngle(startAngle: number, endAngle: number, positive = true): null | Arc {
@@ -402,14 +401,12 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
         return new RegularPolygon(this.owner, this.radius, this.centerX, this.centerY, sideCount, angle)
     }
 
-    getGraphics(type: GraphicsImplType): (SvgCommand | CanvasCommand)[] {
+    getGraphics(): GraphicsCommand[] {
         let c = this.centerCoordinate,
             g = new Graphics()
-
-        g.moveTo(...c)
         g.centerArcTo(...c, this.radius, this.radius, 0, 2 * Math.PI, 0)
         g.close()
-        return g.valueOf(type)
+        return g.commands
     }
 
     apply(transformation: Transformation): GeomObject {

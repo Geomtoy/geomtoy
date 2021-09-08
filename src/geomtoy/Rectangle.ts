@@ -1,10 +1,10 @@
 import util from "./utility"
 
 import Point from "./Point"
-import { CanvasCommand, GraphicsImplType, SvgCommand } from "./types"
+import { GraphicsCommand } from "./types"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
-import { is, sealed, validAndWithSameOwner } from "./decorator"
+import { assertIsCoordinate, assertIsPoint, assertIsPositiveNumber, assertIsRealNumber, assertIsSize, sealed, validAndWithSameOwner } from "./decorator"
 import math from "./utility/math"
 import Geomtoy from "."
 import coord from "./utility/coordinate"
@@ -22,76 +22,80 @@ class Rectangle extends GeomObject {
     constructor(owner: Geomtoy, originCoordinate: [number, number], size: [number, number])
     constructor(owner: Geomtoy, originPoint: Point, width: number, height: number)
     constructor(owner: Geomtoy, originPoint: Point, size: [number, number])
-    constructor(o: Geomtoy, a1: any, a2: any, a3?: any, a4?: any) {
+    constructor(owner: Geomtoy)
+    constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any) {
         super(o)
         if (util.isNumber(a1)) {
             if (util.isNumber(a3)) {
                 Object.assign(this, { originX: a1, originY: a2, width: a3, height: a4 })
+            } else {
+                Object.assign(this, { originX: a1, originY: a2, size: a3 })
             }
-            Object.assign(this, { originX: a1, originY: a2, size: a3 })
         }
         if (util.isArray(a1)) {
             if (util.isNumber(a2)) {
                 Object.assign(this, { originCoordinate: a1, width: a2, height: a3 })
+            } else {
+                Object.assign(this, { originCoordinate: a1, size: a2 })
             }
-            Object.assign(this, { originCoordinate: a1, size: a2 })
         }
         if (a1 instanceof Point) {
             if (util.isNumber(a2)) {
                 Object.assign(this, { originPoint: a1, width: a2, height: a3 })
+            } else {
+                Object.assign(this, { originPoint: a1, size: a2 })
             }
-            Object.assign(this, { originPoint: a1, size: a2 })
         }
         return Object.seal(this)
     }
 
-    @is("realNumber")
     get originX() {
         return coord.x(this.#originCoordinate)
     }
     set originX(value) {
+        assertIsRealNumber(value, "originX")
         coord.x(this.#originCoordinate, value)
     }
-    @is("realNumber")
     get originY() {
         return coord.y(this.#originCoordinate)
     }
     set originY(value) {
+        assertIsRealNumber(value, "originY")
         coord.y(this.#originCoordinate, value)
     }
-    @is("coordinate")
     get originCoordinate() {
         return coord.copy(this.#originCoordinate)
     }
     set originCoordinate(value) {
+        assertIsCoordinate(value, "originCoordinate")
         coord.assign(this.#originCoordinate, value)
     }
-    @is("point")
     get originPoint() {
         return new Point(this.owner, this.#originCoordinate)
     }
     set originPoint(value) {
+        assertIsPoint(value, "originPoint")
         coord.assign(this.#originCoordinate, value.coordinate)
     }
-    @is("positiveNumber")
     get width() {
         return size.width(this.#size)
     }
     set width(value) {
+        assertIsPositiveNumber(value, "width")
         size.width(this.#size, value)
     }
-    @is("positiveNumber")
     get height() {
         return size.height(this.#size)
     }
     set height(value) {
+        assertIsPositiveNumber(value, "height")
         size.height(this.#size, value)
     }
-    @is("size")
     get size() {
         return size.copy(this.#size)
     }
     set size(value) {
+        assertIsSize(value, "size")
         size.assign(this.#size, value)
     }
 
@@ -220,7 +224,7 @@ class Rectangle extends GeomObject {
         throw new Error("Method not implemented.")
     }
 
-    getGraphics(type: GraphicsImplType): (SvgCommand | CanvasCommand)[] {
+    getGraphics(): GraphicsCommand[] {
         throw new Error("Method not implemented.")
     }
     toString(): string {

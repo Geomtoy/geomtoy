@@ -5,10 +5,10 @@ import math from "./utility/math"
 
 import Point from "./Point"
 import Segment from "./Segment"
-import { CanvasCommand, GraphicsImplType, SvgCommand } from "./types"
+import { GraphicsCommand } from "./types"
 import GeomObject from "./base/GeomObject"
 import Graphics from "./graphics"
-import { is, sealed, validAndWithSameOwner } from "./decorator"
+import { assertIsCoordinate, assertIsPoint, assertIsRealNumber, sealed, validAndWithSameOwner } from "./decorator"
 import Transformation from "./transformation"
 import Geomtoy from "."
 import coord from "./utility/coordinate"
@@ -33,106 +33,109 @@ class Vector extends GeomObject {
         if (util.isNumber(a1)) {
             if (util.isNumber(a3)) {
                 Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4 })
+            } else {
+                Object.assign(this, { x: a1, y: a2 })
             }
-            Object.assign(this, { x: a1, y: a2 })
         }
         if (util.isArray(a1)) {
             if (util.isArray(a2)) {
                 Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2 })
+            } else {
+                Object.assign(this, { coordinate: a1 })
             }
-            Object.assign(this, { coordinate: a1 })
         }
         if (a1 instanceof Point) {
             if (a2 instanceof Point) {
                 Object.assign(this, { point1: a1, point2: a2 })
+            } else {
+                Object.assign(this, { point: a1 })
             }
-            Object.assign(this, { point: a1 })
         }
         return Object.seal(this)
     }
 
-    @is("realNumber")
     get x() {
         return coord.x(this.#coordinate)
     }
     set x(value) {
+        assertIsRealNumber(value, "x")
         coord.x(this.#coordinate, value)
     }
-    @is("realNumber")
     get y() {
         return coord.y(this.#coordinate)
     }
     set y(value) {
+        assertIsRealNumber(value, "y")
         coord.y(this.#coordinate, value)
     }
-    @is("coordinate")
     get coordinate() {
         return coord.copy(this.#coordinate)
     }
     set coordinate(value) {
+        assertIsCoordinate(value, "coordinate")
         coord.assign(this.#coordinate, value)
     }
-    @is("point")
     get point() {
         return new Point(this.owner, this.#coordinate)
     }
     set point(value) {
+        assertIsPoint(value, "point")
         coord.assign(this.#coordinate, value.coordinate)
     }
-    @is("realNumber")
     get point1X() {
         return coord.x(this.#point1Coordinate)
     }
     set point1X(value) {
+        assertIsRealNumber(value, "point1X")
         coord.x(this.#point1Coordinate, value)
     }
-    @is("realNumber")
     get point1Y() {
         return coord.y(this.#point1Coordinate)
     }
     set point1Y(value) {
+        assertIsRealNumber(value, "point1Y")
         coord.y(this.#point1Coordinate, value)
     }
-    @is("coordinate")
     get point1Coordinate() {
         return coord.copy(this.#point1Coordinate)
     }
     set point1Coordinate(value) {
+        assertIsCoordinate(value, "point1Coordinate")
         coord.assign(this.#point1Coordinate, value)
     }
-    @is("point")
     get point1() {
         return new Point(this.owner, this.#point1Coordinate)
     }
     set point1(value) {
+        assertIsPoint(value, "point1")
         coord.assign(this.#point1Coordinate, value.coordinate)
     }
-    @is("realNumber")
     get point2X() {
         return coord.x(this.#point1Coordinate) + coord.x(this.#coordinate)
     }
     set point2X(value) {
+        assertIsRealNumber(value, "point2X")
         coord.x(this.#coordinate, value - coord.x(this.#point1Coordinate))
     }
-    @is("realNumber")
     get point2Y() {
         return coord.y(this.#point1Coordinate) + coord.y(this.#coordinate)
     }
     set point2Y(value) {
+        assertIsRealNumber(value, "point2Y")
         coord.y(this.#coordinate, value - coord.y(this.#point1Coordinate))
     }
-    @is("coordinate")
     get point2Coordinate() {
         return vec2.add(this.#point1Coordinate, this.#coordinate)
     }
     set point2Coordinate(value) {
+        assertIsCoordinate(value, "point2Coordinate")
         coord.assign(this.#coordinate, vec2.from(this.#point1Coordinate, value))
     }
-    @is("point")
     get point2() {
         return new Point(this.owner, this.point2Coordinate)
     }
     set point2(value) {
+        assertIsPoint(value, "point2")
         coord.assign(this.#coordinate, vec2.from(this.#point1Coordinate, value.coordinate))
     }
 
@@ -284,21 +287,14 @@ class Vector extends GeomObject {
     }
 
     //todo
-    /**
-     * Get graphics object of `this`
-     * @param {GraphicsImplType} type
-     * @returns {Array<SvgCommand | CanvasCommand>}
-     */
-    getGraphics(type: GraphicsImplType): Array<SvgCommand | CanvasCommand> {
-        let [x1, y1] = this.point1Coordinate,
-            [x2, y2] = this.point2Coordinate,
-            g = new Graphics()
-
-        g.moveTo(x1, y1)
-        g.lineTo(x2, y2)
+    getGraphics(): GraphicsCommand[] {
+        const g = new Graphics()
+        const { point1Coordinate: c1, point2Coordinate: c2 } = this
+        g.moveTo(...c1)
+        g.lineTo(...c2)
         // g.centerArcTo(x, y, Vector.options.graphics.pointSize, Vector.options.graphics.pointSize, 0, 2 * math.PI, 0)
         // g.close()
-        return g.valueOf(type)
+        return g.commands
     }
     toString() {
         return [

@@ -10,8 +10,12 @@ class Matrix {
     static get identity() {
         return new Matrix(1, 0, 0, 1, 0, 0)
     }
-    toIdentity() {
+    identity() {
+        return this.clone().identitySelf()
+    }
+    identitySelf(){
         Object.assign(this, { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 })
+        return this
     }
     preMultiply(matrix: Matrix) {
         return this.clone().preMultiplySelf(matrix)

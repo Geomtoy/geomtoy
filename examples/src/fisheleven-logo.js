@@ -9,10 +9,10 @@ class myAdapter {
         let [a, b, c, d, e, f] = this.geomtoy.globalTransformation.get()
         this.svgDotJsContainer.attr("transform", `matrix(${a} ${b} ${c} ${d} ${e} ${f})`)
     }
-    async draw(object, { duration = 500, delay = 0 } = {}) {
+    async draw(object, { duration = 2000, delay = 0 } = {}) {
         this.setup()
         return new Promise((resolve, reject) => {
-            let ds = object.getGraphic("svg"),
+            let ds = object.getGraphics("svg"),
                 path = this.svgDotJsContainer.path(),
                 attrD = ""
 
