@@ -4,6 +4,7 @@ function getSettings(map, renderer) {
     if (!map.has(renderer)) {
         const settings = {
             currentTouch: undefined,
+            currentTouchOffset: [],
             panning: false,
             mouseDownCb(e) {
                 const cbs = settings.mouseDownCbs
@@ -48,7 +49,7 @@ function getSettings(map, renderer) {
 
 const minScale = 0.1
 const maxScale = 100
-const scaleDeltaRate = 1 / 200
+const scaleDeltaRate = 1 / 300
 
 export default {
     startDragAndDrop(touchables, renderer, callback) {
@@ -57,10 +58,12 @@ export default {
         renderer.container.addEventListener("mousedown", settings.mouseDownCb)
         settings.mouseDownCbs.dragAndDrop = e => {
             const coord = renderer.geomtoy.globalTransformation.antitransformCoordinate([e.offsetX, e.offsetY])
-            Object.keys(touchables).forEach(name => {
+
+            Object.keys(touchables).some(name => {
                 if (renderer.isPointInFill(touchables[name].path, ...coord)) {
-                    const currentTouch = (settings.currentTouch = touchables[name])
-                    currentTouch.offset = [currentTouch.object.x - coord[0], currentTouch.object.y - coord[1]]
+                    settings.currentTouch = touchables[name]
+                    settings.currentTouchOffset = [settings.currentTouch.object.x - coord[0], settings.currentTouch.object.y - coord[1]]
+                    return true
                 }
             })
         }
@@ -71,12 +74,12 @@ export default {
         renderer.container.addEventListener("mousemove", settings.mouseMoveCb)
         settings.mouseMoveCbs.dragAndDrop = e => {
             const coord = renderer.geomtoy.globalTransformation.antitransformCoordinate([e.offsetX, e.offsetY])
-            const currentTouch = settings.currentTouch
-            if (currentTouch !== undefined) {
-                currentTouch.object.x = coord[0] + currentTouch.offset[0]
-                currentTouch.object.y = coord[1] + currentTouch.offset[1]
+
+            if (settings.currentTouch !== undefined) {
+                settings.currentTouch.object.x = coord[0] + settings.currentTouchOffset[0]
+                settings.currentTouch.object.y = coord[1] + settings.currentTouchOffset[1]
                 setTimeout(() => {
-                    callback(renderer, currentTouch)
+                    callback(renderer, settings.currentTouch)
                 })
             } else {
                 renderer.container.style.cursor = Object.keys(touchables).some(name => renderer.isPointInFill(touchables[name].path, ...coord)) ? "pointer" : "default"
@@ -123,12 +126,17 @@ export default {
             scale += e.deltaY * scaleDeltaRate
 
             if (scale < minScale) {
-                renderer.geomtoy.scale = minScale
+                scale = minScale
             } else if (scale > maxScale) {
-                renderer.geomtoy.scale = maxScale
-            } else {
-                renderer.geomtoy.scale = scale
+                scale = maxScale
             }
+
+            const [innerOffsetX, innerOffsetY] = renderer.geomtoy.globalTransformation.antitransformCoordinate([e.offsetX, e.offsetY])
+            renderer.geomtoy.scale = scale
+            const [scaledOffsetX, scaledOffsetY] = renderer.geomtoy.globalTransformation.transformCoordinate([innerOffsetX, innerOffsetY])
+            const [zoomOffsetX, zoomOffsetY] = [e.offsetX - scaledOffsetX, e.offsetY - scaledOffsetY]
+            renderer.geomtoy.offset = [renderer.geomtoy.offset[0] + zoomOffsetX, renderer.geomtoy.offset[1] + zoomOffsetY]
+            
             setTimeout(() => {
                 callback(renderer)
             })

@@ -2,22 +2,20 @@ import Geomtoy from "../../src/geomtoy"
 import "./assets/dg"
 import colors from "./assets/colors"
 import interact from "./assets/interact"
+import rendererSwitch from "./assets/renderer-switch"
 
 const canvas = document.querySelector("#canvas")
 const svg = document.querySelector("#svg")
-const G = new Geomtoy(1000,1000,{
+const G = new Geomtoy(100,100,{
     epsilon: 2 ** -32,
-    coordinateSystem: {
-        scale: 4,
-        xAxisPositiveOnRight: true,
-        yAxisPositiveOnBottom: true
-    },
     graphics: {
-        pointSize: 4
+        pointSize: 6
     }
 })
 const canvasRenderer = new Geomtoy.adapters.VanillaCanvas(canvas, G, { lineJoin: "round" })
 const svgRenderer = new Geomtoy.adapters.VanillaSvg(svg, G, { lineJoin: "round" })
+const gui = new dat.GUI()
+
 const touchables = {
     point1: {
         object: G.Point(200, 120),
@@ -44,39 +42,37 @@ const touchables = {
         path: undefined
     }
 }
-const gui = new dat.GUI()
-const setting = {
-    renderer: "svg"
-}
-console.log(touchables.point1.object)
-gui.add(setting, "renderer", ["canvas", "svg"])
-    .listen()
-    .onChange(value => showRender(value))
-showRender("svg")
-function showRender(type) {
-    canvas.style.display = svg.style.display = "none"
-    if (type === "canvas") {
-        canvas.style.display = "block"
-        draw(canvasRenderer)
-    }
-    if (type === "svg") {
-        svg.style.display = "block"
-        draw(svgRenderer)
-    }
-}
-interact.responsive(canvas, () => {
-    if (setting.renderer === "canvas") draw(canvasRenderer)
+
+
+let currentRenderer
+const rendererList = { canvas: canvasRenderer, svg: svgRenderer }
+
+rendererSwitch(gui, rendererList, "canvas", (type, renderer) => {
+    currentRenderer = renderer
+    Object.keys(rendererList)
+        .filter(t => t !== type)
+        .forEach(t => {
+            interact.stopDragAndDrop(rendererList[t])
+            interact.stopZoomAndPan(rendererList[t])
+            interact.stopResponsive(rendererList[t])
+        })
+    interact.startDragAndDrop(touchables, currentRenderer, draw)
+    interact.startZoomAndPan(currentRenderer, draw)
+    interact.startResponsive(currentRenderer, (_, width, height) => {
+        G.width = width
+        G.height = height
+        G.origin = [width / 2, height / 2]
+        draw(currentRenderer)
+    })
 })
-interact.responsive(svg, () => {
-    if (setting.renderer === "svg") draw(svgRenderer)
-})
-interact.dragAndDrop(touchables, canvas, canvasRenderer, () => draw(canvasRenderer))
-interact.dragAndDrop(touchables, svg, svgRenderer, () => draw(svgRenderer))
+
 
 function draw(renderer) {
     renderer.clear()
 
+    renderer.strokeWidth(2)
     renderer.stroke(colors.black)
+    renderer.draw(G.Point.zero())
     renderer.fill("#00000000")
 
     touchables.point1.path = renderer.draw(touchables.point1.object)
@@ -87,7 +83,7 @@ function draw(renderer) {
     let p3 = touchables.point3.object
 
     renderer.stroke(colors.red + "80")
-    renderer.drawBehind(G.Triangle(p1, p2, p3))
+    renderer.draw(G.Triangle(p1, p2, p3),true)
 
     renderer.draw(G.Circle(20,p1))
 

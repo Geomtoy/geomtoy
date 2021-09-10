@@ -1,7 +1,7 @@
 import Geomtoy from ".."
 import GeomObject from "../base/GeomObject"
 import { Visible } from "../interfaces"
-import { GraphicsTextCommand } from "../types"
+import { AdapterOptions, LineCapType, LineJoinType } from "./adapter-types"
 /**
  * @category Adapter
  */
@@ -17,11 +17,11 @@ export default class VanillaCanvas {
     private _strokeWidth: number = 1
     private _fill: string = "transparent"
 
-    private _lineJoin: "bevel" | "miter" | "round"
+    private _lineJoin: LineJoinType
     private _miterLimit: number
-    private _lineCap: "butt" | "round" | "square"
+    private _lineCap: LineCapType
 
-    constructor(container: HTMLCanvasElement, geomtoy: Geomtoy, options?: { lineJoin?: "bevel" | "miter" | "round"; miterLimit?: number; lineCap?: "butt" | "round" | "square" }) {
+    constructor(container: HTMLCanvasElement, geomtoy: Geomtoy, options?: Partial<AdapterOptions>) {
         if (container instanceof HTMLCanvasElement) {
             this.container = container
             this.geomtoy = geomtoy
@@ -38,59 +38,61 @@ export default class VanillaCanvas {
     }
 
     setup() {
-        const [a, b, c, d, e, f] = this.geomtoy.globalTransformation.get()
-        this.context.setTransform(a, b, c, d, e, f)
+        const gt = this.geomtoy.globalTransformation.get()
+        this.context.setTransform(...gt)
         this.context.lineJoin = this._lineJoin
         this.context.miterLimit = this._miterLimit
         this.context.lineCap = this._lineCap
     }
-
-    private _drawText(cmd: GraphicsTextCommand, path2D: Path2D) {
-        // text
-        this.context.textAlign = "start" //default of `Canvas`
-        this.context.textBaseline = "alphabetic" //default of `Canvas`, `baseline`
-        this.context.font = `${cmd.font.bold ? "bold" : ""} ${cmd.font.italic ? "italic" : ""} ${cmd.font.size}px ${cmd.font.family}`
-        // handle text orientation
-        this.context.save()
-        this.context.transform(...this.geomtoy.globalTransformation.invert().get())
-        this.context.fillText(cmd.text, ...this.geomtoy.globalTransformation.transformCoordinate([cmd.x, cmd.y]))
-        this.context.restore()
-        // draw transparent bounding box
-        // this.context.strokeStyle = "transparent"
-        // this.context.fillStyle = "transparent"
-        this.context.strokeStyle = "transparent"
-        this.context.fillStyle = "#FF000080"
-        const metrics = this.context.measureText(cmd.text)
-        const width = metrics.width / this.geomtoy.scale
-        const ascent = metrics.fontBoundingBoxAscent / this.geomtoy.scale
-        const descent = metrics.fontBoundingBoxDescent / this.geomtoy.scale
-        const height = ascent + descent
-        const offsetY = this.geomtoy.yAxisPositiveOnBottom ? ascent : descent
-        const offsetX = this.geomtoy.xAxisPositiveOnRight ? 0 : width
-        const box = [cmd.x - offsetX, cmd.y - offsetY, width, height]
-        
-        path2D.moveTo(box[0],box[1])
-        path2D.lineTo(box[0]+box[2], box[1])
-        path2D.lineTo(box[0]+box[2],box[1]+box[3])
-        path2D.lineTo(box[0],box[1]+box[3])
-        path2D.closePath()
-    }
-    private _draw(object: GeomObject & Visible) {
+    draw(object: GeomObject & Visible, behind = false) {
         this.context.save()
         this.setup()
         const cmds = object.getGraphics()
         const path2D = new Path2D()
- 
 
         this._strokeDash.length > 0 && this.context.setLineDash(this._strokeDash)
         this._strokeDash.length > 0 && (this.context.lineDashOffset = this._strokeDashOffset)
         this.context.lineWidth = this._strokeWidth
         this.context.strokeStyle = this._stroke
         this.context.fillStyle = this._fill
-        
+
         if (cmds.length === 1 && cmds[0].type === "text") {
             const cmd = cmds[0]
-            this._drawText(cmd, path2D)
+            // text baseline
+            this.context.textBaseline = "alphabetic"
+            // text font style
+            let fontStyle = ""
+            cmd.font.bold && (fontStyle += "bold ")
+            cmd.font.italic && (fontStyle += "italic ")
+            fontStyle += `${cmd.font.size}px `
+            fontStyle += cmd.font.family
+            this.context.font = fontStyle
+            // handle text orientation
+            this.context.save()
+            this.context.transform(...this.geomtoy.globalTransformation.invert().get()) // resetTransform
+            // text
+            if (behind) {
+                this.context.globalCompositeOperation = "destination-over"
+            } else {
+                this.context.globalCompositeOperation = "source-over"
+            }
+            this.context.fillText(cmd.text, ...this.geomtoy.globalTransformation.transformCoordinate([cmd.x, cmd.y]))
+            this.context.restore()
+            // draw transparent bounding box
+            this.context.strokeStyle = "transparent"
+            this.context.fillStyle = "transparent"
+            const metrics = this.context.measureText(cmd.text)
+            const width = metrics.width / this.geomtoy.scale
+            const height = (metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent) / this.geomtoy.scale
+            const offsetY = this.geomtoy.yAxisPositiveOnBottom ? height : 0
+            const offsetX = this.geomtoy.xAxisPositiveOnRight ? 0 : width
+            const box = [cmd.x - offsetX, cmd.y - offsetY, width, height]
+            // bounding box
+            path2D.moveTo(box[0], box[1])
+            path2D.lineTo(box[0] + box[2], box[1])
+            path2D.lineTo(box[0] + box[2], box[1] + box[3])
+            path2D.lineTo(box[0], box[1] + box[3])
+            path2D.closePath()
         } else {
             cmds.forEach(cmd => {
                 if (cmd.type === "moveTo") {
@@ -113,16 +115,21 @@ export default class VanillaCanvas {
                 }
             })
         }
+        if (behind) {
+            this.context.globalCompositeOperation = "destination-over"
+        } else {
+            this.context.globalCompositeOperation = "source-over"
+        }
         this.context.fill(path2D)
         this.context.stroke(path2D)
         this.context.restore()
         return path2D
     }
-    
-    stroke(stroke:string){
+
+    stroke(stroke: string) {
         this._stroke = stroke
     }
-    strokeWidth(strokeWidth:number){
+    strokeWidth(strokeWidth: number) {
         this._strokeWidth = strokeWidth / this.geomtoy.scale
     }
     strokeDash(strokeDash: number[]) {
@@ -134,8 +141,6 @@ export default class VanillaCanvas {
     fill(fill: string) {
         this._fill = fill
     }
-
- 
     isPointInFill(path2D: Path2D, x: number, y: number) {
         // console.log(path2D,x,y)
         return this.context.isPointInPath(path2D, x, y)
@@ -144,19 +149,8 @@ export default class VanillaCanvas {
         return this.context.isPointInStroke(path2D, x, y)
     }
 
-    draw(object: GeomObject & Visible) {
-        this.context.globalCompositeOperation = "source-over"
-        return this._draw(object)
-    }
-    drawBehind(object: GeomObject & Visible) {
-        this.context.globalCompositeOperation = "destination-over"
-        return this._draw(object)
-    }
-    drawBatch(...objects: Array<GeomObject & Visible>) {
-        return objects.map(o => this.draw(o))
-    }
-    drawBehindBatch(...objects: Array<GeomObject & Visible>) {
-        return objects.map(o => this.drawBehind(o))
+    drawBatch(objects: (GeomObject & Visible)[], behind = false) {
+        return objects.map(o => this.draw(o, behind))
     }
     clear() {
         this.context.clearRect(0, 0, this.container.width, this.container.height)

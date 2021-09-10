@@ -18,18 +18,7 @@ import Text from "./Text"
 import Transformation from "./transformation"
 import Inversion from "./inversion"
 
-import {
-    Options,
-    defaultOptions,
-    Tail,
-    ConstructorOverloads,
-    TailedConstructor,
-    TailedStaticMethods,
-    RecursivePartial,
-    Factory,
-    CoordinateSystem,
-    defaultCoordinateSystem
-} from "./types"
+import { Options, defaultOptions, Tail, ConstructorOverloads, TailedConstructor, TailedStaticMethods, RecursivePartial, Factory } from "./types"
 import VanillaCanvas from "./adaptor/vanilla-canvas"
 import VanillaSvg from "./adaptor/vanilla-svg"
 import GeomObject from "./base/GeomObject"
@@ -215,11 +204,10 @@ class Geomtoy {
         applyOptionsRules(this.#options)
     }
 
-    getBoundingBox(): [number, number, number, number] {
+    globalBoundingBox(): [number, number, number, number] {
         const scale = this.#scale
         const [x, y] = this.globalTransformation.antitransformCoordinate([0, 0])
-        const width = this.#width / scale
-        const height = this.#height / scale
+        const [width, height] = [this.#width / scale, this.#height / scale]
         return [x, y, width, height]
     }
 

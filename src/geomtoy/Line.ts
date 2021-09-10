@@ -559,15 +559,11 @@ class Line extends GeomObject {
     }
 
     getGraphics(): GraphicsCommand[] {
-        let bbox = this.owner.getBoundingBox(),
+        let bbox = this.owner.globalBoundingBox(),
             lowerBoundX = bbox[0],
             upperBoundX = bbox[0] + bbox[2],
             lowerBoundY = bbox[1],
             upperBoundY = bbox[1] + bbox[3],
-            // lowerBoundX = - this.owner.getOptions().graphics.lineRange,
-            // upperBoundX =  this.owner.getOptions().graphics.lineRange,
-            // lowerBoundY = - this.owner.getOptions().graphics.lineRange,
-            // upperBoundY =  this.owner.getOptions().graphics.lineRange,
             { a, b, c } = this,
             x1,
             x2,

@@ -105,17 +105,6 @@ export type RecursivePartial<T> = {
     [K in keyof T]?: T[K] extends (infer U)[] ? RecursivePartial<U>[] : T[K] extends object ? RecursivePartial<T[K]> : T[K]
 }
 
-export type CoordinateSystem = {
-    xAxisPositiveOnRight: boolean
-    yAxisPositiveOnBottom: boolean
-    origin: [number, number]
-}
-export const defaultCoordinateSystem: CoordinateSystem = {
-    xAxisPositiveOnRight: true,
-    yAxisPositiveOnBottom: true,
-    origin: [0, 0]
-}
-
 // Geomtoy global options
 export type Options = {
     epsilon: number

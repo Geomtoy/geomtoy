@@ -7,14 +7,14 @@ import rendererSwitch from "./assets/renderer-switch"
 const canvas = document.querySelector("#canvas")
 const svg = document.querySelector("#svg")
 
-const G = new Geomtoy(canvas.width, canvas.height, {
+const G = new Geomtoy(100, 100, {
     epsilon: 2 ** -32,
     graphics: {
         pointSize: 6,
         lineRange: 1000
     }
 })
-G.xAxisPositiveOnRight = false
+// G.xAxisPositiveOnRight = false
 G.yAxisPositiveOnBottom = false
 G.scale = 10
 
@@ -29,7 +29,6 @@ const touchables = {
             x: undefined,
             y: undefined
         },
-        offset:undefined,
         path: undefined
     },
     point2: {
@@ -38,7 +37,6 @@ const touchables = {
             x: undefined,
             y: undefined
         },
-        offset:undefined,
         path: undefined
     },
     point3: {
@@ -47,7 +45,6 @@ const touchables = {
             x: undefined,
             y: undefined
         },
-        offset:undefined,
         path: undefined
     }
 }
@@ -57,7 +54,7 @@ const setting = {
     centroidPoint: false,
     medialTriangle: false,
     antimedialTriangle: false,
-    bisectingSegments: false,
+    angleBisectingSegments: false,
     incenterPoint: false,
     inscribedCircle: false,
     altitudeLines: false,
@@ -79,7 +76,7 @@ const setting = {
 let currentRenderer
 const rendererList = { canvas: canvasRenderer, svg: svgRenderer }
 
-rendererSwitch(gui, rendererList, "svg", (type, renderer) => {
+rendererSwitch(gui, rendererList, "canvas", (type, renderer) => {
     currentRenderer = renderer
     Object.keys(rendererList)
         .filter(t => t !== type)
@@ -131,73 +128,81 @@ Object.keys(setting).forEach(name => {
         .onChange(() => draw(currentRenderer))
 })
 
+const mathFont = "Cambria Math, Times New Roman, math, serif"
+
 function draw(renderer) {
     renderer.clear()
 
-    renderer.strokeWidth(4)
-    renderer.stroke(colors.black + "CC")
+    renderer.strokeWidth(2)
+    renderer.stroke(colors.grey + "CC")
+    renderer.fill(colors.grey + "CC")
+    renderer.draw(G.Point.zero())
+    renderer.draw(G.Text(1, 0, "O", { size: 40, italic: true, family: mathFont }))
 
-    renderer.fill("#000000FF")
+    renderer.fill(colors.black + "FF")
+    renderer.stroke(colors.black + "FF")
     touchables.point1.path = renderer.draw(touchables.point1.object)
     touchables.point2.path = renderer.draw(touchables.point2.object)
     touchables.point3.path = renderer.draw(touchables.point3.object)
+    renderer.draw(G.Text(touchables.point1.object.x + 1, touchables.point1.object.y, "A", { size: 40, italic: true, family: mathFont }))
+    renderer.draw(G.Text(touchables.point2.object.x + 1, touchables.point2.object.y, "B", { size: 40, italic: true, family: mathFont }))
+    renderer.draw(G.Text(touchables.point3.object.x + 1, touchables.point3.object.y, "C", { size: 40, italic: true, family: mathFont }))
 
-    renderer.fill(colors.black)
     // renderer.stroke(colors.red)
     // renderer.strokeWidth(4)
     // renderer.strokeDash([10,10])
     // renderer.strokeDashOffset(10)
-    // renderer.draw(G.Text(touchables.point1.object.x , touchables.point1.object.y -1, "AA", { size: 40, bold: true }))
-    // renderer.draw(G.Text(touchables.point2.object.x , touchables.point2.object.y -1, "B", { size: 40, bold: true }))
-    // renderer.draw(G.Text(touchables.point3.object.x , touchables.point3.object.y -1, "C", { size: 40, bold: true }))
-
     // renderer.strokeDash([10,10])
-    renderer.fill("#00000000")
-    // renderer.strokeWidth(4)
-    renderer.stroke(colors.black)
-    renderer.strokeWidth(4)
-    const tri = G.Triangle()
-    Object.assign(tri, {
-        point1: touchables.point1.object,
-        point2: touchables.point2.object,
-        point3: touchables.point3.object
-    })
+    const tri = G.Triangle(touchables.point1.object, touchables.point2.object, touchables.point3.object)
 
     if (tri.isValid()) {
-        // renderer.strokeDash([4,4])
-        renderer.drawBehind(tri)
-        // renderer.strokeDash([])
-        renderer.stroke(colors.grey + "CC")
-        setting.sideLines && renderer.drawBehindBatch(...tri.getSideSegments().map(s => s.toLine()))
+        renderer.fill("transparent")
+        renderer.draw(tri, true)
 
+        renderer.stroke(colors.grey + "CC")
+        renderer.strokeDash([2, 2])
+        setting.sideLines &&
+            renderer.drawBatch(
+                tri.getSideSegments().map(s => s.toLine()),
+                true
+            )
+        renderer.strokeDash([])
         renderer.stroke(colors.red + "CC")
-        setting.medianSegments && renderer.drawBehindBatch(...tri.getMedianSegments())
-        setting.centroidPoint && renderer.drawBehind(tri.getCentroidPoint())
-        setting.medialTriangle && renderer.drawBehind(tri.getMedialTriangle())
-        setting.antimedialTriangle && renderer.drawBehind(tri.getAntimedialTriangle())
+        setting.medianSegments && renderer.drawBatch(tri.getMedianSegments(), true)
+        setting.centroidPoint && renderer.draw(tri.getCentroidPoint(), true)
+        setting.medialTriangle && renderer.draw(tri.getMedialTriangle(), true)
+        setting.antimedialTriangle && renderer.draw(tri.getAntimedialTriangle(), true)
         renderer.stroke(colors.green + "CC")
-        setting.bisectingSegments && renderer.drawBehindBatch(...tri.getAngleBisectingSegments())
-        setting.incenterPoint && renderer.drawBehind(tri.getIncenterPoint())
-        setting.inscribedCircle && renderer.drawBehind(tri.getInscribedCircle())
+        setting.angleBisectingSegments && renderer.drawBatch(tri.getAngleBisectingSegments(), true)
+        setting.incenterPoint && renderer.draw(tri.getIncenterPoint(), true)
+        setting.inscribedCircle && renderer.draw(tri.getInscribedCircle(), true)
         renderer.stroke(colors.purple + "CC")
-        setting.altitudeLines && renderer.drawBehindBatch(...tri.getAltitudeSegments().map(s => s.toLine()))
-        setting.orthocenterPoint && renderer.drawBehind(tri.getOrthocenterPoint())
+        setting.altitudeLines &&
+            renderer.drawBatch(
+                tri.getAltitudeSegments().map(s => s.toLine()),
+                true
+            )
+        setting.orthocenterPoint && renderer.draw(tri.getOrthocenterPoint(), true)
         let ot, pc
-        setting.orthicTriangle && (ot = tri.getOrthicTriangle()) !== null && renderer.drawBehind(ot)
-        setting.polarCircle && (pc = tri.getPolarCircle()) !== null && renderer.drawBehind(pc)
+        setting.orthicTriangle && (ot = tri.getOrthicTriangle()) !== null && renderer.draw(ot, true)
+        setting.polarCircle && (pc = tri.getPolarCircle()) !== null && renderer.draw(pc, true)
         renderer.stroke(colors.indigo + "CC")
-        setting.perpendicularlyBisectingLines && renderer.drawBehindBatch(...tri.getPerpendicularlyBisectingSegments().map(s => s.toLine()))
-        setting.circumcenterPoint && renderer.drawBehind(tri.getCircumcenterPoint())
-        setting.circumscribedCircle && renderer.drawBehind(tri.getCircumscribedCircle())
+        setting.perpendicularlyBisectingLines &&
+            renderer.drawBatch(
+                tri.getPerpendicularlyBisectingSegments().map(s => s.toLine()),
+                true
+            )
+        setting.circumcenterPoint && renderer.draw(tri.getCircumcenterPoint(), true)
+        setting.circumscribedCircle && renderer.draw(tri.getCircumscribedCircle(), true)
         renderer.stroke(colors.teal + "CC")
-        setting.escenterPoints && renderer.drawBehindBatch(...tri.getEscenterPoints())
-        setting.escribedCircles && renderer.drawBehindBatch(...tri.getEscribedCircles())
+        setting.escenterPoints && renderer.drawBatch(tri.getEscenterPoints(), true)
+        setting.escribedCircles && renderer.drawBatch(tri.getEscribedCircles(), true)
         renderer.stroke(colors.yellow + "CC")
-        setting.symmedianSegments && renderer.drawBehindBatch(...tri.getSymmedianSegments())
-        setting.lemoinePoint && renderer.drawBehind(tri.getLemoinePoint())
+        setting.symmedianSegments && renderer.drawBatch(tri.getSymmedianSegments(), true)
+        setting.lemoinePoint && renderer.draw(tri.getLemoinePoint(), true)
         renderer.stroke(colors.brown + "CC")
-        setting.eulerLine && renderer.drawBehind(tri.getEulerLine())
-        setting.ninePointCenterPoint && renderer.drawBehind(tri.getNinePointCenterPoint())
-        setting.ninePointCircle && renderer.drawBehind(tri.getNinePointCircle())
+        setting.eulerLine && renderer.draw(tri.getEulerLine(), true)
+        setting.ninePointCenterPoint && renderer.draw(tri.getNinePointCenterPoint(), true)
+        setting.ninePointCircle && renderer.draw(tri.getNinePointCircle(), true)
     }
 }

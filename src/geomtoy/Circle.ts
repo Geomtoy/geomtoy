@@ -404,7 +404,7 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
     getGraphics(): GraphicsCommand[] {
         let c = this.centerCoordinate,
             g = new Graphics()
-        g.centerArcTo(...c, this.radius, this.radius, 0, 2 * Math.PI, 0)
+        g.centerArcTo(...c, this.radius, this.radius, 0, 0, 2 * Math.PI)
         g.close()
         return g.commands
     }

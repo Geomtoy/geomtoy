@@ -1,4 +1,3 @@
-import Transformation from "../transformation"
 import { GraphicsCommandType, GraphicsCommand, Font } from "../types"
 import { arcCenterToEndpointParameterization, arcEndpointToCenterParameterization } from "./helper"
 
