@@ -1,77 +1,82 @@
 import util from "../utility"
 import vec2 from "../utility/vec2"
 import math from "../utility/math"
-import { assertIsCoordinate, assertIsNonZeroNumber, assertIsPoint, assertIsRealNumber, sealed, validAndWithSameOwner } from "../decorator"
-
+import coord from "../utility/coordinate"
+import { validAndWithSameOwner } from "../decorator"
+import assert from "../utility/assertion"
+import GeomObject from "../base/GeomObject"
 import Point from "../Point"
 import Circle from "../Circle"
 import Vector from "../Vector"
 import Line from "../Line"
-import GeomObject from "../base/GeomObject"
 import Geomtoy from ".."
-import coord from "../utility/coordinate"
 
-@sealed
-@validAndWithSameOwner
+const defaultPower = 10000
 class Inversion extends GeomObject {
-    #power: number = NaN
-    #centerCoordinate: [number, number] = [NaN, NaN]
+    private _power: number = NaN
+    private _centerCoordinate: [number, number] = [NaN, NaN]
 
-    constructor(owner: Geomtoy, power: number, centerX: number, centerY: number)
-    constructor(owner: Geomtoy, power: number, centerCoordinate: [number, number])
-    constructor(owner: Geomtoy, power: number, centerPoint: Point)
-    constructor(o: Geomtoy, a1: number, a2: any, a3?: any) {
+    constructor(owner: Geomtoy, centerX: number, centerY: number, power?: number)
+    constructor(owner: Geomtoy, centerCoordinate: [number, number], power?: number)
+    constructor(owner: Geomtoy, centerPoint: Point, power?: number)
+    constructor(owner: Geomtoy)
+    constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any) {
         super(o)
-        if (util.isNumber(a2) && util.isNumber(a3)) {
-            return Object.seal(Object.assign(this, { power: a1, centerX: a2, centerY: a3 }))
+        if (util.isNumber(a1) && util.isNumber(a2)) {
+            Object.assign(this, { centerX: a1, centerY: a2, power: a3 ?? defaultPower })
         }
-        if (util.isArray(a2)) {
-            return Object.seal(Object.assign(this, { power: a1, centerCoordinate: a2 }))
+        if (util.isArray(a1)) {
+            Object.assign(this, { centerCoordinate: a1, power: a2 ?? defaultPower })
         }
-        if (a2 instanceof Point) {
-            return Object.seal(Object.assign(this, { power: a1, centerPoint: a2 }))
+        if (a1 instanceof Point) {
+            Object.assign(this, { centerPoint: a1, power: a2 ?? defaultPower })
         }
-        throw new Error("[G]Arguments can NOT construct an `Inversion`.")
+        return Object.seal(this)
     }
+
+    eventNames = Object.freeze(["centerXChanged", "centerYChanged", "powerChanged"])
 
     get power() {
-        return this.#power
+        return this._power
     }
     set power(value) {
-        assertIsNonZeroNumber(value, "power")
-        this.#power = value
+        assert.isNonZeroNumber(value, "power")
+        this._power = value
     }
     get centerX() {
-        return coord.x(this.#centerCoordinate)
+        return coord.x(this._centerCoordinate)
     }
     set centerX(value) {
-        assertIsRealNumber(value, "centerX")
-        coord.x(this.#centerCoordinate, value)
+        assert.isRealNumber(value, "centerX")
+        coord.x(this._centerCoordinate, value)
     }
     get centerY() {
-        return coord.y(this.#centerCoordinate)
+        return coord.y(this._centerCoordinate)
     }
     set centerY(value) {
-        assertIsRealNumber(value, "centerY")
-        coord.y(this.#centerCoordinate, value)
+        assert.isRealNumber(value, "centerY")
+        coord.y(this._centerCoordinate, value)
     }
     get centerCoordinate() {
-        return coord.copy(this.#centerCoordinate)
+        return coord.clone(this._centerCoordinate)
     }
     set centerCoordinate(value) {
-        assertIsCoordinate(value, "centerCoordinate")
-        coord.assign(this.#centerCoordinate, value)
+        assert.isCoordinate(value, "centerCoordinate")
+        coord.assign(this._centerCoordinate, value)
     }
     get centerPoint() {
-        return new Point(this.owner, this.#centerCoordinate)
+        return new Point(this.owner, this._centerCoordinate)
     }
     set centerPoint(value) {
-        assertIsPoint(value, "centerPoint")
-        coord.assign(this.#centerCoordinate, value.coordinate)
+        assert.isPoint(value, "centerPoint")
+        coord.assign(this._centerCoordinate, value.coordinate)
     }
 
     isValid() {
-        return coord.isValid(this.centerCoordinate) && util.isRealNumber(this.power) && this.power !== 0
+        const [cc, power] = [this._centerCoordinate, this._power]
+        if (!coord.isValid(cc)) return false
+        if (!util.isNonZeroNumber(power)) return false
+        return true
     }
     /**
      * Find the inversion of point `point`
@@ -115,7 +120,7 @@ class Inversion extends GeomObject {
         let pO = this.centerPoint,
             pP = line.getPerpendicularPointFromPoint(pO),
             dist = pP.getDistanceBetweenPoint(pO),
-            inversionDist = Math.abs(this.power / dist),
+            inversionDist = math.abs(this.power / dist),
             radius = inversionDist / 2,
             vOP = new Vector(this.owner, pO, pP),
             angle
@@ -146,7 +151,7 @@ class Inversion extends GeomObject {
             let pO = this.centerPoint,
                 pP = circle.centerPoint,
                 inversionDist = Math.abs((this.power / 2) * circle.radius),
-                lL = Line.fromTwoPoints(this.owner, pO, pP),
+                lL = Line.fromTwoPoints.bind(this)(this.owner, pO, pP),
                 vOP = new Vector(this.owner, pO, pP),
                 angle
             //OP和OQ方向相反
@@ -198,24 +203,35 @@ class Inversion extends GeomObject {
     }
 
     clone() {
-        return new Inversion(this.owner, this.power, this.centerX, this.centerY)
+        return new Inversion(this.owner, this.centerCoordinate, this.power)
+    }
+    copyFrom(inversion: Inversion | null) {
+        if (inversion === null) {
+            coord.assign(this._centerCoordinate, [NaN, NaN])
+            this._power = defaultPower
+        } else {
+            coord.assign(this._centerCoordinate, inversion._centerCoordinate)
+            this._power = inversion._power
+        }
+        this.trigger(this.eventNames.join(" "))
+        return this
     }
     toString() {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
+            `\tcenterCoordinate: ${this.centerCoordinate.join(", ")}`,
             `\tpower: ${this.power}`, 
-            `\tcenterX: ${this.centerX}`, 
-            `\tcenterY: ${this.centerY}`, 
             `} owned by Geomtoy(${this.owner.uuid})`
         ].join("\n")
     }
-    toObject(): object {
-        return { power: this.power, centerX: this.centerX, centerY: this.centerY }
-    }
     toArray(): any[] {
-        throw [this.power, this.centerX, this.centerY]
+        throw [this.centerCoordinate, this.power]
+    }
+    toObject(): object {
+        return { centerCoordinate: this.centerCoordinate, power: this.power }
     }
 }
+validAndWithSameOwner(Inversion)
 
 export default Inversion

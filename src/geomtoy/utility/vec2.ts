@@ -1,22 +1,20 @@
 import math from "./math"
 
 const vec2 = {
-    // vector setup initial coordinate of u and terminal coordinate of v
     from([ux, uy]: [number, number], [vx, vy]: [number, number]): [number, number] {
         return vec2.subtract([vx, vy], [ux, uy])
     },
     from2(angle: number, magnitude: number): [number, number] {
-        let x = magnitude * math.cos(angle),
-            y = magnitude * math.sin(angle)
+        const x = magnitude * math.cos(angle)
+        const y = magnitude * math.sin(angle)
         return [x, y]
     },
     angle([x, y]: [number, number]): number {
         return math.atan2(y, x)
     },
-    //rotation angle from u to v
     angleTo([ux, uy]: [number, number], [vx, vy]: [number, number]): number {
         // return vec2.angle([vx, vy]) - vec2.angle([ux, uy])
-        let sign = vec2.cross([ux, uy], [vx, vy]) >= 0 ? 1 : -1
+        const sign = vec2.cross([ux, uy], [vx, vy]) >= 0 ? 1 : -1
         return sign * math.acos(vec2.dot([ux, uy], [vx, vy]) / (vec2.magnitude([ux, uy]) * vec2.magnitude([vx, vy])))
     },
     magnitude([x, y]: [number, number]): number {
@@ -53,7 +51,7 @@ const vec2 = {
     negative([x, y]: [number, number]): [number, number] {
         return [-x, -y]
     },
-    reciprocal([x, y]: [number, number]): [number, number] {
+    invert([x, y]: [number, number]): [number, number] {
         return [1 / x, 1 / y]
     },
     swap([x, y]: [number, number]): [number, number] {

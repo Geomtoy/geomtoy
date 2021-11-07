@@ -1,5 +1,6 @@
 import Point from "./Point"
-import { assertIsBoolean, assertIsPositiveNumber, assertIsRealNumber, sealed, validAndWithSameOwner } from "./decorator"
+import { validAndWithSameOwner } from "./decorator"
+import assert from "./utility/assertion"
 import util from "./utility"
 import math from "./utility/math"
 import angle from "./utility/angle"
@@ -11,17 +12,18 @@ import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Graphics from "./graphics"
 import { Visible } from "./interfaces"
+import { optionerOf } from "./helper/Optioner"
+import { OwnerCarrier } from "./types"
 
-@sealed
-@validAndWithSameOwner
 class Arc extends GeomObject implements Visible {
-    #centerCoordinate: [number, number] = [NaN, NaN]
-    #radiusX: number = NaN
-    #radiusY: number = NaN
-    #startAngle: number = NaN
-    #endAngle: number = NaN
-    #positive: boolean = false
-    #rotation: number = 0
+    private _options = optionerOf(this.owner).options
+    private _centerCoordinate: [number, number] = [NaN, NaN]
+    private _radiusX: number = NaN
+    private _radiusY: number = NaN
+    private _startAngle: number = NaN
+    private _endAngle: number = NaN
+    private _positive: boolean = false
+    private _rotation: number = 0
 
     constructor(owner: Geomtoy, centerX: number, centerY: number, radiusX: number, radiusY: number, startAngle: number, endAngle: number, positive: boolean, rotation?: number)
     constructor(owner: Geomtoy, centerCoordinate: [number, number], radiusX: number, radiusY: number, startAngle: number, endAngle: number, positive: boolean, rotation?: number)
@@ -40,132 +42,247 @@ class Arc extends GeomObject implements Visible {
         }
         return Object.seal(this)
     }
+
+    static readonly events = Object.freeze({
+        centerXChanged: "centerXChanged",
+        centerYChanged: "centerYChanged",
+        radiusXChanged: "radiusXChanged",
+        radiusYChanged: "radiusYChanged",
+        startAngleChanged: "startAngleChanged",
+        endAngleChanged: "endAngleChanged",
+        positiveChanged: "positiveChanged",
+        rotationChanged: "rotationChanged"
+    })
+
+    private _setCenterX(value: number) {
+        this.willTrigger_(coord.x(this._centerCoordinate), value, [Arc.events.centerXChanged])
+        coord.x(this._centerCoordinate, value)
+    }
+    private _setCenterY(value: number) {
+        this.willTrigger_(coord.y(this._centerCoordinate), value, [Arc.events.centerYChanged])
+        coord.y(this._centerCoordinate, value)
+    }
+    private _setRadiusX(value: number) {
+        this.willTrigger_(this._radiusX, value, [Arc.events.radiusXChanged])
+        this._radiusX = value
+    }
+    private _setRadiusY(value: number) {
+        this.willTrigger_(this._radiusY, value, [Arc.events.radiusYChanged])
+        this._radiusY = value
+    }
+    private _setStartAngle(value: number) {
+        this.willTrigger_(this._startAngle, value, [Arc.events.startAngleChanged])
+        this._startAngle = value
+    }
+    private _setEndAngle(value: number) {
+        this.willTrigger_(this._endAngle, value, [Arc.events.endAngleChanged])
+        this._endAngle = value
+    }
+    private _setPositive(value: boolean) {
+        this.willTrigger_(this._positive, value, [Arc.events.positiveChanged])
+        this._positive = value
+    }
+    private _setRotation(value: number) {
+        this.willTrigger_(this._rotation, value, [Arc.events.rotationChanged])
+        this._rotation = value
+    }
+
     get centerX() {
-        return coord.x(this.#centerCoordinate)
+        return coord.x(this._centerCoordinate)
     }
     set centerX(value) {
-        assertIsRealNumber(value, "centerX")
-        coord.x(this.#centerCoordinate, value)
+        assert.isRealNumber(value, "centerX")
+        this._setCenterX(value)
     }
     get centerY() {
-        return coord.y(this.#centerCoordinate)
+        return coord.y(this._centerCoordinate)
     }
     set centerY(value) {
-        assertIsRealNumber(value, "centerY")
-        coord.y(this.#centerCoordinate, value)
+        assert.isRealNumber(value, "centerY")
+        this._setCenterY(value)
     }
     get centerCoordinate() {
-        return coord.copy(this.#centerCoordinate)
+        return coord.clone(this._centerCoordinate)
     }
     set centerCoordinate(value) {
-        assertIsRealNumber(value, "centerCoordinate")
-        coord.assign(this.#centerCoordinate, value)
+        assert.isRealNumber(value, "centerCoordinate")
+        this._setCenterX(coord.x(value))
+        this._setCenterY(coord.y(value))
     }
     get centerPoint() {
-        return new Point(this.owner, this.#centerCoordinate)
+        return new Point(this.owner, this._centerCoordinate)
     }
     set centerPoint(value) {
-        assertIsRealNumber(value, "centerPoint")
-        coord.assign(this.#centerCoordinate, value.coordinate)
+        assert.isRealNumber(value, "centerPoint")
+        this._setCenterX(value.x)
+        this._setCenterY(value.y)
     }
     get radiusX() {
-        return this.#radiusX
+        return this._radiusX
     }
     set radiusX(value) {
-        assertIsPositiveNumber(value, "radiusX")
-        this.#radiusX = value
+        assert.isPositiveNumber(value, "radiusX")
+        this._setRadiusX(value)
     }
     get radiusY() {
-        return this.#radiusY
+        return this._radiusY
     }
     set radiusY(value) {
-        assertIsPositiveNumber(value, "radiusY")
-        this.#radiusY = value
+        assert.isPositiveNumber(value, "radiusY")
+        this._setRadiusY(value)
     }
     get startAngle() {
-        return this.#startAngle
+        return this._startAngle
     }
     set startAngle(value) {
-        assertIsRealNumber(value, "startAngle")
-        this.#startAngle = angle.simplify(value)
+        assert.isRealNumber(value, "startAngle")
+        this._setStartAngle(value)
     }
     get endAngle() {
-        return this.#endAngle
+        return this._endAngle
     }
     set endAngle(value) {
-        assertIsRealNumber(value, "endAngle")
-        this.#endAngle = angle.simplify(value)
+        assert.isRealNumber(value, "endAngle")
+        this._setEndAngle(value)
     }
     get positive() {
-        return this.#positive
+        return this._positive
     }
     set positive(value) {
-        assertIsBoolean(value, "positive")
-        this.#positive = value
+        assert.isBoolean(value, "positive")
+        this._setPositive(value)
     }
     get rotation() {
-        return this.#rotation
+        return this._rotation
     }
     set rotation(value) {
-        assertIsRealNumber(value, "rotation")
-        this.#rotation = value
+        assert.isRealNumber(value, "rotation")
+        this._setRotation(value)
     }
 
     static formingCondition = "[G]The `startAngle` and `endAngle` of an `Arc` should not be coincide, to keep an `Arc` not full `Ellipse` nor empty `Ellipse`."
 
     isValid() {
-        let epsilon = this.owner.getOptions().epsilon,
-            valid = true
-        valid &&= coord.isValid(this.centerCoordinate)
-        valid &&= !math.equalTo(this.startAngle, this.endAngle, epsilon)
-        return valid
+        const [cc, sa, ea] = [this._centerCoordinate, this._startAngle, this._endAngle]
+        const epsilon = this._options.epsilon
+        if (!coord.isValid(cc)) return false
+        if (!util.isRealNumber(sa)) return false
+        if (!util.isRealNumber(ea)) return false
+        if (math.equalTo(sa, ea, epsilon)) return false
+        return true
+    }
+    /**
+     * Move point `this` by `offsetX` and `offsetY` to get new point.
+     */
+    move(deltaX: number, deltaY: number) {
+        return this.clone().moveSelf(deltaX, deltaY)
+    }
+    /**
+     * Move point `this` itself by `offsetX` and `offsetY`.
+     */
+    moveSelf(deltaX: number, deltaY: number) {
+        this.centerCoordinate = coord.move(this.centerCoordinate, deltaX, deltaY)
+        return this
+    }
+    /**
+     * Move point `this` with `distance` along `angle` to get new point.
+     */
+    moveAlongAngle(angle: number, distance: number) {
+        return this.clone().moveAlongAngleSelf(angle, distance)
+    }
+    /**
+     * Move point `this` itself with `distance` along `angle`.
+     */
+    moveAlongAngleSelf(angle: number, distance: number) {
+        this.centerCoordinate = coord.moveAlongAngle(this.centerCoordinate, angle, distance)
+        return this
     }
 
-    static fromTwoPointsEtc(owner: Geomtoy, point1: Point, point2: Point, radiusX: number, radiusY: number, largeArc: boolean, positive: boolean, rotation: number) {
-        let [x1, y1] = point1.coordinate,
-            [x2, y2] = point2.coordinate,
-            {
-                centerX: cx,
-                centerY: cy,
-                radiusX: rx,
-                radiusY: ry,
-                startAngle,
-                endAngle
-            } = arcEndpointToCenterParameterization({
-                point1X: x1,
-                point1Y: y1,
-                point2X: x2,
-                point2Y: y2,
-                radiusX,
-                radiusY,
-                largeArcFlag: largeArc,
-                sweepFlag: positive,
-                xAxisRotation: rotation
-            })
-        return new Arc(owner, cx, cy, rx, ry, startAngle, endAngle, positive, rotation)
+    static fromTwoPointsEtc(
+        this: OwnerCarrier,
+        point1: [number, number] | Point,
+        point2: [number, number] | Point,
+        radiusX: number,
+        radiusY: number,
+        largeArc: boolean,
+        positive: boolean,
+        rotation: number
+    ) {
+        assert.isCoordinateOrPoint(point1, "point1")
+        assert.isCoordinateOrPoint(point2, "point2")
+        assert.isPositiveNumber(radiusX, "radiusX")
+        assert.isPositiveNumber(radiusY, "radiusY")
+        assert.isBoolean(largeArc, "largeArc")
+        assert.isBoolean(positive, "positive")
+        assert.isRealNumber(rotation, "rotation")
+        const [x1, y1] = point1 instanceof Point ? point1.coordinate : point1
+        const [x2, y2] = point2 instanceof Point ? point2.coordinate : point2
+        const {
+            centerX,
+            centerY,
+            radiusX: correctedRx,
+            radiusY: correctedRy,
+            startAngle,
+            endAngle
+        } = arcEndpointToCenterParameterization({
+            point1X: x1,
+            point1Y: y1,
+            point2X: x2,
+            point2Y: y2,
+            radiusX,
+            radiusY,
+            largeArcFlag: largeArc,
+            sweepFlag: positive,
+            xAxisRotation: rotation
+        })
+        return new Arc(this.owner, centerX, centerY, correctedRx, correctedRy, startAngle, endAngle, positive, rotation)
     }
     getLength() {}
     getGraphics() {
-        let c = this.centerCoordinate,
-            g = new Graphics()
+        const c = this.centerCoordinate
+        const g = new Graphics()
         g.centerArcTo(...c, this.radiusX, this.radiusY, this.rotation, this.startAngle, this.endAngle, this.positive)
         return g.commands
     }
     apply(transformation: Transformation): GeomObject {
         throw new Error("Method not implemented.")
     }
-    clone(): GeomObject {
-        throw new Error("Method not implemented.")
+    clone() {
+        return new Arc(this.owner, this.centerCoordinate, this.radiusX, this.radiusY, this.startAngle, this.endAngle, this.positive, this.rotation)
+    }
+    copyFrom(arc: Arc | null) {
+        if (arc === null) arc = new Arc(this.owner)
+        this._setCenterX(coord.x(arc._centerCoordinate))
+        this._setCenterY(coord.y(arc._centerCoordinate))
+        this._setRadiusX(arc._radiusX)
+        this._setRadiusY(arc._radiusY)
+        this._setStartAngle(arc._startAngle)
+        this._setEndAngle(arc._endAngle)
+        this._setPositive(arc._positive)
+        this._setRotation(arc._rotation)
+        return this
     }
     toString(): string {
-        throw new Error("Method not implemented.")
-    }
-    toObject(): object {
         throw new Error("Method not implemented.")
     }
     toArray(): any[] {
         throw new Error("Method not implemented.")
     }
+    toObject() {
+        return {
+            centerCoordinate: this.centerCoordinate,
+            radiusX: this.radiusX,
+            radiusY: this.radiusY,
+            startAngle: this.startAngle,
+            endAngle: this.endAngle,
+            positive: this.positive,
+            rotation: this.rotation
+        }
+    }
 }
 
+validAndWithSameOwner(Arc)
+/**
+ * @category GeomObject
+ */
 export default Arc

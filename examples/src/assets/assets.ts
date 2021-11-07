@@ -1,4 +1,4 @@
-export default {
+const colors = {
     red: "#f44336",
     pink: "#e91e63",
     purple: "#9c27b0",
@@ -21,3 +21,7 @@ export default {
     black: "#000000",
     white: "#FFFFF"
 }
+
+const mathFont = [28, "Cambria Math, Times New Roman, math, serif", false, true] as const
+
+export { colors, mathFont }

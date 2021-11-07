@@ -2,10 +2,10 @@ import vec2 from "./utility/vec2"
 import util from "./utility"
 import angle from "./utility/angle"
 import math from "./utility/math"
-import { assertIsCoordinate, assertIsPoint, assertIsRealNumber, sealed, validAndWithSameOwner } from "./decorator"
-
+import { validAndWithSameOwner } from "./decorator"
+import assert from "./utility/assertion"
 import Point from "./Point"
-import Segment from "./Segment"
+import LineSegment from "./LineSegment"
 import { GraphicsCommand } from "./types"
 import GeomObject from "./base/GeomObject"
 import Graphics from "./graphics"
@@ -15,11 +15,9 @@ import coord from "./utility/coordinate"
 import { Visible } from "./interfaces"
 import Line from "./Line"
 
-@sealed
-@validAndWithSameOwner
 class Ray extends GeomObject implements Visible {
-    #coordinate: [number, number] = [NaN, NaN]
-    #angle: number = NaN
+    private _coordinate: [number, number] = [NaN, NaN]
+    private _angle: number = NaN
 
     constructor(owner: Geomtoy, x: number, y: number, angle: number)
     constructor(owner: Geomtoy, coordinate: [number, number], angle: number)
@@ -39,44 +37,67 @@ class Ray extends GeomObject implements Visible {
         return Object.seal(this)
     }
 
+    static readonly events = Object.freeze({
+        xChanged: "xChanged",
+        yChanged: "yChanged",
+        angleChanged: "angleChanged"
+    })
+
+    private _setX(value: number) {
+        this.willTrigger_(coord.x(this._coordinate), value, [Ray.events.xChanged])
+        coord.x(this._coordinate, value)
+    }
+    private _setY(value: number) {
+        this.willTrigger_(coord.y(this._coordinate), value, [Ray.events.yChanged])
+        coord.y(this._coordinate, value)
+    }
+    private _setAngle(value: number) {
+        this.willTrigger_(this._angle, value, [Ray.events.angleChanged])
+        this._angle = value
+    }
+
     get x() {
-        return coord.x(this.#coordinate)
+        return coord.x(this._coordinate)
     }
     set x(value) {
-        assertIsRealNumber(value, "x")
-        coord.x(this.#coordinate, value)
+        assert.isRealNumber(value, "x")
+        this._setX(value)
     }
     get y() {
-        return coord.y(this.#coordinate)
+        return coord.y(this._coordinate)
     }
     set y(value) {
-        assertIsRealNumber(value, "y")
-        coord.y(this.#coordinate, value)
+        assert.isRealNumber(value, "y")
+        this._setY(value)
     }
     get coordinate() {
-        return coord.copy(this.#coordinate)
+        return coord.clone(this._coordinate)
     }
     set coordinate(value) {
-        assertIsCoordinate(value, "coordinate")
-        coord.assign(this.#coordinate, value)
+        assert.isCoordinate(value, "coordinate")
+        this._setX(coord.x(value))
+        this._setY(coord.y(value))
     }
     get point() {
-        return new Point(this.owner, this.#coordinate)
+        return new Point(this.owner, this._coordinate)
     }
     set point(value) {
-        assertIsPoint(value, "point")
-        coord.assign(this.#coordinate, value.coordinate)
+        assert.isPoint(value, "point")
+        this._setX(value.x)
+        this._setY(value.y)
     }
     get angle() {
-        return this.#angle
+        return this._angle
     }
     set angle(value) {
-        assertIsRealNumber(value, "angle")
-        this.#angle = angle.simplify2(value)
+        assert.isRealNumber(value, "angle")
+        this._setAngle(value)
     }
 
     isValid(): boolean {
-        return coord.isValid(this.#coordinate)
+        if (!coord.isValid(this._coordinate)) return false
+        if (!util.isRealNumber(this._angle)) return false
+        return true
     }
 
     /**
@@ -88,27 +109,54 @@ class Ray extends GeomObject implements Visible {
      * @param ray1
      * @param ray2
      */
-    static getAngleNSectionRaysFromTwoRays(owner: Geomtoy, n: number, ray1: Ray, ray2: Ray): Array<Ray> | null {
+    static getAngleNSectionRaysFromTwoRays(owner: Geomtoy, n: number, ray1: Ray, ray2: Ray): Ray[] | null {
         if (!util.isInteger(n) || n < 2) return null
         if (!ray1.isEndpointSameAs(ray2)) return null
         let a1 = ray1.angle,
             a2 = ray2.angle,
-            vertex = ray1.point,
+            c = ray1.coordinate,
             d = (a2 - a1) / n,
-            ret: Array<Ray> = []
-        util.forEach(util.range(1, n), i => {
-            ret.push(new Ray(owner, vertex, a1 + d * i))
+            ret: Ray[] = []
+        util.range(1, n).forEach(index => {
+            ret.push(new Ray(owner, c, a1 + d * index))
         })
         return ret
     }
 
     isSameAs(ray: Ray) {
-        let epsilon = this.owner.getOptions().epsilon
+        const epsilon = this.options_.epsilon
         return coord.isSameAs(this.coordinate, ray.coordinate, epsilon) && math.equalTo(this.angle, ray.angle, epsilon), epsilon
     }
     isEndpointSameAs(ray: Ray) {
-        let epsilon = this.owner.getOptions().epsilon
+        const epsilon = this.options_.epsilon
         return coord.isSameAs(this.coordinate, ray.coordinate, epsilon)
+    }
+
+    /**
+     * Move ray `this` by `offsetX` and `offsetY` to get new ray.
+     */
+    move(deltaX: number, deltaY: number) {
+        return this.clone().moveSelf(deltaX, deltaY)
+    }
+    /**
+     * Move ray `this` itself by `offsetX` and `offsetY`.
+     */
+    moveSelf(deltaX: number, deltaY: number) {
+        this.coordinate = coord.move(this.coordinate, deltaX, deltaY)
+        return this
+    }
+    /**
+     * Move ray `this` with `distance` along `angle` to get new ray.
+     */
+    moveAlongAngle(angle: number, distance: number) {
+        return this.clone().moveAlongAngleSelf(angle, distance)
+    }
+    /**
+     * Move ray `this` itself with `distance` along `angle`.
+     */
+    moveAlongAngleSelf(angle: number, distance: number) {
+        this.coordinate = coord.moveAlongAngle(this.coordinate, angle, distance)
+        return this
     }
 
     getAngleToRay(ray: Ray) {
@@ -126,8 +174,15 @@ class Ray extends GeomObject implements Visible {
         throw new Error("Method not implemented.")
     }
 
-    clone(): GeomObject {
-        throw new Error("Method not implemented.")
+    clone() {
+        return new Ray(this.owner, this.coordinate, this.angle)
+    }
+    copyFrom(ray: Ray | null) {
+        if (ray === null) ray = new Ray(this.owner)
+        this._setX(coord.x(ray._coordinate))
+        this._setY(coord.y(ray._coordinate))
+        this._setAngle(ray._angle)
+        return this
     }
     toString(): string {
         throw new Error("Method not implemented.")
@@ -140,4 +195,8 @@ class Ray extends GeomObject implements Visible {
     }
 }
 
+validAndWithSameOwner(Ray)
+/**
+ * @category GeomObject
+ */
 export default Ray

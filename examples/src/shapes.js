@@ -1,8 +1,7 @@
 import Geomtoy from "../../src/geomtoy"
-import "./assets/dg"
-import colors from "./assets/colors"
-import interact from "./assets/interact"
-import rendererSwitch from "./assets/renderer-switch"
+import "./assets/misc"
+import {colors} from "./assets/assets"
+import Interact from "./assets/interact"
 
 const canvas = document.querySelector("#canvas")
 const svg = document.querySelector("#svg")

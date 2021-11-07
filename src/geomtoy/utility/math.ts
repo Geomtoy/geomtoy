@@ -1,8 +1,16 @@
 const math = {
-    PI: Math.PI, // 884279719003555/281474976710656
-    Infinity: Number.POSITIVE_INFINITY, //Infinity, `Math.pow(2, 1024)`
-    Tan90: Math.tan(Math.PI / 2), // 16331239353195370
-
+    // 3.141592653589793 = 884279719003555/281474976710656
+    PI: Math.PI,
+    // 2 ** 1024 ≈ 1.797693134862315E+308 = Number.MAX_VALUE
+    Infinity: Infinity,
+    // 16331239353195370
+    Tan90: Math.tan(Math.PI / 2),
+    // -16331239353195370
+    TanN90: Math.tan(-Math.PI / 2),
+    // 6.123233995736766e-17
+    Cot90: 1 / Math.tan(Math.PI / 2),
+    // -6.123233995736766e-17
+    CotN90: 1 / Math.tan(-Math.PI / 2),
     abs: Math.abs,
     hypot: Math.hypot,
     pow: Math.pow,
@@ -15,16 +23,46 @@ const math = {
     round: Math.round,
     ceil: Math.ceil,
     floor: Math.floor,
+    atan2: (y: number, x: number) => {
+        // @see https://tc39.es/ecma262/#sec-math.atan2
+        // When `y` and `x` are respectively equal to `±0`, the value of `Math.atan2` is specified rather than calculated,
+        // but whether the result is 0 or `Math.PI`, these results are meaningless for the angle of zero vector.
+        // The zero vector has no direction, so there is no angle.
+        // So when `y` and `x` are respectively equal to `±0`, `Math.atan2` need return `NaN`(even there is an underflow).
+        if (y === 0 && x === 0) return NaN
+        return Math.atan2(y, x)
+    },
     acos: Math.acos,
     asin: Math.asin,
     atan: Math.atan,
-    atan2: Math.atan2,
+    acot: (x: number) => {
+        Math.atan(1 / x)
+    },
+    // Because `Infinity` cannot participate in arithmetic calculations well, and we need to implement
+    // the secant, cosecant, cotangent functions works on 0, `Math.PI / 2` etc.,
+    // so we must keep or make sure the sine and tangent functions
+    // to return approximate values when the return value is 0.
     cos: Math.cos,
-    sec: (n: number) => 1 / Math.cos(n),
-    sin: Math.sin,
-    csc: (n: number) => 1 / math.sin(n),
-    tan: Math.tan,
-
+    sec: (x: number) => {
+        return 1 / math.cos(x)
+    },
+    sin: (x: number) => {
+        if (x === 0) return math.cos(Math.PI / 2)
+        return Math.sin(x)
+    },
+    csc: (x: number) => {
+        return 1 / math.sin(x)
+    },
+    tan: (x: number): number => {
+        if (x === 0) return math.cot(Math.PI / 2)
+        return Math.tan(x)
+    },
+    cot: (x: number) => {
+        return 1 / math.tan(x)
+    },
+    logAny: (b: number, n: number) => {
+        return Math.log(n) / Math.log(b)
+    },
     /**
      * Lerp between `u` and `v` by `t`
      * @see {@link https://en.wikipedia.org/wiki/Linear_interpolation}
@@ -47,6 +85,10 @@ const math = {
         if ((n - l) * (n - u) <= 0) return n
         if (n < l) return l < u ? l : u
         return l > u ? l : u
+    },
+
+    inInterval(n: number, l: number, u: number, lOpen = false, uOpen = false) {
+        return (lOpen ? n > l : n >= l) && (uOpen ? n < u : n <= u)
     },
 
     /**

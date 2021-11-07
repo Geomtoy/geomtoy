@@ -1,1 +1,1 @@
-import "./assets/dg"
+import "./assets/misc"

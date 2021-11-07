@@ -10,6 +10,7 @@
         // !Even the typescript official example code to demonstrate parameter decorator with `TypedPropertyDescriptor<Function>` will have warnings if following flag is `true`
         "strictFunctionTypes": false,
         "noImplicitAny": true,
+        "noImplicitThis":true,
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
         "strictNullChecks": true,

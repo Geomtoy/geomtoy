@@ -1,7 +1,3 @@
-import Transformation from "../transformation"
-
-export type GraphicsImplType = "canvas" | "svg"
-
 export const enum GraphicsCommandType {
     MoveTo = "moveTo",
     LineTo = "lineTo",
@@ -9,7 +5,8 @@ export const enum GraphicsCommandType {
     QuadraticBezierCurveTo = "quadraticBezierCurveTo",
     ArcTo = "arcTo",
     Close = "close",
-    Text = "text"
+    Text = "text",
+    Image = "image"
 }
 
 export type GraphicsCommand =
@@ -20,26 +17,27 @@ export type GraphicsCommand =
     | GraphicsArcToCommand
     | GraphicsCloseCommand
     | GraphicsTextCommand
+    | GraphicsImageCommand
+
+export type GraphicsGeometryCommand = GraphicsMoveToCommand | GraphicsLineToCommand | GraphicsBezierCurveToCommand | GraphicsQuadraticBezierCurveToCommand | GraphicsArcToCommand | GraphicsCloseCommand
+
+export type GraphicsImageCommand = {
+    type: GraphicsCommandType.Image
+    x: number
+    y: number
+    width: number
+    height: number
+}
 
 export type GraphicsTextCommand = {
     type: GraphicsCommandType.Text
     x: number
     y: number
     text: string
-    font: Font
-}
-
-export type Font = {
-    size: number
-    family: string
-    bold: boolean
-    italic: boolean
-}
-export const defaultFont: Font = {
-    size: 16,
-    family: "sans-serif",
-    bold: false,
-    italic: false
+    fontSize: number
+    fontFamily: string
+    fontBold: boolean
+    fontItalic: boolean
 }
 
 export type GraphicsMoveToCommand = {
@@ -74,13 +72,13 @@ export type GraphicsArcToCommand = {
     centerY: number
     radiusX: number
     radiusY: number
+    xAxisRotation: number
     startAngle: number
     endAngle: number
-    xAxisRotation: number
+    largeArc: boolean
     positive: boolean
     x: number
     y: number
-    largeArc: boolean
 }
 export type GraphicsCloseCommand = {
     type: GraphicsCommandType.Close

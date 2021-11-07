@@ -1,16 +1,14 @@
 import util from "../utility"
-import Point from "../Point"
-import Line from "../Line"
-import Ellipse from "../Ellipse"
 import GeomObject from "../base/GeomObject"
 import Geomtoy from ".."
+import { OwnerCarrier } from "../types"
 
 function article(name: string, adj?: string) {
     let vowels = ["A", "E", "I", "O", "U"],
         // prettier-ignore
         a = adj !== undefined
-        ? util.includes(vowels, util.head(adj)!.toUpperCase()) ? `an ${adj}` : `a ${adj}`
-        : util.includes(vowels, util.head(name)!.toUpperCase()) ? "an" : "a"
+        ? vowels.includes( util.head(adj)!.toUpperCase()) ? `an ${adj}` : `a ${adj}`
+        : vowels.includes( util.head(name)!.toUpperCase()) ? "an" : "a"
 
     return `${a} \`${name}\``
 }
@@ -20,7 +18,7 @@ function validText(constructor: any) {
         "and meet the forming conditions. " +
         `${constructor?.formingCondition ? `\nThe forming conditions of ${article(constructor.name)} are: ${constructor.formingCondition!}` : ""}` +
         "\nWhen a `GeomObject` is invalid, only the essential properties and the following methods can be available: " +
-        "`isValid`, `toString`, `toArray`, `toObject`."
+        `\`${alwaysAvailableInstanceMethods.join("`, `")}\`.`
     )
 }
 // prettier-ignore
@@ -37,17 +35,19 @@ export function sealed(constructor: new (...args: any[]) => any) {
     Object.seal(constructor.prototype)
 }
 
+const alwaysAvailableInstanceMethods = ["isValid", "toString", "toArray", "toObject", "copyFrom", "getGraphics"]
+
 export function validAndWithSameOwner(constructor: new (...args: any[]) => any) {
     // static methods on the `constructor`
-    util.forEach(Object.getOwnPropertyNames(constructor), memberName => {
+    Object.getOwnPropertyNames(constructor).forEach(memberName => {
         let name = constructor.name,
             descriptor = Object.getOwnPropertyDescriptor(constructor, memberName)!
 
         if (util.isFunction(descriptor.value)) {
             let method = descriptor.value
-            descriptor.value = function () {
-                let staticOwner: Geomtoy = util.head(arguments) // The `owner` is always the first arg passed in.
-                util.forEach(util.tail(arguments), arg => {
+            descriptor.value = function (this: OwnerCarrier) {
+                let staticOwner: Geomtoy = this.owner
+                util.tail(arguments).forEach(arg => {
                     if (arg instanceof GeomObject) {
                         if (!arg.isValid()) {
                             throw new Error(
@@ -74,13 +74,13 @@ export function validAndWithSameOwner(constructor: new (...args: any[]) => any) 
     We have no direct properties on the `instance` itself.
     */
     // `instance` properties/accessors/methods on the `constructor.prototype`(`instance.__proto__`)
-    util.forEach(Object.getOwnPropertyNames(constructor.prototype), memberName => {
+    Object.getOwnPropertyNames(constructor.prototype).forEach(memberName => {
         let name = constructor.name,
             descriptor = Object.getOwnPropertyDescriptor(constructor.prototype, memberName)!
 
         // properties or methods
         if (descriptor.value !== undefined && memberName !== "constructor" /* excluding `constructor` */) {
-            if (util.isFunction(descriptor.value) && !util.includes(["isValid", "toString", "toArray", "toObject"], memberName) /* excluding callable method when invalid*/) {
+            if (util.isFunction(descriptor.value) && !alwaysAvailableInstanceMethods.includes(memberName) /* excluding the always-available methods when invalid*/) {
                 let method = descriptor.value
                 descriptor.value = function () {
                     if (!this.isValid()) {
@@ -90,7 +90,7 @@ export function validAndWithSameOwner(constructor: new (...args: any[]) => any) 
                             \n${validText(constructor)}`
                         )
                     }
-                    util.forEach(arguments, arg => {
+                    Array.from(arguments).forEach(arg => {
                         if (arg instanceof GeomObject) {
                             if (!arg.isValid()) {
                                 throw new Error(
@@ -140,7 +140,7 @@ export function validAndWithSameOwner(constructor: new (...args: any[]) => any) 
             let setter = descriptor.set
             descriptor.set = function (value: any) {
                 if (util.isArray(value)) {
-                    util.forEach(value, v => {
+                    value.forEach(v => {
                         if (v instanceof GeomObject) {
                             if (!v.isValid()) {
                                 throw new Error(
@@ -188,97 +188,4 @@ export function validAndWithSameOwner(constructor: new (...args: any[]) => any) 
             Object.defineProperty(constructor.prototype, memberName, descriptor)
         }
     })
-}
-
-export function assertCondition(condition: any, msg?: string): asserts condition {
-    if (!condition) {
-        throw new TypeError(`[G]${msg}`)
-    }
-}
-
-export function assertIsRealNumber(value: any, p: string): asserts value is number {
-    if (!util.isRealNumber(value)) {
-        throw new TypeError(`[G]The \`${p}\` should be a real number(number excluding \`Infinity\` and \`NaN\`).`)
-    }
-}
-export function assertIsInteger(value: any, p: string): asserts value is number {
-    if (!util.isInteger(value)) {
-        throw new TypeError(`[G]The \`${p}\` should be an integer.`)
-    }
-}
-export function assertIsPositiveNumber(value: any, p: string): asserts value is number {
-    if (!util.isPositiveNumber(value)) {
-        throw new TypeError(`[G]The \`${p}\` should be a positive number.`)
-    }
-}
-export function assertIsNegativeNumber(value: any, p: string): asserts value is number {
-    if (!util.isNegativeNumber(value)) {
-        throw new TypeError(`[G]The \`${p}\` should be a negative number.`)
-    }
-}
-export function assertIsNonZeroNumber(value: any, p: string): asserts value is number {
-    if (!util.isNonZeroNumber(value)) {
-        throw new TypeError(`[G]The \`${p}\` should be a nonzero number.`)
-    }
-}
-export function assertIsCoordinate(value: any, p: string): asserts value is [number, number] {
-    if (!util.isCoordinate(value)) {
-        throw new TypeError(`[G]The \`${p}\` should be a coordinate.`)
-    }
-}
-export function assertIsCoordinateArray(value: any, p: string): asserts value is [number, number][] {
-    if (!(util.isArray(value) && util.every(value, c => util.isCoordinate(c)))) {
-        throw new TypeError(`[G]The \`${p}\` should be an array of coordinate.`)
-    }
-}
-export function assertIsPoint(value: any, p: string): asserts value is Point {
-    if (!(value instanceof Point)) {
-        throw new Error(`[G]The \`${p}\` should be a \`Point\`.`)
-    }
-}
-export function assertIsPointArray(value: any, p: string): asserts value is Point[] {
-    if (!(util.isArray(value) && util.every(value, p => p instanceof Point))) {
-        throw new Error(`[G]The \`${p}\`  an array of \`Point\`.`)
-    }
-}
-export function assertIsSize(value: any, p: string): asserts value is [number, number] {
-    if (!util.isSize(value)) {
-        throw new TypeError(`[G]The \`${p}\` should be a size.`)
-    }
-}
-export function assertIsBoolean(value: any, p: string): asserts value is boolean {
-    if (!util.isBoolean(value)) {
-        throw new TypeError(`[G]The \`${p}\` should be a boolean.`)
-    }
-}
-export function assertIsString(value: any, p: string): asserts value is string {
-    if (!util.isString(value)) {
-        throw new TypeError(`[G]The \`${p}\` should be a string.`)
-    }
-}
-export function assertIsLine(value: any, p: string): asserts value is Line {
-    if (!(value instanceof Line)) {
-        throw new TypeError(`[G]The \`${p}\`  should be a \`Line\`.`)
-    }
-}
-
-export function assertComparison(value: any, p: string, t: "gt" | "lt" | "eq" | "ge" | "le" | "ne", n: number) {
-    if (t === "gt" && !(value > n)) {
-        throw new TypeError(`[G]The \`${p}\` should be greater than ${n}.`)
-    }
-    if (t === "lt" && !(value < n)) {
-        throw new TypeError(`[G]The \`${p}\` should be less than ${n}.`)
-    }
-    if (t === "eq" && !(value === n)) {
-        throw new TypeError(`[G]The \`${p}\` should be equal to ${n}.`)
-    }
-    if (t === "ge" && !(value >= n)) {
-        throw new TypeError(`[G]The \`${p}\` should be greater than or equal to ${n}.`)
-    }
-    if (t === "le" && !(value <= n)) {
-        throw new TypeError(`[G]The \`${p}\` should be less than or equal to ${n}.`)
-    }
-    if (t === "ne" && !(value !== n)) {
-        throw new TypeError(`[G]The \`${p}\` should not be equal to ${n}.`)
-    }
 }

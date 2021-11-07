@@ -1,4 +1,5 @@
-import { assertIsCoordinate, assertIsRealNumber, sealed, validAndWithSameOwner } from "./decorator"
+import { validAndWithSameOwner } from "./decorator"
+import assert from "./utility/assertion"
 import vec2 from "./utility/vec2"
 import util from "./utility"
 import math from "./utility/math"
@@ -7,22 +8,21 @@ import coord from "./utility/coordinate"
 import Geomtoy from "."
 import GeomObject from "./base/GeomObject"
 import Vector from "./Vector"
-import Segment from "./Segment"
+import LineSegment from "./LineSegment"
 import Line from "./Line"
 import Circle from "./Circle"
 import Transformation from "./transformation"
 
 import Graphics from "./graphics"
-import { GraphicsCommand } from "./types"
+import { GraphicsCommand, OwnerCarrier } from "./types"
 import { Visible } from "./interfaces"
-import Polygon from "./Polygon"
-import Triangle from "./Triangle"
+import Polygon from "./advanced/Polygon"
 import Ray from "./Ray"
+import { optionerOf } from "./helper/Optioner"
+import factory from "./utility/factory"
 
-@sealed
-@validAndWithSameOwner
 class Point extends GeomObject implements Visible {
-    #coordinate: [number, number] = [NaN, NaN]
+    private _coordinate: [number, number] = [NaN, NaN]
 
     constructor(owner: Geomtoy, x: number, y: number)
     constructor(owner: Geomtoy, coordinate: [number, number])
@@ -38,35 +38,45 @@ class Point extends GeomObject implements Visible {
         return Object.seal(this)
     }
 
+    static readonly events = Object.freeze({
+        xChanged: "xChanged",
+        yChanged: "yChanged"
+    })
+
     get x() {
-        return coord.x(this.#coordinate)
+        return coord.x(this._coordinate)
     }
     set x(value) {
-        assertIsRealNumber(value, "x")
-        coord.x(this.#coordinate, value)
+        assert.isRealNumber(value, "x")
+        this.willTrigger_(coord.x(this._coordinate), value, [Point.events.xChanged])
+        coord.x(this._coordinate, value)
     }
     get y() {
-        return coord.y(this.#coordinate)
+        return coord.y(this._coordinate)
     }
     set y(value) {
-        assertIsRealNumber(value, "y")
-        coord.y(this.#coordinate, value)
+        assert.isRealNumber(value, "y")
+        this.willTrigger_(coord.y(this._coordinate), value, [Point.events.yChanged])
+        coord.y(this._coordinate, value)
     }
     get coordinate() {
-        return coord.copy(this.#coordinate)
+        return coord.clone(this._coordinate)
     }
     set coordinate(value) {
-        assertIsCoordinate(value, "coordinate")
-        coord.assign(this.#coordinate, value)
+        assert.isCoordinate(value, "coordinate")
+        this.willTrigger_(coord.x(this._coordinate), coord.x(value), [Point.events.xChanged])
+        this.willTrigger_(coord.y(this._coordinate), coord.y(value), [Point.events.yChanged])
+        coord.assign(this._coordinate, value)
     }
 
-    static zero(owner: Geomtoy): Point {
-        return new Point(owner, 0, 0)
+    static zero(this: OwnerCarrier) {
+        return new Point(this.owner, 0, 0)
     }
 
-    isValid() {
-        return coord.isValid(this.#coordinate)
+    isValid(): boolean {
+        return coord.isValid(this._coordinate)
     }
+
     /**
      * Whether points `point1`, `point2`, `point3` are collinear.
      * @category Static
@@ -76,57 +86,51 @@ class Point extends GeomObject implements Visible {
      * @returns
      */
     static isThreePointsCollinear(owner: Geomtoy, point1: Point, point2: Point, point3: Point) {
-        let [x1, y1] = point1.coordinate,
-            [x2, y2] = point2.coordinate,
-            [x3, y3] = point3.coordinate,
-            d = x1 * y2 + x2 * y3 + x3 * y1 - (x2 * y1 + x3 * y2 + x1 * y3) //cross product shorthand
-        return math.equalTo(d, 0, owner.getOptions().epsilon)
+        const [x1, y1] = point1.coordinate
+        const [x2, y2] = point2.coordinate
+        const [x3, y3] = point3.coordinate
+        const d = x1 * y2 + x2 * y3 + x3 * y1 - (x2 * y1 + x3 * y2 + x1 * y3) //cross product shorthand
+        const epsilon = optionerOf(owner).options.epsilon
+        return math.equalTo(d, 0, epsilon)
     }
     /**
      * Get the `n` equally dividing rays of the angle which is formed by points `vertex`, `leg1` and `leg2`.
      * @description
      * The angle is generated from `leg1` to `leg2` taking `vertex` as the center of rotation.
      * If `n` is not an integer, return `null`.
-     * If any two in `vertex`, `leg1`, `leg2` are the same, return `null`.
+     * If any two in `vertex`, `leg1`, `leg2` are the same, return `[]`.
      * @param n
      * @param vertex
      * @param leg1
      * @param leg2
      */
-    static getAngleNEquallyDividingRaysFromThreePoints(owner: Geomtoy, n: number, vertex: Point, leg1: Point, leg2: Point): Array<Ray> | null {
-        if (!util.isInteger(n) || n < 2) return null
+    static getAngleNEquallyDividingRaysFromThreePoints(this: OwnerCarrier, n: number, vertex: Point, leg1: Point, leg2: Point): Ray[] | null {
+        if (!util.isInteger(n) || n < 2) {
+            throw new Error(`[G]\`n\` should be an integer and not less than 2, but we got \`${n}\`.`)
+        }
 
-        let c0 = vertex.coordinate,
-            c1 = leg1.coordinate,
-            c2 = leg2.coordinate,
-            epsilon = owner.getOptions().epsilon
-        if (coord.isSameAs(c0, c1, epsilon) || coord.isSameAs(c0, c2, epsilon) || coord.isSameAs(c1, c2, epsilon)) return null
-        let a1 = vec2.angle(vec2.from(c0, c1)),
-            a2 = vec2.angle(vec2.from(c0, c1)),
-            d = (a2 - a1) / n
-        return util.range(1, n).map(i => new Ray(owner, vertex, a1 + d * i))
+        const [c0, c1, c2] = [vertex.coordinate, leg1.coordinate, leg2.coordinate]
+        const epsilon = optionerOf(this.owner).options.epsilon
+        if (coord.isSameAs(c0, c1, epsilon) || coord.isSameAs(c0, c2, epsilon) || coord.isSameAs(c1, c2, epsilon)) {
+            console.warn("[G]The points `vertex`, `leg1`, `leg2` are the same, there is no angle formed by them.")
+            return null
+        }
+        const a1 = vec2.angle(vec2.from(c0, c1))
+        const a2 = vec2.angle(vec2.from(c0, c1))
+        const d = (a2 - a1) / n
+        return util.range(1, n).map(i => new Ray(this.owner, vertex.coordinate, a1 + d * i))
     }
 
     //todo
-    static isFourPointsConcyclic(owner: Geomtoy, point1: Point, point2: Point, point3: Point, point4: Point) {}
+    static isFourPointsConcyclic(this: OwnerCarrier, point1: Point, point2: Point, point3: Point, point4: Point) {}
     /**
      * Determine a point from vector `vector`.
      * @category Static
      * @param vector
      * @returns
      */
-    static fromVector(owner: Geomtoy, vector: Vector): Point {
+    static fromVector(owner: Geomtoy, vector: Vector) {
         return new Point(owner, vector.point2.coordinate)
-    }
-
-    /**
-     * Whether point `this` is `Point.zero()`.
-     * @returns {boolean}
-     */
-    isZero(): boolean {
-        let { x, y } = this,
-            epsilon = this.owner.getOptions().epsilon
-        return math.equalTo(x, 0, epsilon) && math.equalTo(y, 0, epsilon)
     }
     /**
      * Whether point `this` is the same as point `point`.
@@ -135,50 +139,42 @@ class Point extends GeomObject implements Visible {
      */
     isSameAs(point: Point): boolean {
         if (point === this) return true
-        let epsilon = this.owner.getOptions().epsilon
-        return coord.isSameAs(this.coordinate, point.coordinate, epsilon)
+        return coord.isSameAs(this.coordinate, point.coordinate, this.options_.epsilon)
     }
     /**
-     * Move point `this` by offsets `offsetX` and `offsetY`.
-     * @param {number} offsetX
-     * @param {number} offsetY
-     * @returns {Point}
+     * Move point `this` by `deltaX` and `deltaY` to get new point.
      */
-    move(offsetX: number, offsetY: number): Point {
-        return this.clone().moveSelf(offsetX, offsetY)
+    move(deltaX: number, deltaY: number) {
+        return this.clone().moveSelf(deltaX, deltaY)
     }
-    moveSelf(offsetX: number, offsetY: number) {
-        this.x += offsetX
-        this.y += offsetY
+    /**
+     * Move point `this` itself by `deltaX` and `deltaY`.
+     */
+    moveSelf(deltaX: number, deltaY: number) {
+        this.coordinate = coord.move(this.coordinate, deltaX, deltaY)
         return this
     }
     /**
-     * Move point `this` with distance `distance` along angle `angle`.
-     * @param {number} angle
-     * @param {number} distance
-     * @returns {Point}
+     * Move point `this` with `distance` along `angle` to get new point.
      */
-    moveAlongAngle(angle: number, distance: number): Point {
+    moveAlongAngle(angle: number, distance: number) {
         return this.clone().moveAlongAngleSelf(angle, distance)
     }
+    /**
+     * Move point `this` itself with `distance` along `angle`.
+     */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.x += distance * math.cos(angle)
-        this.y += distance * math.sin(angle)
+        this.coordinate = coord.moveAlongAngle(this.coordinate, angle, distance)
         return this
     }
-
     /**
      * Get the distance between point `this` and point `point`.
-     * @param {Point} point
-     * @returns {number}
      */
     getDistanceBetweenPoint(point: Point): number {
         return vec2.magnitude(vec2.from(this.coordinate, point.coordinate))
     }
     /**
      * Get the distance square between point `this` and point `point`.
-     * @param {Point} point
-     * @returns {number}
      */
     getSquaredDistanceBetweenPoint(point: Point): number {
         return vec2.squaredMagnitude(vec2.from(this.coordinate, point.coordinate))
@@ -197,8 +193,8 @@ class Point extends GeomObject implements Visible {
      * @returns {number}
      */
     getSignedDistanceBetweenLine(line: Line): number {
-        let { a, b, c } = line,
-            { x, y } = this
+        const [a, b, c] = line.getGeneralEquationParameters()
+        const { x, y } = this
         return (a * x + b * y + c) / math.hypot(a, b)
     }
     /**
@@ -207,43 +203,41 @@ class Point extends GeomObject implements Visible {
      * @returns {number}
      */
     getSquaredDistanceBetweenLine(line: Line): number {
-        let { a, b, c } = line,
-            { x, y } = this
+        const [a, b, c] = line.getGeneralEquationParameters()
+        const { x, y } = this
         return (a * x + b * y + c) ** 2 / (a ** 2 + b ** 2)
     }
     /**
-     * Get the distance between point `this` and segment `segment`.
-     * @param {Segment} segment
+     * Get the distance between point `this` and line segment `lineSegment`.
+     * @param {LineSegment} lineSegment
      * @returns {number}
      */
-    getDistanceBetweenSegment(segment: Segment): number {
-        return math.abs(this.getSignedDistanceBetweenSegment(segment))
+    getDistanceBetweenLineSegment(lineSegment: LineSegment): number {
+        return math.abs(this.getSignedDistanceBetweenLineSegment(lineSegment))
     }
     /**
-     * Get the signed distance between point `this` and segment `segment`.
+     * Get the signed distance between point `this` and line segment `lineSegment`.
      * @summary [[include:Matrix.md]]
-     * @param {Segment} segment
+     * @param {LineSegment} lineSegment
      * @returns {number}
      */
-    getSignedDistanceBetweenSegment(segment: Segment): number {
-        let c0 = this.coordinate,
-            c1 = segment.point1Coordinate,
-            c2 = segment.point2Coordinate,
-            v12 = vec2.from(c1, c2),
-            v10 = vec2.from(c1, c0)
+    getSignedDistanceBetweenLineSegment(lineSegment: LineSegment): number {
+        const c = this.coordinate
+        const { point1Coordinate: c1, point2Coordinate: c2 } = lineSegment
+        const v12 = vec2.from(c1, c2)
+        const v10 = vec2.from(c1, c)
         return vec2.cross(v12, v10) / vec2.magnitude(vec2.from(c1, c2))
     }
     /**
-     * Get the distance square between point `this` and segment `segment`
-     * @param {Segment} segment
+     * Get the distance square between point `this` and line segment `lineSegment`
+     * @param {LineSegment} lineSegment
      * @returns {number}
      */
-    getSquaredDistanceBetweenSegment(segment: Segment): number {
-        let c0 = this.coordinate,
-            c1 = segment.point1Coordinate,
-            c2 = segment.point2Coordinate,
-            v12 = vec2.from(c1, c2),
-            v10 = vec2.from(c1, c0)
+    getSquaredDistanceBetweenLineSegment(lineSegment: LineSegment): number {
+        const c = this.coordinate
+        const { point1Coordinate: c1, point2Coordinate: c2 } = lineSegment
+        const v12 = vec2.from(c1, c2)
+        const v10 = vec2.from(c1, c)
         return vec2.cross(v12, v10) ** 2 / vec2.squaredMagnitude(vec2.from(c1, c2))
     }
 
@@ -264,17 +258,13 @@ class Point extends GeomObject implements Visible {
             cp = vec2.cross(v12, v10),
             dp = vec2.dot(v12, v10),
             sm = vec2.squaredMagnitude(v12),
-            epsilon = this.owner.getOptions().epsilon
+            epsilon = this.options_.epsilon
 
         if (allowEqual) {
             return math.equalTo(cp, 0, epsilon) && !math.lessThan(dp, 0, epsilon) && !math.greaterThan(dp, sm, epsilon)
         }
         return math.equalTo(cp, 0, epsilon) && math.greaterThan(dp, 0, epsilon) && math.lessThan(dp, sm, epsilon)
     }
-
-    isOnTriangle(triangle: Triangle) {}
-    isInsideTriangle(triangle: Triangle) {}
-    isOutsideTriangle(triangle: Triangle) {}
 
     isOutsidePolygon() {}
 
@@ -283,85 +273,72 @@ class Point extends GeomObject implements Visible {
     isOnPolygon(polygon: Polygon) {}
 
     isOnLine(line: Line): boolean {
-        let { a, b, c } = line,
+        let [a, b, c] = line.getGeneralEquationParameters(),
             { x, y } = this,
-            epsilon = this.owner.getOptions().epsilon
+            epsilon = this.options_.epsilon
         return math.equalTo(a * x + b * y + c, 0, epsilon)
     }
-    isEndpointOfSegment(segment: Segment): boolean {
-        return this.isSameAs(segment.point1) || this.isSameAs(segment.point2)
-    }
 
-    isOnSegmentLyingLine(segment: Segment): boolean {
-        let v1 = vec2.from(segment.point1Coordinate, segment.point2Coordinate),
-            v2 = vec2.from(segment.point1Coordinate, this.coordinate),
-            epsilon = this.owner.getOptions().epsilon,
+    isOnLineSegmentLyingLine(lineSegment: LineSegment): boolean {
+        let v1 = vec2.from(lineSegment.point1Coordinate, lineSegment.point2Coordinate),
+            v2 = vec2.from(lineSegment.point1Coordinate, this.coordinate),
+            epsilon = this.options_.epsilon,
             dp = vec2.dot(v1, v2)
         return math.equalTo(dp, 0, epsilon)
     }
 
-    isOnSegment(segment: Segment): boolean {
-        return this.isBetweenPoints(segment.point1, segment.point2, true)
-    }
-
-    isOnCircle(circle: Circle) {
-        let sd = this.getSquaredDistanceBetweenPoint(circle.centerPoint),
-            sr = circle.radius ** 2,
-            epsilon = this.owner.getOptions().epsilon
-        return math.equalTo(sd, sr, epsilon)
-    }
-    isInsideCircle(circle: Circle) {
-        let sd = this.getSquaredDistanceBetweenPoint(circle.centerPoint),
-            sr = circle.radius ** 2,
-            epsilon = this.owner.getOptions().epsilon
-        return math.lessThan(sd, sr, epsilon)
-    }
-    isOutsideCircle(circle: Circle) {
-        let sd = this.getSquaredDistanceBetweenPoint(circle.centerPoint),
-            sr = circle.radius ** 2,
-            epsilon = this.owner.getOptions().epsilon
-        return math.greaterThan(sd, sr, epsilon)
+    isOnLineSegment(lineSegment: LineSegment): boolean {
+        return this.isBetweenPoints(lineSegment.point1, lineSegment.point2, true)
     }
 
     getGraphics(): GraphicsCommand[] {
         const g = new Graphics()
-        const c = this.coordinate
+        if (!this.isValid()) return g.commands
         const scale = this.owner.scale
-        const pointSize = this.owner.getOptions().graphics.pointSize / scale
+        const pointSize = this.options_.graphics.pointSize / scale
 
-        g.centerArcTo(...c, pointSize, pointSize, 0, 0, 2 * Math.PI)
+        g.centerArcTo(...this.coordinate, pointSize, pointSize, 0, 0, 2 * Math.PI)
         g.close()
         return g.commands
     }
     /**
-     * apply the transformation
-     * @returns {Point}
+     * Apply the transformation
+     * @param transformation
+     * @returns
      */
-    apply(transformation: Transformation): Point {
+    apply(transformation: Transformation) {
         let c = transformation.transformCoordinate(this.coordinate)
         return new Point(this.owner, c)
     }
     clone() {
-        return new Point(this.owner, this.x, this.y)
+        return new Point(this.owner, this.coordinate)
+    }
+    copyFrom(point: Point | null) {
+        if (point === null) point = new Point(this.owner)
+        this.willTrigger_(coord.x(this._coordinate), coord.x(point._coordinate), [Point.events.xChanged])
+        this.willTrigger_(coord.y(this._coordinate), coord.y(point._coordinate), [Point.events.xChanged])
+        coord.assign(this._coordinate, point._coordinate)
+        return this
     }
     toString() {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
-            `\tcoordinate: ${coord.toString(this.coordinate)}`,
+            `\tcoordinate: ${this.coordinate.join(", ")}`,
             `} owned by Geomtoy(${this.owner.uuid})`
         ].join("\n")
     }
     toArray() {
-        return [coord.copy(this.coordinate)]
+        return this.coordinate
     }
     toObject() {
-        return { coordinate: coord.copy(this.coordinate) }
+        return { coordinate: this.coordinate }
     }
 }
 
+validAndWithSameOwner(Point)
+
 /**
- *
  * @category GeomObject
  */
 export default Point

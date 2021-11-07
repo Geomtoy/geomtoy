@@ -15,7 +15,7 @@ const size = {
         if (h !== undefined) s[1] = h
         return s[1]
     },
-    copy(s: [number, number]): [number, number] {
+    clone(s: [number, number]): [number, number] {
         return [...s]
     },
     isSameAs(s1: [number, number], s2: [number, number], epsilon: number): boolean {

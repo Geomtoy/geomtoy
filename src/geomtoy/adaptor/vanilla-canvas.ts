@@ -1,11 +1,11 @@
 import Geomtoy from ".."
 import GeomObject from "../base/GeomObject"
 import { Visible } from "../interfaces"
-import { AdapterOptions, LineCapType, LineJoinType } from "./adapter-types"
+import { AdapterOptions, LineCapType, LineJoinType, Renderer } from "./adapter-types"
 /**
  * @category Adapter
  */
-export default class VanillaCanvas {
+export default class VanillaCanvas implements Renderer {
     container: HTMLCanvasElement
     geomtoy: Geomtoy
 
@@ -62,10 +62,10 @@ export default class VanillaCanvas {
             this.context.textBaseline = "alphabetic"
             // text font style
             let fontStyle = ""
-            cmd.font.bold && (fontStyle += "bold ")
-            cmd.font.italic && (fontStyle += "italic ")
-            fontStyle += `${cmd.font.size}px `
-            fontStyle += cmd.font.family
+            cmd.fontBold && (fontStyle += "bold ")
+            cmd.fontItalic && (fontStyle += "italic ")
+            fontStyle += `${cmd.fontSize}px `
+            fontStyle += cmd.fontFamily
             this.context.font = fontStyle
             // handle text orientation
             this.context.save()
@@ -142,11 +142,14 @@ export default class VanillaCanvas {
         this._fill = fill
     }
     isPointInFill(path2D: Path2D, x: number, y: number) {
-        // console.log(path2D,x,y)
         return this.context.isPointInPath(path2D, x, y)
     }
-    isPointInStroke(path2D: Path2D, x: number, y: number) {
-        return this.context.isPointInStroke(path2D, x, y)
+    isPointInStroke(path2D: Path2D, strokeWidth: number, x: number, y: number) {
+        this.context.save()
+        this.context.lineWidth = strokeWidth / this.geomtoy.scale
+        const d = this.context.isPointInStroke(path2D, x, y)
+        this.context.restore()
+        return d
     }
 
     drawBatch(objects: (GeomObject & Visible)[], behind = false) {

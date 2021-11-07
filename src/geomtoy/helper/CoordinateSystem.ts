@@ -92,7 +92,6 @@ class Trilinear {
             l1 = vec2.magnitude(vec2.from(c2, c3)),
             l2 = vec2.magnitude(vec2.from(c3, c1)),
             l3 = vec2.magnitude(vec2.from(c1, c2))
-
         lambda1 *= l1
         lambda2 *= l2
         lambda3 *= l3

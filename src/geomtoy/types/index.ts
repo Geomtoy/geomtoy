@@ -1,10 +1,12 @@
 import Line from "../Line"
 import Point from "../Point"
 import Ray from "../Ray"
-import Segment from "../Segment"
+import LineSegment from "../LineSegment"
 
-export * from "./graphics"
+
 export * from "./geomtoy"
+export * from "./geom-object"
+export * from "./graphics"
 
 export type PointLineData = {
     point: Point
@@ -19,12 +21,12 @@ export type AnglePointLineData = {
     point: Point
     line: Line
 }
-export type SegmentLineData = {
-    segment: Segment
+export type LineSegmentLineData = {
+    lineSegment: LineSegment
     line: Line
 }
-export type SegmentRayLineData = {
-    segment: Segment
+export type LineSegmentRayLineData = {
+    lineSegment: LineSegment
     ray: Ray
     line: Line
 }
@@ -37,7 +39,7 @@ export enum RsPointToLine {
     On = 2,
     NotOn = 2 ^ 1
 }
-export enum RsPointToSegment {
+export enum RsPointToLineSegment {
     On = 2,
     NotOn = 2 << 4,
     Collinear = 2 << 5
@@ -48,7 +50,7 @@ export enum RsPointToCircle {
     Outside = 2 << 2,
     NotOn = Inside | Outside
 }
-export enum RsLineToSegment {}
+export enum RsLineToLineSegment {}
 export enum RsLineToRectangle {
     Intersected = 2,
     IntersectedWith1Point = Intersected | (2 << 1),
@@ -56,7 +58,7 @@ export enum RsLineToRectangle {
     Separated = 2 << 3
 }
 
-export enum RsSegmentToSegment {
+export enum RsLineSegmentToLineSegment {
     Perpendicular = 2,
     Parallel = 2 << 1,
     Collinear = Parallel | (2 << 2),

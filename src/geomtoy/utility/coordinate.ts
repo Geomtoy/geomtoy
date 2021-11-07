@@ -15,10 +15,17 @@ const coord = {
         if (y !== undefined) c[1] = y
         return c[1]
     },
-    copy(c: [number, number]): [number, number] {
+    clone(c: [number, number]): [number, number] {
         return [...c]
     },
+    move(c: [number, number], dx: number, dy: number): [number, number] {
+        return [c[0] + dx, c[1] + dy]
+    },
+    moveAlongAngle(c: [number, number], angle: number, d: number): [number, number] {
+        return [c[0] + d * math.cos(angle), c[1] + d * math.sin(angle)]
+    },
     isSameAs(c1: [number, number], c2: [number, number], epsilon: number): boolean {
+        // todo rename math.equalTo = apxEqualTo
         return math.equalTo(c1[0], c2[0], epsilon) && math.equalTo(c1[1], c2[1], epsilon)
     },
     // x first comparison
@@ -27,15 +34,9 @@ const coord = {
             d1 = math.compare(c1[0], c2[0], epsilon)
         return d0 === 0 ? d1 : d0
     },
-    sort(cs: [number, number][]) {
-        return util.sort(cs, (c1, c2) => (c1[0] == c2[0] ? c1[1] - c2[1] : c1[0] - c2[0]))
-    },
     //
     isValid(c: [number, number]) {
         return util.isRealNumber(c[0]) && util.isRealNumber(c[1])
-    },
-    toString(c: [number, number]) {
-        return `[${coord.x(c)}, ${coord.y(c)}]`
     }
 }
 export default coord

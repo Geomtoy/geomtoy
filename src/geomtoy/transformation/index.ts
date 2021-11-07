@@ -5,12 +5,15 @@ import Line from "../Line"
 import Matrix from "../helper/Matrix"
 import GeomObject from "../base/GeomObject"
 import Geomtoy from ".."
+import { validAndWithSameOwner } from "../decorator"
 class Transformation extends GeomObject {
-    #matrix: Matrix = Matrix.identity
+    private _matrix: Matrix = Matrix.identity
 
     constructor(owner: Geomtoy) {
         super(owner)
+        return Object.seal(this)
     }
+    eventNames = Object.freeze([])
 
     isValid() {
         return true
@@ -19,7 +22,7 @@ class Transformation extends GeomObject {
      * Get the matrix of transformation `this`.
      */
     get(): [number, number, number, number, number, number] {
-        let { a, b, c, d, e, f } = this.#matrix
+        let { a, b, c, d, e, f } = this._matrix
         return [a, b, c, d, e, f]
     }
     /**
@@ -27,29 +30,29 @@ class Transformation extends GeomObject {
      */
     set(value: [number, number, number, number, number, number]) {
         let [a, b, c, d, e, f] = value
-        Object.assign(this.#matrix, { a, b, c, d, e, f })
+        Object.assign(this._matrix, { a, b, c, d, e, f })
         return this
     }
     /**
      * Reset transformation `this` by the identity matrix.
      */
     reset() {
-        this.#matrix.identitySelf()
+        this._matrix.identitySelf()
         return this
     }
-    invert(){
-        this.#matrix.invertSelf()
+    invert() {
+        this._matrix.invertSelf()
         return this
     }
     /**
      * Add a translation to transformation `this`.
      */
-    translate(deltaX: number, deltaY: number) {
+    translate(offsetX: number, offsetY: number) {
         let t = Object.assign(Matrix.identity, {
-            e: deltaX,
-            f: deltaY
+            e: offsetX,
+            f: offsetY
         }) as Matrix
-        this.#matrix.postMultiplySelf(t)
+        this._matrix.postMultiplySelf(t)
         return this
     }
     /**
@@ -76,7 +79,7 @@ class Transformation extends GeomObject {
             t.postMultiplySelf(postTranslation)
         }
 
-        this.#matrix.postMultiplySelf(t)
+        this._matrix.postMultiplySelf(t)
         return this
     }
     /**
@@ -100,7 +103,7 @@ class Transformation extends GeomObject {
             t.preMultiplySelf(preTranslation)
             t.postMultiplySelf(postTranslation)
         }
-        this.#matrix.postMultiplySelf(t)
+        this._matrix.postMultiplySelf(t)
         return this
     }
     /**
@@ -126,24 +129,24 @@ class Transformation extends GeomObject {
             t.postMultiplySelf(postTranslation)
         }
 
-        this.#matrix.postMultiplySelf(t)
+        this._matrix.postMultiplySelf(t)
         return this
     }
     /**
      * Add a line reflection to transformation `this`.
      */
     lineReflect(line: Line) {
-        let { a, b, c } = line,
-            denom = a ** 2 + b ** 2,
-            t = Object.assign(Matrix.identity, {
-                a: (b ** 2 - a ** 2) / denom,
-                b: -(2 * a * b) / denom,
-                c: -(2 * a * b) / denom,
-                d: -(b ** 2 - a ** 2) / denom,
-                e: -(2 * a * c) / denom,
-                f: -(2 * b * c) / denom
-            }) as Matrix
-        this.#matrix.postMultiplySelf(t)
+        const [a, b, c] = line.getGeneralEquationParameters()
+        const denom = a ** 2 + b ** 2
+        const t = Object.assign(Matrix.identity, {
+            a: (b ** 2 - a ** 2) / denom,
+            b: -(2 * a * b) / denom,
+            c: -(2 * a * b) / denom,
+            d: -(b ** 2 - a ** 2) / denom,
+            e: -(2 * a * c) / denom,
+            f: -(2 * b * c) / denom
+        }) as Matrix
+        this._matrix.postMultiplySelf(t)
         return this
     }
     /**
@@ -157,7 +160,7 @@ class Transformation extends GeomObject {
                 e: 2 * x,
                 f: 2 * y
             })
-        this.#matrix.postMultiplySelf(t)
+        this._matrix.postMultiplySelf(t)
         return this
     }
     /**
@@ -165,7 +168,7 @@ class Transformation extends GeomObject {
      */
     matrix(a: number, b: number, c: number, d: number, e: number, f: number) {
         let t = new Matrix(a, b, c, d, e, f)
-        this.#matrix.postMultiplySelf(t)
+        this._matrix.postMultiplySelf(t)
         return this
     }
     /**
@@ -174,7 +177,7 @@ class Transformation extends GeomObject {
      * and the visual position of the coordinate will not change.
      */
     transformCoordinate(coordinate: [number, number]): [number, number] {
-        return this.#matrix.transformCoordinate(coordinate)
+        return this._matrix.transformCoordinate(coordinate)
     }
     /**
      * Transform coordinate `coordinate` corresponding to the identity matrix (in the initial state without transformation)
@@ -182,7 +185,7 @@ class Transformation extends GeomObject {
      * and the visual position of the coordinate will not change.
      */
     antitransformCoordinate(coordinate: [number, number]): [number, number] {
-        return this.#matrix.antitransformCoordinate(coordinate)
+        return this._matrix.antitransformCoordinate(coordinate)
     }
     /**
      * Decompose transformation `this`.
@@ -229,6 +232,9 @@ class Transformation extends GeomObject {
     clone() {
         return new Transformation(this.owner).set(this.get())
     }
+    copyFrom(from: GeomObject): this {
+        throw new Error("Method not implemented.")
+    }
     toString() {
         let [a, b, c, d, e, f] = this.get()
         //prettier-ignore
@@ -251,5 +257,7 @@ class Transformation extends GeomObject {
         return { a, b, c, d, e, f }
     }
 }
+
+validAndWithSameOwner(Transformation)
 
 export default Transformation

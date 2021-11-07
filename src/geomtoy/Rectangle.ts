@@ -1,20 +1,18 @@
 import util from "./utility"
-
 import Point from "./Point"
 import { GraphicsCommand } from "./types"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
-import { assertIsCoordinate, assertIsPoint, assertIsPositiveNumber, assertIsRealNumber, assertIsSize, sealed, validAndWithSameOwner } from "./decorator"
+import { validAndWithSameOwner } from "./decorator"
+import assert from "./utility/assertion"
 import math from "./utility/math"
 import Geomtoy from "."
 import coord from "./utility/coordinate"
 import size from "./utility/size"
 
-@sealed
-@validAndWithSameOwner
 class Rectangle extends GeomObject {
-    #originCoordinate: [number, number] = [NaN, NaN]
-    #size: [number, number] = [NaN, NaN]
+    private _originCoordinate: [number, number] = [NaN, NaN]
+    private _size: [number, number] = [NaN, NaN]
 
     constructor(owner: Geomtoy, originX: number, originY: number, width: number, height: number)
     constructor(owner: Geomtoy, originX: number, originY: number, size: [number, number])
@@ -49,59 +47,89 @@ class Rectangle extends GeomObject {
         return Object.seal(this)
     }
 
+    static readonly events = Object.freeze({
+        originXChanged: "originXChanged",
+        originYChanged: "originYChanged",
+        widthChanged: "widthChanged",
+        heightChanged: "heightChanged"
+    })
+
+    private _setOriginX(value: number) {
+        this.willTrigger_(coord.x(this._originCoordinate), value, [Rectangle.events.originXChanged])
+        coord.x(this._originCoordinate, value)
+    }
+    private _setOriginY(value: number) {
+        this.willTrigger_(coord.y(this._originCoordinate), value, [Rectangle.events.originYChanged])
+        coord.y(this._originCoordinate, value)
+    }
+    private _setWidth(value: number) {
+        this.willTrigger_(size.width(this._size), value, [Rectangle.events.widthChanged])
+        size.width(this._size, value)
+    }
+    private _setHeight(value: number) {
+        this.willTrigger_(size.height(this._size), value, [Rectangle.events.heightChanged])
+        size.height(this._size, value)
+    }
+
     get originX() {
-        return coord.x(this.#originCoordinate)
+        return coord.x(this._originCoordinate)
     }
     set originX(value) {
-        assertIsRealNumber(value, "originX")
-        coord.x(this.#originCoordinate, value)
+        assert.isRealNumber(value, "originX")
+        this._setOriginX(value)
     }
     get originY() {
-        return coord.y(this.#originCoordinate)
+        return coord.y(this._originCoordinate)
     }
     set originY(value) {
-        assertIsRealNumber(value, "originY")
-        coord.y(this.#originCoordinate, value)
+        assert.isRealNumber(value, "originY")
+        this._setOriginY(value)
     }
     get originCoordinate() {
-        return coord.copy(this.#originCoordinate)
+        return coord.clone(this._originCoordinate)
     }
     set originCoordinate(value) {
-        assertIsCoordinate(value, "originCoordinate")
-        coord.assign(this.#originCoordinate, value)
+        assert.isCoordinate(value, "originCoordinate")
+        this._setOriginX(coord.x(value))
+        this._setOriginY(coord.y(value))
     }
     get originPoint() {
-        return new Point(this.owner, this.#originCoordinate)
+        return new Point(this.owner, this._originCoordinate)
     }
     set originPoint(value) {
-        assertIsPoint(value, "originPoint")
-        coord.assign(this.#originCoordinate, value.coordinate)
+        assert.isPoint(value, "originPoint")
+        this._setOriginX(value.x)
+        this._setOriginY(value.y)
     }
     get width() {
-        return size.width(this.#size)
+        return size.width(this._size)
     }
     set width(value) {
-        assertIsPositiveNumber(value, "width")
-        size.width(this.#size, value)
+        assert.isPositiveNumber(value, "width")
+        this._setWidth(value)
     }
     get height() {
-        return size.height(this.#size)
+        return size.height(this._size)
     }
     set height(value) {
-        assertIsPositiveNumber(value, "height")
-        size.height(this.#size, value)
+        assert.isPositiveNumber(value, "height")
+        this._setHeight(value)
     }
     get size() {
-        return size.copy(this.#size)
+        return size.clone(this._size)
     }
     set size(value) {
-        assertIsSize(value, "size")
-        size.assign(this.#size, value)
+        assert.isSize(value, "size")
+        this._setWidth(size.width(value))
+        this._setHeight(size.height(value))
     }
 
     isValid() {
-        let epsilon = this.owner.getOptions().epsilon
-        return coord.isValid(this.originCoordinate) && size.isValid(this.size, epsilon)
+        const [oc, s] = [this._originCoordinate, this._size]
+        const epsilon = this.options_.epsilon
+        if (!coord.isValid(oc)) return false
+        if (!size.isValid(s, epsilon)) return false
+        return true
     }
 
     static fromPoints(owner: Geomtoy, point1: Point, point2: Point) {
@@ -118,8 +146,8 @@ class Rectangle extends GeomObject {
     }
 
     getCornerPoint(corner: "leftTop" | "rightTop" | "rightBottom" | "leftBottom"): Point {
-        let xRight = this.owner.getOptions().coordinateSystem.xAxisPositiveOnRight,
-            yBottom = this.owner.getOptions().coordinateSystem.yAxisPositiveOnBottom,
+        let xRight = this.owner.xAxisPositiveOnRight,
+            yBottom = this.owner.yAxisPositiveOnBottom,
             { originX: x, originY: y, width: w, height: h } = this,
             lt: [number, number] = [x, y],
             rt: [number, number] = [x + w, y],
@@ -127,7 +155,7 @@ class Rectangle extends GeomObject {
             lb: [number, number] = [x, y + h]
         if (!xRight) ([lt, rt] = [rt, lt]), ([lb, rb] = [rb, lb])
         if (!yBottom) ([lt, lb] = [lb, lt]), ([rt, rb] = [rb, rt])
-        let ret = Point.zero(this.owner)
+        let ret = Point.zero.bind(this)()
         if (corner === "leftTop") {
             ret = new Point(this.owner, lt)
         }
@@ -143,8 +171,8 @@ class Rectangle extends GeomObject {
         return ret
     }
     getBounding(side: "left" | "right" | "top" | "bottom"): number {
-        let xRight = this.owner.getOptions().coordinateSystem.xAxisPositiveOnRight,
-            yBottom = this.owner.getOptions().coordinateSystem.yAxisPositiveOnBottom,
+        let xRight = this.owner.xAxisPositiveOnRight,
+            yBottom = this.owner.yAxisPositiveOnBottom,
             { originX: x, originY: y, width: w, height: h } = this,
             l = x,
             r = x + w,
@@ -168,12 +196,30 @@ class Rectangle extends GeomObject {
         return ret
     }
 
-    move(offsetX: number, offsetY: number): Rectangle {
-        return this.clone().moveSelf(offsetX, offsetY)
+    /**
+     * Move rectangle `this` by `offsetX` and `offsetY` to get new rectangle.
+     */
+    move(deltaX: number, deltaY: number) {
+        return this.clone().moveSelf(deltaX, deltaY)
     }
-    moveSelf(offsetX: number, offsetY: number): Rectangle {
-        this.originX += offsetX
-        this.originY += offsetY
+    /**
+     * Move rectangle `this` itself by `offsetX` and `offsetY`.
+     */
+    moveSelf(deltaX: number, deltaY: number) {
+        this.originCoordinate = coord.move(this.originCoordinate, deltaX, deltaY)
+        return this
+    }
+    /**
+     * Move rectangle `this` with `distance` along `angle` to get new rectangle.
+     */
+    moveAlongAngle(angle: number, distance: number) {
+        return this.clone().moveAlongAngleSelf(angle, distance)
+    }
+    /**
+     * Move rectangle `this` itself with `distance` along `angle`.
+     */
+    moveAlongAngleSelf(angle: number, distance: number) {
+        this.originCoordinate = coord.moveAlongAngle(this.originCoordinate, angle, distance)
         return this
     }
 
@@ -220,6 +266,14 @@ class Rectangle extends GeomObject {
     clone() {
         return new Rectangle(this.owner, this.originCoordinate, this.size)
     }
+    copyFrom(rectangle: Rectangle | null) {
+        if (rectangle === null) rectangle = new Rectangle(this.owner)
+        this._setOriginX(coord.x(rectangle._originCoordinate))
+        this._setOriginY(coord.y(rectangle._originCoordinate))
+        this._setWidth(size.width(rectangle._size))
+        this._setHeight(size.height(rectangle._size))
+        return this
+    }
     apply(transformation: Transformation): GeomObject {
         throw new Error("Method not implemented.")
     }
@@ -244,17 +298,16 @@ class Rectangle extends GeomObject {
     // 	//接下来依次求解直线与构成矩形的四条线段的交点
     // 	boolean m1,m2,m3,m4;//设置是否有交点的标志
     // 	System.out.println("直线与矩形交点的计算结果为 ： ");
-    // 	m1 = pointSegment(a, b, c, x1, y1, x2, y2);
-    // 	m2 = pointSegment(a, b, c, x2, y2, x3, y3);
-    // 	m3 = pointSegment(a, b, c, x3, y3, x4, y4);
-    // 	m4 = pointSegment(a, b, c, x4, y4, x1, y1);
+    // 	m1 = pointLineSegment(a, b, c, x1, y1, x2, y2);
+    // 	m2 = pointLineSegment(a, b, c, x2, y2, x3, y3);
+    // 	m3 = pointLineSegment(a, b, c, x3, y3, x4, y4);
+    // 	m4 = pointLineSegment(a, b, c, x4, y4, x1, y1);
     // 	if(m1 == m2 == m3 == m4 == false)
     // 		System.out.println("直线与矩形没有交点");
     // }
 }
-
+validAndWithSameOwner(Rectangle)
 /**
- *
  * @category GeomObject
  */
 export default Rectangle

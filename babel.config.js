@@ -3,7 +3,8 @@ module.exports = {
         [
             "@babel/preset-env",
             {
-                bugfixes: true
+                bugfixes: true,
+                loose: true
             }
         ],
         [

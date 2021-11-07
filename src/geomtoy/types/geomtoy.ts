@@ -1,3 +1,5 @@
+import Geomtoy from ".."
+
 export type Tail<T extends any[]> = T extends [infer A, ...infer R] ? R : never
 
 // prettier-ignore
@@ -88,17 +90,17 @@ export type ConstructorOverloads<T> =
     ]
     : never
 
-// prettier-ignore
-export type TailedStaticMethods<T extends { new (...args: any): any }> = {
-    [K in keyof T as T[K] extends (...args: any) => any ? K : never]
-    : T[K] extends (...args: any) => any ? (...args: Tail<Parameters<T[K]>>) => ReturnType<T[K]> : never
-}
+export type StaticMethodsMapper<T extends { new (...args: any[]): any }> = {
+    [K in keyof T as T[K] extends (...args: any[]) => any ? K  : never]  
+    : T[K] extends (...args: any[]) => any ? T[K] : never
+} 
+export type OwnerCarrier = {owner:Geomtoy}
 
-export type TailedConstructor<T extends { new (...args: any): any }> = {
+export type ConstructorTailer<T extends { new (...args: any[]): any }> = {
     (...args: Tail<ConstructorParameters<ConstructorOverloads<T>[number]>>): InstanceType<T>
 }
-
-export type Factory<T extends { new (...args: any): any }> = TailedStaticMethods<T> & TailedConstructor<T>
+export type Factory<T extends { new (...args: any[]): any }> = 
+    ConstructorTailer<T> & StaticMethodsMapper<T> & OwnerCarrier
 
 // export
 export type RecursivePartial<T> = {
@@ -110,11 +112,14 @@ export type Options = {
     epsilon: number
     graphics: {
         pointSize: number
-        lineRange: number
-        vectorArrow: {
+        lineArrow: boolean
+        vectorArrow: boolean
+        rayArrow: boolean
+        arrow: {
             width: number
             length: number
             foldback: number
+            noFoldback: boolean
         }
     }
     pathSampleRatio: number
@@ -123,11 +128,14 @@ export const defaultOptions: Options = {
     epsilon: 2 ** -32,
     graphics: {
         pointSize: 2,
-        lineRange: 2 ** 10,
-        vectorArrow: {
+        lineArrow: true,
+        vectorArrow: true,
+        rayArrow: true,
+        arrow: {
             width: 5,
             length: 10,
-            foldback: 1
+            foldback: 1,
+            noFoldback: false
         }
     },
     pathSampleRatio: 100

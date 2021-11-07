@@ -3,26 +3,26 @@ import Point from "./Point"
 import Vector from "./Vector"
 import util from "./utility"
 import { Direction } from "./types"
-import { assertIsCoordinate, assertIsPoint, assertIsPositiveNumber, assertIsRealNumber, sealed, validAndWithSameOwner } from "./decorator"
+import { validAndWithSameOwner } from "./decorator"
+import assert from "./utility/assertion"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Geomtoy from "."
 import { AreaMeasurable } from "./interfaces"
 import coord from "./utility/coordinate"
 
-@sealed
-@validAndWithSameOwner
 class Ellipse extends GeomObject implements AreaMeasurable {
-    #centerCoordinate: [number, number] = [NaN, NaN]
-    #radiusX: number = NaN
-    #radiusY: number = NaN
-    #rotation: number = NaN
-    #windingDirection: Direction = "positive"
+    private _centerCoordinate: [number, number] = [NaN, NaN]
+    private _radiusX: number = NaN
+    private _radiusY: number = NaN
+    private _rotation: number = NaN
+    private _windingDirection: Direction = "positive"
 
     constructor(owner: Geomtoy, centerX: number, centerY: number, radiusX: number, radiusY: number, rotation?: number)
     constructor(owner: Geomtoy, centerCoordinate: [number, number], radiusX: number, radiusY: number, rotation?: number)
     constructor(owner: Geomtoy, centerPoint: Point, radiusX: number, radiusY: number, rotation?: number)
-    constructor(o: Geomtoy, a1: any, a2: any, a3: any, a4?: any, a5?: any) {
+    constructor(owner: Geomtoy)
+    constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any) {
         super(o)
         if (util.isNumber(a1)) {
             Object.assign(this, { centerX: a1, centerY: a2, radiusX: a3, radiusY: a4, rotation: a5 ?? 0 })
@@ -36,74 +36,142 @@ class Ellipse extends GeomObject implements AreaMeasurable {
         return Object.seal(this)
     }
 
+    static readonly events = Object.freeze({
+        centerXChanged: "centerXChanged",
+        centerYChanged: "centerYChanged",
+        radiusXChanged: "radiusXChanged",
+        radiusYChanged: "radiusYChanged",
+        rotationChanged: "rotationChanged"
+    })
+
+    private _setCenterX(value: number) {
+        this.willTrigger_(coord.x(this._centerCoordinate), value, [Ellipse.events.centerXChanged])
+        coord.x(this._centerCoordinate, value)
+    }
+    private _setCenterY(value: number) {
+        this.willTrigger_(coord.y(this._centerCoordinate), value, [Ellipse.events.centerYChanged])
+        coord.y(this._centerCoordinate, value)
+    }
+    private _setRadiusX(value: number) {
+        this.willTrigger_(this._radiusX, value, [Ellipse.events.radiusXChanged])
+        this._radiusX = value
+    }
+    private _setRadiusY(value: number) {
+        this.willTrigger_(this._radiusY, value, [Ellipse.events.radiusYChanged])
+        this._radiusY = value
+    }
+    private _setRotation(value: number) {
+        this.willTrigger_(this._rotation, value, [Ellipse.events.rotationChanged])
+        this._rotation = value
+    }
+
     get centerX() {
-        return coord.x(this.#centerCoordinate)
+        return coord.x(this._centerCoordinate)
     }
     set centerX(value) {
-        assertIsRealNumber(value, "centerX")
-        coord.x(this.#centerCoordinate, value)
+        assert.isRealNumber(value, "centerX")
+        this._setCenterX(value)
     }
     get centerY() {
-        return coord.y(this.#centerCoordinate)
+        return coord.y(this._centerCoordinate)
     }
     set centerY(value) {
-        assertIsRealNumber(value, "centerY")
-        coord.y(this.#centerCoordinate, value)
+        assert.isRealNumber(value, "centerY")
+        this._setCenterY(value)
     }
     get centerCoordinate() {
-        return coord.copy(this.#centerCoordinate)
+        return coord.clone(this._centerCoordinate)
     }
     set centerCoordinate(value) {
-        assertIsCoordinate(value, "centerCoordinate")
-        coord.assign(this.#centerCoordinate, value)
+        assert.isCoordinate(value, "centerCoordinate")
+        this._setCenterX(coord.x(value))
+        this._setCenterY(coord.y(value))
     }
     get centerPoint() {
-        return new Point(this.owner, this.#centerCoordinate)
+        return new Point(this.owner, this._centerCoordinate)
     }
     set centerPoint(value) {
-        assertIsPoint(value, "centerPoint")
-        coord.assign(this.#centerCoordinate, value.coordinate)
+        assert.isPoint(value, "centerPoint")
+        this._setCenterX(value.x)
+        this._setCenterY(value.y)
     }
     get radiusX() {
-        return this.#radiusX
+        return this._radiusX
     }
     set radiusX(value) {
-        assertIsPositiveNumber(value, "radiusX")
-        this.#radiusX = value
+        assert.isPositiveNumber(value, "radiusX")
+        this._setRadiusX(value)
     }
     get radiusY() {
-        return this.#radiusY
+        return this._radiusY
     }
     set radiusY(value) {
-        assertIsPositiveNumber(value, "radiusY")
-        this.#radiusY = value
+        assert.isPositiveNumber(value, "radiusY")
+        this._setRadiusY(value)
     }
     get rotation() {
-        return this.#rotation
+        return this._rotation
     }
     set rotation(value) {
-        assertIsRealNumber(value, "rotation")
-        this.#rotation = value
+        assert.isRealNumber(value, "rotation")
+        this._setRotation(value)
     }
 
     isValid() {
-        let valid = true
-        valid &&= coord.isValid(this.centerCoordinate)
-        valid &&= util.isRealNumber(this.radiusX) && this.radiusX > 0
-        valid &&= util.isRealNumber(this.radiusY) && this.radiusY > 0
-        return valid
+        const [cc, rx, ry] = [this._centerCoordinate, this._radiusX, this._radiusY]
+        if (!coord.isValid(cc)) return false
+        if (!util.isPositiveNumber(rx)) return false
+        if (!util.isPositiveNumber(ry)) return false
+        return true
     }
+
+    /**
+     * Move ellipse `this` by `offsetX` and `offsetY` to get new ellipse.
+     */
+    move(deltaX: number, deltaY: number) {
+        return this.clone().moveSelf(deltaX, deltaY)
+    }
+    /**
+     * Move ellipse `this` itself by `offsetX` and `offsetY`.
+     */
+    moveSelf(deltaX: number, deltaY: number) {
+        this.centerCoordinate = coord.move(this.centerCoordinate, deltaX, deltaY)
+        return this
+    }
+    /**
+     * Move ellipse `this` with `distance` along `angle` to get new ellipse.
+     */
+    moveAlongAngle(angle: number, distance: number) {
+        return this.clone().moveAlongAngleSelf(angle, distance)
+    }
+    /**
+     * Move ellipse `this` itself with `distance` along `angle`.
+     */
+    moveAlongAngleSelf(angle: number, distance: number) {
+        this.centerCoordinate = coord.moveAlongAngle(this.centerCoordinate, angle, distance)
+        return this
+    }
+
     getWindingDirection() {
-        return this.#windingDirection
+        return this._windingDirection
     }
     setWindingDirection(direction: Direction) {
-        this.#windingDirection = direction
+        this._windingDirection = direction
     }
 
     getEccentricity() {}
 
-    clone(): GeomObject {
-        throw new Error("Method not implemented.")
+    clone() {
+        return new Ellipse(this.owner, this.centerCoordinate, this.radiusX, this.radiusY, this.rotation)
+    }
+    copyFrom(ellipse: Ellipse | null) {
+        if (ellipse === null) ellipse = new Ellipse(this.owner)
+        this._setCenterX(coord.x(ellipse._centerCoordinate))
+        this._setCenterY(coord.y(ellipse._centerCoordinate))
+        this._setRadiusX(ellipse._radiusX)
+        this._setRadiusY(ellipse._radiusY)
+        this._setRotation(ellipse._rotation)
+        return this
     }
     toString(): string {
         throw new Error("Method not implemented.")
@@ -158,8 +226,8 @@ class Ellipse extends GeomObject implements AreaMeasurable {
     }
 }
 
+validAndWithSameOwner(Ellipse)
 /**
- *
  * @category GeomObject
  */
 export default Ellipse

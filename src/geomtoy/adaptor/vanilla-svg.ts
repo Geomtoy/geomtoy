@@ -9,7 +9,7 @@ export default class VanillaSvg {
     container: SVGSVGElement
     geomtoy: Geomtoy
 
-    private gEl: SVGGElement
+    public gEl: SVGGElement
 
     private _stroke: string = "transparent"
     private _strokeDash: number[] = []
@@ -49,34 +49,36 @@ export default class VanillaSvg {
     draw(object: GeomObject & Visible, behind = false) {
         this.setup()
         const cmds = object.getGraphics()
-        const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path")
 
-        this._strokeDash.length > 0 && pathEl.setAttribute("stroke-dasharray", this._strokeDash.toString())
-        this._strokeDash.length > 0 && pathEl.setAttribute("stroke-dashoffset", this._strokeDashOffset.toString())
-        pathEl.setAttribute("stroke-width", this._strokeWidth.toString())
-        pathEl.setAttribute("stroke", this._stroke)
-        pathEl.setAttribute("fill", this._fill)
+        const found = document.querySelector(`path[data-id='${object.uuid}']`)
+        const pathEl = (found as SVGPathElement) || document.createElementNS("http://www.w3.org/2000/svg", "path")
+        !found && pathEl.setAttribute("data-id", object.uuid)
 
         if (cmds.length === 1 && cmds[0].type === "text") {
             const cmd = cmds[0]
-            const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text")
+
+            const textFound = document.querySelector(`text[data-id='${object.uuid}']`)
+            const textEl = (textFound as SVGTextElement) || document.createElementNS("http://www.w3.org/2000/svg", "text")
+            !textFound && textEl.setAttribute("data-id", object.uuid)
 
             // text baseline
             textEl.setAttribute("dominant-baseline", "alphabetic")
             // text font style
-            cmd.font.bold && textEl.setAttribute("font-weight", "bold")
-            cmd.font.italic && textEl.setAttribute("font-style", "italic")
-            textEl.setAttribute("font-family", cmd.font.family)
-            textEl.setAttribute("font-size", cmd.font.size.toString())
+            cmd.fontBold && textEl.setAttribute("font-weight", "bold")
+            cmd.fontItalic && textEl.setAttribute("font-style", "italic")
+            textEl.setAttribute("font-family", cmd.fontFamily)
+            textEl.setAttribute("font-size", cmd.fontSize.toString())
             // handle text orientation
             textEl.setAttribute("transform", `matrix(${this.geomtoy.globalTransformation.invert().get().join(" ")})`)
             // text
-            if (behind) {
-                this.gEl.prepend(textEl)
-            } else {
-                this.gEl.append(textEl)
+            if (!textFound) {
+                if (behind) {
+                    this.gEl.prepend(textEl)
+                } else {
+                    this.gEl.append(textEl)
+                }
             }
-            textEl.innerHTML = cmd.text
+            textEl.textContent = cmd.text
             textEl.setAttribute("fill", this._fill)
             textEl.setAttribute("style", "user-select: none; pointer-events: none;")
             const [tx, ty] = this.geomtoy.globalTransformation.transformCoordinate([cmd.x, cmd.y])
@@ -100,6 +102,12 @@ export default class VanillaSvg {
             attrD += `Z`
             pathEl.setAttribute("d", attrD)
         } else {
+            this._strokeDash.length > 0 && pathEl.setAttribute("stroke-dasharray", this._strokeDash.toString())
+            this._strokeDash.length > 0 && pathEl.setAttribute("stroke-dashoffset", this._strokeDashOffset.toString())
+            pathEl.setAttribute("stroke-width", this._strokeWidth.toString())
+            pathEl.setAttribute("stroke", this._stroke)
+            pathEl.setAttribute("fill", this._fill)
+
             let attrD = ""
             cmds.forEach(cmd => {
                 if (cmd.type === "moveTo") {
@@ -123,11 +131,14 @@ export default class VanillaSvg {
             })
             pathEl.setAttribute("d", attrD)
         }
-        if (behind) {
-            this.gEl.prepend(pathEl)
-        } else {
-            this.gEl.append(pathEl)
+        if (!found) {
+            if (behind) {
+                this.gEl.prepend(pathEl)
+            } else {
+                this.gEl.append(pathEl)
+            }
         }
+
         return pathEl
     }
     drawBatch(objects: (GeomObject & Visible)[], behind = false) {
@@ -156,15 +167,17 @@ export default class VanillaSvg {
         // typescript inheritance error here: `SVGPathElement` inherited from `SVGGraphicsElement`
         return (pathEl as any as SVGGeometryElement).isPointInFill(point)
     }
-    isPointInStroke(pathEl: SVGPathElement, x: number, y: number) {
+    isPointInStroke(pathEl: SVGPathElement,strokeWidth: number, x: number, y: number) {
         const point = this.container.createSVGPoint() || new DOMPoint()
         point.x = x
         point.y = y
-        // typescript inheritance error here: `SVGPathElement` inherited from `SVGGraphicsElement`
-        return (pathEl as any as SVGGeometryElement).isPointInStroke(point)
+        return pathEl.isPointInStroke(point)
     }
 
     clear() {
-        this.gEl.innerHTML = ""
+        Promise.resolve().then(() => {
+            //drawCache()
+            // if not in draw cache then remove the element.
+        })
     }
 }

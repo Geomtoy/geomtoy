@@ -1,18 +1,18 @@
-const babel = require("@rollup/plugin-babel").default,
-    nodeResolve = require("@rollup/plugin-node-resolve").default,
-    { terser } = require("rollup-plugin-terser"),
-    html = require("@rollup/plugin-html").default,
-    serve = require("rollup-plugin-serve"),
-    livereload = require("rollup-plugin-livereload"),
-    dts = require("rollup-plugin-dts").default,
-    pkg = require("./package.json")
+const babel = require("@rollup/plugin-babel").default
+const nodeResolve = require("@rollup/plugin-node-resolve").default
+const { terser } = require("rollup-plugin-terser")
+const html = require("@rollup/plugin-html").default
+const serve = require("rollup-plugin-serve")
+const livereload = require("rollup-plugin-livereload")
+const dts = require("rollup-plugin-dts").default
+const pkg = require("./package.json")
 
-const fs = require("fs"),
-    path = require("path")
+const fs = require("fs")
+const path = require("path")
 
-const task = process.env.TASK,
-    extensions = [".js", ".ts"],
-    exclude = "./node_modules/**"
+const task = process.env.TASK
+const extensions = [".js", ".ts"]
+const exclude = "./node_modules/**"
 
 let config = null
 
@@ -58,41 +58,41 @@ switch (task) {
     }
 
     default: {
-        const exampleSrcPath = path.resolve(pkg.config.examplesDir, "src"),
-            exampleDistPath = path.resolve(pkg.config.examplesDir, "dist"),
-            exampleDefaultHtmlPath = path.resolve(pkg.config.examplesDir, "src", "default.html"),
-            host = "localhost",
-            port = 1347,
-            fileRecursive = (dir, callback, withoutDirName) => {
-                let entries = fs.readdirSync(dir)
-                entries.forEach(entry => {
-                    let entryPath = path.resolve(dir, entry)
-                    if (fs.statSync(entryPath).isDirectory() && entry !== withoutDirName) {
-                        fileRecursive(entryPath, callback, withoutDirName)
-                    } else {
-                        callback(entryPath)
+        const exampleSrcPath = path.resolve(pkg.config.examplesDir, "src")
+        const exampleDistPath = path.resolve(pkg.config.examplesDir, "dist")
+        const exampleDefaultHtmlPath = path.resolve(pkg.config.examplesDir, "src", "default.html")
+        const host = "localhost"
+        const port = 1347
+        const fileRecursive = (dir, callback, withoutDirName) => {
+            const entries = fs.readdirSync(dir)
+            entries.forEach(entry => {
+                const entryPath = path.resolve(dir, entry)
+                if (fs.statSync(entryPath).isDirectory() && entry !== withoutDirName) {
+                    fileRecursive(entryPath, callback, withoutDirName)
+                } else {
+                    callback(entryPath)
+                }
+            })
+        }
+        const injectScript = (html, scriptSrc) => {
+            return html.replace(/<body>([\s\S]+?)<\/body>/, (m0, m1) => `<body>${m1}\n\x20\x20\x20\x20<script src="${scriptSrc}" type="module"></script></body>`)
+        }
+        const examples = (() => {
+            const ret = []
+            fileRecursive(
+                exampleSrcPath,
+                filePath => {
+                    if ([".js", ".ts"].includes(path.extname(filePath))) {
+                        ret.push({
+                            fileNameWithoutExt: filePath.replace(path.resolve(exampleSrcPath) + path.sep, "").replace(/\.(js|ts)$/, ""),
+                            jsPath: filePath
+                        })
                     }
-                })
-            },
-            injectScript = (html, scriptSrc) => {
-                return html.replace(/<body>([\s\S]+?)<\/body>/, (m0, m1) => `<body>${m1}\n\x20\x20\x20\x20<script src="${scriptSrc}" type="module"></script></body>`)
-            },
-            examples = (() => {
-                let ret = []
-                fileRecursive(
-                    exampleSrcPath,
-                    filePath => {
-                        if ([".js", ".ts"].includes(path.extname(filePath))) {
-                            ret.push({
-                                fileNameWithoutExt: filePath.replace(path.resolve(exampleSrcPath) + path.sep, "").replace(/\.(js|ts)$/, ""),
-                                jsPath: filePath
-                            })
-                        }
-                    },
-                    "assets"
-                )
-                return ret
-            })()
+                },
+                "assets"
+            )
+            return ret
+        })()
 
         config = [
             {
@@ -107,20 +107,20 @@ switch (task) {
                     nodeResolve({ extensions }),
                     babel({ babelHelpers: "bundled", extensions, exclude }),
                     ...examples.map(item => {
-                        let htmlPath = item.jsPath.replace(/\.(js|ts)$/, ".html")
+                        const htmlPath = item.jsPath.replace(/\.(js|ts)$/, ".html")
                         return html({
                             fileName: item.fileNameWithoutExt + ".html",
                             template: () => {
-                                let htmlContent = fs.readFileSync(fs.existsSync(htmlPath) ? htmlPath : exampleDefaultHtmlPath, "utf-8")
-                                return injectScript(htmlContent, `./${path.basename(item.jsPath)}`)
+                                const htmlContent = fs.readFileSync(fs.existsSync(htmlPath) ? htmlPath : exampleDefaultHtmlPath, "utf-8")
+                                return injectScript(htmlContent, `./${path.basename(item.jsPath.replace(/\.(js|ts)$/, ".js"))}`)
                             }
                         })
                     }),
                     serve({
-                        contentBase:exampleDistPath,
+                        contentBase: exampleDistPath,
                         open: true,
                         host: host,
-                        port: port,
+                        port: port
                     }),
                     livereload(exampleDistPath)
                 ]

@@ -8,10 +8,11 @@ import Line from "./Line"
 import RegularPolygon from "./RegularPolygon"
 
 import Vector from "./Vector"
-import Segment from "./Segment"
+import LineSegment from "./LineSegment"
 import Inversion from "./inversion"
 import { GraphicsCommand, Direction, AnglePointLineData, PointLineData, PointsLineData } from "./types"
-import { assertIsCoordinate, assertIsPoint, assertIsPositiveNumber, assertIsRealNumber, sealed } from "./decorator"
+import { validAndWithSameOwner } from "./decorator"
+import assert from "./utility/assertion"
 import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Graphics from "./graphics"
@@ -20,63 +21,81 @@ import coord from "./utility/coordinate"
 import { AreaMeasurable, Visible } from "./interfaces"
 import Arc from "./Arc"
 
-@sealed
 class Circle extends GeomObject implements AreaMeasurable, Visible {
-    #radius: number = NaN
-    #centerCoordinate: [number, number] = [NaN, NaN]
-    #windingDirection: Direction = "positive"
+    private _radius: number = NaN
+    private _centerCoordinate: [number, number] = [NaN, NaN]
+    private _windingDirection: Direction = "positive"
 
-    constructor(owner: Geomtoy, radius: number, centerX: number, centerY: number)
-    constructor(owner: Geomtoy, radius: number, centerCoordinate: [number, number])
-    constructor(owner: Geomtoy, radius: number, centerPoint: Point)
-    constructor(o: Geomtoy, a1: number, a2: any, a3?: any) {
+    constructor(owner: Geomtoy, centerX: number, centerY: number, radius: number)
+    constructor(owner: Geomtoy, centerCoordinate: [number, number], radius: number)
+    constructor(owner: Geomtoy, centerPoint: Point, radius: number)
+    constructor(owner: Geomtoy)
+    constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any) {
         super(o)
-        if (util.isNumber(a2)) {
-            Object.assign(this, { radius: a1, centerX: a2, centerY: a3 })
+        if (util.isNumber(a1)) {
+            Object.assign(this, { centerX: a1, centerY: a2, radius: a3 })
         }
-        if (util.isArray(a2)) {
-            Object.assign(this, { radius: a1, centerCoordinate: a2 })
-        }
-        if (a2 instanceof Point) {
-            Object.assign(this, { radius: a1, centerPoint: a2 })
+        if (util.isArray(a1)) {
+            Object.assign(this, { centerCoordinate: a1, radius: a2 })
         }
         return Object.seal(this)
     }
 
-    get radius() {
-        return this.#radius
+    static readonly events = Object.freeze({
+        centerXChanged: "centerXChanged",
+        centerYChanged: "centerYChanged",
+        radiusChanged: "radiusChanged"
+    })
+
+    private _setCenterX(value: number) {
+        this.willTrigger_(coord.x(this._centerCoordinate), value, [Circle.events.centerXChanged])
+        coord.x(this._centerCoordinate, value)
     }
-    set radius(value) {
-        assertIsPositiveNumber(value, "radius")
-        this.#radius = value
+    private _setCenterY(value: number) {
+        this.willTrigger_(coord.y(this._centerCoordinate), value, [Circle.events.centerYChanged])
+        coord.y(this._centerCoordinate, value)
     }
+    private _setRadius(value: number) {
+        this.willTrigger_(this._radius, value, [Circle.events.radiusChanged])
+        this._radius = value
+    }
+
     get centerX() {
-        return coord.x(this.#centerCoordinate)
+        return coord.x(this._centerCoordinate)
     }
     set centerX(value) {
-        assertIsRealNumber(value, "centerX")
-        coord.x(this.#centerCoordinate, value)
+        assert.isRealNumber(value, "centerX")
+        this._setCenterX(value)
     }
     get centerY() {
-        return coord.y(this.#centerCoordinate)
+        return coord.y(this._centerCoordinate)
     }
     set centerY(value) {
-        assertIsRealNumber(value, "centerY")
-        coord.y(this.#centerCoordinate, value)
+        assert.isRealNumber(value, "centerY")
+        this._setCenterY(value)
     }
     get centerCoordinate() {
-        return coord.copy(this.#centerCoordinate)
+        return coord.clone(this._centerCoordinate)
     }
     set centerCoordinate(value) {
-        assertIsCoordinate(value, "centerCoordinate")
-        coord.assign(this.#centerCoordinate, value)
+        assert.isCoordinate(value, "centerCoordinate")
+        this._setCenterX(coord.x(value))
+        this._setCenterY(coord.y(value))
     }
     get centerPoint() {
-        return new Point(this.owner, this.#centerCoordinate)
+        return new Point(this.owner, this._centerCoordinate)
     }
     set centerPoint(value) {
-        assertIsPoint(value, "centerPoint")
-        coord.assign(this.#centerCoordinate, value.coordinate)
+        assert.isPoint(value, "centerPoint")
+        this._setCenterX(value.x)
+        this._setCenterY(value.y)
+    }
+    get radius() {
+        return this._radius
+    }
+    set radius(value) {
+        assert.isPositiveNumber(value, "radius")
+        this._setRadius(value)
     }
 
     get diameter() {
@@ -87,24 +106,53 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
     }
 
     isValid() {
-        return coord.isValid(this.centerCoordinate) && util.isRealNumber(this.radius) && this.radius > 0
+        const [cc, r] = [this._centerCoordinate, this._radius]
+        if (!coord.isValid(cc)) return false
+        if (!util.isPositiveNumber(r)) return false
+        return true
+    }
+    /**
+     * Move circle `this` by `offsetX` and `offsetY` to get new circle.
+     */
+    move(deltaX: number, deltaY: number) {
+        return this.clone().moveSelf(deltaX, deltaY)
+    }
+    /**
+     * Move circle `this` itself by `offsetX` and `offsetY`.
+     */
+    moveSelf(deltaX: number, deltaY: number) {
+        this.centerCoordinate = coord.move(this.centerCoordinate, deltaX, deltaY)
+        return this
+    }
+    /**
+     * Move circle `this` with `distance` along `angle` to get new circle.
+     */
+    moveAlongAngle(angle: number, distance: number) {
+        return this.clone().moveAlongAngleSelf(angle, distance)
+    }
+    /**
+     * Move circle `this` itself with `distance` along `angle`.
+     */
+    moveAlongAngleSelf(angle: number, distance: number) {
+        this.centerCoordinate = coord.moveAlongAngle(this.centerCoordinate, angle, distance)
+        return this
     }
 
     getWindingDirection(): Direction {
-        return this.#windingDirection
+        return this._windingDirection
     }
 
     setWindingDirection(direction: Direction) {
-        this.#windingDirection = direction
+        this._windingDirection = direction
     }
 
     isSameAs(circle: Circle): boolean {
         if (this === circle) return true
-        let epsilon = this.owner.getOptions().epsilon
+        const epsilon = this.options_.epsilon
         return coord.isSameAs(this.centerCoordinate, circle.centerCoordinate, epsilon) && math.equalTo(this.radius, circle.radius, epsilon)
     }
     isConcentricWithCircle(circle: Circle): boolean {
-        let epsilon = this.owner.getOptions().epsilon
+        const epsilon = this.options_.epsilon
         return coord.isSameAs(this.centerCoordinate, circle.centerCoordinate, epsilon)
     }
 
@@ -117,37 +165,37 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
     // ContainedBy(or Containing)
     // SeparatedFrom
     isIntersectedWithCircle(circle: Circle) {
-        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this.#centerCoordinate)),
+        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this._centerCoordinate)),
             ssr = (circle.radius + this.radius) ** 2,
             sdr = (circle.radius - this.radius) ** 2,
-            epsilon = this.owner.getOptions().epsilon
+            epsilon = this.options_.epsilon
         return math.lessThan(sd, ssr, epsilon) && math.greaterThan(sd, sdr, epsilon)
     }
     isInternallyTangentToCircle(circle: Circle): boolean {
-        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this.#centerCoordinate)),
+        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this._centerCoordinate)),
             sdr = (circle.radius - this.radius) ** 2,
-            epsilon = this.owner.getOptions().epsilon
+            epsilon = this.options_.epsilon
         return math.equalTo(sd, sdr, epsilon)
     }
     isExternallyTangentToCircle(circle: Circle): boolean {
-        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this.#centerCoordinate)),
+        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this._centerCoordinate)),
             ssr = (circle.radius + this.radius) ** 2,
-            epsilon = this.owner.getOptions().epsilon
+            epsilon = this.options_.epsilon
         return math.equalTo(sd, ssr, epsilon)
     }
     isTangentToCircle(circle: Circle): boolean {
         return this.isInternallyTangentToCircle(circle) || this.isExternallyTangentToCircle(circle)
     }
     isContainedByCircle(circle: Circle): boolean {
-        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this.#centerCoordinate)),
+        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this._centerCoordinate)),
             sdr = (circle.radius - this.radius) ** 2,
-            epsilon = this.owner.getOptions().epsilon
+            epsilon = this.options_.epsilon
         return math.greaterThan(circle.radius, this.radius, epsilon) && math.lessThan(sd, sdr, epsilon)
     }
     isSeparatedFromCircle(circle: Circle): boolean {
-        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this.#centerCoordinate)),
+        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this._centerCoordinate)),
             ssr = (circle.radius + this.radius) ** 2,
-            epsilon = this.owner.getOptions().epsilon
+            epsilon = this.options_.epsilon
         return math.greaterThan(sd, ssr, epsilon)
     }
     // #endregion
@@ -167,22 +215,41 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
 
     // todo
     getArcBetweenAngle(startAngle: number, endAngle: number, positive = true): null | Arc {
-        let epsilon = this.owner.getOptions().epsilon
+        const epsilon = this.options_.epsilon
         if (math.equalTo(angle.simplify(startAngle), angle.simplify(endAngle), epsilon)) return null
         return new Arc(this.owner, this.centerCoordinate, this.radius, this.radius, startAngle, endAngle, positive)
     }
-    getChordSegmentBetweenAngle(startAngle: number, endAngle: number) {
+    getChordLineSegmentBetweenAngle(startAngle: number, endAngle: number) {
         let cc = this.centerCoordinate,
             r = this.radius
-        return new Segment(this.owner, vec2.add(cc, vec2.from2(startAngle, r)), vec2.add(cc, vec2.from2(endAngle, r)))
+        return new LineSegment(this.owner, vec2.add(cc, vec2.from2(startAngle, r)), vec2.add(cc, vec2.from2(endAngle, r)))
     }
+
+    isPointOn(point: Point) {
+        const sd = vec2.squaredMagnitude(vec2.from(this.centerCoordinate, point.coordinate))
+        const sr = this.radius ** 2
+        const epsilon = this.options_.epsilon
+        return math.equalTo(sd, sr, epsilon)
+    }
+    isPointOutside(point: Point) {
+        const sd = vec2.squaredMagnitude(vec2.from(this.centerCoordinate, point.coordinate))
+        const sr = this.radius ** 2
+        const epsilon = this.options_.epsilon
+        return math.greaterThan(sd, sr, epsilon)
+    }
+    isPointInside(point: Point) {
+        const sd = vec2.squaredMagnitude(vec2.from(this.centerCoordinate, point.coordinate))
+        const sr = this.radius ** 2
+        const epsilon = this.options_.epsilon
+        return math.lessThan(sd, sr, epsilon)
+    }
+
     /**
      * 若`点point`在`圆this`上，则求过`点point`的`圆this`的切线
-     * @param {Point} point
-     * @returns {Line | null}
+     *
      */
     getTangentLineAtPoint(point: Point): Line | null {
-        if (!point.isOnCircle(this)) return null
+        if (!this.isPointOn(point)) return null
 
         let [x1, y1] = point.coordinate,
             [x2, y2] = this.centerCoordinate,
@@ -202,11 +269,9 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
      * The returns depends:
      * - If `point` is outside `this`, return the tangent data.
      * - If `point` is not outside `this`, return null.
-     * @param point
-     * @returns
      */
     getTangentDataWithPointOutside(point: Point): [AnglePointLineData, AnglePointLineData] | null {
-        if (!point.isOutsideCircle(this)) return null
+        if (!this.isPointOutside(point)) return null
 
         let p1 = point,
             v0 = this.centerCoordinate,
@@ -223,7 +288,7 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
             return {
                 angle: a,
                 point: p2,
-                line: Line.fromTwoPoints(this.owner, p1, p2)
+                line: Line.fromTwoPoints.bind(this)(p1, p2)
             }
         })
         return ret as [AnglePointLineData, AnglePointLineData]
@@ -231,7 +296,7 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
 
     getInternallyTangentDataWithCircle(circle: Circle): PointLineData | null {
         if (!this.isInternallyTangentToCircle(circle)) return null
-        let p = this.getPointAtAngle(new Vector(this.owner, this.centerPoint, circle.centerPoint).angle),
+        let p = this.getPointAtAngle(vec2.angle(vec2.from(this.centerCoordinate, circle.centerCoordinate))),
             l = this.getTangentLineAtPoint(p)!
         return {
             point: p,
@@ -240,7 +305,7 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
     }
     getExternallyTangentDataWithCircle(circle: Circle): PointLineData | null {
         if (!this.isExternallyTangentToCircle(circle)) return null
-        let p = this.getPointAtAngle(new Vector(this.owner, this.centerPoint, circle.centerPoint).angle),
+        let p = this.getPointAtAngle(vec2.angle(vec2.from(this.centerCoordinate, circle.centerCoordinate))),
             l = this.getTangentLineAtPoint(p)!
         return {
             point: p,
@@ -249,21 +314,22 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
     }
     /**
      * `圆this`是否在`圆circle`的内部，被circle包含
-     * @param {Circle} circle
-     * @returns {boolean}
      */
     isInsideCircle(circle: Circle) {
-        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
-            epsilon = this.owner.getOptions().epsilon
+        const c1 = circle.centerCoordinate
+        const c2 = this.centerCoordinate
+        const sd = vec2.squaredMagnitude(vec2.from(c1, c2))
+        const epsilon = this.options_.epsilon
         return math.lessThan(sd, (circle.radius - this.radius) ** 2, epsilon)
     }
     /**
      * `圆this`是否在`圆circle`的外部，包含circle
-     * @param circle
      */
     isOutsideCircle(circle: Circle) {
-        let sd = circle.centerPoint.getSquaredDistanceBetweenPoint(this.centerPoint),
-            epsilon = this.owner.getOptions().epsilon
+        const c1 = circle.centerCoordinate
+        const c2 = this.centerCoordinate
+        const sd = vec2.squaredMagnitude(vec2.from(c1, c2))
+        const epsilon = this.options_.epsilon
         return math.greaterThan(sd, (circle.radius + this.radius) ** 2, epsilon)
     }
 
@@ -281,8 +347,6 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
 
     /**
      * 是否与`圆this`正交，过其中一交点分别作两圆的切线，两切线夹角（圆的交角）为直角
-     * @param {Circle} circle
-     * @returns {boolean}
      */
     isOrthogonalWithCircle(circle: Circle): boolean {
         let c = circle
@@ -297,7 +361,6 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
      *
      * @param {circle} circle1
      * @param {circle} circle2
-     * @returns {Array<object> | null}
      */
     //1.两圆内含，没有公切线
     //2.两圆内切，有1个条公切线，其中：1条两圆自有的内切切线
@@ -341,11 +404,11 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
             p4 = circle2.getPointAtAngle(baseAngle - angle)
 
         data.push({
-            line: Line.fromTwoPoints(owner, p1, p2),
+            line: Line.fromTwoPoints.call(this, p1, p2),
             points: [p1, p2]
         })
         data.push({
-            line: Line.fromTwoPoints(owner, p3, p4),
+            line: Line.fromTwoPoints.call(this, p3, p4),
             points: [p3, p4]
         })
 
@@ -357,11 +420,11 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
                 p3 = circle1.getPointAtAngle(baseAngle - angle),
                 p4 = circle2.getPointAtAngle(baseAngle - angle)
             data.push({
-                line: Line.fromTwoPoints(owner, p1, p2),
+                line: Line.fromTwoPoints.call(this, p1, p2),
                 points: [p1, p2]
             })
             data.push({
-                line: Line.fromTwoPoints(owner, p3, p4),
+                line: Line.fromTwoPoints.call(this, p3, p4),
                 points: [p3, p4]
             })
         }
@@ -377,16 +440,14 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
      * @param {Circle} circle1
      * @param {Circle} circle2
      * @param {Point} point
-     * @returns {Array<Circle> | null}
      */
-    static getCommonTangentCirclesOfTwoCirclesThroughPointNotOn(owner: Geomtoy, circle1: Circle, circle2: Circle, point: Point): Array<Circle> | null {
+    static getCommonTangentCirclesOfTwoCirclesThroughPointNotOn(owner: Geomtoy, circle1: Circle, circle2: Circle, point: Point): Circle[] | null {
         //如果点在其中一个圆上，并不一定能作出公切圆
         //比如半径一样的且相切的两个圆，在圆心连线垂线方向与圆的交点处，无法做出公切圆，此时公切圆的半径无穷大（切线）
         //而且点在其上的这个圆的反演图形是直线，无法求公切线，无法用反演做
+        if (circle1.isPointOn(point) || circle2.isPointOn(point)) return null
 
-        if (point.isOnCircle(circle1) || point.isOnCircle(circle2)) return null
-
-        let inversion = new Inversion(owner, 10000, point),
+        let inversion = new Inversion(owner, point),
             ivCircle1 = inversion.invertCircle(circle1),
             ivCircle2 = inversion.invertCircle(circle2)
 
@@ -394,7 +455,7 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
         let ctData = Circle.getCommonTangentDataOfTwoCircles(ivCircle1, ivCircle2)
         if (ctData === null) return null
         // @ts-ignore
-        return util.map(ctData, d => inversion.invertLine(d.line))
+        return ctData.map(d => inversion.invertLine(d.line))
     }
 
     getInscribedRegularPolygon(sideCount: number, angle = 0) {
@@ -413,7 +474,14 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
         throw new Error("Method not implemented.")
     }
     clone() {
-        return new Circle(this.owner, this.radius, this.centerPoint)
+        return new Circle(this.owner, this.centerCoordinate, this.radius)
+    }
+    copyFrom(circle: Circle | null) {
+        if (circle === null) circle = new Circle(this.owner)
+        this._setCenterX(coord.x(circle._centerCoordinate))
+        this._setCenterY(coord.y(circle._centerCoordinate))
+        this._setRadius(circle._radius)
+        return this
     }
     toArray() {
         return [this.radius, this.centerX, this.centerY]
@@ -426,8 +494,8 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
     }
 }
 
+validAndWithSameOwner(Circle)
 /**
- *
  * @category GeomObject
  */
 export default Circle
