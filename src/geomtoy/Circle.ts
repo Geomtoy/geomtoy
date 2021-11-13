@@ -18,10 +18,11 @@ import Transformation from "./transformation"
 import Graphics from "./graphics"
 import Geomtoy from "."
 import coord from "./utility/coordinate"
-import { AreaMeasurable, Visible } from "./interfaces"
 import Arc from "./Arc"
+import Shape from "./base/Shape"
+import { ClosedShape } from "./interfaces"
 
-class Circle extends GeomObject implements AreaMeasurable, Visible {
+class Circle extends Shape implements ClosedShape {
     private _radius: number = NaN
     private _centerCoordinate: [number, number] = [NaN, NaN]
     private _windingDirection: Direction = "positive"
@@ -185,18 +186,6 @@ class Circle extends GeomObject implements AreaMeasurable, Visible {
     }
     isTangentToCircle(circle: Circle): boolean {
         return this.isInternallyTangentToCircle(circle) || this.isExternallyTangentToCircle(circle)
-    }
-    isContainedByCircle(circle: Circle): boolean {
-        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this._centerCoordinate)),
-            sdr = (circle.radius - this.radius) ** 2,
-            epsilon = this.options_.epsilon
-        return math.greaterThan(circle.radius, this.radius, epsilon) && math.lessThan(sd, sdr, epsilon)
-    }
-    isSeparatedFromCircle(circle: Circle): boolean {
-        let sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, this._centerCoordinate)),
-            ssr = (circle.radius + this.radius) ** 2,
-            epsilon = this.options_.epsilon
-        return math.greaterThan(sd, ssr, epsilon)
     }
     // #endregion
 

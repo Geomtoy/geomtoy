@@ -1,24 +1,24 @@
 import Geomtoy from ".."
-import GeomObject from "../base/GeomObject"
+import EventTarget from "../base/EventTarget"
 
 const flushTimeout = 1000 //1000ms
 
 const schedulerMap: WeakMap<Geomtoy, Scheduler> = new WeakMap()
 
 class Scheduler {
-    public callbacksMarker = new WeakMap<(...args: any[]) => any, WeakSet<GeomObject>>()
+    public callbacksMarker = new WeakMap<(...args: any[]) => any, WeakSet<EventTarget>>()
 
-    public markCallback(callback: (...args: any[]) => any, context: GeomObject) {
+    public markCallback(callback: (...args: any[]) => any, context: EventTarget) {
         if (!this.callbacksMarker.has(callback)) this.callbacksMarker.set(callback, new WeakSet())
         const contexts = this.callbacksMarker.get(callback)!
         contexts.add(context)
     }
-    public unmarkCallback(callback: (...args: any[]) => any, context: GeomObject) {
+    public unmarkCallback(callback: (...args: any[]) => any, context: EventTarget) {
         if (!this.callbacksMarker.has(callback)) return
         const contexts = this.callbacksMarker.get(callback)!
         contexts.delete(context)
     }
-    public isCallbackInvokedBy(callback: (...args: any[]) => any, context: GeomObject) {
+    public isCallbackInvokedBy(callback: (...args: any[]) => any, context: EventTarget) {
         if (!this.callbacksMarker.has(callback)) return false
         const contexts = this.callbacksMarker.get(callback)!
         return contexts.has(context)

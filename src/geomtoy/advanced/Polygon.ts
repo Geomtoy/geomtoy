@@ -163,6 +163,17 @@ class Polygon extends GeomObject {
 
     isPointsConcyclic() {}
 
+    isPointOn(){
+
+    }
+    isPointOutside() {}
+
+    isPointInside() {
+        
+    }
+ 
+
+
     getPerimeter() {
         let p = 0,
             l = this.vertexCount,

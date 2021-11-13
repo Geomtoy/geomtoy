@@ -1,2 +1,0 @@
-import { EventObject } from "../types"
-

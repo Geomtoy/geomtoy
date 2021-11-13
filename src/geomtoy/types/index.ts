@@ -3,9 +3,8 @@ import Point from "../Point"
 import Ray from "../Ray"
 import LineSegment from "../LineSegment"
 
-
 export * from "./geomtoy"
-export * from "./geom-object"
+export * from "./event"
 export * from "./graphics"
 
 export type PointLineData = {

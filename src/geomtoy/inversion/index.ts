@@ -11,9 +11,9 @@ import Vector from "../Vector"
 import Line from "../Line"
 import Geomtoy from ".."
 
-const defaultPower = 10000
+const defaultInversionPower = 10000
 class Inversion extends GeomObject {
-    private _power: number = NaN
+    private _power: number = defaultInversionPower
     private _centerCoordinate: [number, number] = [NaN, NaN]
 
     constructor(owner: Geomtoy, centerX: number, centerY: number, power?: number)
@@ -22,54 +22,73 @@ class Inversion extends GeomObject {
     constructor(owner: Geomtoy)
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any) {
         super(o)
-        if (util.isNumber(a1) && util.isNumber(a2)) {
-            Object.assign(this, { centerX: a1, centerY: a2, power: a3 ?? defaultPower })
+        if (util.isNumber(a1)) {
+            Object.assign(this, { centerX: a1, centerY: a2, power: a3 ?? defaultInversionPower })
         }
         if (util.isArray(a1)) {
-            Object.assign(this, { centerCoordinate: a1, power: a2 ?? defaultPower })
+            Object.assign(this, { centerCoordinate: a1, power: a2 ?? defaultInversionPower })
         }
         if (a1 instanceof Point) {
-            Object.assign(this, { centerPoint: a1, power: a2 ?? defaultPower })
+            Object.assign(this, { centerPoint: a1, power: a2 ?? defaultInversionPower })
         }
         return Object.seal(this)
     }
 
-    eventNames = Object.freeze(["centerXChanged", "centerYChanged", "powerChanged"])
+    static readonly events = Object.freeze({
+        centerXChanged: "centerXChanged",
+        centerYChanged: "centerYChanged",
+        powerChanged: "powerChanged"
+    })
 
-    get power() {
-        return this._power
+    private _setCenterX(value: number) {
+        this.willTrigger_(coord.x(this._centerCoordinate), value, [Inversion.events.centerXChanged])
+        coord.x(this._centerCoordinate, value)
     }
-    set power(value) {
-        assert.isNonZeroNumber(value, "power")
+    private _setCenterY(value: number) {
+        this.willTrigger_(coord.y(this._centerCoordinate), value, [Inversion.events.centerYChanged])
+        coord.y(this._centerCoordinate, value)
+    }
+    private _setPower(value: number) {
+        this.willTrigger_(this._power, value, [Inversion.events.powerChanged])
         this._power = value
     }
+
     get centerX() {
         return coord.x(this._centerCoordinate)
     }
     set centerX(value) {
         assert.isRealNumber(value, "centerX")
-        coord.x(this._centerCoordinate, value)
+        this._setCenterX(value)
     }
     get centerY() {
         return coord.y(this._centerCoordinate)
     }
     set centerY(value) {
         assert.isRealNumber(value, "centerY")
-        coord.y(this._centerCoordinate, value)
+        this._setCenterY(value)
     }
     get centerCoordinate() {
         return coord.clone(this._centerCoordinate)
     }
     set centerCoordinate(value) {
         assert.isCoordinate(value, "centerCoordinate")
-        coord.assign(this._centerCoordinate, value)
+        this._setCenterX(coord.x(value))
+        this._setCenterY(coord.y(value))
     }
     get centerPoint() {
         return new Point(this.owner, this._centerCoordinate)
     }
     set centerPoint(value) {
         assert.isPoint(value, "centerPoint")
-        coord.assign(this._centerCoordinate, value.coordinate)
+        this._setCenterX(value.x)
+        this._setCenterY(value.y)
+    }
+    get power() {
+        return this._power
+    }
+    set power(value) {
+        assert.isNonZeroNumber(value, "power")
+        this._setPower(value)
     }
 
     isValid() {
@@ -78,40 +97,37 @@ class Inversion extends GeomObject {
         if (!util.isNonZeroNumber(power)) return false
         return true
     }
+
     /**
-     * Find the inversion of point `point`
-     * @param {Point} point
-     * @returns {Point}
+     *  Find the inversion of `point`
+     * @param point
+     * @returns
      */
-    invertPoint(point: Point): Point {
-        let p0 = this.centerPoint,
-            p1 = point,
-            dist = p1.getDistanceBetweenPoint(p0),
-            inversionDist = math.abs(this.power / dist),
-            v01 = vec2.from(p0.coordinate, p1.coordinate),
-            a
+    invertPoint(point: [number, number] | Point): Point {
+        assert.isCoordinateOrPoint(point, "point")
+        const c0 = this.centerCoordinate
+        const c1 = point instanceof Point ? point.coordinate : point
+        const power = this.power
+        const v01 = vec2.from(c0, c1)
+        const d = vec2.magnitude(v01)
+        const id = math.abs(power / d)
 
-        if (this.power > 0) {
-            // v01 and v02 are in the same direction
-            a = vec2.angle(v01)
-        } else {
-            // v01 and v02 are in the opposite direction
-            a = vec2.angle(vec2.negative(v01))
-        }
+        // When power > 0, v01 and v02 are in the same direction.
+        // When power < 0, v01 and v02 are in the opposite direction
+        const a = power > 0 ? vec2.angle(v01) : vec2.angle(vec2.negative(v01))
 
-        let v02 = vec2.from2(a, inversionDist),
-            v0 = p0.coordinate,
-            v2 = vec2.add(v0, v02)
-        return new Point(this.owner, v2)
+        const v02 = vec2.from2(a, id)
+        const c2 = vec2.add(c0, v02)
+        return new Point(this.owner, c2)
     }
 
     /**
-     * Find the inversion of line `line`.
+     * Find the inversion of `line`.
      * @description
-     * If line `line` passes through the inversion center, return itself(cloned).
-     * If line `line` does not pass through the inversion center, return the inverted circle.
-     * @param {Line} line
-     * @returns {Line | Circle}
+     * If `line` passes through the inversion center, return itself(cloned).
+     * If `line` does not pass through the inversion center, return the inverted circle.
+     * @param line
+     * @returns
      */
     invertLine(line: Line): Line | Circle {
         if (this.centerPoint.isOnLine(line)) return line.clone()
@@ -208,7 +224,7 @@ class Inversion extends GeomObject {
     copyFrom(inversion: Inversion | null) {
         if (inversion === null) {
             coord.assign(this._centerCoordinate, [NaN, NaN])
-            this._power = defaultPower
+            this._power = defaultInversionPower
         } else {
             coord.assign(this._centerCoordinate, inversion._centerCoordinate)
             this._power = inversion._power

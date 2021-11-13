@@ -8,15 +8,14 @@ import coord from "./utility/coordinate"
 
 import { arcEndpointToCenterParameterization } from "./graphics/helper"
 import Geomtoy from "."
-import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Graphics from "./graphics"
-import { Visible } from "./interfaces"
 import { optionerOf } from "./helper/Optioner"
 import { OwnerCarrier } from "./types"
+import Shape from "./base/Shape"
+import { FiniteOpenShape } from "./interfaces"
 
-class Arc extends GeomObject implements Visible {
-    private _options = optionerOf(this.owner).options
+class Arc extends Shape implements FiniteOpenShape {
     private _centerCoordinate: [number, number] = [NaN, NaN]
     private _radiusX: number = NaN
     private _radiusY: number = NaN
@@ -164,7 +163,7 @@ class Arc extends GeomObject implements Visible {
 
     isValid() {
         const [cc, sa, ea] = [this._centerCoordinate, this._startAngle, this._endAngle]
-        const epsilon = this._options.epsilon
+        const epsilon = this.options_.epsilon
         if (!coord.isValid(cc)) return false
         if (!util.isRealNumber(sa)) return false
         if (!util.isRealNumber(ea)) return false
@@ -184,6 +183,7 @@ class Arc extends GeomObject implements Visible {
         this.centerCoordinate = coord.move(this.centerCoordinate, deltaX, deltaY)
         return this
     }
+
     /**
      * Move point `this` with `distance` along `angle` to get new point.
      */
@@ -196,6 +196,10 @@ class Arc extends GeomObject implements Visible {
     moveAlongAngleSelf(angle: number, distance: number) {
         this.centerCoordinate = coord.moveAlongAngle(this.centerCoordinate, angle, distance)
         return this
+    }
+
+    isPointOn(point: [number, number] | Point): boolean {
+        throw new Error("Method not implemented.")
     }
 
     static fromTwoPointsEtc(
@@ -237,14 +241,16 @@ class Arc extends GeomObject implements Visible {
         })
         return new Arc(this.owner, centerX, centerY, correctedRx, correctedRy, startAngle, endAngle, positive, rotation)
     }
-    getLength() {}
+    getLength() {
+        return 0
+    }
     getGraphics() {
         const c = this.centerCoordinate
         const g = new Graphics()
         g.centerArcTo(...c, this.radiusX, this.radiusY, this.rotation, this.startAngle, this.endAngle, this.positive)
         return g.commands
     }
-    apply(transformation: Transformation): GeomObject {
+    apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
     clone() {
@@ -265,8 +271,8 @@ class Arc extends GeomObject implements Visible {
     toString(): string {
         throw new Error("Method not implemented.")
     }
-    toArray(): any[] {
-        throw new Error("Method not implemented.")
+    toArray() {
+        return [this.centerCoordinate, this.radiusX, this.radiusY, this.startAngle, this.endAngle, this.positive, this.rotation]
     }
     toObject() {
         return {

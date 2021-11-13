@@ -43,23 +43,25 @@ class LineSegment extends GeomObject implements Shape, LengthMeasurable {
         point1XChanged: "point1XChanged",
         point1YChanged: "point1YChanged",
         point2XChanged: "point2XChanged",
-        point2YChanged: "point2YChanged"
+        point2YChanged: "point2YChanged",
+        angleChanged: "angleChanged",
+        lengthChanged: "lengthChanged"
     })
 
     private _setPoint1X(value: number) {
-        this.willTrigger_(coord.x(this._point1Coordinate), value, [LineSegment.events.point1XChanged])
+        this.willTrigger_(coord.x(this._point1Coordinate), value, [LineSegment.events.point1XChanged, LineSegment.events.angleChanged, LineSegment.events.lengthChanged])
         coord.x(this._point1Coordinate, value)
     }
     private _setPoint1Y(value: number) {
-        this.willTrigger_(coord.y(this._point1Coordinate), value, [LineSegment.events.point1YChanged])
+        this.willTrigger_(coord.y(this._point1Coordinate), value, [LineSegment.events.point1YChanged, LineSegment.events.angleChanged, LineSegment.events.lengthChanged])
         coord.y(this._point1Coordinate, value)
     }
     private _setPoint2X(value: number) {
-        this.willTrigger_(coord.x(this._point2Coordinate), value, [LineSegment.events.point2XChanged])
+        this.willTrigger_(coord.x(this._point2Coordinate), value, [LineSegment.events.point2XChanged, LineSegment.events.angleChanged, LineSegment.events.lengthChanged])
         coord.x(this._point2Coordinate, value)
     }
     private _setPoint2Y(value: number) {
-        this.willTrigger_(coord.y(this._point2Coordinate), value, [LineSegment.events.point2YChanged])
+        this.willTrigger_(coord.y(this._point2Coordinate), value, [LineSegment.events.point2YChanged, LineSegment.events.angleChanged, LineSegment.events.lengthChanged])
         coord.y(this._point2Coordinate, value)
     }
 
@@ -123,17 +125,23 @@ class LineSegment extends GeomObject implements Shape, LengthMeasurable {
         this._setPoint2X(value.x)
         this._setPoint2Y(value.y)
     }
-    /**
-     * Get the angle of line segment `this`, treated as a vector from `point1` to `point2`, the result is in the interval `(-math.PI, math.PI]`.
-     */
-    get angle(): number {
-        return vec2.angle(vec2.from(this.point1Coordinate, this.point2Coordinate))
+    get angle() {
+        return vec2.angle(vec2.from(this._point1Coordinate, this._point2Coordinate))
     }
-    /**
-     * Get the length of line segment `this`.
-     */
-    get length(): number {
-        return vec2.magnitude(vec2.from(this.point1Coordinate, this.point2Coordinate))
+    set angle(value) {
+        assert.isRealNumber(value, "angle")
+        const nc2 = vec2.add(this._point1Coordinate, vec2.from2(value, this.length))
+        this._setPoint2X(coord.x(nc2))
+        this._setPoint2Y(coord.y(nc2))
+    }
+    get length() {
+        return vec2.magnitude(vec2.from(this._point1Coordinate, this._point2Coordinate))
+    }
+    set length(value) {
+        assert.isPositiveNumber(value, "length")
+        const nc2 = vec2.add(this._point1Coordinate, vec2.from2(this.angle, value))
+        this._setPoint2X(coord.x(nc2))
+        this._setPoint2Y(coord.y(nc2))
     }
 
     static formingCondition = "The two endpoints of a `LineSegment` should be distinct, or the length of a `LineSegment` should greater than 0."
@@ -147,10 +155,10 @@ class LineSegment extends GeomObject implements Shape, LengthMeasurable {
         return true
     }
 
-    static fromPointAndAngleAndLength(owner: Geomtoy, point: Point, angle: number, length: number) {
-        let p1 = point,
-            p2 = p1.moveAlongAngle(angle, length)
-        return new LineSegment(owner, p1, p2)
+    static fromPointAndAngleAndLength(owner: Geomtoy, point: [number, number] | Point, angle: number, length: number) {
+        const c1 = point instanceof Point ? point.coordinate : point
+        const c2 = coord.moveAlongAngle(c1, angle, length)
+        return new LineSegment(owner, c1, c2)
     }
     /**
      * Get the `n` equally dividing rays of the angle which is formed by rays `ray1` and `ray2`.

@@ -14,14 +14,13 @@ import Circle from "./Circle"
 import Transformation from "./transformation"
 
 import Graphics from "./graphics"
-import { GraphicsCommand, OwnerCarrier } from "./types"
-import { Visible } from "./interfaces"
+import { GraphicsCommand, OwnerCarrier } from "./types" 
 import Polygon from "./advanced/Polygon"
 import Ray from "./Ray"
 import { optionerOf } from "./helper/Optioner"
-import factory from "./utility/factory"
+import Shape from "./base/Shape"
 
-class Point extends GeomObject implements Visible {
+class Point extends Shape {
     private _coordinate: [number, number] = [NaN, NaN]
 
     constructor(owner: Geomtoy, x: number, y: number)
@@ -265,20 +264,6 @@ class Point extends GeomObject implements Visible {
         }
         return math.equalTo(cp, 0, epsilon) && math.greaterThan(dp, 0, epsilon) && math.lessThan(dp, sm, epsilon)
     }
-
-    isOutsidePolygon() {}
-
-    isInsidePolygon() {}
-
-    isOnPolygon(polygon: Polygon) {}
-
-    isOnLine(line: Line): boolean {
-        let [a, b, c] = line.getGeneralEquationParameters(),
-            { x, y } = this,
-            epsilon = this.options_.epsilon
-        return math.equalTo(a * x + b * y + c, 0, epsilon)
-    }
-
     isOnLineSegmentLyingLine(lineSegment: LineSegment): boolean {
         let v1 = vec2.from(lineSegment.point1Coordinate, lineSegment.point2Coordinate),
             v2 = vec2.from(lineSegment.point1Coordinate, this.coordinate),

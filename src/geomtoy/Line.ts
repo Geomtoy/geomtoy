@@ -19,6 +19,7 @@ import Arrow from "./helper/Arrow"
 import coordArray from "./utility/coordinateArray"
 import { optionerOf } from "./helper/Optioner"
 import bbox from "./utility/boundingBox"
+import vec2 from "./utility/vec2"
 
 class Line extends GeomObject {
     private _slope: number = NaN
@@ -158,59 +159,6 @@ class Line extends GeomObject {
         return true
     }
 
-    /**
-     * Whether line `this` is the same as line `line`.
-     * @param line
-     * @returns
-     */
-    isSameAs(line: Line): boolean {
-        if (this === line) return true
-        const epsilon = this.options_.epsilon
-        return math.equalTo(this.slope, line.slope, epsilon) && math.equalTo(this.yIntercept, line.yIntercept, epsilon)
-    }
-    /**
-     * Move line `this` by `offsetX` and `offsetY` to get new line.
-     */
-    move(deltaX: number, deltaY: number) {
-        return this.clone().moveSelf(deltaX, deltaY)
-    }
-    /**
-     * Move line `this` itself by `offsetX` and `offsetY`.
-     */
-    moveSelf(deltaX: number, deltaY: number) {
-        this.coordinate = coord.move(this.coordinate, deltaX, deltaY)
-        return this
-    }
-    /**
-     * Move line `this` with `distance` along `angle` to get new line.
-     */
-    moveAlongAngle(angle: number, distance: number) {
-        return this.clone().moveAlongAngleSelf(angle, distance)
-    }
-    /**
-     * Move line `this` itself with `distance` along `angle`.
-     */
-    moveAlongAngleSelf(angle: number, distance: number) {
-        this.coordinate = coord.moveAlongAngle(this.coordinate, angle, distance)
-        return this
-    }
-
-    getGeneralEquationParameters() {
-        const { x, y, slope } = this
-        if (slope === Infinity) return [-1, 0, x]
-        if (slope === 0) return [0, -1, y]
-        return [slope, -1, y - slope * x]
-    }
-    static fromGeneralEquationParameters(owner: Geomtoy, params: [number, number, number]): null | Line {
-        const [a, b, c] = params
-        if (a === 0 && b === 0) {
-            console.warn("[G]The `a` and `b` of a `Line` should not be equal to 0 at the same time.")
-            return null
-        }
-        if (b === 0) return new Line(owner, -(c / a), 0, Infinity)
-        if (a === 0) return new Line(owner, 0, -(c / b), 0)
-        return new Line(owner, 0, -(c / b), -(a / b))
-    }
     static yAxis(owner: Geomtoy) {
         return new Line(owner, 0, 0, Infinity)
     }
@@ -222,6 +170,16 @@ class Line extends GeomObject {
     }
     static yEqualNegativeX(owner: Geomtoy) {
         return new Line(owner, 0, 0, -1)
+    }
+    static fromGeneralEquationParameters(owner: Geomtoy, params: [number, number, number]): null | Line {
+        const [a, b, c] = params
+        if (a === 0 && b === 0) {
+            console.warn("[G]The `a` and `b` of a `Line` should not be equal to 0 at the same time.")
+            return null
+        }
+        if (b === 0) return new Line(owner, -(c / a), 0, Infinity)
+        if (a === 0) return new Line(owner, 0, -(c / b), 0)
+        return new Line(owner, 0, -(c / b), -(a / b))
     }
 
     /**
@@ -280,61 +238,88 @@ class Line extends GeomObject {
         if (yInt === Infinity) return new Line(this.owner, xIntercept, 0, Infinity)
         return Line.fromTwoPoints.bind(this)([0, yIntercept], [xIntercept, 0], useYInterceptionPoint)
     }
+
+    /**
+     * Whether line `this` is the same as line `line`.
+     * @param line
+     * @returns
+     */
+    isSameAs(line: Line): boolean {
+        if (this === line) return true
+        const epsilon = this.options_.epsilon
+        return math.equalTo(this.slope, line.slope, epsilon) && math.equalTo(this.yIntercept, line.yIntercept, epsilon)
+    }
+    /**
+     * Move line `this` by `offsetX` and `offsetY` to get new line.
+     */
+    move(deltaX: number, deltaY: number) {
+        return this.clone().moveSelf(deltaX, deltaY)
+    }
+    /**
+     * Move line `this` itself by `offsetX` and `offsetY`.
+     */
+    moveSelf(deltaX: number, deltaY: number) {
+        this.coordinate = coord.move(this.coordinate, deltaX, deltaY)
+        return this
+    }
+    /**
+     * Move line `this` with `distance` along `angle` to get new line.
+     */
+    moveAlongAngle(angle: number, distance: number) {
+        return this.clone().moveAlongAngleSelf(angle, distance)
+    }
+    /**
+     * Move line `this` itself with `distance` along `angle`.
+     */
+    moveAlongAngleSelf(angle: number, distance: number) {
+        this.coordinate = coord.moveAlongAngle(this.coordinate, angle, distance)
+        return this
+    }
+
+    getGeneralEquationParameters() {
+        const { x, y, slope } = this
+        if (slope === Infinity) return [-1, 0, x]
+        if (slope === 0) return [0, -1, y]
+        return [slope, -1, y - slope * x]
+    }
+    isPointOn(point: [number, number] | Point) {
+        assert.isCoordinateOrPoint(point, "point")
+        const [x, y] = point instanceof Point ? point.coordinate : point
+        const [a, b, c] = this.getGeneralEquationParameters()
+        const epsilon = this.options_.epsilon
+        return math.equalTo(a * x + b * y + c, 0, epsilon)
+    }
     isParallelToXAxis() {
         return this.slope === Infinity
     }
-
     isParallelToYAxis(): boolean {
         return this.slope === 0
     }
-
-    getXWhereYEqualTo(y: number): number {
-        if (this.slope === Infinity) {
-            return this.x
-        }
-        if (this.slope === 0) return NaN
-        return (y - this.y) / this.slope + this.x
+    getXWhereYEqualTo(y: number) {
+        return this.slope === Infinity ? this.x : this.slope === 0 ? NaN : (y - this.y) / this.slope + this.x
     }
-
-    getYWhereXEqualTo(x: number): number {
-        if (this.slope === 0) {
-            return this.y
-        }
-        if (this.slope === Infinity) return NaN
-        return (x - this.x) * this.slope + this.y
+    getYWhereXEqualTo(x: number) {
+        return this.slope === 0 ? this.y : this.slope === Infinity ? NaN : (x - this.x) * this.slope + this.y
     }
-
-    getCoordinateWhereYEqualTo(y: number): [number, number] | [] {
-        if (this.slope === Infinity) {
-            return [this.x, y]
-        }
-        if (this.slope === 0) return []
-        return [(y - this.y) / this.slope + this.x, y]
-    }
-
-    getCoordinateWhereXEqualTo(x: number): [number, number] | [] {
-        if (this.slope === 0) {
-            return [x, this.y]
-        }
-        if (this.slope === Infinity) return []
-        return [x, (x - this.x) * this.slope + this.y]
-    }
-
     /**
      * Get the point on line `this` where y is equal to `y`.
-     * @param {number} y
+     * @param y
+     * @returns
      */
-    getPointWhereYEqualTo(y: number) {
-        const c = this.getCoordinateWhereYEqualTo(y)
-        return c.length ? new Point(this.owner, c) : new Point(this.owner)
+    getPointWhereYEqualTo(y: number): null | Point {
+        const x = this.getXWhereYEqualTo(y)
+        if (util.isNaN(x)) return null
+        return new Point(this.owner, [x, y])
     }
     /**
      * Get the point on line `this` where x is equal to `x`.
-     * @param {number} x
+     * @param x
+     * @returns
      */
-    getPointWhereXEqualTo(x: number) {
-        const c = this.getCoordinateWhereXEqualTo(x)
-        return c.length ? new Point(this.owner, c) : new Point(this.owner)
+    getPointWhereXEqualTo(x: number): null | Point {
+        const y = this.getYWhereXEqualTo(x)
+        if (util.isNaN(y)) return null
+        return new Point(this.owner, [x, y])
     }
 
     // #region Positional relationships of line to line
@@ -551,7 +536,7 @@ class Line extends GeomObject {
         if (ret) return ret
         return null
     }
-
+    
     /**
      * Find the perpendicular line of line `this` from point `point`.
      * @param coordinate
@@ -567,6 +552,11 @@ class Line extends GeomObject {
      * Find the perpendicular point(the foot of the perpendicular) on line `this` from point `point`.
      * @param point
      */
+    // change function name
+    getClosestPointFromPoint(){
+        
+    }
+
     getPerpendicularPointFromPoint(point: Point): Point {
         let [a, b, c] = this.getGeneralEquationParameters(),
             { x, y } = point,
