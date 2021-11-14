@@ -6,7 +6,6 @@ import assert from "./utility/assertion"
 import Point from "./Point"
 import LineSegment from "./LineSegment"
 import { GraphicsCommand } from "./types"
-import GeomObject from "./base/GeomObject"
 import Graphics from "./graphics"
 import Transformation from "./transformation"
 import Geomtoy from "."
@@ -14,9 +13,9 @@ import coord from "./utility/coordinate"
 import Line from "./Line"
 import Ray from "./Ray"
 import Arrow from "./helper/Arrow"
-import { Shape } from "./interfaces"
+import Shape from "./base/Shape"
 
-class Vector extends GeomObject implements Shape {
+class Vector extends Shape{
     private _coordinate: [number, number] = [NaN, NaN]
     private _point1Coordinate: [number, number] = [0, 0]
 
@@ -357,6 +356,6 @@ validAndWithSameOwner(Vector)
 
 /**
  *
- * @category GeomObject
+ * @category Shape
  */
 export default Vector

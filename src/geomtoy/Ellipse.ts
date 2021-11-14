@@ -5,13 +5,13 @@ import util from "./utility"
 import { Direction } from "./types"
 import { validAndWithSameOwner } from "./decorator"
 import assert from "./utility/assertion"
-import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Geomtoy from "."
-import { AreaMeasurable } from "./interfaces"
+import { ClosedShape } from "./interfaces"
 import coord from "./utility/coordinate"
+import Shape from "./base/Shape"
 
-class Ellipse extends GeomObject implements AreaMeasurable {
+class Ellipse extends Shape implements ClosedShape {
     private _centerCoordinate: [number, number] = [NaN, NaN]
     private _radiusX: number = NaN
     private _radiusY: number = NaN
@@ -124,7 +124,18 @@ class Ellipse extends GeomObject implements AreaMeasurable {
         if (!util.isPositiveNumber(ry)) return false
         return true
     }
-
+    getLength(): number {
+        throw new Error("Method not implemented.")
+    }
+    isPointOn(point: [number, number] | Point): boolean {
+        throw new Error("Method not implemented.")
+    }
+    isPointOutside(point: [number, number] | Point): boolean {
+        throw new Error("Method not implemented.")
+    }
+    isPointInside(point: [number, number] | Point): boolean {
+        throw new Error("Method not implemented.")
+    }
     /**
      * Move ellipse `this` by `offsetX` and `offsetY` to get new ellipse.
      */
@@ -196,7 +207,7 @@ class Ellipse extends GeomObject implements AreaMeasurable {
     //https://zhuanlan.zhihu.com/p/64550850
     static findTangentLineOfEllipseAndParabola() {}
 
-    apply(transformation: Transformation): GeomObject {
+    apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
     getPerimeter(): number {
@@ -228,6 +239,6 @@ class Ellipse extends GeomObject implements AreaMeasurable {
 
 validAndWithSameOwner(Ellipse)
 /**
- * @category GeomObject
+ * @category Shape
  */
 export default Ellipse

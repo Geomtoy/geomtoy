@@ -289,6 +289,6 @@ class Arc extends Shape implements FiniteOpenShape {
 
 validAndWithSameOwner(Arc)
 /**
- * @category GeomObject
+ * @category Shape
  */
 export default Arc

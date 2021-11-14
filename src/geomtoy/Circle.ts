@@ -13,7 +13,6 @@ import Inversion from "./inversion"
 import { GraphicsCommand, Direction, AnglePointLineData, PointLineData, PointsLineData } from "./types"
 import { validAndWithSameOwner } from "./decorator"
 import assert from "./utility/assertion"
-import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import Graphics from "./graphics"
 import Geomtoy from "."
@@ -111,6 +110,9 @@ class Circle extends Shape implements ClosedShape {
         if (!coord.isValid(cc)) return false
         if (!util.isPositiveNumber(r)) return false
         return true
+    }
+    getLength(): number {
+        throw new Error("Method not implemented.")
     }
     /**
      * Move circle `this` by `offsetX` and `offsetY` to get new circle.
@@ -214,19 +216,19 @@ class Circle extends Shape implements ClosedShape {
         return new LineSegment(this.owner, vec2.add(cc, vec2.from2(startAngle, r)), vec2.add(cc, vec2.from2(endAngle, r)))
     }
 
-    isPointOn(point: Point) {
+    isPointOn(point: [number, number] | Point) {
         const sd = vec2.squaredMagnitude(vec2.from(this.centerCoordinate, point.coordinate))
         const sr = this.radius ** 2
         const epsilon = this.options_.epsilon
         return math.equalTo(sd, sr, epsilon)
     }
-    isPointOutside(point: Point) {
+    isPointOutside(point: [number, number] | Point) {
         const sd = vec2.squaredMagnitude(vec2.from(this.centerCoordinate, point.coordinate))
         const sr = this.radius ** 2
         const epsilon = this.options_.epsilon
         return math.greaterThan(sd, sr, epsilon)
     }
-    isPointInside(point: Point) {
+    isPointInside(point: [number, number] | Point) {
         const sd = vec2.squaredMagnitude(vec2.from(this.centerCoordinate, point.coordinate))
         const sr = this.radius ** 2
         const epsilon = this.options_.epsilon
@@ -459,7 +461,7 @@ class Circle extends Shape implements ClosedShape {
         return g.commands
     }
 
-    apply(transformation: Transformation): GeomObject {
+    apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
     clone() {
@@ -485,6 +487,6 @@ class Circle extends Shape implements ClosedShape {
 
 validAndWithSameOwner(Circle)
 /**
- * @category GeomObject
+ * @category Shape
  */
 export default Circle

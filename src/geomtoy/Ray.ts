@@ -7,15 +7,15 @@ import assert from "./utility/assertion"
 import Point from "./Point"
 import LineSegment from "./LineSegment"
 import { GraphicsCommand } from "./types"
-import GeomObject from "./base/GeomObject"
 import Graphics from "./graphics"
 import Transformation from "./transformation"
 import Geomtoy from "."
 import coord from "./utility/coordinate"
-import { Visible } from "./interfaces"
+import { InfiniteOpenShape } from "./interfaces"
 import Line from "./Line"
+import Shape from "./base/Shape"
 
-class Ray extends GeomObject implements Visible {
+class Ray extends Shape implements InfiniteOpenShape {
     private _coordinate: [number, number] = [NaN, NaN]
     private _angle: number = NaN
 
@@ -99,7 +99,13 @@ class Ray extends GeomObject implements Visible {
         if (!util.isRealNumber(this._angle)) return false
         return true
     }
-
+    isPointOn(point: [number, number] | Point) {
+        const epsilon = this.options_.epsilon
+        const c0 = this.coordinate
+        const c1 = point instanceof Point ? point.coordinate : point
+        if (coord.isSameAs(c0, c1, epsilon)) return true
+        return math.equalTo(vec2.angle(vec2.from(c0, c1)), this.angle, epsilon)
+    }
     /**
      * Get the `n` section(equal) rays of the angle which is formed by rays `ray1` and `ray2`.
      * @description
@@ -167,7 +173,7 @@ class Ray extends GeomObject implements Visible {
         return Line.fromPointAndAngle(this.owner, this.point, this.angle)
     }
 
-    apply(transformation: Transformation): GeomObject {
+    apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
     getGraphics(): GraphicsCommand[] {
@@ -197,6 +203,6 @@ class Ray extends GeomObject implements Visible {
 
 validAndWithSameOwner(Ray)
 /**
- * @category GeomObject
+ * @category Shape
  */
 export default Ray

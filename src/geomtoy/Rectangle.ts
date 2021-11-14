@@ -9,8 +9,9 @@ import math from "./utility/math"
 import Geomtoy from "."
 import coord from "./utility/coordinate"
 import size from "./utility/size"
+import Shape from "./base/Shape"
 
-class Rectangle extends GeomObject {
+class Rectangle extends Shape {
     private _originCoordinate: [number, number] = [NaN, NaN]
     private _size: [number, number] = [NaN, NaN]
 
@@ -274,7 +275,7 @@ class Rectangle extends GeomObject {
         this._setHeight(size.height(rectangle._size))
         return this
     }
-    apply(transformation: Transformation): GeomObject {
+    apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
 
@@ -308,6 +309,6 @@ class Rectangle extends GeomObject {
 }
 validAndWithSameOwner(Rectangle)
 /**
- * @category GeomObject
+ * @category Shape
  */
 export default Rectangle

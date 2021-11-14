@@ -2,18 +2,18 @@ import Geomtoy from "."
 import GeomObject from "./base/GeomObject"
 import { validAndWithSameOwner } from "./decorator"
 import assert from "./utility/assertion"
-import Graphics from "./graphics"
-import { Shape } from "./interfaces"
+import Graphics from "./graphics" 
 import Point from "./Point"
 import Transformation from "./transformation"
 import util from "./utility"
 import coord from "./utility/coordinate"
+import Shape from "./base/Shape"
 
 const defaultFontSize = 16
 const defaultFontFamily = "sans-serif"
 const defaultFontBold = false
 const defaultFontItalic = false
-class Text extends GeomObject implements Shape {
+class Text extends Shape {
     private _coordinate: [number, number] = [NaN, NaN]
     private _text = ""
     private _fontSize = defaultFontSize
@@ -190,7 +190,7 @@ class Text extends GeomObject implements Shape {
         return this
     }
 
-    apply(transformation: Transformation): GeomObject {
+    apply(transformation: Transformation):Shape {
         throw new Error("Method not implemented.")
     }
     getGraphics() {
@@ -237,6 +237,6 @@ class Text extends GeomObject implements Shape {
 }
 validAndWithSameOwner(Text)
 /**
- * @category GeomObject
+ * @category Shape
  */
 export default Text

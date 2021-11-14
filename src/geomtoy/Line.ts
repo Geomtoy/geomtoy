@@ -8,7 +8,6 @@ import LineSegment from "./LineSegment"
 import Graphics from "./graphics"
 import Rectangle from "./Rectangle"
 import Circle from "./Circle"
-import GeomObject from "./base/GeomObject"
 import { GraphicsCommand, OwnerCarrier } from "./types"
 import Transformation from "./transformation"
 import Geomtoy from "."
@@ -20,8 +19,10 @@ import coordArray from "./utility/coordinateArray"
 import { optionerOf } from "./helper/Optioner"
 import bbox from "./utility/boundingBox"
 import vec2 from "./utility/vec2"
+import Shape from "./base/Shape"
+import { InfiniteOpenShape } from "./interfaces"
 
-class Line extends GeomObject {
+class Line extends Shape implements InfiniteOpenShape {
     private _slope: number = NaN
     private _coordinate: [number, number] = [NaN, NaN]
 
@@ -631,7 +632,7 @@ class Line extends GeomObject {
 
         return g.commands
     }
-    apply(transformation: Transformation): GeomObject {
+    apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
     clone() {
@@ -663,6 +664,6 @@ class Line extends GeomObject {
 
 validAndWithSameOwner(Line)
 /**
- * @category GeomObject
+ * @category Shape
  */
 export default Line

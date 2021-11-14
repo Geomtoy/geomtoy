@@ -2,6 +2,7 @@ import util from "../utility"
 import Point from "../Point"
 import Line from "../Line"
 import GeomObject from "../base/GeomObject"
+import Shape from "../base/Shape"
 
 interface Assertion {
     condition(condition: any, msg?: string): asserts condition
@@ -21,6 +22,7 @@ interface Assertion {
     isFunction(value: any, p: string): asserts value is (...args: any) => any
     isString(value: any, p: string): asserts value is string
     isLine(value: any, p: string): asserts value is Line
+    isShape(value: any, p: string): asserts value is Shape
     comparison(value: any, p: string, t: "gt" | "lt" | "eq" | "ge" | "le" | "ne", n: number): void
 }
 
@@ -108,6 +110,11 @@ const assert: Assertion = {
     isLine(value: any, p: string): asserts value is Line {
         if (!(value instanceof Line)) {
             throw new TypeError(`[G]The \`${p}\`  should be a \`Line\`.`)
+        }
+    },
+    isShape(value: any, p: string): asserts value is Shape {
+        if (!(value instanceof Shape)) {
+            throw new TypeError(`[G]The \`${p}\`  should be a \`Shape\`.`)
         }
     },
     comparison(value: any, p: string, t: "gt" | "lt" | "eq" | "ge" | "le" | "ne", n: number) {

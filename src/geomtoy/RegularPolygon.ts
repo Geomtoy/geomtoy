@@ -11,14 +11,15 @@ import { validAndWithSameOwner } from "./decorator"
 import assert from "./utility/assertion"
 import { Direction, GraphicsCommand } from "./types"
 import GeomObject from "./base/GeomObject"
-import { AreaMeasurable, Shape } from "./interfaces"
+import {  ClosedShape } from "./interfaces"
 import Transformation from "./transformation"
 import Graphics from "./graphics"
 import Geomtoy from "."
 import coord from "./utility/coordinate"
+import Shape from "./base/Shape"
 
 const regularPolygonMinSideCount = 3
-class RegularPolygon extends GeomObject implements Shape, AreaMeasurable {
+class RegularPolygon extends Shape implements ClosedShape {
     private _radius: number = NaN
     private _centerCoordinate: [number, number] = [NaN, NaN]
     private _sideCount: number = NaN
@@ -159,7 +160,18 @@ class RegularPolygon extends GeomObject implements Shape, AreaMeasurable {
     setWindingDirection(direction: Direction) {
         this._windingDirection = direction
     }
-
+    getLength(): number {
+        throw new Error("Method not implemented.")
+    }
+    isPointOn(point: [number, number] | Point): boolean {
+        throw new Error("Method not implemented.")
+    }
+    isPointOutside(point: [number, number] | Point): boolean {
+        throw new Error("Method not implemented.")
+    }
+    isPointInside(point: [number, number] | Point): boolean {
+        throw new Error("Method not implemented.")
+    }
     /**
      * Move regular polygon `this` by `offsetX` and `offsetY` to get new regular polygon.
      */
@@ -227,7 +239,7 @@ class RegularPolygon extends GeomObject implements Shape, AreaMeasurable {
         let p = this.getPerimeter()
         return (p * this.apothem) / 2
     }
-    apply(transformation: Transformation): GeomObject {
+    apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
     clone() {

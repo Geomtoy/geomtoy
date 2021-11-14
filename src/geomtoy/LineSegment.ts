@@ -5,7 +5,6 @@ import vec2 from "./utility/vec2"
 import Point from "./Point"
 import Vector from "./Vector"
 import Line from "./Line"
-import GeomObject from "./base/GeomObject"
 import Transformation from "./transformation"
 import { GraphicsCommand } from "./types"
 import { validAndWithSameOwner } from "./decorator"
@@ -15,9 +14,10 @@ import Geomtoy from "."
 import coord from "./utility/coordinate"
 import Ray from "./Ray"
 import coordArray from "./utility/coordinateArray"
-import { Shape, LengthMeasurable } from "./interfaces"
+import { FiniteOpenShape } from "./interfaces"
+import Shape from "./base/Shape"
 
-class LineSegment extends GeomObject implements Shape, LengthMeasurable {
+class LineSegment extends Shape implements FiniteOpenShape {
     private _point1Coordinate: [number, number] = [NaN, NaN]
     private _point2Coordinate: [number, number] = [NaN, NaN]
 
@@ -232,18 +232,12 @@ class LineSegment extends GeomObject implements Shape, LengthMeasurable {
         this.point2Coordinate = coord.moveAlongAngle(this.point2Coordinate, angle, distance)
         return this
     }
-
-    getMiddleCoordinate() {
-        const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = this
-        return [(x1 + x2) / 2, (y1 + y2) / 2] as [number, number]
-    }
     /**
      * Get the middle point of line segment `this`.
      * @returns
      */
     getMiddlePoint() {
-        let [x1, y1] = this.point1Coordinate,
-            [x2, y2] = this.point2Coordinate
+        const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = this
         return new Point(this.owner, (x1 + x2) / 2, (y1 + y2) / 2)
     }
     /**
@@ -252,7 +246,7 @@ class LineSegment extends GeomObject implements Shape, LengthMeasurable {
      */
     getPerpendicularlyBisectingLine() {
         const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = this
-        return new Line(this.owner, this.getMiddleCoordinate(), (x1 - x2) / (y1 - y2))
+        return new Line(this.owner, this.getMiddlePoint(), (x1 - x2) / (y1 - y2))
     }
 
     getIntersectionPointWithLine(line: Line) {
@@ -351,15 +345,16 @@ class LineSegment extends GeomObject implements Shape, LengthMeasurable {
     getLength() {
         return vec2.magnitude(vec2.from(this.point1Coordinate, this.point2Coordinate))
     }
-    isPointOn(point: Point) {
-        const v1 = vec2.from(this.point1Coordinate, point.coordinate)
-        const v2 = vec2.from(this.point2Coordinate, point.coordinate)
+    isPointOn(point: [number, number] | Point) {
+        const c1 = this.point1Coordinate
+        const c2 = this.point2Coordinate
+        const c3 = point instanceof Point ? point.coordinate : point
         const epsilon = this.options_.epsilon
-        const d1 = vec2.magnitude(v1)
-        const d2 = vec2.magnitude(v2)
-        if (math.equalTo(d1, 0, epsilon) || math.equalTo(d2, 0, epsilon)) return true
-        const dp = vec2.dot(v1, v2)
-        return math.equalTo(dp, 0, epsilon) && !math.equalTo(vec2.angle(v1), vec2.angle(v2), epsilon)
+        if (coord.isSameAs(c1, c3, epsilon) || coord.isSameAs(c2, c3, epsilon)) return true
+        const v13 = vec2.from(c1, c3)
+        const v23 = vec2.from(c2, c3)
+        const dp = vec2.dot(v13, v23)
+        return math.equalTo(dp, 0, epsilon) && !math.equalTo(vec2.angle(v13), vec2.angle(v23), epsilon)
     }
 
     /**
@@ -492,16 +487,16 @@ class LineSegment extends GeomObject implements Shape, LengthMeasurable {
      * Get the division ratio `lambda` divided by line `line `.
      * @description
      * - When `line` is parallel to `this`, return `NaN`.
-     * - When `line` is intersected with `this`, return a number in the interval `[0, math.Infinity]`:
+     * - When `line` is intersected with `this`, return a number in the interval `[0, Infinity]`:
      *      - If `line` passes through `point1`, return 0.
-     *      - If `line` passes through `point2`, return `math.Infinity`.
+     *      - If `line` passes through `point2`, return `Infinity`.
      * - When `line` is not parallel to and not intersected with `this`, return a number in the interval `(-math.Infinity, -1)` and `(-1, 0)`.
      * @param {Line} line
      * @returns {number}
      */
     getDivisionRatioByLine(line: Line): number {
         if (line.isParallelToLineSegment(this)) return NaN
-        if (this.point2.isOnLine(line)) return math.Infinity
+        if (line.isPointOn(this.point2Coordinate)) return Infinity
         let {
                 point1: { x: x1, y: y1 },
                 point2: { x: x2, y: y2 }
@@ -541,7 +536,7 @@ class LineSegment extends GeomObject implements Shape, LengthMeasurable {
         return `LineSegment(${this.point1.x}, ${this.point1.y}, ${this.point2.x}, ${this.point2.y})`
     }
 
-    apply(transformation: Transformation): GeomObject {
+    apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
 }

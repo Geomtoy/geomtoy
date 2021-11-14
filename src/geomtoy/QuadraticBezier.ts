@@ -14,14 +14,15 @@ import Polygon from "./advanced/Polygon"
 import LineSegment from "./LineSegment"
 import Transformation from "./transformation"
 
-import { AreaMeasurable, LengthMeasurable, Shape } from "./interfaces"
+import { FiniteOpenShape } from "./interfaces"
 import { Direction, GraphicsCommand } from "./types"
 import Graphics from "./graphics"
 import { Cartesian, Trilinear } from "./helper/CoordinateSystem"
 import coordArray from "./utility/coordinateArray"
 import { optionerOf } from "./helper/Optioner"
+import Shape from "./base/Shape"
 
-class QuadraticBezier extends GeomObject implements Shape, LengthMeasurable {
+class QuadraticBezier extends Shape implements FiniteOpenShape {
     private _options = optionerOf(this.owner).options
 
     private _point1Coordinate: [number, number] = [NaN, NaN]
@@ -241,7 +242,7 @@ class QuadraticBezier extends GeomObject implements Shape, LengthMeasurable {
     isPointOn(point: Point): boolean {
         return true
     }
-    apply(transformation: Transformation): GeomObject {
+    apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
     getGraphics(): GraphicsCommand[] {
@@ -290,6 +291,6 @@ class QuadraticBezier extends GeomObject implements Shape, LengthMeasurable {
 validAndWithSameOwner(QuadraticBezier)
 /**
  *
- * @category GeomObject
+ * @category Shape
  */
 export default QuadraticBezier

@@ -6,7 +6,6 @@ import math from "./utility/math"
 import coord from "./utility/coordinate"
 
 import Geomtoy from "."
-import GeomObject from "./base/GeomObject"
 import Vector from "./Vector"
 import LineSegment from "./LineSegment"
 import Line from "./Line"
@@ -129,7 +128,7 @@ class Point extends Shape {
      * @returns
      */
     static fromVector(owner: Geomtoy, vector: Vector) {
-        return new Point(owner, vector.point2.coordinate)
+        return new Point(owner, vector.point2Coordinate)
     }
     /**
      * Whether point `this` is the same as point `point`.
@@ -324,6 +323,6 @@ class Point extends Shape {
 validAndWithSameOwner(Point)
 
 /**
- * @category GeomObject
+ * @category Shape
  */
 export default Point

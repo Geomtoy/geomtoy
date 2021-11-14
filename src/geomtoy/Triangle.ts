@@ -13,14 +13,14 @@ import Line from "./Line"
 import Polygon from "./advanced/Polygon"
 import LineSegment from "./LineSegment"
 import Transformation from "./transformation"
-
-import { AreaMeasurable, Shape } from "./interfaces"
 import { Direction, GraphicsCommand } from "./types"
 import Graphics from "./graphics"
 import { Cartesian, Trilinear } from "./helper/CoordinateSystem"
 import coordArray from "./utility/coordinateArray"
+import { ClosedShape } from "./interfaces"
+import Shape from "./base/Shape"
 
-class Triangle extends GeomObject implements Shape, AreaMeasurable {
+class Triangle extends Shape implements ClosedShape {
     private _point1Coordinate: [number, number] = [NaN, NaN]
     private _point2Coordinate: [number, number] = [NaN, NaN]
     private _point3Coordinate: [number, number] = [NaN, NaN]
@@ -222,6 +222,9 @@ class Triangle extends GeomObject implements Shape, AreaMeasurable {
         // None of these methods can guarantee that if triangle `this` is judged to be valid, its inner line segment can all be valid.
         if (!math.greaterThan(vec2.magnitude(vec2.from(c1, c2)) + vec2.magnitude(vec2.from(c2, c3)), vec2.magnitude(vec2.from(c3, c1)), epsilon)) return false
         return true
+    }
+    getLength(): number {
+        throw new Error("Method not implemented.")
     }
     /**
      * Get the winding direction of vertices of triangle `this`.
@@ -1011,7 +1014,7 @@ class Triangle extends GeomObject implements Shape, AreaMeasurable {
         return [new Circle(this.owner, ea, ra), new Circle(this.owner, eb, rb), new Circle(this.owner, ec, rc)]
     }
 
-    apply(transformation: Transformation): GeomObject {
+    apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
     getGraphics(): GraphicsCommand[] {
@@ -1063,6 +1066,6 @@ validAndWithSameOwner(Triangle)
 
 /**
  *
- * @category GeomObject
+ * @category Shape
  */
 export default Triangle

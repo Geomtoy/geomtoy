@@ -6,7 +6,6 @@ import vec2 from "./utility/vec2"
 import math from "./utility/math"
 
 import Geomtoy from "."
-import GeomObject from "./base/GeomObject"
 import Point from "./Point"
 import Circle from "./Circle"
 import Line from "./Line"
@@ -14,17 +13,14 @@ import Polygon from "./advanced/Polygon"
 import LineSegment from "./LineSegment"
 import Transformation from "./transformation"
 
-import { AreaMeasurable, LengthMeasurable, Shape } from "./interfaces"
+import { FiniteOpenShape } from "./interfaces"
 import { Direction, GraphicsCommand } from "./types"
 import Graphics from "./graphics"
 import { Cartesian, Trilinear } from "./helper/CoordinateSystem"
 import coordArray from "./utility/coordinateArray"
-import { optionerOf } from "./helper/Optioner"
-import factory from "./utility/factory"
+import Shape from "./base/Shape"
 
-class Bezier extends GeomObject implements Shape, LengthMeasurable {
-    private _options = optionerOf(this.owner).options
-
+class Bezier extends Shape implements FiniteOpenShape {
     private _point1Coordinate: [number, number] = [NaN, NaN]
     private _point2Coordinate: [number, number] = [NaN, NaN]
     private _controlPoint1Coordinate: [number, number] = [NaN, NaN]
@@ -232,7 +228,7 @@ class Bezier extends GeomObject implements Shape, LengthMeasurable {
 
     isValid() {
         const [c1, c2] = [this._point1Coordinate, this._point2Coordinate]
-        const epsilon = this._options.epsilon
+        const epsilon = this.options_.epsilon
         if (!coord.isValid(c1)) return false
         if (!coord.isValid(c2)) return false
         if (coord.isSameAs(c1, c2, epsilon)) return false
@@ -243,7 +239,7 @@ class Bezier extends GeomObject implements Shape, LengthMeasurable {
      * @param triangle
      */
     isSameAs(bezier: Bezier) {
-        const epsilon = this._options.epsilon
+        const epsilon = this.options_.epsilon
         return true
     }
     /**
@@ -251,7 +247,7 @@ class Bezier extends GeomObject implements Shape, LengthMeasurable {
      * @param triangle
      */
     isSameAs2(bezier: Bezier) {
-        const epsilon = this._options.epsilon
+        const epsilon = this.options_.epsilon
         return (
             coord.isSameAs(this.point1Coordinate, bezier.point1Coordinate, epsilon) &&
             coord.isSameAs(this.point2Coordinate, bezier.point2Coordinate, epsilon) &&
@@ -303,7 +299,7 @@ class Bezier extends GeomObject implements Shape, LengthMeasurable {
     isPointOn(point: Point): boolean {
         return true
     }
-    apply(transformation: Transformation): GeomObject {
+    apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
     getGraphics(): GraphicsCommand[] {
@@ -356,6 +352,6 @@ class Bezier extends GeomObject implements Shape, LengthMeasurable {
 validAndWithSameOwner(Bezier)
 /**
  *
- * @category GeomObject
+ * @category Shape
  */
 export default Bezier
