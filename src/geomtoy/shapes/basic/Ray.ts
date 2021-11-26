@@ -1,20 +1,19 @@
-import vec2 from "./utility/vec2"
-import util from "./utility"
-import angle from "./utility/angle"
-import math from "./utility/math"
-import { validAndWithSameOwner } from "./decorator"
-import assert from "./utility/assertion"
-import Point from "./Point"
-import LineSegment from "./LineSegment"
-import { GraphicsCommand } from "./types"
-import Graphics from "./graphics"
-import Transformation from "./transformation"
-import Geomtoy from "."
-import coord from "./utility/coordinate"
-import { InfiniteOpenShape } from "./interfaces"
-import Line from "./Line"
-import Shape from "./base/Shape"
+import { validAndWithSameOwner } from "../../decorator"
+import assert from "../../utility/assertion"
+import util from "../../utility"
+import coord from "../../utility/coordinate"
+import math from "../../utility/math"
+import vec2 from "../../utility/vec2"
+import angle from "../../utility/angle"
 
+import Shape from "../../base/Shape"
+import Point from "./Point"
+import Line from "./Line"
+import Graphics from "../../graphics"
+
+import type Geomtoy from "../.."
+import type Transformation from "../../transformation"
+import type { InfiniteOpenShape } from "../../types"
 class Ray extends Shape implements InfiniteOpenShape {
     private _coordinate: [number, number] = [NaN, NaN]
     private _angle: number = NaN
@@ -176,7 +175,9 @@ class Ray extends Shape implements InfiniteOpenShape {
     apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
-    getGraphics(): GraphicsCommand[] {
+    getGraphics() {
+        const g = new Graphics()
+        if (!this.isValid) return g
         throw new Error("Method not implemented.")
     }
 

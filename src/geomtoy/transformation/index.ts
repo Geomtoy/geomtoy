@@ -1,12 +1,14 @@
 import math from "../utility/math"
-
-import Point from "../Point"
-import Line from "../Line"
-import Matrix from "../helper/Matrix"
-import GeomObject from "../base/GeomObject"
-import Geomtoy from ".."
 import { validAndWithSameOwner } from "../decorator"
-class Transformation extends GeomObject {
+import Matrix from "../helper/Matrix"
+
+import BaseObject from "../base/BaseObject"
+import Point from "../shapes/basic/Point"
+import Line from "../shapes/basic/Line"
+
+import type Geomtoy from ".."
+
+class Transformation extends BaseObject {
     private _matrix: Matrix = Matrix.identity
 
     constructor(owner: Geomtoy) {
@@ -58,48 +60,35 @@ class Transformation extends GeomObject {
     /**
      * Add a rotation to transformation `this`.
      */
-    rotate(angle: number, origin?: Point) {
-        let t = Object.assign(Matrix.identity, {
+    rotate(angle: number, originPoint?: [number, number] | Point) {
+        const t = Object.assign(Matrix.identity, {
             a: math.cos(angle),
             b: -math.sin(angle),
             c: math.sin(angle),
             d: math.cos(angle)
-        }) as Matrix
+        })
         if (origin !== undefined) {
-            let { x, y } = origin,
-                preTranslation = Object.assign(Matrix.identity, {
-                    e: x,
-                    f: y
-                }) as Matrix,
-                postTranslation = Object.assign(Matrix.identity, {
-                    e: -x,
-                    f: -y
-                }) as Matrix
+            const [x, y] = originPoint instanceof Point ? originPoint.coordinate : originPoint
+            const preTranslation = Object.assign(Matrix.identity, { e: x, f: y })
+            const postTranslation = Object.assign(Matrix.identity, { e: -x, f: -y })
             t.preMultiplySelf(preTranslation)
             t.postMultiplySelf(postTranslation)
         }
-
         this._matrix.postMultiplySelf(t)
         return this
     }
     /**
      * Add a scaling to transformation `this`.
      */
-    scale(factorX: number, factorY: number, origin?: Point) {
-        let t = Object.assign(Matrix.identity, {
+    scale(factorX: number, factorY: number, originPoint?: [number, number] | Point) {
+        const t = Object.assign(Matrix.identity, {
             a: factorX,
             d: factorY
-        }) as Matrix
+        })
         if (origin !== undefined) {
-            let { x, y } = origin,
-                preTranslation = Object.assign(Matrix.identity, {
-                    e: x,
-                    f: y
-                }) as Matrix,
-                postTranslation = Object.assign(Matrix.identity, {
-                    e: -x,
-                    f: -y
-                }) as Matrix
+            const [x, y] = originPoint instanceof Point ? originPoint.coordinate : originPoint
+            const preTranslation = Object.assign(Matrix.identity, { e: x, f: y })
+            const postTranslation = Object.assign(Matrix.identity, { e: -x, f: -y })
             t.preMultiplySelf(preTranslation)
             t.postMultiplySelf(postTranslation)
         }
@@ -109,26 +98,19 @@ class Transformation extends GeomObject {
     /**
      * Add a skewing to transformation `this`.
      */
-    skew(angleX: number, angleY: number, origin?: Point) {
-        let t = Object.assign(Matrix.identity, {
+    skew(angleX: number, angleY: number, originPoint?: [number, number] | Point) {
+        const t = Object.assign(Matrix.identity, {
             b: math.tan(angleY),
             c: math.tan(angleX)
-        }) as Matrix
+        })
 
         if (origin !== undefined) {
-            let { x, y } = origin,
-                preTranslation = Object.assign(Matrix.identity, {
-                    e: x,
-                    f: y
-                }) as Matrix,
-                postTranslation = Object.assign(Matrix.identity, {
-                    e: -x,
-                    f: -y
-                }) as Matrix
+            const [x, y] = originPoint instanceof Point ? originPoint.coordinate : originPoint
+            const preTranslation = Object.assign(Matrix.identity, { e: x, f: y })
+            const postTranslation = Object.assign(Matrix.identity, { e: -x, f: -y })
             t.preMultiplySelf(preTranslation)
             t.postMultiplySelf(postTranslation)
         }
-
         this._matrix.postMultiplySelf(t)
         return this
     }
@@ -152,14 +134,14 @@ class Transformation extends GeomObject {
     /**
      * Add a point reflection to transformation `this`.
      */
-    pointReflect(point: Point) {
-        let [x, y] = point.coordinate,
-            t = Object.assign(Matrix.identity, {
-                a: -1,
-                d: -1,
-                e: 2 * x,
-                f: 2 * y
-            })
+    pointReflect(point: [number, number] | Point) {
+        const [x, y] = point instanceof Point ? point.coordinate : point
+        const t = Object.assign(Matrix.identity, {
+            a: -1,
+            d: -1,
+            e: 2 * x,
+            f: 2 * y
+        })
         this._matrix.postMultiplySelf(t)
         return this
     }
@@ -232,7 +214,7 @@ class Transformation extends GeomObject {
     clone() {
         return new Transformation(this.owner).set(this.get())
     }
-    copyFrom(from: GeomObject): this {
+    copyFrom(from: BaseObject): this {
         throw new Error("Method not implemented.")
     }
     toString() {

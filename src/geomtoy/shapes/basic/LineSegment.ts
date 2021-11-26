@@ -1,23 +1,23 @@
-import util from "./utility"
-import math from "./utility/math"
-import vec2 from "./utility/vec2"
+import { validAndWithSameOwner } from "../../decorator"
+import assert from "../../utility/assertion"
+import util from "../../utility"
+import math from "../../utility/math"
+import coord from "../../utility/coordinate"
+import vec2 from "../../utility/vec2"
+import coordArray from "../../utility/coordinateArray"
 
+import Shape from "../../base/Shape"
 import Point from "./Point"
 import Vector from "./Vector"
 import Line from "./Line"
-import Transformation from "./transformation"
-import { GraphicsCommand } from "./types"
-import { validAndWithSameOwner } from "./decorator"
-import assert from "./utility/assertion"
-import Graphics from "./graphics"
-import Geomtoy from "."
-import coord from "./utility/coordinate"
 import Ray from "./Ray"
-import coordArray from "./utility/coordinateArray"
-import { FiniteOpenShape } from "./interfaces"
-import Shape from "./base/Shape"
+import Graphics from "../../graphics"
 
-class LineSegment extends Shape implements FiniteOpenShape {
+import type Geomtoy from "../.."
+import type Transformation from "../../transformation"
+import type { FiniteOpenShape, TransformableShape } from "../../types"
+
+class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
     private _point1Coordinate: [number, number] = [NaN, NaN]
     private _point2Coordinate: [number, number] = [NaN, NaN]
 
@@ -508,12 +508,13 @@ class LineSegment extends Shape implements FiniteOpenShape {
         return Line.fromTwoPoints.bind(this)(this.point1Coordinate, this.point2Coordinate)
     }
 
-    getGraphics(): GraphicsCommand[] {
+    getGraphics() {
         const g = new Graphics()
+        if (!this.isValid()) return g
         const { point1Coordinate: c1, point2Coordinate: c2 } = this
         g.moveTo(...c1)
         g.lineTo(...c2)
-        return g.commands
+        return g
     }
     clone() {
         return new LineSegment(this.owner, this.point1Coordinate, this.point2Coordinate)
@@ -544,6 +545,6 @@ class LineSegment extends Shape implements FiniteOpenShape {
 validAndWithSameOwner(LineSegment)
 /**
  *
- * @category GeomObject
+ * @category BaseObject
  */
 export default LineSegment

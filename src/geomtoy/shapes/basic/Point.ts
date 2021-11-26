@@ -1,23 +1,22 @@
-import { validAndWithSameOwner } from "./decorator"
-import assert from "./utility/assertion"
-import vec2 from "./utility/vec2"
-import util from "./utility"
-import math from "./utility/math"
-import coord from "./utility/coordinate"
+import { validAndWithSameOwner } from "../../decorator"
+import assert from "../../utility/assertion"
+import util from "../../utility"
+import math from "../../utility/math"
+import coord from "../../utility/coordinate"
+import vec2 from "../../utility/vec2"
 
-import Geomtoy from "."
+import { optionerOf } from "../../helper/Optioner"
+
+import Shape from "../../base/Shape"
 import Vector from "./Vector"
 import LineSegment from "./LineSegment"
 import Line from "./Line"
-import Circle from "./Circle"
-import Transformation from "./transformation"
-
-import Graphics from "./graphics"
-import { GraphicsCommand, OwnerCarrier } from "./types" 
-import Polygon from "./advanced/Polygon"
+import Graphics from "../../graphics"
 import Ray from "./Ray"
-import { optionerOf } from "./helper/Optioner"
-import Shape from "./base/Shape"
+
+import type Geomtoy from "../.."
+import type Transformation from "../../transformation"
+import type { GraphicsCommand, OwnerCarrier } from "../../types"
 
 class Point extends Shape {
     private _coordinate: [number, number] = [NaN, NaN]
@@ -275,15 +274,15 @@ class Point extends Shape {
         return this.isBetweenPoints(lineSegment.point1, lineSegment.point2, true)
     }
 
-    getGraphics(): GraphicsCommand[] {
+    getGraphics() {
         const g = new Graphics()
-        if (!this.isValid()) return g.commands
+        if (!this.isValid()) return g
         const scale = this.owner.scale
         const pointSize = this.options_.graphics.pointSize / scale
 
         g.centerArcTo(...this.coordinate, pointSize, pointSize, 0, 0, 2 * Math.PI)
         g.close()
-        return g.commands
+        return g
     }
     /**
      * Apply the transformation

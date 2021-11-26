@@ -1,21 +1,25 @@
-import vec2 from "./utility/vec2"
-import util from "./utility"
-import angle from "./utility/angle"
-import { validAndWithSameOwner } from "./decorator"
-import assert from "./utility/assertion"
+import { validAndWithSameOwner } from "../../decorator"
+import assert from "../../utility/assertion"
+import util from "../../utility"
+import math from "../../utility/math"
+import coord from "../../utility/coordinate"
+import vec2 from "../../utility/vec2"
+import angle from "../../utility/angle"
+
+import Arrow from "../../helper/Arrow"
+
+import Shape from "../../base/Shape"
 import Point from "./Point"
-import LineSegment from "./LineSegment"
-import { GraphicsCommand } from "./types"
-import Graphics from "./graphics"
-import Transformation from "./transformation"
-import Geomtoy from "."
-import coord from "./utility/coordinate"
 import Line from "./Line"
 import Ray from "./Ray"
-import Arrow from "./helper/Arrow"
-import Shape from "./base/Shape"
+import LineSegment from "./LineSegment"
+import Graphics from "../../graphics"
 
-class Vector extends Shape{
+import type Geomtoy from "../.."
+import type Transformation from "../../transformation"
+import type { TransformableShape } from "../../types"
+
+class Vector extends Shape implements TransformableShape {
     private _coordinate: [number, number] = [NaN, NaN]
     private _point1Coordinate: [number, number] = [0, 0]
 
@@ -319,9 +323,9 @@ class Vector extends Shape{
         let c = transformation.transformCoordinate(this.coordinate)
         return new Vector(this.owner, this.point1Coordinate, c)
     }
-    getGraphics(): GraphicsCommand[] {
+    getGraphics() {
         const g = new Graphics()
-        if (!this.isValid()) return g.commands
+        if (!this.isValid()) return g
         const { point1Coordinate: c1, point2Coordinate: c2 } = this
 
         g.moveTo(...c1)
@@ -329,7 +333,7 @@ class Vector extends Shape{
 
         const arrowGraphics = new Arrow(this.owner, c2, this.angle).getGraphics()
         g.append(arrowGraphics)
-        return g.commands
+        return g
     }
     toString() {
         return [

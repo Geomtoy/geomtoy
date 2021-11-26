@@ -1,4 +1,4 @@
-import { Renderer } from "../../../src/geomtoy/adaptor/adapter-types"
+import { PathLike, Renderer } from "../../../src/geomtoy/types"
 import { Touchable, Collection } from "./GeomObjectWrapper"
 const map: Map<Renderer, Settings> = new Map()
 
@@ -81,6 +81,20 @@ class Interact {
         this.settings = getSettings(this.renderer)
     }
 
+    private _isPointInTouchable(touchable: Touchable, x: number, y: number) {
+        const path = touchable.path!
+        let ret = true
+
+        if (Array.isArray(path)) {
+            ret &&= path.every(p => this.renderer.isPointInFill(p, x, y))
+            ret &&= path.every(p => this.renderer.isPointInStroke(p, touchable.strokeWidth, x, y))
+        } else {
+            ret &&= this.renderer.isPointInFill(path, x, y)
+            ret &&= this.renderer.isPointInStroke(path, touchable.strokeWidth, x, y)
+        }
+        return ret
+    }
+
     startDragAndDrop() {
         const settings = this.settings
         const touchables = this.collection.touchables
@@ -89,10 +103,7 @@ class Interact {
         settings.mouseDownCbs.dragAndDrop = e => {
             const coord = this.renderer.geomtoy.globalTransformation.antitransformCoordinate([e.offsetX, e.offsetY])
             Object.keys(touchables).some(name => {
-                if (
-                    this.renderer.isPointInFill(touchables[name].path!, ...coord) ||
-                    this.renderer.isPointInStroke(touchables[name].path!, touchables[name].strokeWidth, ...coord)
-                ) {
+                if (this._isPointInTouchable(touchables[name], ...coord)) {
                     settings.currentTouch = touchables[name]
                     settings.currentTouchOffset = coord
                     return true
@@ -114,14 +125,7 @@ class Interact {
                     this.collection.render(this.renderer)
                 })
             } else {
-                this.renderer.container.style.cursor = Object.keys(touchables).some(name => {
-                    return (
-                        this.renderer.isPointInFill(touchables[name].path!, ...coord) ||
-                        this.renderer.isPointInStroke(touchables[name].path!, touchables[name].strokeWidth, ...coord)
-                    )
-                })
-                    ? "pointer"
-                    : "default"
+                this.renderer.container.style.cursor = Object.keys(touchables).some(name => this._isPointInTouchable(touchables[name], ...coord)) ? "pointer" : "default"
             }
         }
     }
@@ -178,7 +182,7 @@ class Interact {
             const [scaledOffsetX, scaledOffsetY] = renderer.geomtoy.globalTransformation.transformCoordinate([innerOffsetX, innerOffsetY])
             const [zoomOffsetX, zoomOffsetY] = [e.offsetX - scaledOffsetX, e.offsetY - scaledOffsetY]
             renderer.geomtoy.offset = [renderer.geomtoy.offset[0] + zoomOffsetX, renderer.geomtoy.offset[1] + zoomOffsetY]
-            
+
             setTimeout(() => {
                 this.collection.render(this.renderer)
             })

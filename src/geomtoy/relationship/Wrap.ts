@@ -1,4 +1,4 @@
-import Arc from "../Arc"
+import Arc from "../shapes/basic/Arc"
 import Bezier from "../Bezier"
 import Circle from "../Circle"
 import { optionerOf } from "../helper/Optioner"
@@ -9,7 +9,8 @@ import math from "../utility/math"
 import vec2 from "../utility/vec2"
 
 class Wrap {
-    //#region Cirlce
+    static verb = "Wraps" as const
+    //#region Circle
     static circleWrapsCircle(this: OwnerCarrier, circle: Circle, otherCircle: Circle) {
         const sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, otherCircle.centerCoordinate))
         const sdr = (circle.radius - otherCircle.radius) ** 2
@@ -19,14 +20,10 @@ class Wrap {
     static circleWrapsLineSegment(this: OwnerCarrier, circle: Circle, lineSegment: LineSegment) {
         return circle.isPointInside(lineSegment.point1Coordinate) && circle.isPointInside(lineSegment.point2Coordinate)
     }
-    static circleWrapsArc(this:OwnerCarrier,circle:Circle, arc:Arc){
-        
-    }
-    static circleWrapsBezier(this:OwnerCarrier, circle:Circle, bezier:Bezier){
-
-    }
-    static cicleWrapsQuadraticBezier(this:OwnerCarrier,circle:Circle,quadraticBezier:QuadraticBezier){
-        
-    }
+    static circleWrapsArc(this: OwnerCarrier, circle: Circle, arc: Arc) {}
+    static circleWrapsBezier(this: OwnerCarrier, circle: Circle, bezier: Bezier) {}
+    static circleWrapsQuadraticBezier(this: OwnerCarrier, circle: Circle, quadraticBezier: QuadraticBezier) {}
     //#endregion
 }
+
+export default Wrap

@@ -1,26 +1,27 @@
-import util from "./utility"
-import { validAndWithSameOwner } from "./decorator"
-import assert from "./utility/assertion"
-import coord from "./utility/coordinate"
-import vec2 from "./utility/vec2"
-import math from "./utility/math"
+import { validAndWithSameOwner } from "../../decorator"
+import assert from "../../utility/assertion"
+import util from "../../utility"
+import coord from "../../utility/coordinate"
+import math from "../../utility/math"
+import vec2 from "../../utility/vec2"
+import coordArray from "../../utility/coordinateArray"
 
-import Geomtoy from "."
-import GeomObject from "./base/GeomObject"
+import { Cartesian, Trilinear } from "../../helper/CoordinateSystem"
+
+import Shape from "../../base/Shape"
 import Point from "./Point"
 import Circle from "./Circle"
-import Line from "./Line"
-import Polygon from "./advanced/Polygon"
 import LineSegment from "./LineSegment"
-import Transformation from "./transformation"
-import { Direction, GraphicsCommand } from "./types"
-import Graphics from "./graphics"
-import { Cartesian, Trilinear } from "./helper/CoordinateSystem"
-import coordArray from "./utility/coordinateArray"
-import { ClosedShape } from "./interfaces"
-import Shape from "./base/Shape"
+import Line from "./Line"
+import Polygon from "../advanced/Polygon"
 
-class Triangle extends Shape implements ClosedShape {
+import Graphics from "../../graphics"
+
+import type Geomtoy from "../.."
+import type Transformation from "../../transformation"
+import type { Direction, ClosedShape, TransformableShape } from "../../types"
+
+class Triangle extends Shape implements ClosedShape, TransformableShape {
     private _point1Coordinate: [number, number] = [NaN, NaN]
     private _point2Coordinate: [number, number] = [NaN, NaN]
     private _point3Coordinate: [number, number] = [NaN, NaN]
@@ -1017,16 +1018,16 @@ class Triangle extends Shape implements ClosedShape {
     apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
-    getGraphics(): GraphicsCommand[] {
+    getGraphics() {
         const g = new Graphics()
-        if (!this.isValid()) return g.commands
+        if (!this.isValid()) return g
 
         const { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = this
         g.moveTo(...c1)
         g.lineTo(...c2)
         g.lineTo(...c3)
         g.close()
-        return g.commands
+        return g
     }
     clone() {
         return new Triangle(this.owner, this.point1Coordinate, this.point2Coordinate, this.point3Coordinate)

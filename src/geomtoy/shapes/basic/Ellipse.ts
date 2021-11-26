@@ -1,17 +1,17 @@
-import Graphics from "./graphics"
-import Point from "./Point"
-import Vector from "./Vector"
-import util from "./utility"
-import { Direction } from "./types"
-import { validAndWithSameOwner } from "./decorator"
-import assert from "./utility/assertion"
-import Transformation from "./transformation"
-import Geomtoy from "."
-import { ClosedShape } from "./interfaces"
-import coord from "./utility/coordinate"
-import Shape from "./base/Shape"
+import { validAndWithSameOwner } from "../../decorator"
+import assert from "../../utility/assertion"
+import util from "../../utility"
+import coord from "../../utility/coordinate"
 
-class Ellipse extends Shape implements ClosedShape {
+import Shape from "../../base/Shape"
+import Graphics from "../../graphics"
+import Point from "./Point"
+
+import type Geomtoy from "../.."
+import type Transformation from "../../transformation"
+import type { OwnerCarrier, Direction, ClosedShape, TransformableShape } from "../../types"
+
+class Ellipse extends Shape implements ClosedShape, TransformableShape {
     private _centerCoordinate: [number, number] = [NaN, NaN]
     private _radiusX: number = NaN
     private _radiusY: number = NaN
@@ -195,10 +195,12 @@ class Ellipse extends Shape implements ClosedShape {
     }
 
     getGraphics() {
-        const { centerX, centerY, radiusX, radiusY, rotation } = this
         const g = new Graphics()
+        if (!this.isValid()) return g
+
+        const { centerX, centerY, radiusX, radiusY, rotation } = this
         g.centerArcTo(centerX, centerY, radiusX, radiusY, rotation, 0, 2 * Math.PI)
-        return g.commands
+        return g
     }
 
     //https://www.coder.work/article/1220553

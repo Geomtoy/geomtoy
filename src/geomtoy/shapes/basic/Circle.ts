@@ -1,27 +1,26 @@
-import math from "./utility/math"
-import util from "./utility"
-import angle from "./utility/angle"
-import vec2 from "./utility/vec2"
+import { validAndWithSameOwner } from "../../decorator"
+import assert from "../../utility/assertion"
+import util from "../../utility"
+import math from "../../utility/math"
+import coord from "../../utility/coordinate"
+import angle from "../../utility/angle"
+import vec2 from "../../utility/vec2"
 
+import Shape from "../../base/Shape"
+import Graphics from "../../graphics"
 import Point from "./Point"
 import Line from "./Line"
 import RegularPolygon from "./RegularPolygon"
-
+import Arc from "./Arc"
 import Vector from "./Vector"
 import LineSegment from "./LineSegment"
-import Inversion from "./inversion"
-import { GraphicsCommand, Direction, AnglePointLineData, PointLineData, PointsLineData } from "./types"
-import { validAndWithSameOwner } from "./decorator"
-import assert from "./utility/assertion"
-import Transformation from "./transformation"
-import Graphics from "./graphics"
-import Geomtoy from "."
-import coord from "./utility/coordinate"
-import Arc from "./Arc"
-import Shape from "./base/Shape"
-import { ClosedShape } from "./interfaces"
+import Inversion from "../../inversion"
 
-class Circle extends Shape implements ClosedShape {
+import type Geomtoy from "../.."
+import type Transformation from "../../transformation"
+import type { OwnerCarrier, Direction, AnglePointLineData, PointLineData, PointsLineData, ClosedShape, TransformableShape } from "../../types"
+
+class Circle extends Shape implements ClosedShape, TransformableShape {
     private _radius: number = NaN
     private _centerCoordinate: [number, number] = [NaN, NaN]
     private _windingDirection: Direction = "positive"
@@ -217,19 +216,22 @@ class Circle extends Shape implements ClosedShape {
     }
 
     isPointOn(point: [number, number] | Point) {
-        const sd = vec2.squaredMagnitude(vec2.from(this.centerCoordinate, point.coordinate))
+        const c = point instanceof Point ? point.coordinate : point
+        const sd = vec2.squaredMagnitude(vec2.from(this.centerCoordinate, c))
         const sr = this.radius ** 2
         const epsilon = this.options_.epsilon
         return math.equalTo(sd, sr, epsilon)
     }
     isPointOutside(point: [number, number] | Point) {
-        const sd = vec2.squaredMagnitude(vec2.from(this.centerCoordinate, point.coordinate))
+        const c = point instanceof Point ? point.coordinate : point
+        const sd = vec2.squaredMagnitude(vec2.from(this.centerCoordinate, c))
         const sr = this.radius ** 2
         const epsilon = this.options_.epsilon
         return math.greaterThan(sd, sr, epsilon)
     }
     isPointInside(point: [number, number] | Point) {
-        const sd = vec2.squaredMagnitude(vec2.from(this.centerCoordinate, point.coordinate))
+        const c = point instanceof Point ? point.coordinate : point
+        const sd = vec2.squaredMagnitude(vec2.from(this.centerCoordinate, c))
         const sr = this.radius ** 2
         const epsilon = this.options_.epsilon
         return math.lessThan(sd, sr, epsilon)
@@ -453,12 +455,14 @@ class Circle extends Shape implements ClosedShape {
         return new RegularPolygon(this.owner, this.radius, this.centerX, this.centerY, sideCount, angle)
     }
 
-    getGraphics(): GraphicsCommand[] {
-        let c = this.centerCoordinate,
-            g = new Graphics()
+    getGraphics() {
+        const g = new Graphics()
+        if (!this.isValid()) return g
+
+        const c = this.centerCoordinate
         g.centerArcTo(...c, this.radius, this.radius, 0, 0, 2 * Math.PI)
         g.close()
-        return g.commands
+        return g
     }
 
     apply(transformation: Transformation): Shape {

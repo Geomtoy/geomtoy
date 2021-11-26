@@ -21,11 +21,8 @@ const size = {
     isSameAs(s1: [number, number], s2: [number, number], epsilon: number): boolean {
         return math.equalTo(size.width(s1), size.width(s2), epsilon) && math.equalTo(size.height(s1), size.height(s2), epsilon)
     },
-    isValid(s: [number, number], epsilon: number) {
-        return util.isRealNumber(s[0]) && math.greaterThan(s[0], 0, epsilon) && util.isRealNumber(s[1]) && math.greaterThan(s[1], 0, epsilon)
-    },
-    toString(s: [number, number]) {
-        return `[${size.width(s)}, ${size.width(s)}]`
+    isValid(s: [number, number]) {
+        return util.isRealNumber(s[0]) && s[0] > 0 && util.isRealNumber(s[1]) && s[1] > 0
     }
 }
 

@@ -1,25 +1,21 @@
-import math from "./utility/math"
-import util from "./utility"
-import angle from "./utility/angle"
-import vec2 from "./utility/vec2"
+import { validAndWithSameOwner } from "../../decorator"
+import assert from "../../utility/assertion"
+import util from "../../utility"
+import math from "../../utility/math"
+import coord from "../../utility/coordinate"
 
+import Shape from "../../base/Shape"
+import Graphics from "../../graphics"
 import Point from "./Point"
-import Circle from "./Circle"
 import Line from "./Line"
-import Polygon from "./advanced/Polygon"
-import { validAndWithSameOwner } from "./decorator"
-import assert from "./utility/assertion"
-import { Direction, GraphicsCommand } from "./types"
-import GeomObject from "./base/GeomObject"
-import {  ClosedShape } from "./interfaces"
-import Transformation from "./transformation"
-import Graphics from "./graphics"
-import Geomtoy from "."
-import coord from "./utility/coordinate"
-import Shape from "./base/Shape"
+import Circle from "./Circle"
+
+import type Geomtoy from "../.."
+import type Transformation from "../../transformation"
+import type { Direction, ClosedShape, TransformableShape } from "../../types"
 
 const regularPolygonMinSideCount = 3
-class RegularPolygon extends Shape implements ClosedShape {
+class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
     private _radius: number = NaN
     private _centerCoordinate: [number, number] = [NaN, NaN]
     private _sideCount: number = NaN
@@ -263,21 +259,23 @@ class RegularPolygon extends Shape implements ClosedShape {
     toArray(): any[] {
         throw new Error("Method not implemented.")
     }
-    getGraphics(): GraphicsCommand[] {
+    getGraphics() {
         const g = new Graphics()
+        if (!this.isValid()) return g
+
         const ps = this.getPoints()
         g.moveTo(...util.head(ps)!.coordinate!)
         util.range(1, this.sideCount).forEach(index => {
             g.lineTo(...ps[index].coordinate)
         })
         g.close()
-        return g.commands
+        return g
     }
 }
 
 validAndWithSameOwner(RegularPolygon)
 
 /**
- * @category GeomObject
+ * @category BaseObject
  */
 export default RegularPolygon

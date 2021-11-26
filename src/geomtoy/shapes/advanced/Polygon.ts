@@ -1,19 +1,23 @@
-import util from "../utility"
-import vec2 from "../utility/vec2"
+import { validAndWithSameOwner } from "../../decorator"
+import math from "../../utility/math"
+import util from "../../utility"
+import vec2 from "../../utility/vec2"
+import assert from "../../utility/assertion"
+import coordArray from "../../utility/coordinateArray"
+import coord from "../../utility/coordinate"
 
-import Point from "../Point"
-import Rectangle from "../Rectangle"
-import GeomObject from "../base/GeomObject"
-import Geomtoy from ".."
-import math from "../utility/math"
-import { validAndWithSameOwner } from "../decorator"
-import assert from "../utility/assertion"
-import coordArray from "../utility/coordinateArray"
-import coord from "../utility/coordinate"
-import { PolygonVertex } from "../types/polygon"
+import Shape from "../../base/Shape"
+import Point from "../basic/Point"
+import Rectangle from "../basic/Rectangle"
+import BaseObject from "../../base/BaseObject"
+
+import type Geomtoy from "../.."
+import type { PolygonVertex, TransformableShape } from "../../types"
+import graphics from "../../graphics"
+import Transformation from "../../transformation"
 
 const minPointCount = 3
-class Polygon extends GeomObject {
+class Polygon extends Shape implements TransformableShape {
     private _closed = true
     private _vertices: PolygonVertex[] = []
 
@@ -61,7 +65,7 @@ class Polygon extends GeomObject {
 
     static formingCondition = `There should be at least ${minPointCount} distinct vertices in a \`Polygon\`.`
 
-    static fromPoints(points: ([number,number] | Point )[]) {
+    static fromPoints(points: ([number, number] | Point)[]) {
         // isCoordinateArray(value: any, p: string): asserts value is [number, number][] {
         //     if (!(util.isArray(value) && value.every(c => util.isCoordinate(c)))) {
         //         throw new TypeError(`[G]The \`${p}\` should be an array of coordinate.`)
@@ -163,16 +167,10 @@ class Polygon extends GeomObject {
 
     isPointsConcyclic() {}
 
-    isPointOn(){
-
-    }
+    isPointOn() {}
     isPointOutside() {}
 
-    isPointInside() {
-        
-    }
- 
-
+    isPointInside() {}
 
     getPerimeter() {
         let p = 0,
@@ -294,10 +292,16 @@ class Polygon extends GeomObject {
         return !this.isPointInsidePolygon(point) && !this.isPointOnPolygon(point)
     }
 
+    apply(transformation: Transformation): Shape {
+        throw new Error("Method not implemented.")
+    }
+    getGraphics(): graphics {
+        throw new Error("Method not implemented.")
+    }
     clone() {
         return new Polygon(this.owner, this.pointCoordinates)
     }
-    copyFrom(from: GeomObject): this {
+    copyFrom(from: BaseObject): this {
         throw new Error("Method not implemented.")
     }
     toString(): string {
@@ -313,6 +317,6 @@ class Polygon extends GeomObject {
 
 validAndWithSameOwner(Polygon)
 /**
- * @category GeomObject
+ * @category BaseObject
  */
 export default Polygon

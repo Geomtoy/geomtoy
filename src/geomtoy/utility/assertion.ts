@@ -1,8 +1,8 @@
 import util from "../utility"
-import Point from "../Point"
-import Line from "../Line"
-import GeomObject from "../base/GeomObject"
+
 import Shape from "../base/Shape"
+import Point from "../shapes/basic/Point"
+import Line from "../shapes/basic/Line"
 
 interface Assertion {
     condition(condition: any, msg?: string): asserts condition
@@ -15,7 +15,6 @@ interface Assertion {
     isCoordinate(value: any, p: string): asserts value is [number, number]
     isPoint(value: any, p: string): asserts value is Point
     isCoordinateOrPoint(value: any, p: string): asserts value is [number, number] | Point
-    isGeomObjectArray(value: any, p: string): asserts value is GeomObject[]
     isSize(value: any, p: string): asserts value is [number, number]
     isBoolean(value: any, p: string): asserts value is boolean
     isArray(value: any, p: string): asserts value is any[]
@@ -23,6 +22,7 @@ interface Assertion {
     isString(value: any, p: string): asserts value is string
     isLine(value: any, p: string): asserts value is Line
     isShape(value: any, p: string): asserts value is Shape
+    isShapeArray(value: any, p: string): asserts value is Shape[]
     comparison(value: any, p: string, t: "gt" | "lt" | "eq" | "ge" | "le" | "ne", n: number): void
 }
 
@@ -77,11 +77,6 @@ const assert: Assertion = {
             throw new TypeError(`[G]The \`${p}\` should be a coordinate or a \`Point\`.`)
         }
     },
-    isGeomObjectArray(value: any, p: string): asserts value is GeomObject[] {
-        if (!(util.isArray(value) && value.every(p => p instanceof GeomObject))) {
-            throw new Error(`[G]The \`${p}\`  an array of \`GeomObject\`.`)
-        }
-    },
     isSize(value: any, p: string): asserts value is [number, number] {
         if (!util.isSize(value)) {
             throw new TypeError(`[G]The \`${p}\` should be a size.`)
@@ -115,6 +110,11 @@ const assert: Assertion = {
     isShape(value: any, p: string): asserts value is Shape {
         if (!(value instanceof Shape)) {
             throw new TypeError(`[G]The \`${p}\`  should be a \`Shape\`.`)
+        }
+    },
+    isShapeArray(value: any, p: string): asserts value is Shape[] {
+        if (!(util.isArray(value) && value.every(p => p instanceof Shape))) {
+            throw new Error(`[G]The \`${p}\`  an array of \`Shape\`.`)
         }
     },
     comparison(value: any, p: string, t: "gt" | "lt" | "eq" | "ge" | "le" | "ne", n: number) {

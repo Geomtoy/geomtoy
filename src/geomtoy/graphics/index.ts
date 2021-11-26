@@ -1,15 +1,13 @@
-import { GraphicsCommandType, GraphicsCommand } from "../types"
 import { arcCenterToEndpointParameterization, arcEndpointToCenterParameterization } from "./helper"
+import { GraphicsCommandType } from "../types"
+
+import type { GraphicsCommand } from "../types"
 
 export default class Graphics {
-    commands: GraphicsCommand[]
-    currentXY: [number, number]
-    startXY: [number, number]
-    constructor() {
-        this.commands = []
-        this.currentXY = [0, 0]
-        this.startXY = [0, 0]
-    }
+    commands: GraphicsCommand[] = []
+    currentXY: [number, number] = [0, 0]
+    startXY: [number, number] = [0, 0]
+
     moveTo(x: number, y: number) {
         this.commands.push({
             type: GraphicsCommandType.MoveTo,
@@ -146,7 +144,21 @@ export default class Graphics {
         })
         return this
     }
-
+    image(x: number, y: number, width: number, height: number, sourceX: number, sourceY: number, sourceWidth: number, sourceHeight: number, imageSource: string) {
+        this.commands.push({
+            type: GraphicsCommandType.Image,
+            x,
+            y,
+            width,
+            height,
+            sourceX,
+            sourceY,
+            sourceWidth,
+            sourceHeight,
+            imageSource
+        })
+        return this
+    }
     append(g: Graphics) {
         this.commands = [...this.commands, ...g.commands]
     }

@@ -2,13 +2,15 @@ import { validAndWithSameOwner } from "../decorator"
 import assert from "../utility/assertion"
 import util from "../utility"
 
-import Geomtoy from ".."
-import GeomObject from "../base/GeomObject"
+import BaseObject from "../base/BaseObject"
 
-class Group extends GeomObject {
-    public _items: GeomObject[] = []
+import type Geomtoy from ".."
+import type Shape from "../base/Shape"
 
-    constructor(owner: Geomtoy, items: GeomObject[])
+class Group extends BaseObject {
+    public _items: Shape[] = []
+
+    constructor(owner: Geomtoy, items: Shape[])
     constructor(owner: Geomtoy)
     constructor(o: Geomtoy, a1?: any) {
         super(o)
@@ -18,29 +20,12 @@ class Group extends GeomObject {
         return Object.seal(this)
     }
 
-    eventNames = Object.freeze([])
-
     get items() {
         return this._items
     }
     set items(value) {
-        assert.isGeomObjectArray(value, "items")
+        assert.isShapeArray(value, "items")
         this._items = value
-    }
-    isValid(): boolean {
-        return true
-    }
-    clone() {
-        return new Group(this.owner, this.items)
-    }
-    copyFrom(group: Group | null) {
-        if (group === null) {
-            this._items = []
-        } else {
-            this._items = group._items
-        }
-        this.trigger(this.eventNames.join(" "))
-        return this
     }
     toString() {
         // prettier-ignore
@@ -60,6 +45,6 @@ class Group extends GeomObject {
 
 validAndWithSameOwner(Group)
 /**
- * @category GeomObject
+ * @category BaseObject
  */
 export default Group

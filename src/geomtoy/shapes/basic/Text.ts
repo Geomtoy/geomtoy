@@ -1,71 +1,56 @@
-import Geomtoy from "."
-import GeomObject from "./base/GeomObject"
-import { validAndWithSameOwner } from "./decorator"
-import assert from "./utility/assertion"
-import Graphics from "./graphics" 
-import Point from "./Point"
-import Transformation from "./transformation"
-import util from "./utility"
-import coord from "./utility/coordinate"
-import Shape from "./base/Shape"
+import { validAndWithSameOwner } from "../../decorator"
+import util from "../../utility"
+import coord from "../../utility/coordinate"
+import assert from "../../utility/assertion"
 
-const defaultFontSize = 16
-const defaultFontFamily = "sans-serif"
-const defaultFontBold = false
-const defaultFontItalic = false
+import { defaultFontConfig } from "../../consts"
+
+import Shape from "../../base/Shape"
+import Point from "./Point"
+import Graphics from "../../graphics"
+
+import type Geomtoy from "../.."
+import type Transformation from "../../transformation"
+import type { FontConfig } from "../../types"
+
 class Text extends Shape {
     private _coordinate: [number, number] = [NaN, NaN]
     private _text = ""
-    private _fontSize = defaultFontSize
-    private _fontFamily = defaultFontFamily
-    private _fontBold = defaultFontBold
-    private _fontItalic = defaultFontItalic
+    private _font: FontConfig = defaultFontConfig
 
-    constructor(owner: Geomtoy, x: number, y: number, text: string, fontSize?: number, fontFamily?: string, fontBold?: boolean, fontItalic?: boolean)
-    constructor(owner: Geomtoy, coordinate: [number, number], text: string, fontSize?: number, fontFamily?: string, fontBold?: boolean, fontItalic?: boolean)
-    constructor(owner: Geomtoy, point: Point, text: string, fontSize?: number, fontFamily?: string, fontBold?: boolean, fontItalic?: boolean)
-    constructor(owner: Geomtoy, text: string, fontSize?: number, fontFamily?: string, fontBold?: boolean, fontItalic?: boolean)
+    constructor(owner: Geomtoy, x: number, y: number, text: string, font?: FontConfig)
+    constructor(owner: Geomtoy, coordinate: [number, number], text: string, font?: FontConfig)
+    constructor(owner: Geomtoy, point: Point, text: string, font?: FontConfig)
+    constructor(owner: Geomtoy, text: string, font?: FontConfig)
     constructor(owner: Geomtoy)
-    constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any, a7?: any) {
+    constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any) {
         super(o)
         if (util.isNumber(a1)) {
             Object.assign(this, {
                 x: a1,
                 y: a2,
                 text: a3,
-                fontSize: a4 ?? defaultFontSize,
-                fontFamily: a5 ?? defaultFontFamily,
-                fontBold: a6 ?? defaultFontBold,
-                fontItalic: a7 ?? defaultFontItalic
+                font: a4 ?? defaultFontConfig
             })
         }
         if (util.isArray(a1)) {
             Object.assign(this, {
                 coordinate: a1,
                 text: a2,
-                fontSize: a3 ?? defaultFontSize,
-                fontFamily: a4 ?? defaultFontFamily,
-                fontBold: a5 ?? defaultFontBold,
-                fontItalic: a6 ?? defaultFontItalic
+                font: a4 ?? defaultFontConfig
             })
         }
         if (a1 instanceof Point) {
             Object.assign(this, {
                 point: a1,
                 text: a2,
-                fontSize: a3 ?? defaultFontSize,
-                fontFamily: a4 ?? defaultFontFamily,
-                fontBold: a5 ?? defaultFontBold,
-                fontItalic: a6 ?? defaultFontItalic
+                font: a4 ?? defaultFontConfig
             })
         }
         if (util.isString(a1)) {
             Object.assign(this, {
                 text: a1,
-                fontSize: a2 ?? defaultFontSize,
-                fontFamily: a3 ?? defaultFontFamily,
-                fontBold: a4 ?? defaultFontBold,
-                fontItalic: a5 ?? defaultFontItalic
+                font: a4 ?? defaultFontConfig
             })
         }
         return Object.seal(this)
@@ -127,36 +112,12 @@ class Text extends Shape {
         assert.isString(value, "text")
         this._setText(value)
     }
-    get fontSize() {
-        return this._fontSize
+    get font(): FontConfig {
+        return util.cloneDeep(this._font)
     }
-    set fontSize(value) {
-        assert.isRealNumber(value, "fontSize")
-        this._fontSize = value
+    set font(value: Partial<FontConfig>) {
+        util.assignDeep(this._font, value)
     }
-    get fontFamily() {
-        return this._fontFamily
-    }
-    set fontFamily(value) {
-        assert.isString(value, "fontFamily")
-        this._fontFamily = value
-    }
-    get fontBold() {
-        return this._fontBold
-    }
-    set fontBold(value) {
-        assert.isBoolean(value, "fontBold")
-        this._fontBold = value
-    }
-    get fontItalic() {
-        return this._fontItalic
-    }
-    set fontItalic(value) {
-        assert.isBoolean(value, "fontItalic")
-        this._fontItalic = value
-    }
-
-   
 
     isValid() {
         if (!coord.isValid(this._coordinate)) return false
@@ -190,41 +151,43 @@ class Text extends Shape {
         return this
     }
 
-    apply(transformation: Transformation):Shape {
+    apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
     getGraphics() {
         const g = new Graphics()
-        if (!this.isValid()) return g.commands
-        const { x, y, text, fontSize, fontFamily, fontBold, fontItalic } = this
+        if (!this.isValid()) return g
+        const {
+            x,
+            y,
+            text,
+            font: { fontSize, fontFamily, fontBold, fontItalic }
+        } = this
         g.text(x, y, text, fontSize, fontFamily, fontBold, fontItalic)
-        return g.commands
+        return g
     }
-
     clone() {
-        return new Text(this.owner, this.coordinate, this.text, this.fontSize, this.fontFamily, this.fontBold, this.fontItalic)
+        return new Text(this.owner, this.coordinate, this.text, this.font)
     }
     copyFrom(text: Text | null) {
         if (text === null) text = new Text(this.owner)
         this._setX(coord.x(text._coordinate))
         this._setY(coord.y(text._coordinate))
         this._setText(text._text)
-        this._fontSize = text._fontSize
-        this._fontFamily = text._fontFamily
-        this._fontBold = text._fontBold
-        this._fontItalic = text._fontItalic
+        util.assignDeep(this._font, util.cloneDeep(text._font))
         return this
     }
     toString() {
-        // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
-            `\tcoordinate: ${this.coordinate.join(", ")}`,
-            `\ttext: ${this.text}`,
-            `\tfontSize: ${this.fontSize}`,
-            `\tfontFamily: ${this.fontFamily}`,
-            `\tfontBold: ${this.fontBold}`,
-            `\tfontItalic: ${this.fontItalic}`,
+            `\tcoordinate: ${this._coordinate.join(", ")}`,
+            `\ttext: ${this._text}`,
+            `\tfont: {`,
+            `\t\tfontSize: ${this._font.fontSize}`,
+            `\t\tfontFamily: ${this._font.fontFamily}`,
+            `\t\tfontBold: ${this._font.fontBold}`,
+            `\t\tfontItalic: ${this._font.fontItalic}`,
+            `\t}`,
             `} owned by Geomtoy(${this.owner.uuid})`
         ].join("\n")
     }

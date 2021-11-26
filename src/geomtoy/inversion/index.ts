@@ -4,7 +4,7 @@ import math from "../utility/math"
 import coord from "../utility/coordinate"
 import { validAndWithSameOwner } from "../decorator"
 import assert from "../utility/assertion"
-import GeomObject from "../base/GeomObject"
+import BaseObject from "../base/BaseObject"
 import Point from "../Point"
 import Circle from "../Circle"
 import Vector from "../Vector"
@@ -12,7 +12,7 @@ import Line from "../Line"
 import Geomtoy from ".."
 
 const defaultInversionPower = 10000
-class Inversion extends GeomObject {
+class Inversion extends BaseObject {
     private _power: number = defaultInversionPower
     private _centerCoordinate: [number, number] = [NaN, NaN]
 

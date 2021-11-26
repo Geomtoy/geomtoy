@@ -1,9 +1,16 @@
-import Geomtoy from ".."
 import util from "../utility"
-import { Options } from "../types"
 import { optionerOf } from "../helper/Optioner"
 
-abstract class GeomObject {
+import Geomtoy from ".."
+import Shape from "./Shape"
+import Group from "../group"
+import Inversion from "../inversion"
+import Relationship from "../relationship"
+import Transformation from "../transformation"
+
+import type { Options } from "../types"
+
+abstract class BaseObject {
     private _owner: Geomtoy = null as unknown as Geomtoy
     private _uuid = util.uuid()
     protected options_: Options
@@ -19,7 +26,7 @@ abstract class GeomObject {
         return this._owner
     }
     set owner(value: Geomtoy) {
-        if (!(value instanceof Geomtoy)) throw new Error("[G]The `owner` of a `GeomObject` should be a `Geomtoy`.")
+        if (!(value instanceof Geomtoy)) throw new Error("[G]The `owner` of a `BaseObject` should be a `Geomtoy`.")
         this._owner = value
     }
     get name() {
@@ -27,6 +34,13 @@ abstract class GeomObject {
     }
     get uuid() {
         return this._uuid
+    }
+    static objects = {
+        ...Shape.shapes,
+        Group,
+        Inversion,
+        Relationship,
+        Transformation
     }
 
     data(key: string, value: any): this
@@ -45,4 +59,4 @@ abstract class GeomObject {
 /**
  * @category Base
  */
-export default GeomObject
+export default BaseObject

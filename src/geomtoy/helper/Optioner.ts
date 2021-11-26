@@ -1,5 +1,6 @@
 import Geomtoy from ".."
-import { defaultOptions, Options, RecursivePartial } from "../types"
+import { defaultOptions } from "../consts"
+import { Options, RecursivePartial } from "../types"
 import util from "../utility"
 
 const optionerMap: WeakMap<Geomtoy, Optioner> = new WeakMap()

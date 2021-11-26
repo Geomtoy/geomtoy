@@ -1,28 +1,19 @@
-import util from "./utility"
-import { validAndWithSameOwner } from "./decorator"
-import assert from "./utility/assertion"
-import coord from "./utility/coordinate"
-import vec2 from "./utility/vec2"
-import math from "./utility/math"
+import { validAndWithSameOwner } from "../../decorator"
+import assert from "../../utility/assertion"
+import util from "../../utility"
+import coord from "../../utility/coordinate"
 
-import Geomtoy from "."
-import GeomObject from "./base/GeomObject"
+import { optionerOf } from "../../helper/Optioner"
+
+import Shape from "../../base/Shape"
 import Point from "./Point"
-import Circle from "./Circle"
-import Line from "./Line"
-import Polygon from "./advanced/Polygon"
-import LineSegment from "./LineSegment"
-import Transformation from "./transformation"
+import Graphics from "../../graphics"
 
-import { FiniteOpenShape } from "./interfaces"
-import { Direction, GraphicsCommand } from "./types"
-import Graphics from "./graphics"
-import { Cartesian, Trilinear } from "./helper/CoordinateSystem"
-import coordArray from "./utility/coordinateArray"
-import { optionerOf } from "./helper/Optioner"
-import Shape from "./base/Shape"
+import type Geomtoy from "../.."
+import type Transformation from "../../transformation"
+import type { FiniteOpenShape, TransformableShape } from "../../types"
 
-class QuadraticBezier extends Shape implements FiniteOpenShape {
+class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableShape {
     private _options = optionerOf(this.owner).options
 
     private _point1Coordinate: [number, number] = [NaN, NaN]
@@ -245,14 +236,14 @@ class QuadraticBezier extends Shape implements FiniteOpenShape {
     apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")
     }
-    getGraphics(): GraphicsCommand[] {
+    getGraphics() {
         const g = new Graphics()
-        if (!this.isValid()) return g.commands
+        if (!this.isValid()) return g
 
         const { point1Coordinate: c1, point2Coordinate: c2, controlPointCoordinate: cpc } = this
         g.moveTo(...c1)
         g.quadraticBezierCurveTo(...cpc, ...c2)
-        return g.commands
+        return g
     }
     clone() {
         return new QuadraticBezier(this.owner, this.point1Coordinate, this.point2Coordinate, this.controlPointCoordinate)

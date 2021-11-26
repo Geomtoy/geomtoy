@@ -5,29 +5,12 @@ import bbox from "./utility/boundingBox"
 import { sealed } from "./decorator"
 import Scheduler, { schedulerOf } from "./helper/Scheduler"
 import Optioner, { optionerOf } from "./helper/Optioner"
-import Point from "./Point"
-import Line from "./Line"
-import Ray from "./Ray"
-import LineSegment from "./LineSegment"
-import Vector from "./Vector"
-import Triangle from "./Triangle"
-import Circle from "./Circle"
-import Rectangle from "./Rectangle"
-import Polygon from "./advanced/Polygon"
-import RegularPolygon from "./RegularPolygon"
-import Ellipse from "./Ellipse"
-import Bezier from "./Bezier"
-import QuadraticBezier from "./QuadraticBezier"
-import Text from "./Text"
-import Group from "./complex/Group"
+import Transformation from "./transformation" 
 
-import Transformation from "./transformation"
-import Inversion from "./inversion"
-
-import { Options, Tail, ConstructorOverloads, ConstructorTailer, RecursivePartial, Factory, StaticMethodsMapper, OwnerCarrier } from "./types"
+import { Options, Tail, ConstructorOverloads, ConstructorTailer, RecursivePartial, Factory, StaticMethodsMapper, OwnerCarrier, BaseObjectCollection } from "./types"
 import VanillaCanvas from "./adaptor/vanilla-canvas"
 import VanillaSvg from "./adaptor/vanilla-svg"
-import GeomObject from "./base/GeomObject"
+import BaseObject from "./base/BaseObject"
 import math from "./utility/math"
 import angle from "./utility/angle"
 
@@ -51,26 +34,9 @@ function factory<T extends { new (...args: any[]): any }>(owner: Geomtoy, ctor: 
     return Object.assign(constructorTailer, staticMethodsMapper, ownerCarrier)
 }
 
+interface Geomtoy extends Readonly<BaseObjectCollection> {}
 class Geomtoy {
     private _uuid = util.uuid()
-
-    private _Point = factory(this, Point)
-    private _Line = factory(this, Line)
-    private _Ray = factory(this, Ray)
-    private _LineSegment = factory(this, LineSegment)
-    private _Vector = factory(this, Vector)
-    private _Triangle = factory(this, Triangle)
-    private _Circle = factory(this, Circle)
-    private _Rectangle = factory(this, Rectangle)
-    private _Polygon = factory(this, Polygon)
-    private _RegularPolygon = factory(this, RegularPolygon)
-    private _Ellipse = factory(this, Ellipse)
-    private _Bezier = factory(this, Bezier)
-    private _QuadraticBezier = factory(this, QuadraticBezier)
-    private _Text = factory(this, Text)
-    private _Transformation = factory(this, Transformation)
-    private _Group = factory(this, Group)
-    private _Inversion = factory(this, Inversion)
 
     private _width: number = NaN
     private _height: number = NaN
@@ -89,6 +55,18 @@ class Geomtoy {
 
     constructor(width: number, height: number, options: RecursivePartial<Options> = {}) {
         Object.assign(this, { width, height })
+        const objects = BaseObject.objects
+
+        Object.keys(objects).forEach((name: keyof typeof objects) => {
+            Object.defineProperty(this, name, {
+                configurable: false,
+                enumerable: true,
+                get() {
+                    return factory(this, objects[name])
+                }
+            })
+        })
+
         this._optioner = optionerOf(this)
         this._scheduler = schedulerOf(this)
         this.options(options)
@@ -99,6 +77,23 @@ class Geomtoy {
         return {
             VanillaCanvas,
             VanillaSvg
+        }
+    }
+    get utils() {
+        const options = this._optioner.options
+        return {
+            approximatelyEqualTo(n1: number, n2: number) {
+                return math.equalTo(n1, n2, options.epsilon)
+            },
+            definitelyGreaterThan(n1: number, n2: number) {
+                return math.greaterThan(n1, n2, options.epsilon)
+            },
+            definitelyLessThan(n1: number, n2: number) {
+                return math.lessThan(n1, n2, options.epsilon)
+            },
+            uuid: util.uuid,
+            degreeToRadian: angle.degreeToRadian,
+            radianToDegree: angle.radianToDegree
         }
     }
 
@@ -171,7 +166,7 @@ class Geomtoy {
         return bbox.clone(this._globalBoundingBox)
     }
 
-    _refresh() {
+    private _refresh() {
         const { width, height, origin, scale, offset, xAxisPositiveOnRight: xpr, yAxisPositiveOnBottom: ypb } = this
         this._globalTransformation
             .reset()
@@ -182,7 +177,7 @@ class Geomtoy {
         bbox.assign(this._globalBoundingBox, bbox.from([x, y], [width / scale, height / scale]))
     }
 
-    options(options: RecursivePartial<Options>): undefined
+    options(options: RecursivePartial<Options>): void
     options(): Options
     options(options?: any) {
         if (options === undefined) return this._optioner.getOptions()
@@ -194,78 +189,8 @@ class Geomtoy {
         this._scheduler.nextTick(todo)
     }
 
-    adopt(object: GeomObject) {
+    adopt(object: BaseObject) {
         object.owner = this
-    }
-
-    get utils() {
-        const options = this._optioner.options
-        return {
-            approximatelyEqualTo(n1: number, n2: number) {
-                return math.equalTo(n1, n2, options.epsilon)
-            },
-            definitelyGreaterThan(n1: number, n2: number) {
-                return math.greaterThan(n1, n2, options.epsilon)
-            },
-            definitelyLessThan(n1: number, n2: number) {
-                return math.lessThan(n1, n2, options.epsilon)
-            },
-            uuid:util.uuid,
-            degreeToRadian:angle.degreeToRadian,
-            radianToDegree:angle.radianToDegree
-        }
-    }
-
-    get Point() {
-        return this._Point
-    }
-    get Line() {
-        return this._Line
-    }
-    get Ray() {
-        return this._Ray
-    }
-    get LineSegment() {
-        return this._LineSegment
-    }
-    get Vector() {
-        return this._Vector
-    }
-    get Triangle() {
-        return this._Triangle
-    }
-    get Circle() {
-        return this._Circle
-    }
-    get Rectangle() {
-        return this._Rectangle
-    }
-    get Polygon() {
-        return this._Polygon
-    }
-    get RegularPolygon() {
-        return this._RegularPolygon
-    }
-    get Ellipse() {
-        return this._Ellipse
-    }
-    get Bezier() {
-        return this._Bezier
-    }
-    get QuadraticBezier() {
-        return this._QuadraticBezier
-    }
-    get Text() {
-        return this._Text
-    }
-    get Transformation() {
-        return this._Transformation
-    }
-    get Group() {
-        return this._Group
-    }
-    get Inversion() {
-        return this._Inversion
     }
 }
 

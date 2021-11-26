@@ -1,17 +1,19 @@
-import util from "./utility"
-import Point from "./Point"
-import { GraphicsCommand } from "./types"
-import GeomObject from "./base/GeomObject"
-import Transformation from "./transformation"
-import { validAndWithSameOwner } from "./decorator"
-import assert from "./utility/assertion"
-import math from "./utility/math"
-import Geomtoy from "."
-import coord from "./utility/coordinate"
-import size from "./utility/size"
-import Shape from "./base/Shape"
+import { validAndWithSameOwner } from "../../decorator"
+import util from "../../utility"
+import coord from "../../utility/coordinate"
+import size from "../../utility/size"
+import assert from "../../utility/assertion"
+import math from "../../utility/math"
 
-class Rectangle extends Shape {
+import Shape from "../../base/Shape"
+import Point from "./Point"
+import Graphics from "../../graphics"
+
+import type Transformation from "../../transformation"
+import type Geomtoy from "../.."
+import type { ClosedShape, Direction, TransformableShape } from "../../types"
+
+class Rectangle extends Shape implements ClosedShape, TransformableShape {
     private _originCoordinate: [number, number] = [NaN, NaN]
     private _size: [number, number] = [NaN, NaN]
 
@@ -129,7 +131,7 @@ class Rectangle extends Shape {
         const [oc, s] = [this._originCoordinate, this._size]
         const epsilon = this.options_.epsilon
         if (!coord.isValid(oc)) return false
-        if (!size.isValid(s, epsilon)) return false
+        if (!size.isValid(s)) return false
         return true
     }
 
@@ -144,6 +146,25 @@ class Rectangle extends Shape {
             dx = math.abs(x1 - x2),
             dy = math.abs(y1 - y2)
         return new Rectangle(owner, [minX, minY], dx, dy)
+    }
+
+    getLength(): number {
+        throw new Error("Method not implemented.")
+    }
+    getArea(): number {
+        throw new Error("Method not implemented.")
+    }
+    getWindingDirection(): Direction {
+        throw new Error("Method not implemented.")
+    }
+    isPointOn(point: [number, number] | Point): boolean {
+        throw new Error("Method not implemented.")
+    }
+    isPointOutside(point: [number, number] | Point): boolean {
+        throw new Error("Method not implemented.")
+    }
+    isPointInside(point: [number, number] | Point): boolean {
+        throw new Error("Method not implemented.")
     }
 
     getCornerPoint(corner: "leftTop" | "rightTop" | "rightBottom" | "leftBottom"): Point {
@@ -279,7 +300,9 @@ class Rectangle extends Shape {
         throw new Error("Method not implemented.")
     }
 
-    getGraphics(): GraphicsCommand[] {
+    getGraphics() {
+        const g = new Graphics()
+        if (!this.isValid()) return g
         throw new Error("Method not implemented.")
     }
     toString(): string {

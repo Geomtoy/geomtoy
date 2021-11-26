@@ -88,6 +88,12 @@ const util = {
         n += n < 0 ? l : 0
         return n < 0 || n >= l ? undefined : arr[n]
     },
+    lowerFirstChar(s: string) {
+        return s.charAt(0).toLowerCase() + s.slice(1)
+    },
+    upperFirstChar(s: string) {
+        return s.charAt(0).toUpperCase() + s.slice(1)
+    },
     // native
     isString: (v: any): v is string => {
         return Object.prototype.toString.call(v) === "[object String]"

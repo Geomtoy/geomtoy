@@ -1,18 +1,19 @@
-import Geomtoy from ".."
-import Scheduler, { schedulerOf } from "../helper/Scheduler"
-import GeomObject from "./GeomObject"
 import util from "../utility"
 import assert from "../utility/assertion"
+
+import { bindEventHandlerDefaultPriority, eventNameForAny, eventNameSplitter, onEventHandlerDefaultPriority } from "../consts"
+
+import BaseObject from "./BaseObject"
 import EventCache from "./EventCache"
-import { EventHandler, EventHandlerType, EventObject, EventObjectType, EventTargetEventNamesPair, EventTargetFromPair } from "../types"
+import Scheduler, { schedulerOf } from "../helper/Scheduler"
+import { EventHandlerType, EventObjectType } from "../types"
+
+import type Geomtoy from ".."
+import type { EventHandler, EventObject, EventTargetEventNamesPair, EventTargetFromPair } from "../types"
 
 // regular expression used to split event strings
-const eventNameSplitter = /\s+/
-const eventNameForAny = "*"
-const OnEventHandlerDefaultPriority = 1
-const BindEventHandlerDefaultPriority = 1000
 
-abstract class EventTarget extends GeomObject {
+abstract class EventTarget extends BaseObject {
     private _scheduler: Scheduler
     private _muted: boolean = false
     constructor(owner: Geomtoy) {
@@ -104,7 +105,7 @@ abstract class EventTarget extends GeomObject {
         return ret
     }
 
-    on(eventNames: string, callback: (this: this) => any, priority = OnEventHandlerDefaultPriority) {
+    on(eventNames: string, callback: (this: this) => any, priority = onEventHandlerDefaultPriority) {
         assert.isString(eventNames, "eventNames")
         assert.isFunction(callback, "callback")
         assert.isRealNumber(priority, "priority")
@@ -303,7 +304,7 @@ abstract class EventTarget extends GeomObject {
         objectEventNamesPairs: [...T],
         callback: (this: this, args: [...EventTargetFromPair<T>]) => any,
         immediately = true,
-        priority = BindEventHandlerDefaultPriority
+        priority = bindEventHandlerDefaultPriority
     ) {
         assert.isArray(objectEventNamesPairs, "objectEventNamesPairs")
         assert.isFunction(callback, "callback")

@@ -5,7 +5,7 @@ import math from "../utility/math"
 import vec2 from "../utility/vec2"
 
 class Separate {
-
+    static verb = "Separates" as const
 
     //#region Circle
     static circleSeparatesCircle(this: OwnerCarrier, circle1: Circle, circle2: Circle) {
@@ -15,7 +15,6 @@ class Separate {
         return math.greaterThan(sd, ssr, epsilon)
     }
     //#endregion
-
-
-
 }
+
+export default Separate

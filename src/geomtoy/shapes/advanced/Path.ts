@@ -1,17 +1,17 @@
-import Geomtoy from ".."
-import Arc from "../Arc"
-import GeomObject from "../base/GeomObject"
+import Geomtoy from "../.."
+import Arc from "../basic/Arc"
+import BaseObject from "../../base/BaseObject"
 import Bezier from "../Bezier"
 import Line from "../Line"
 import LineSegment from "../LineSegment"
 import Point from "../Point"
 import QuadraticBezier from "../QuadraticBezier"
 import { PathArcToCommand, PathBezierCurveToCommand, PathCommand, PathCommandType, PathLineToCommand, PathMoveToCommand, PathQuadraticBezierCurveToCommand } from "../types/path"
-import util from "../utility"
-import assert from "../utility/assertion"
-import coord from "../utility/coordinate"
+import util from "../../utility"
+import assert from "../../utility/assertion"
+import coord from "../../utility/coordinate"
 
-class Path extends GeomObject {
+class Path extends BaseObject {
     private _closed = true
     private _commands: PathCommand[] = []
 
@@ -219,10 +219,10 @@ class Path extends GeomObject {
         }
     }
 
-    clone(): GeomObject {
+    clone(): BaseObject {
         throw new Error("Method not implemented.")
     }
-    copyFrom(object: GeomObject | null): this {
+    copyFrom(object: BaseObject | null): this {
         throw new Error("Method not implemented.")
     }
     toString(): string {

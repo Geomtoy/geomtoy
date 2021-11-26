@@ -1,28 +1,27 @@
-import math from "./utility/math"
-import util from "./utility"
-import { validAndWithSameOwner } from "./decorator"
-import assert from "./utility/assertion"
+import { validAndWithSameOwner } from "../../decorator"
+import assert from "../../utility/assertion"
+import util from "../../utility"
+import math from "../../utility/math"
+import coord from "../../utility/coordinate"
+import angle from "../../utility/angle"
+import bbox from "../../utility/boundingBox"
+import coordArray from "../../utility/coordinateArray"
 
+import Arrow from "../../helper/Arrow"
+import { optionerOf } from "../../helper/Optioner"
+
+import Shape from "../../base/Shape"
 import Point from "./Point"
 import LineSegment from "./LineSegment"
-import Graphics from "./graphics"
+import Graphics from "../../graphics"
 import Rectangle from "./Rectangle"
 import Circle from "./Circle"
-import { GraphicsCommand, OwnerCarrier } from "./types"
-import Transformation from "./transformation"
-import Geomtoy from "."
-import Polygon from "./advanced/Polygon"
-import coord from "./utility/coordinate"
-import angle from "./utility/angle"
-import Arrow from "./helper/Arrow"
-import coordArray from "./utility/coordinateArray"
-import { optionerOf } from "./helper/Optioner"
-import bbox from "./utility/boundingBox"
-import vec2 from "./utility/vec2"
-import Shape from "./base/Shape"
-import { InfiniteOpenShape } from "./interfaces"
 
-class Line extends Shape implements InfiniteOpenShape {
+import Geomtoy from "../.."
+import type { OwnerCarrier, InfiniteOpenShape, TransformableShape } from "../../types"
+import type Transformation from "../../transformation"
+
+class Line extends Shape implements InfiniteOpenShape, TransformableShape {
     private _slope: number = NaN
     private _coordinate: [number, number] = [NaN, NaN]
 
@@ -537,7 +536,7 @@ class Line extends Shape implements InfiniteOpenShape {
         if (ret) return ret
         return null
     }
-    
+
     /**
      * Find the perpendicular line of line `this` from point `point`.
      * @param coordinate
@@ -554,9 +553,7 @@ class Line extends Shape implements InfiniteOpenShape {
      * @param point
      */
     // change function name
-    getClosestPointFromPoint(){
-        
-    }
+    getClosestPointFromPoint() {}
 
     getPerpendicularPointFromPoint(point: Point): Point {
         let [a, b, c] = this.getGeneralEquationParameters(),
@@ -590,9 +587,9 @@ class Line extends Shape implements InfiniteOpenShape {
         return [ret1, ret2, ret3, ret4].filter(v => v !== null) as Point[]
     }
 
-    getGraphics(): GraphicsCommand[] {
+    getGraphics() {
         const g = new Graphics()
-        if (!this.isValid()) return g.commands
+        if (!this.isValid()) return g
 
         const gbb = this.owner.globalBoundingBox
         const [a, b, c] = this.getGeneralEquationParameters()
@@ -616,9 +613,7 @@ class Line extends Shape implements InfiniteOpenShape {
         // When `cs.length === 1`, line `this` only passes through one vertex of the bbox.
         // When `cs.length === 2`, line `this` intersects the bbox or one of the lines of bbox.
 
-        if (cs.length !== 2) {
-            return g.commands
-        }
+        if (cs.length !== 2) return g
         const [c1, c2] = coordArray.sortSelf(cs, this.options_.epsilon)
         g.moveTo(...c1)
         g.lineTo(...c2)
@@ -630,7 +625,7 @@ class Line extends Shape implements InfiniteOpenShape {
             g.append(arrowGraphics2)
         }
 
-        return g.commands
+        return g
     }
     apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")

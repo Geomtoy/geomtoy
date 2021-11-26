@@ -1,4 +1,4 @@
-import { EventObject } from "../types"
+import type { EventObject } from "../types"
 
 class EventCache {
     private _eventNames: string[] = []

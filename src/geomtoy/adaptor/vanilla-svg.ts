@@ -1,11 +1,10 @@
 import Geomtoy from ".."
-import GeomObject from "../base/GeomObject"
-import { Visible } from "../interfaces"
-import { AdapterOptions, LineCapType, LineJoinType } from "./adapter-types"
+import Shape from "../base/Shape"
+import { RendererOptions, RendererLineCapType, RendererLineJoinType, Renderer } from "../types"
 /**
  * @category Adapter
  */
-export default class VanillaSvg {
+export default class VanillaSvg implements Renderer {
     container: SVGSVGElement
     geomtoy: Geomtoy
 
@@ -17,11 +16,11 @@ export default class VanillaSvg {
     private _strokeWidth: number = 1
     private _fill: string = "transparent"
 
-    private _lineJoin: LineJoinType
+    private _lineJoin: RendererLineJoinType
     private _miterLimit: number
-    private _lineCap: LineCapType
+    private _lineCap: RendererLineCapType
 
-    constructor(container: SVGSVGElement, geomtoy: Geomtoy, options?: Partial<AdapterOptions>) {
+    constructor(container: SVGSVGElement, geomtoy: Geomtoy, options?: Partial<RendererOptions>) {
         if (container instanceof SVGSVGElement) {
             this.container = container
             this.geomtoy = geomtoy
@@ -46,20 +45,20 @@ export default class VanillaSvg {
         this.gEl.setAttribute("stroke-miterlimit", this._miterLimit.toString())
         this.gEl.setAttribute("stroke-linecap", this._lineCap)
     }
-    draw(object: GeomObject & Visible, behind = false) {
+    draw(shape: Shape, behind = false) {
         this.setup()
-        const cmds = object.getGraphics()
+        const cmds = shape.getGraphics()
 
-        const found = document.querySelector(`path[data-id='${object.uuid}']`)
+        const found = document.querySelector(`path[data-id='${shape.uuid}']`)
         const pathEl = (found as SVGPathElement) || document.createElementNS("http://www.w3.org/2000/svg", "path")
-        !found && pathEl.setAttribute("data-id", object.uuid)
+        !found && pathEl.setAttribute("data-id", shape.uuid)
 
         if (cmds.length === 1 && cmds[0].type === "text") {
             const cmd = cmds[0]
 
-            const textFound = document.querySelector(`text[data-id='${object.uuid}']`)
+            const textFound = document.querySelector(`text[data-id='${shape.uuid}']`)
             const textEl = (textFound as SVGTextElement) || document.createElementNS("http://www.w3.org/2000/svg", "text")
-            !textFound && textEl.setAttribute("data-id", object.uuid)
+            !textFound && textEl.setAttribute("data-id", shape.uuid)
 
             // text baseline
             textEl.setAttribute("dominant-baseline", "alphabetic")
@@ -141,8 +140,8 @@ export default class VanillaSvg {
 
         return pathEl
     }
-    drawBatch(objects: (GeomObject & Visible)[], behind = false) {
-        return objects.map(o => this.draw(o, behind))
+    drawBatch(shapes: Shape[], behind = false) {
+        return shapes.map(o => this.draw(o, behind))
     }
 
     stroke(stroke: string) {
@@ -167,7 +166,7 @@ export default class VanillaSvg {
         // typescript inheritance error here: `SVGPathElement` inherited from `SVGGraphicsElement`
         return (pathEl as any as SVGGeometryElement).isPointInFill(point)
     }
-    isPointInStroke(pathEl: SVGPathElement,strokeWidth: number, x: number, y: number) {
+    isPointInStroke(pathEl: SVGPathElement, strokeWidth: number, x: number, y: number) {
         const point = this.container.createSVGPoint() || new DOMPoint()
         point.x = x
         point.y = y

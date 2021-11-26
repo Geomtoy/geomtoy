@@ -1,21 +1,19 @@
+import { validAndWithSameOwner } from "../../decorator"
+import assert from "../../utility/assertion"
+import util from "../../utility"
+import math from "../../utility/math"
+import coord from "../../utility/coordinate"
+
+import { arcEndpointToCenterParameterization } from "../../graphics/helper"
+import Shape from "../../base/Shape"
 import Point from "./Point"
-import { validAndWithSameOwner } from "./decorator"
-import assert from "./utility/assertion"
-import util from "./utility"
-import math from "./utility/math"
-import angle from "./utility/angle"
-import coord from "./utility/coordinate"
+import Graphics from "../../graphics"
 
-import { arcEndpointToCenterParameterization } from "./graphics/helper"
-import Geomtoy from "."
-import Transformation from "./transformation"
-import Graphics from "./graphics"
-import { optionerOf } from "./helper/Optioner"
-import { OwnerCarrier } from "./types"
-import Shape from "./base/Shape"
-import { FiniteOpenShape } from "./interfaces"
+import type Geomtoy from "../.."
+import type Transformation from "../../transformation"
+import type { OwnerCarrier, FiniteOpenShape, TransformableShape } from "../../types"
 
-class Arc extends Shape implements FiniteOpenShape {
+class Arc extends Shape implements FiniteOpenShape, TransformableShape {
     private _centerCoordinate: [number, number] = [NaN, NaN]
     private _radiusX: number = NaN
     private _radiusY: number = NaN
@@ -245,10 +243,12 @@ class Arc extends Shape implements FiniteOpenShape {
         return 0
     }
     getGraphics() {
-        const c = this.centerCoordinate
         const g = new Graphics()
+        if (!this.isValid()) return g
+
+        const c = this.centerCoordinate
         g.centerArcTo(...c, this.radiusX, this.radiusY, this.rotation, this.startAngle, this.endAngle, this.positive)
-        return g.commands
+        return g
     }
     apply(transformation: Transformation): Shape {
         throw new Error("Method not implemented.")

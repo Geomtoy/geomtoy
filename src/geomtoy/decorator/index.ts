@@ -1,5 +1,5 @@
 import util from "../utility"
-import GeomObject from "../base/GeomObject"
+import BaseObject from "../base/BaseObject"
 import Geomtoy from ".."
 import { OwnerCarrier } from "../types"
 
@@ -17,14 +17,14 @@ function validText(constructor: any) {
         "\nPlease check whether the essential properties of it have been well assigned, " +
         "and meet the forming conditions. " +
         `${constructor?.formingCondition ? `\nThe forming conditions of ${article(constructor.name)} are: ${constructor.formingCondition!}` : ""}` +
-        "\nWhen a `GeomObject` is invalid, only the essential properties and the following methods can be available: " +
+        "\nWhen a `BaseObject` is invalid, only the essential properties and the following methods can be available: " +
         `\`${alwaysAvailableInstanceMethods.join("`, `")}\`.`
     )
 }
 // prettier-ignore
 const sameOwnerText = 
-    "\nOnly `GeomObject`s owned by the same `Geomtoy` can interop with each other. " +
-    "\nIf you want to use a `GeomObject` from other `Geomtoy`s, adopt it first."
+    "\nOnly `BaseObject`s owned by the same `Geomtoy` can interop with each other. " +
+    "\nIf you want to use a `BaseObject` from other `Geomtoy`s, adopt it first."
 
 export function sealed(constructor: new (...args: any[]) => any) {
     // Seal the `constructor` to prevent modify(including add) static members.
@@ -48,7 +48,7 @@ export function validAndWithSameOwner(constructor: new (...args: any[]) => any) 
             descriptor.value = function (this: OwnerCarrier) {
                 let staticOwner: Geomtoy = this.owner
                 util.tail(arguments).forEach(arg => {
-                    if (arg instanceof GeomObject) {
+                    if (arg instanceof BaseObject) {
                         if (!arg.isValid()) {
                             throw new Error(
                                 `[G]Calling <static>\`${memberName}\` of \`${name}\` with ${article(arg.constructor.name, "invalid")}:\
@@ -91,7 +91,7 @@ export function validAndWithSameOwner(constructor: new (...args: any[]) => any) 
                         )
                     }
                     Array.from(arguments).forEach(arg => {
-                        if (arg instanceof GeomObject) {
+                        if (arg instanceof BaseObject) {
                             if (!arg.isValid()) {
                                 throw new Error(
                                     `[G]Calling \`${memberName}\` of ${article(name)}:\
@@ -141,7 +141,7 @@ export function validAndWithSameOwner(constructor: new (...args: any[]) => any) 
             descriptor.set = function (value: any) {
                 if (util.isArray(value)) {
                     value.forEach(v => {
-                        if (v instanceof GeomObject) {
+                        if (v instanceof BaseObject) {
                             if (!v.isValid()) {
                                 throw new Error(
                                     `[G]Accessing <set>\`${memberName}\` of ${article(name)}:\
@@ -163,7 +163,7 @@ export function validAndWithSameOwner(constructor: new (...args: any[]) => any) 
                         }
                     })
                 }
-                if (value instanceof GeomObject) {
+                if (value instanceof BaseObject) {
                     if (!value.isValid()) {
                         throw new Error(
                             `[G]Accessing <set>\`${memberName}\` of ${article(this.name)}:\

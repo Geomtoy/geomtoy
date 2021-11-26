@@ -1,10 +1,10 @@
-import { PathLike, Renderer } from "../../../src/geomtoy/adaptor/adapter-types"
-import GeomObject from "../../../src/geomtoy/base/GeomObject"
-import { Visible } from "../../../src/geomtoy/interfaces"
+import { PathLike, Renderer } from "../../../src/geomtoy/types"
+import Shape from "../../../src/geomtoy/base/Shape"
+import Group from "../../../src/geomtoy/group"
 
 class Drawable {
     constructor(
-        public geomObject: GeomObject & Visible,
+        public object: Shape | Group,
         public behind = false,
         public fill = "transparent",
         public stroke = "transparent",
@@ -15,17 +15,17 @@ class Drawable {
 }
 class Touchable {
     constructor(
-        public geomObject: GeomObject & Visible,
+        public object: Shape | Group,
         public behind = false,
         public fill = "transparent",
         public stroke = "transparent",
         public strokeWidth = 1,
         public strokeDash: number[] = [],
         public strokeDashOffset: number = 0,
-        public path?: PathLike
+        public path?: PathLike | PathLike[]
     ) {}
     move(deltaX: number, deltaY: number) {
-        this.geomObject.moveSelf(deltaX, deltaY)
+        this.object.moveSelf(deltaX, deltaY)
     }
 }
 
@@ -56,22 +56,32 @@ class Collection {
     render(renderer: Renderer) {
         renderer.clear()
         Object.keys(this.drawables).forEach(key => {
-            let item = this.drawables[key]
-            renderer.fill(item.fill)
-            renderer.stroke(item.stroke)
-            renderer.strokeWidth(item.strokeWidth)
-            renderer.strokeDash(item.strokeDash)
-            renderer.strokeDashOffset(item.strokeDashOffset)
-            renderer.draw(item.geomObject, item.behind)
+            let d = this.drawables[key]
+            renderer.fill(d.fill)
+            renderer.stroke(d.stroke)
+            renderer.strokeWidth(d.strokeWidth)
+            renderer.strokeDash(d.strokeDash)
+            renderer.strokeDashOffset(d.strokeDashOffset)
+            if (d.object instanceof Shape) {
+                renderer.draw(d.object, d.behind)
+            }
+            if (d.object instanceof Group) {
+                renderer.drawBatch(d.object.items, d.behind)
+            }
         })
         Object.keys(this.touchables).forEach(key => {
-            let item = this.touchables[key]
-            renderer.fill(item.fill)
-            renderer.stroke(item.stroke)
-            renderer.strokeWidth(item.strokeWidth)
-            renderer.strokeDash(item.strokeDash)
-            renderer.strokeDashOffset(item.strokeDashOffset)
-            item.path = renderer.draw(item.geomObject, item.behind)
+            let t = this.touchables[key]
+            renderer.fill(t.fill)
+            renderer.stroke(t.stroke)
+            renderer.strokeWidth(t.strokeWidth)
+            renderer.strokeDash(t.strokeDash)
+            renderer.strokeDashOffset(t.strokeDashOffset)
+            if (t.object instanceof Shape) {
+                t.path = renderer.draw(t.object, t.behind)
+            }
+            if (t.object instanceof Group) {
+                t.path = renderer.drawBatch(t.object.items, t.behind)
+            }
         })
     }
 }

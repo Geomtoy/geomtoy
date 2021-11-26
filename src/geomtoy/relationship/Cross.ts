@@ -1,14 +1,16 @@
 import Geomtoy from ".."
-import GeomObject from "../base/GeomObject"
+import BaseObject from "../base/BaseObject"
 import Shape from "../base/Shape"
+import Circle from "../Circle"
 import Line from "../Line"
 import Point from "../Point"
 import Ray from "../Ray"
+import Rectangle from "../Rectangle"
 import { OwnerCarrier } from "../types"
 import util from "../utility"
 
 class Cross {
-    static verb = "Crosses"
+    static verb = "Crosses" as const
     static lineCrossesLine(this: OwnerCarrier, line: Line, otherLine: Line, quick = false) {
         if (!line.isParallelToLine(otherLine)) return false
         if (quick) return true
@@ -20,9 +22,13 @@ class Cross {
         const y = (c1 * a2 - c2 * a1) / m
         return new Point(this.owner, x, y)
     }
-    static lineCrossesRay(this: OwnerCarrier, line: Line, ray: Ray) {
-        
+
+    static circleCrossesCircle(this: OwnerCarrier, circle: Circle, otherCircle: Circle, quick = false) {
+        return [new Point(this.owner), new Point(this.owner)] as [Point, Point]
     }
+    static lineCrossesRay(this: OwnerCarrier, line: Line, ray: Ray, quick = false) {}
+
+    static lineCrossesRectangle(this: OwnerCarrier, line: Line, rectangle: Rectangle, quick = false) {}
 }
 
 export default Cross

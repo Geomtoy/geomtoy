@@ -6,6 +6,7 @@ import vec2 from "../utility/vec2"
 
 //@ts-ignore
 class Touch {
+    static verb = "Touches" as const
     static circleInTouchesCircle(this: OwnerCarrier, circle1: Circle, circle2: Circle) {
         const sd = vec2.squaredMagnitude(vec2.from(circle1.centerCoordinate, circle2.centerCoordinate))
         const sdr = (circle1.radius - circle2.radius) ** 2
@@ -22,3 +23,5 @@ class Touch {
         return Touch.circleInTouchesCircle.call(this, circle1, circle2) && Touch.circleExTouchesCircle.call(this, circle1, circle2)
     }
 }
+
+export default Touch
