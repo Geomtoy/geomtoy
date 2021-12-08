@@ -1,8 +1,10 @@
-import Circle from "../Circle"
-import { optionerOf } from "../helper/Optioner"
-import { OwnerCarrier } from "../types"
 import math from "../utility/math"
 import vec2 from "../utility/vec2"
+
+import Circle from "../shapes/basic/Circle"
+import { optionerOf } from "../helper/Optioner"
+import { OwnerCarrier } from "../types"
+
 
 class Separate {
     static verb = "Separates" as const

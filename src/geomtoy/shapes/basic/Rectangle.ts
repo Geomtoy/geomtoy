@@ -1,252 +1,267 @@
-import { validAndWithSameOwner } from "../../decorator"
-import util from "../../utility"
-import coord from "../../utility/coordinate"
-import size from "../../utility/size"
-import assert from "../../utility/assertion"
-import math from "../../utility/math"
+import { validAndWithSameOwner } from "../../decorator";
+import util from "../../utility";
+import coord from "../../utility/coordinate";
+import size from "../../utility/size";
+import assert from "../../utility/assertion";
+import math from "../../utility/math";
+import bbox from "../../utility/boundingBox";
+import vec2 from "../../utility/vec2";
 
-import Shape from "../../base/Shape"
-import Point from "./Point"
-import Graphics from "../../graphics"
+import Shape from "../../base/Shape";
+import Point from "./Point";
+import Transformation from "../../transformation";
+import Graphics from "../../graphics";
+import EventObject from "../../event/EventObject";
 
-import type Transformation from "../../transformation"
-import type Geomtoy from "../.."
-import type { ClosedShape, Direction, TransformableShape } from "../../types"
+import type Geomtoy from "../..";
+import type { ClosedShape, Direction, RotationFeaturedShape, TransformableShape } from "../../types";
 
-class Rectangle extends Shape implements ClosedShape, TransformableShape {
-    private _originCoordinate: [number, number] = [NaN, NaN]
-    private _size: [number, number] = [NaN, NaN]
+class Rectangle extends Shape implements ClosedShape, TransformableShape, RotationFeaturedShape {
+    private _originX = NaN;
+    private _originY = NaN;
+    private _width = NaN;
+    private _height = NaN;
+    private _rotation = 0;
 
-    constructor(owner: Geomtoy, originX: number, originY: number, width: number, height: number)
-    constructor(owner: Geomtoy, originX: number, originY: number, size: [number, number])
-    constructor(owner: Geomtoy, originCoordinate: [number, number], width: number, height: number)
-    constructor(owner: Geomtoy, originCoordinate: [number, number], size: [number, number])
-    constructor(owner: Geomtoy, originPoint: Point, width: number, height: number)
-    constructor(owner: Geomtoy, originPoint: Point, size: [number, number])
-    constructor(owner: Geomtoy)
-    constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any) {
-        super(o)
+    constructor(owner: Geomtoy, originX: number, originY: number, width: number, height: number, rotation?: number);
+    constructor(owner: Geomtoy, originX: number, originY: number, size: [number, number], rotation?: number);
+    constructor(owner: Geomtoy, originCoordinate: [number, number], width: number, height: number, rotation?: number);
+    constructor(owner: Geomtoy, originCoordinate: [number, number], size: [number, number], rotation?: number);
+    constructor(owner: Geomtoy, originPoint: Point, width: number, height: number, rotation?: number);
+    constructor(owner: Geomtoy, originPoint: Point, size: [number, number], rotation?: number);
+    constructor(owner: Geomtoy);
+    constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any) {
+        super(o);
         if (util.isNumber(a1)) {
             if (util.isNumber(a3)) {
-                Object.assign(this, { originX: a1, originY: a2, width: a3, height: a4 })
+                Object.assign(this, { originX: a1, originY: a2, width: a3, height: a4, rotation: a5 ?? 0 });
             } else {
-                Object.assign(this, { originX: a1, originY: a2, size: a3 })
+                Object.assign(this, { originX: a1, originY: a2, size: a3, rotation: a4 ?? 0 });
             }
         }
         if (util.isArray(a1)) {
             if (util.isNumber(a2)) {
-                Object.assign(this, { originCoordinate: a1, width: a2, height: a3 })
+                Object.assign(this, { originCoordinate: a1, width: a2, height: a3, rotation: a4 ?? 0 });
             } else {
-                Object.assign(this, { originCoordinate: a1, size: a2 })
+                Object.assign(this, { originCoordinate: a1, size: a2, rotation: a3 ?? 0 });
             }
         }
         if (a1 instanceof Point) {
             if (util.isNumber(a2)) {
-                Object.assign(this, { originPoint: a1, width: a2, height: a3 })
+                Object.assign(this, { originPoint: a1, width: a2, height: a3, rotation: a4 ?? 0 });
             } else {
-                Object.assign(this, { originPoint: a1, size: a2 })
+                Object.assign(this, { originPoint: a1, size: a2, rotation: a3 ?? 0 });
             }
         }
-        return Object.seal(this)
+        return Object.seal(this);
     }
 
     static readonly events = Object.freeze({
-        originXChanged: "originXChanged",
-        originYChanged: "originYChanged",
-        widthChanged: "widthChanged",
-        heightChanged: "heightChanged"
-    })
+        originXChanged: "originX" as const,
+        originYChanged: "originY" as const,
+        widthChanged: "width" as const,
+        heightChanged: "height" as const,
+        rotationChanged: "rotation" as const
+    });
 
     private _setOriginX(value: number) {
-        this.willTrigger_(coord.x(this._originCoordinate), value, [Rectangle.events.originXChanged])
-        coord.x(this._originCoordinate, value)
+        if (!util.isEqualTo(this._originX, value)) this.trigger_(EventObject.simple(this, Rectangle.events.originXChanged));
+        this._originX = value;
     }
     private _setOriginY(value: number) {
-        this.willTrigger_(coord.y(this._originCoordinate), value, [Rectangle.events.originYChanged])
-        coord.y(this._originCoordinate, value)
+        if (!util.isEqualTo(this._originY, value)) this.trigger_(EventObject.simple(this, Rectangle.events.originYChanged));
+        this._originY = value;
     }
     private _setWidth(value: number) {
-        this.willTrigger_(size.width(this._size), value, [Rectangle.events.widthChanged])
-        size.width(this._size, value)
+        if (!util.isEqualTo(this._width, value)) this.trigger_(EventObject.simple(this, Rectangle.events.widthChanged));
+        this._width = value;
     }
     private _setHeight(value: number) {
-        this.willTrigger_(size.height(this._size), value, [Rectangle.events.heightChanged])
-        size.height(this._size, value)
+        if (!util.isEqualTo(this._height, value)) this.trigger_(EventObject.simple(this, Rectangle.events.heightChanged));
+        this._height = value;
+    }
+    private _setRotation(value: number) {
+        if (!util.isEqualTo(this._rotation, value)) this.trigger_(EventObject.simple(this, Rectangle.events.rotationChanged));
+        this._rotation = value;
     }
 
     get originX() {
-        return coord.x(this._originCoordinate)
+        return this._originX;
     }
     set originX(value) {
-        assert.isRealNumber(value, "originX")
-        this._setOriginX(value)
+        assert.isRealNumber(value, "originX");
+        this._setOriginX(value);
     }
     get originY() {
-        return coord.y(this._originCoordinate)
+        return this._originY;
     }
     set originY(value) {
-        assert.isRealNumber(value, "originY")
-        this._setOriginY(value)
+        assert.isRealNumber(value, "originY");
+        this._setOriginY(value);
     }
     get originCoordinate() {
-        return coord.clone(this._originCoordinate)
+        return [this._originX, this._originY] as [number, number];
     }
     set originCoordinate(value) {
-        assert.isCoordinate(value, "originCoordinate")
-        this._setOriginX(coord.x(value))
-        this._setOriginY(coord.y(value))
+        assert.isCoordinate(value, "originCoordinate");
+        this._setOriginX(coord.x(value));
+        this._setOriginY(coord.y(value));
     }
     get originPoint() {
-        return new Point(this.owner, this._originCoordinate)
+        return new Point(this.owner, this._originX, this._originY);
     }
     set originPoint(value) {
-        assert.isPoint(value, "originPoint")
-        this._setOriginX(value.x)
-        this._setOriginY(value.y)
+        assert.isPoint(value, "originPoint");
+        this._setOriginX(value.x);
+        this._setOriginY(value.y);
     }
     get width() {
-        return size.width(this._size)
+        return this._width;
     }
     set width(value) {
-        assert.isPositiveNumber(value, "width")
-        this._setWidth(value)
+        assert.isPositiveNumber(value, "width");
+        this._setWidth(value);
     }
     get height() {
-        return size.height(this._size)
+        return this._height;
     }
     set height(value) {
-        assert.isPositiveNumber(value, "height")
-        this._setHeight(value)
+        assert.isPositiveNumber(value, "height");
+        this._setHeight(value);
     }
     get size() {
-        return size.clone(this._size)
+        return [this._width, this._height] as [number, number];
     }
     set size(value) {
-        assert.isSize(value, "size")
-        this._setWidth(size.width(value))
-        this._setHeight(size.height(value))
+        assert.isSize(value, "size");
+        this._setWidth(size.width(value));
+        this._setHeight(size.height(value));
+    }
+    get rotation() {
+        return this._rotation;
+    }
+    set rotation(value) {
+        assert.isRealNumber(value, "rotation");
+        this._setRotation(value);
     }
 
     isValid() {
-        const [oc, s] = [this._originCoordinate, this._size]
-        const epsilon = this.options_.epsilon
-        if (!coord.isValid(oc)) return false
-        if (!size.isValid(s)) return false
-        return true
+        const { originCoordinate: oc, size: s } = this;
+        if (!coord.isValid(oc)) return false;
+        if (!size.isValid(s)) return false;
+        return true;
     }
 
-    static fromPoints(owner: Geomtoy, point1: Point, point2: Point) {
+    static fromTwoPoints(owner: Geomtoy, point1: Point, point2: Point) {
         if (point1.isSameAs(point2)) {
-            throw new Error(`[G]Diagonal endpoints \`point1\` and \`point2\` of a rectangle can NOT be the same.`)
+            throw new Error(`[G]Diagonal endpoints \`point1\` and \`point2\` of a rectangle can NOT be the same.`);
         }
         let { x: x1, y: y1 } = point1,
             { x: x2, y: y2 } = point2,
             minX = math.min(...[x1, x2])!,
             minY = math.min(...[y1, y2])!,
             dx = math.abs(x1 - x2),
-            dy = math.abs(y1 - y2)
-        return new Rectangle(owner, [minX, minY], dx, dy)
+            dy = math.abs(y1 - y2);
+        return new Rectangle(owner, [minX, minY], dx, dy);
     }
 
     getLength(): number {
-        throw new Error("Method not implemented.")
+        throw new Error("Method not implemented.");
     }
     getArea(): number {
-        throw new Error("Method not implemented.")
+        throw new Error("Method not implemented.");
     }
     getWindingDirection(): Direction {
-        throw new Error("Method not implemented.")
+        throw new Error("Method not implemented.");
     }
     isPointOn(point: [number, number] | Point): boolean {
-        throw new Error("Method not implemented.")
+        throw new Error("Method not implemented.");
     }
     isPointOutside(point: [number, number] | Point): boolean {
-        throw new Error("Method not implemented.")
+        throw new Error("Method not implemented.");
     }
     isPointInside(point: [number, number] | Point): boolean {
-        throw new Error("Method not implemented.")
+        throw new Error("Method not implemented.");
     }
 
-    getCornerPoint(corner: "leftTop" | "rightTop" | "rightBottom" | "leftBottom"): Point {
-        let xRight = this.owner.xAxisPositiveOnRight,
-            yBottom = this.owner.yAxisPositiveOnBottom,
-            { originX: x, originY: y, width: w, height: h } = this,
-            lt: [number, number] = [x, y],
-            rt: [number, number] = [x + w, y],
-            rb: [number, number] = [x + w, y + h],
-            lb: [number, number] = [x, y + h]
-        if (!xRight) ([lt, rt] = [rt, lt]), ([lb, rb] = [rb, lb])
-        if (!yBottom) ([lt, lb] = [lb, lt]), ([rt, rb] = [rb, rt])
-        let ret = Point.zero.bind(this)()
-        if (corner === "leftTop") {
-            ret = new Point(this.owner, lt)
-        }
-        if (corner === "rightTop") {
-            ret = new Point(this.owner, rt)
-        }
-        if (corner === "rightBottom") {
-            ret = new Point(this.owner, rb)
-        }
-        if (corner === "leftBottom") {
-            ret = new Point(this.owner, lb)
-        }
-        return ret
+    getCornerPoints(): [Point, Point, Point, Point] {
+        const { originX: x, originY: y, width: w, height: h } = this;
+        const box: [number, number, number, number] = [x, y, w, h];
+
+        const t = new Transformation(this.owner);
+        t.rotate(this.rotation, this.getCenterPoint());
+        const nn = t.transformCoordinate(bbox.nn(box));
+        const mn = t.transformCoordinate(bbox.mn(box));
+        const mm = t.transformCoordinate(bbox.mm(box));
+        const nm = t.transformCoordinate(bbox.nm(box));
+        return [new Point(this.owner, nn), new Point(this.owner, mn), new Point(this.owner, mm), new Point(this.owner, nm)];
     }
-    getBounding(side: "left" | "right" | "top" | "bottom"): number {
-        let xRight = this.owner.xAxisPositiveOnRight,
-            yBottom = this.owner.yAxisPositiveOnBottom,
-            { originX: x, originY: y, width: w, height: h } = this,
-            l = x,
-            r = x + w,
-            t = y,
-            b = y + h
-        if (!xRight) [l, r] = [r, l]
-        if (!yBottom) [t, b] = [b, t]
-        let ret = 0
-        if (side === "left") {
-            ret = l
-        }
-        if (side === "right") {
-            ret = r
-        }
-        if (side === "top") {
-            ret = t
-        }
-        if (side === "bottom") {
-            ret = b
-        }
-        return ret
+
+    getCenterPoint() {
+        const c = vec2.add(this.originCoordinate, [size.width(this.size) / 2, size.height(this.size) / 2]);
+        return new Point(this.owner, c);
+    }
+
+    normalize() {
+        //todo Normalize rectangle with rotation of `n * Math.PI / 2` to regular non-rotational rectangle
+    }
+
+    getBoundingBox(): [number, number, number, number] {
+        throw new Error();
+        // let xRight = this.owner.xAxisPositiveOnRight,
+        //     yBottom = this.owner.yAxisPositiveOnBottom,
+        //     { originX: x, originY: y, width: w, height: h } = this,
+        //     l = x,
+        //     r = x + w,
+        //     t = y,
+        //     b = y + h
+        // if (!xRight) [l, r] = [r, l]
+        // if (!yBottom) [t, b] = [b, t]
+        // let ret = 0
+        // if (side === "left") {
+        //     ret = l
+        // }
+        // if (side === "right") {
+        //     ret = r
+        // }
+        // if (side === "top") {
+        //     ret = t
+        // }
+        // if (side === "bottom") {
+        //     ret = b
+        // }
+        // return ret
     }
 
     /**
      * Move rectangle `this` by `offsetX` and `offsetY` to get new rectangle.
      */
     move(deltaX: number, deltaY: number) {
-        return this.clone().moveSelf(deltaX, deltaY)
+        return this.clone().moveSelf(deltaX, deltaY);
     }
     /**
      * Move rectangle `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.originCoordinate = coord.move(this.originCoordinate, deltaX, deltaY)
-        return this
+        this.originCoordinate = coord.move(this.originCoordinate, deltaX, deltaY);
+        return this;
     }
     /**
      * Move rectangle `this` with `distance` along `angle` to get new rectangle.
      */
     moveAlongAngle(angle: number, distance: number) {
-        return this.clone().moveAlongAngleSelf(angle, distance)
+        return this.clone().moveAlongAngleSelf(angle, distance);
     }
     /**
      * Move rectangle `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.originCoordinate = coord.moveAlongAngle(this.originCoordinate, angle, distance)
-        return this
+        this.originCoordinate = coord.moveAlongAngle(this.originCoordinate, angle, distance);
+        return this;
     }
 
     inflate(size: [number, number]) {
-        return this.clone().inflateSelf(size)
+        return this.clone().inflateSelf(size);
     }
     inflateSelf(size: [number, number]) {
         let { originX: x, originY: y, width: w, height: h } = this,
@@ -254,15 +269,15 @@ class Rectangle extends Shape implements ClosedShape, TransformableShape {
             nx = x - sw,
             ny = y - sh,
             nw = w + sw * 2,
-            nh = h + sw * 2
+            nh = h + sw * 2;
         if (nw <= 0 || nh <= 0) {
-            return this
+            return this;
         }
-        this.originX = nx
-        this.originY = ny
-        this.width = nw
-        this.height = nh
-        return this
+        this.originX = nx;
+        this.originY = ny;
+        this.width = nw;
+        this.height = nh;
+        return this;
     }
 
     // keepAspectRadioAndFit(size, keepInside = true) {
@@ -285,53 +300,59 @@ class Rectangle extends Shape implements ClosedShape, TransformableShape {
     //     }
     // }
 
-    clone() {
-        return new Rectangle(this.owner, this.originCoordinate, this.size)
-    }
-    copyFrom(rectangle: Rectangle | null) {
-        if (rectangle === null) rectangle = new Rectangle(this.owner)
-        this._setOriginX(coord.x(rectangle._originCoordinate))
-        this._setOriginY(coord.y(rectangle._originCoordinate))
-        this._setWidth(size.width(rectangle._size))
-        this._setHeight(size.height(rectangle._size))
-        return this
-    }
     apply(transformation: Transformation): Shape {
-        throw new Error("Method not implemented.")
+        throw new Error("Method not implemented.");
     }
 
     getGraphics() {
-        const g = new Graphics()
-        if (!this.isValid()) return g
-        throw new Error("Method not implemented.")
+        const g = new Graphics();
+        if (!this.isValid()) return g;
+        const [p1, p2, p3, p4] = this.getCornerPoints();
+        g.moveTo(...p1.coordinate);
+        g.lineTo(...p2.coordinate);
+        g.lineTo(...p3.coordinate);
+        g.lineTo(...p4.coordinate);
+        g.close();
+        return g;
     }
-    toString(): string {
-        throw new Error("Method not implemented.")
+    clone() {
+        return new Rectangle(this.owner, this.originX, this.originY, this.width, this.height, this.rotation);
     }
-    toObject(): object {
-        throw new Error("Method not implemented.")
+    copyFrom(shape: Rectangle | null) {
+        if (shape === null) shape = new Rectangle(this.owner);
+        this._setOriginX(shape._originX);
+        this._setOriginY(shape._originY);
+        this._setWidth(shape._width);
+        this._setHeight(shape._height);
+        this._setRotation(shape._rotation);
+        return this;
     }
-    toArray(): any[] {
-        throw new Error("Method not implemented.")
+    toString() {
+        return [
+            `${this.name}(${this.uuid}){`,
+            `\toriginX: ${this.originX}`,
+            `\toriginY: ${this.originY}`,
+            `\twidth: ${this.width}`,
+            `\theight: ${this.height}`,
+            `\trotation: ${this.rotation}`,
+            `} owned by Geomtoy(${this.owner.uuid})`
+        ].join("\n");
     }
-
-    // getIntersectionPointWithLine (double a, double b, double c, double x1, double y1, double x2, double y2, double x3, double y3) {
-    // 	double x4,y4;//定义矩形第四个点的横纵坐标
-    // 	x4 = x1 + x3 - x2;
-    // 	y4 = y1 + y3 - y2;
-    // 	//接下来依次求解直线与构成矩形的四条线段的交点
-    // 	boolean m1,m2,m3,m4;//设置是否有交点的标志
-    // 	System.out.println("直线与矩形交点的计算结果为 ： ");
-    // 	m1 = pointLineSegment(a, b, c, x1, y1, x2, y2);
-    // 	m2 = pointLineSegment(a, b, c, x2, y2, x3, y3);
-    // 	m3 = pointLineSegment(a, b, c, x3, y3, x4, y4);
-    // 	m4 = pointLineSegment(a, b, c, x4, y4, x1, y1);
-    // 	if(m1 == m2 == m3 == m4 == false)
-    // 		System.out.println("直线与矩形没有交点");
-    // }
+    toArray() {
+        return [this.originX, this.originY, this.width, this.height, this.rotation];
+    }
+    toObject() {
+        return {
+            originX: this.originX,
+            originY: this.originY,
+            width: this.width,
+            height: this.height,
+            rotation: this.rotation
+        };
+    }
 }
-validAndWithSameOwner(Rectangle)
+validAndWithSameOwner(Rectangle);
 /**
  * @category Shape
  */
-export default Rectangle
+export default Rectangle;

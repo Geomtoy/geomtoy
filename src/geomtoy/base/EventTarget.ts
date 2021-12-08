@@ -1,50 +1,56 @@
-import util from "../utility"
-import assert from "../utility/assertion"
+import util from "../utility";
+import assert from "../utility/assertion";
 
-import { bindEventHandlerDefaultPriority, eventNameForAny, eventNameSplitter, onEventHandlerDefaultPriority } from "../consts"
+import { schedulerOf } from "../helper/Scheduler";
 
-import BaseObject from "./BaseObject"
-import EventCache from "./EventCache"
-import Scheduler, { schedulerOf } from "../helper/Scheduler"
-import { EventHandlerType, EventObjectType } from "../types"
+import BaseObject from "./BaseObject";
+import EventCache from "../helper/EventCache";
+import EventHandler from "../event/EventHandler";
+import EventObject from "../event/EventObject";
 
-import type Geomtoy from ".."
-import type { EventHandler, EventObject, EventTargetEventNamesPair, EventTargetFromPair } from "../types"
+import type Geomtoy from "..";
+import type { EventTargetEventsPair, EventObjectFromPair } from "../types";
 
-// regular expression used to split event strings
+const eventsSplitterReg = /\s+/;
+const eventPatternAnyReg = /^(\w+\|){1,}\w+$/i;
+const eventPatternAnySplitter = "|";
+const eventNameForAny = "any";
 
+const eventPatternAllReg = /^(\w+\&){1,}\w+$/i;
+const eventPatternAllSplitter = "&";
+const eventNameForAll = "all";
+
+const onEventHandlerDefaultPriority = 1;
+const bindEventHandlerDefaultPriority = 1000;
+
+// Below is a hack and not type strong way to achieve `abstract static` members which `Typescript` do not support now.
+interface EventTarget {
+    constructor: Function & {
+        readonly events: {
+            [key: string]: string;
+        };
+    };
+}
 abstract class EventTarget extends BaseObject {
-    private _scheduler: Scheduler
-    private _muted: boolean = false
+    private _scheduler = schedulerOf(this.owner);
+    private _muted = false;
+
     constructor(owner: Geomtoy) {
-        super(owner)
-        this._scheduler = schedulerOf(this.owner)
+        super(owner);
     }
 
-    // fake code, typescript do not support `abstract static`
-    // static abstract readonly events: { [key: string]: string }
     get muted() {
-        return this._muted
+        return this._muted;
     }
     mute() {
-        this._muted = true
+        this._muted = true;
     }
     unmute() {
-        this._muted = false
-    }
-
-    protected willTrigger_(oldValue: any, newValue: any, eventNames: (string | { eventName: string; uuid: string; index: number })[]) {
-        if (oldValue === newValue) return
-        if (util.isString(oldValue) || util.isBoolean(oldValue) || util.isNumber(oldValue)) {
-            if (oldValue !== newValue) this.trigger(eventNames)
-        }
-        if (util.isPlainObject(oldValue)) {
-            if (!util.compareDeep(oldValue, newValue)) this.trigger(eventNames)
-        }
+        this._muted = false;
     }
 
     // event name-handlers map
-    private _events: { [key: string]: EventHandler[] } = {}
+    private _eventMap: EventHandler[] = [];
 
     // event names holder to collect the event names triggered in each loop and automatically remove duplicates
     /* 
@@ -52,100 +58,154 @@ abstract class EventTarget extends BaseObject {
     can visit the values newly added during the `forEach`. This is a significant and few people mentioned difference between `Set` and `Array`.
     @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/forEach
     */
-    private _eventCache: EventCache = new EventCache()
+    private _eventCache: EventCache<typeof this> = new EventCache();
 
     // event scheduled flag to mark if we have told the scheduler ready to go(put the event handlers of triggered events of this `EventTarget` in its queue)
-    private _eventScheduled: boolean = false
+    private _eventScheduled: boolean = false;
 
     // event handling flag to mark if the event handlers of triggered events of this `EventTarget` are now being invoked
-    private _eventHandling: boolean = false
+    private _eventHandling: boolean = false;
 
-    private _getHandlers(eventName: string) {
-        this._events[eventName] === undefined && (this._events[eventName] = [])
-        return this._events[eventName]
+    private _addHandler(eventPattern: string, callback: (...args: any[]) => void, context: EventTarget, relatedTargets: undefined | EventTarget[], priority: number, hasRecursiveEffect: boolean) {
+        const hs = this._eventMap;
+        const handler = new EventHandler(eventPattern, callback, context, relatedTargets, priority, hasRecursiveEffect);
+        hs.push(handler);
+        // From max to in according to priority.
+        hs.sort((a, b) => b.priority - a.priority);
     }
-
-    private _addHandler(eventName: string, callback: (...args: any[]) => any, context: EventTarget, relatedEventTargets: undefined | EventTarget[], priority: number) {
-        const hs = this._getHandlers(eventName)
-        let handler: EventHandler
-        if (util.isArray(relatedEventTargets)) {
-            handler = { callback, context, relatedEventTargets, priority, type: EventHandlerType.Bind }
-        } else {
-            handler = { callback, context, priority, type: EventHandlerType.On }
-        }
-        hs.push(handler)
-        // From min to max according to priority, we will reverse while loop them later.
-        hs.sort((a, b) => a.priority - b.priority)
+    private _removeHandler(eventPattern: string, callback: (...args: any[]) => void, context: EventTarget) {
+        const hs = this._eventMap;
+        const index = hs.findIndex(h => h.eventPattern === eventPattern && h.callback === callback && h.context === context);
+        if (index != -1) hs.splice(index, 1);
     }
-    private _removeHandler(eventName: string, callback: (...args: any[]) => any, context: EventTarget) {
-        const hs = this._getHandlers(eventName)
-        const index = hs.findIndex(h => h.callback === callback && h.context === context)
-        if (index > -1) hs.splice(index, 1)
-    }
-    private _hasHandler(eventName: string, callback: (...args: any[]) => any, context: EventTarget) {
-        const hs = this._getHandlers(eventName)
-        const index = hs.findIndex(e => e.callback === callback && e.context === context)
-        return index > -1
+    private _hasHandler(eventPattern: string, callback: (...args: any[]) => void, context: EventTarget) {
+        const hs = this._eventMap;
+        return hs.findIndex(h => h.eventPattern === eventPattern && h.callback === callback && h.context === context) != -1;
     }
     private _hasEvent(eventName: string) {
-        if (eventName === eventNameForAny) return true
-        //@ts-ignore
-        return Object.values(this.constructor.events).includes(eventName)
+        if(eventName === eventNameForAll) return true
+        if(eventName === eventNameForAny) return true
+
+        return Object.values(this.constructor.events).includes(eventName);
     }
-    private _parseEventNames(eventNames: string) {
-        const ns = eventNames.split(eventNameSplitter).filter(n => n !== "")
-        const ret: string[] = []
-        ns.forEach(n => {
-            if (this._hasEvent(n)) {
-                ret.push(n)
-            } else {
-                console.warn(`[G]There is no event named \`${n}\` in \`${this.name}\` , so it will be ignored.`)
+
+    // events: a string joint some event patterns like: "x|y radius"
+    // eventPattern: a pure event name or a pattern of event name like: "x|y"
+    // eventName: a pure event name like: "x"
+
+    private _getEventObjectsFromCache(eventPattern: string) {
+        if (eventPatternAnyReg.test(eventPattern)) {
+            let origin: EventObject<typeof this> = undefined as unknown as EventObject<typeof this>;
+            return eventPattern.split(eventPatternAnySplitter).some(n => {
+                const objects = this._eventCache.filter(n);
+                if (objects.length > 0) {
+                    origin = util.head(objects)!;
+                    return true;
+                }
+                return false;
+            })
+                ? [EventObject.composedAny(this, eventPattern, origin)]
+                : null;
+        }
+        if (eventPatternAllReg.test(eventPattern)) {
+            let origins: EventObject<typeof this>[] = [];
+            return eventPattern.split(eventPatternAllSplitter).every(n => {
+                const objects = this._eventCache.filter(n);
+                if (objects.length > 0) {
+                    origins.push(util.head(objects)!);
+                    return true;
+                }
+                return false;
+            })
+                ? [EventObject.composedAll(this, eventPattern, origins)]
+                : null;
+        }
+
+        const objects = this._eventCache.filter(eventPattern);
+        return objects.length > 0 ? objects : null;
+    }
+
+    private _parseEvents(events: string) {
+        const patterns = events.trim().split(eventsSplitterReg);
+
+        return patterns.filter(p => {
+            if (eventPatternAnyReg.test(p)) {
+                return p.split(eventPatternAnySplitter).some(n => {
+                    return !this._hasEvent(n) ? (console.warn(`[G]There is no event named \`${n}\` in \`${this.name}\` which is contained in \`${p}\`, so it will be ignored.`), true) : false;
+                })
+                    ? false
+                    : true;
             }
-        })
-        return ret
-    }
 
-    on(eventNames: string, callback: (this: this) => any, priority = onEventHandlerDefaultPriority) {
-        assert.isString(eventNames, "eventNames")
-        assert.isFunction(callback, "callback")
-        assert.isRealNumber(priority, "priority")
-
-        const ns = this._parseEventNames(eventNames)
-        if (ns.length === 0) return this
-        ns.forEach(n => {
-            if (this._hasHandler(n, callback, this)) {
-                console.warn(`[G]An event handler with the same callback and the same context already exists in the event named \`${n}\` on \`${this}\`, so it will be ignored.`)
-            } else {
-                this._addHandler(n, callback, this, undefined, priority)
+            if (eventPatternAllReg.test(p)) {
+                return p.split(eventPatternAllSplitter).some(n => {
+                    return !this._hasEvent(n) ? (console.warn(`[G]There is no event named \`${n}\` in \`${this.name}\` which is contained in \`${p}\`, so it will be ignored.`), true) : false;
+                })
+                    ? false
+                    : true;
             }
-        })
-        return this
-    }
-    off(eventNames: string, callback: (...args: any[]) => any) {
-        assert.isString(eventNames, "eventNames")
-        assert.isFunction(callback, "callback")
 
-        const ns = this._parseEventNames(eventNames)
-        if (ns.length === 0) return this
-        ns.forEach(n => {
-            this._removeHandler(n, callback, this)
-        })
-        return this
+            return !this._hasEvent(p) ? (console.warn(`[G]There is no event named \`${p}\` in \`${this.name}\` , so it will be ignored.`), false) : true;
+        });
     }
-    clear(eventNames: string) {
-        assert.isString(eventNames, "eventNames")
 
-        const ns = this._parseEventNames(eventNames)
-        if (ns.length === 0) return this
-        ns.forEach(n => {
-            const handlers = this._getHandlers(n)
-            handlers.splice(0)
-        })
-        return this
+    on<T extends typeof this>(
+        events: string,
+        callback: (this: this, arg: EventObject<T>) => void,
+        {
+            priority = onEventHandlerDefaultPriority,
+            hasRecursiveEffect = false
+        }: Partial<{
+            priority: number;
+            hasRecursiveEffect: boolean;
+        }> = {}
+    ) {
+        assert.isString(events, "events");
+        assert.isFunction(callback, "callback");
+        assert.isRealNumber(priority, "priority");
+        assert.isBoolean(hasRecursiveEffect, "hasRecursiveEffect");
+
+        this._parseEvents(events).forEach(p => {
+            if (this._hasHandler(p, callback, this))
+                return console.warn(`[G]An event handler with the same event pattern \`${p}\`, callback and context \`${this}\` already exists in \`${this}\`, so it will be ignored.`);
+            this._addHandler(p, callback, this, undefined, priority, hasRecursiveEffect);
+        });
+        return this;
+    }
+    off(events: string, callback: (...args: any[]) => void) {
+        assert.isString(events, "events");
+        assert.isFunction(callback, "callback");
+
+        this._parseEvents(events).forEach(p => {
+            this._removeHandler(p, callback, this);
+        });
+        return this;
+    }
+    clear(events?: string) {
+        events !== undefined && assert.isString(events, "events");
+
+        if (events === undefined) {
+            this._eventMap = [];
+            return this;
+        }
+
+        const hs = this._eventMap;
+        this._parseEvents(events).forEach(p => {
+            const index = hs.findIndex(h => h.eventPattern === p);
+            if (index != -1) hs.splice(index, 1);
+        });
+        return this;
+    }
+
+    private _translateAny() {
+        return Object.values(this.constructor.events).join(eventPatternAnySplitter);
+    }
+    private _translateAll() {
+        return Object.values(this.constructor.events).join(eventPatternAllSplitter);
     }
 
     private _schedule() {
-        this._eventScheduled = true
+        this._eventScheduled = true;
         this._scheduler.queue(() => {
             // #region Event Handling Logic
             //
@@ -206,169 +266,130 @@ abstract class EventTarget extends BaseObject {
             //             otherwise it will be an infinite loop. Don't worry, the scheduler will care about this.
             // #endregion
 
-            this._eventHandling = true
+            this._eventHandling = true;
 
-            this._eventCache.forEach((eventName, eventObject) => {
-                //Copy the event handlers of this event to solid/package it in order to make it unchangeable during the event handling.
-                const hs = [...this._getHandlers(eventName)]
-                let l = hs.length
-                while (l--) {
-                    const h = hs[l]
-                    if (!this._scheduler.isCallbackInvokedBy(h.callback, h.context)) {
-                        if (h.type === EventHandlerType.On) {
-                            h.callback.call(h.context, eventObject)
-                        } else {
+            //Copy the event handlers in order to make it unchangeable during the event handling.
+            const handlingCopy = [...this._eventMap];
+            handlingCopy.forEach(h => {
+                const pattern = h.eventPattern === eventNameForAny ? this._translateAny() : h.eventPattern === eventNameForAll ? this._translateAll() : h.eventPattern;
+
+                let result = this._getEventObjectsFromCache(pattern);
+                if (result !== null) {
+                    // Handler with recursive effect will only be invoked once!
+                    if (this._scheduler.isMarked(h.callback, h.context) && h.hasRecursiveEffect) return;
+
+                    result.forEach(eo => {
+                        if (h.relatedTargets !== undefined) {
                             h.callback.call(
                                 h.context,
-                                h.relatedEventTargets.map(o => (eventObject.target === o ? eventObject : { target: o, type: EventObjectType.Empty }))
-                            )
+                                h.relatedTargets.map(target => (target === this ? eo : EventObject.empty(target)))
+                            );
+                        } else {
+                            h.callback.call(h.context, eo);
                         }
-                        // So the same callback(such as in the `bind` method) bound to multiple events of multiple objects will not be invoked multiple times.
-                        this._scheduler.markCallback(h.callback, h.context)
-                    }
+                    });
+
+                    // So the same callback(such as in the `bind` method) bound to multiple events of multiple objects will not be invoked multiple times.
+                    this._scheduler.mark(h.callback, h.context);
                 }
-            })
-            this._eventCache.clear()
-            this._eventHandling = false
-            this._eventScheduled = false
-        })
-        if (!this._scheduler.flushed) this._scheduler.flushQueue()
+            });
+
+            this._eventCache.clear();
+            this._eventHandling = false;
+            this._eventScheduled = false;
+        });
+        if (!this._scheduler.flushed) this._scheduler.flushQueue();
     }
 
-    trigger(eventNames: (string | { eventName: string; uuid: string; index: number })[]) {
-        if (this._muted) return this
-        if (eventNames.length === 0) return this
+    protected trigger_(eventObject: EventObject<typeof this>) {
+        if (this._muted) return this;
+        // Here we put the triggering event name in to the `_eventCache` instead of directly invoking the event handlers in the event.
+        // Doing so to avoid repeatedly invoking the event handlers in one loop.
+        // No matter how many times an event of `EventTarget` is triggered,
+        // we only need to record here, the event has been triggered, and the event handlers of it need to be invoked.
+        if (!this._eventCache.has(eventObject)) this._eventCache.add(eventObject);
+        // If the event handling of this `EventTarget` is in progress,
+        // only uncached events can have their callbacks unmarked.
+        // We can't change the invoking status of the callbacks of cached event.
 
-        eventNames.forEach(n => {
-            let eventName = ""
-            let eventCacheName = ""
-            let eventObject: EventObject = {} as EventObject
-
-            if (util.isString(n)) {
-                if (!this._hasEvent(n)) return
-                eventName = n
-                eventCacheName = n
-                eventObject = { type: EventObjectType.Simple, target: this, eventName: n }
-            } else {
-                if (!this._hasEvent(n.eventName)) return
-                eventName = n.eventName
-                eventCacheName = n.eventName + n.uuid
-                eventObject = { type: EventObjectType.Collection, target: this, ...n }
-            }
-
-            const cached = this._eventCache.has(eventCacheName)
-            // Here we put the triggering event name in to the `_eventCache` instead of directly invoking the event handlers in the event.
-            // Doing so to avoid repeatedly invoking the event handlers in one loop.
-            // No matter how many times an event of `EventTarget` is triggered,
-            // we only need to record here, the event has been triggered, and the event handlers of it need to be invoked.
-            if (!cached) this._eventCache.add(eventCacheName, eventObject)
-            // If the event handling of this `EventTarget` is in progress,
-            // only uncached events can have their callbacks unmarked.
-            // We can't change the invoking status of the callbacks of cached event.
-            if (this._eventHandling && cached) return
-            this._getHandlers(eventName).forEach(h => {
-                this._scheduler.unmarkCallback(h.callback, h.context)
-            })
-            // If the events of this `EventTarget` has not been scheduled, then schedule it.
-            if (!this._eventScheduled) this._schedule()
-
-            // The triggering of any event will immediately cause the triggering of `*`, except `*` itself
-            // With the previous logic, we are not afraid that the callbacks of `*` will be invoked repeatedly.
-            if (eventName !== eventNameForAny) {
-                this._eventCache.add(eventNameForAny, { target: this, type: EventObjectType.Empty })
-            }
-        })
-        return this
+        // If the events of this `EventTarget` has not been scheduled, then schedule it.
+        if (!this._eventScheduled) this._schedule();
+        return this;
     }
 
-    private _parseObjectEventNamesPairs(pairs: EventTargetEventNamesPair[]) {
-        let ret = {
-            objects: [] as EventTarget[],
+    private _parsePairs(pairs: EventTargetEventsPair[]) {
+        const ret = {
+            targets: [] as EventTarget[],
             pairs: [] as [EventTarget, string][]
-        }
+        };
         pairs.forEach(pair => {
-            if (pair instanceof EventTarget) {
-                ret.objects.push(pair)
-                ret.pairs.push([pair, eventNameForAny])
-            } else if (util.head(pair) instanceof EventTarget && util.isString(util.last(pair))) {
-                ret.objects.push(util.head(pair) as EventTarget)
-                ret.pairs.push(pair)
+            if (pair[0] instanceof EventTarget && util.isString(pair[1])) {
+                ret.targets.push(pair[0]);
+                ret.pairs.push(pair);
             } else {
-                console.warn(`[G]The \`objectEventNamesPairs\` contains a pair: \`${pair}\` which is not valid, so it will be ignored.`)
+                console.warn(`[G]The \`eventTargetEventsPair\` contains a pair: \`${pair}\` which is not valid, so it will be ignored.`);
             }
-        })
-        return ret
+        });
+        return ret;
     }
 
-    bind<T extends EventTargetEventNamesPair[]>(
-        objectEventNamesPairs: [...T],
-        callback: (this: this, args: [...EventTargetFromPair<T>]) => any,
-        immediately = true,
-        priority = bindEventHandlerDefaultPriority
+    bind<T extends EventTargetEventsPair[]>(
+        eventTargetEventsPairs: [...T],
+        callback: (this: this, arg: [...EventObjectFromPair<T>]) => void,
+        {
+            immediately = true,
+            priority = bindEventHandlerDefaultPriority,
+            hasRecursiveEffect = false
+        }: Partial<{
+            immediately: boolean;
+            priority: number;
+            hasRecursiveEffect: boolean;
+        }> = {}
     ) {
-        assert.isArray(objectEventNamesPairs, "objectEventNamesPairs")
-        assert.isFunction(callback, "callback")
-        assert.isBoolean(immediately, "immediately")
-        assert.isRealNumber(priority, "priority")
+        assert.isArray(eventTargetEventsPairs, "eventTargetEventsPairs");
+        assert.isFunction(callback, "callback");
+        assert.isBoolean(immediately, "immediately");
+        assert.isRealNumber(priority, "priority");
+        assert.isBoolean(hasRecursiveEffect, "hasRecursiveEffect");
 
-        let immediatelyTriggered = false
-        const { objects, pairs } = this._parseObjectEventNamesPairs(objectEventNamesPairs)
-
-        if (pairs.length === 0) return this
-        pairs.forEach(oe => {
-            const [object, eventNames] = oe
-            const ns = object._parseEventNames(eventNames)
-            if (ns.length === 0) return
-            ns.forEach(n => {
-                if (object._hasHandler(n, callback, this)) {
-                    console.warn(
-                        `[G]An event handler with the same callback and the same context already exists in the event named \`${n}\` on \`${object}\`, so it will be ignored.`
-                    )
-                } else {
-                    object._addHandler(n, callback, this, objects, priority)
-                    if (immediately && !immediatelyTriggered) {
-                        // object.trigger(n)
-                        callback.call(this, objects)
-                        immediatelyTriggered = true
-                    }
+        let immediatelyCalled = false;
+        const { targets, pairs } = this._parsePairs(eventTargetEventsPairs);
+        pairs.forEach(te => {
+            const [target, events] = te;
+            this._parseEvents(events).forEach(p => {
+                if (target._hasHandler(p, callback, this)) {
+                    return console.warn(`[G]An event handler with the same event pattern \`${p}\`, callback and context \`${this}\` already exists in \`${target}\`, so it will be ignored.`);
                 }
-            })
-        })
+                target._addHandler(p, callback, this, targets, priority, hasRecursiveEffect);
 
-        return this
+                if (immediately && !immediatelyCalled) {
+                    callback.call(
+                        this,
+                        targets.map(target => EventObject.empty(target))
+                    );
+                    immediatelyCalled = true;
+                }
+            });
+        });
+        return this;
     }
 
-    unbind(objectEventNamesPairs: EventTargetEventNamesPair[], callback: (...args: any[]) => any) {
-        assert.isArray(objectEventNamesPairs, "objectEventNamesPairs")
-        assert.isFunction(callback, "callback")
+    unbind(eventTargetEventsPairs: EventTargetEventsPair[], callback: (...args: any[]) => void) {
+        assert.isArray(eventTargetEventsPairs, "eventTargetEventsPairs");
+        assert.isFunction(callback, "callback");
 
-        const { pairs } = this._parseObjectEventNamesPairs(objectEventNamesPairs)
-
-        if (pairs.length === 0) return this
-        pairs.forEach(oe => {
-            const [object, eventNames] = oe
-            const ns = object._parseEventNames(eventNames)
-
-            if (ns.length === 0) return
-            ns.forEach(n => {
-                object._removeHandler(n, callback, this)
-            })
-        })
-
-        return this
-    }
-
-    toString() {
-        return `${this.name}(${this.uuid}) owned by Geomtoy(${this.owner.uuid})`
-    }
-    toArray(): any[] {
-        return [this.muted]
-    }
-    toObject(): object {
-        return {
-            muted: this.muted
-        }
+        const { pairs } = this._parsePairs(eventTargetEventsPairs);
+        pairs.forEach(te => {
+            const [target, events] = te;
+            this._parseEvents(events).forEach(p => {
+                target._removeHandler(p, callback, this);
+            });
+        });
+        return this;
     }
 }
 
-export default EventTarget
+/**
+ * @category Base
+ */
+export default EventTarget;

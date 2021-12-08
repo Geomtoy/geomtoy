@@ -1,239 +1,435 @@
-import Geomtoy from "../.."
-import Arc from "../basic/Arc"
-import BaseObject from "../../base/BaseObject"
-import Bezier from "../Bezier"
-import Line from "../Line"
-import LineSegment from "../LineSegment"
-import Point from "../Point"
-import QuadraticBezier from "../QuadraticBezier"
-import { PathArcToCommand, PathBezierCurveToCommand, PathCommand, PathCommandType, PathLineToCommand, PathMoveToCommand, PathQuadraticBezierCurveToCommand } from "../types/path"
-import util from "../../utility"
-import assert from "../../utility/assertion"
-import coord from "../../utility/coordinate"
+import { validAndWithSameOwner } from "../../decorator";
+import util from "../../utility";
+import assert from "../../utility/assertion";
+import coord from "../../utility/coordinate";
+import math from "../../utility/math";
 
-class Path extends BaseObject {
-    private _closed = true
-    private _commands: PathCommand[] = []
+import Shape from "../../base/Shape";
+import Arc from "../basic/Arc";
+import Bezier from "../basic/Bezier";
+import LineSegment from "../basic/LineSegment";
+import Point from "../basic/Point";
+import QuadraticBezier from "../basic/QuadraticBezier";
+import Graphics from "../../graphics";
+import EventObject from "../../event/EventObject";
 
-    constructor(owner: Geomtoy, commands: PathCommand[])
-    constructor(owner: Geomtoy)
-    constructor(o: Geomtoy, a1?: any) {
-        super(o)
-    }
-    get closed() {
-        return this._closed
-    }
-    set closed(value: boolean) {
-        assert.isBoolean(value,"closed")
-        this._closed = value
-    }
+import { PathCommandType } from "../../types";
 
-    get commands() {
-        return util.cloneDeep(this._commands)
+import type Geomtoy from "../..";
+import type { PathCommand, PathCommandWithUuid, PathMoveToCommand, PathLineToCommand, PathBezierCurveToCommand, PathQuadraticBezierCurveToCommand, PathArcToCommand } from "../../types";
+
+
+class Path extends Shape {
+    private _closed = true;
+    private _commands: PathCommandWithUuid[] = [];
+
+    constructor(owner: Geomtoy, commands: PathCommand[], closed?: boolean);
+    constructor(owner: Geomtoy);
+    constructor(o: Geomtoy, a1?: any, a2?: any) {
+        super(o);
+        if (util.isArray(a1)) {
+            Object.assign(this, { commands: a1, closed: a2 ?? true });
+        }
+        return Object.seal(this);
     }
 
     static readonly events = Object.freeze({
-        commandsReset: "commandsReset",
-        commandAdded: "commandAdded",
-        commandRemoved: "commandRemoved",
-        commandChanged: "commandChanged"
-    })
+        commandsReset: "reset" as const,
+        commandAdded: "cmdAdd" as const,
+        commandRemoved: "cmdRemove" as const,
+        commandChanged: "cmdChange" as const
+    });
+
+    private _setCommands(value: PathCommand[]) {
+        if (!util.isEqualTo(this._commands, value)) this.trigger_(EventObject.simple(this, Path.events.commandsReset));
+        this._commands = value.map(cmd => {
+            return { ...cmd, uuid: util.uuid() };
+        });
+    }
+
+    get commands(): PathCommand[] {
+        return this._commands.map(cmdWu => {
+            const { uuid, ...cmd } = cmdWu;
+            return cmd;
+        });
+    }
+    set commands(value) {
+        assert.condition(util.isArray(value) && value.every(cmd => this._isPathCommand(cmd)), "[G]The `commands` should be an array of `PathCommand`.");
+        this._setCommands(value);
+    }
+
+    get closed() {
+        return this._closed;
+    }
+    set closed(value: boolean) {
+        assert.isBoolean(value, "closed");
+        this._closed = value;
+    }
+
+    get commandCount() {
+        return this._commands.length;
+    }
 
     isValid() {
         if (
-            this._commands.some((c, index) => {
+            this._commands.some((cmd, index) => {
                 if (index === 0) {
-                    return c.type !== PathCommandType.MoveTo
+                    return cmd.type !== PathCommandType.MoveTo;
                 } else {
-                    return c.type === PathCommandType.MoveTo
+                    return cmd.type === PathCommandType.MoveTo;
                 }
             })
         ) {
-            return false
+            return false;
         }
-        if (this._commands.length < 2) return false
-        return true
+        if (this._commands.length < 2) return false;
+        return true;
     }
 
     static moveTo(point: [number, number] | Point) {
-        assert.isCoordinateOrPoint(point, "point")
-        const [x, y] = point instanceof Point ? point.coordinate : point
-        return { type: PathCommandType.MoveTo, coordinate: [x, y], uuid: util.uuid() }
+        assert.isCoordinateOrPoint(point, "point");
+        const [x, y] = point instanceof Point ? point.coordinate : point;
+        const ret: PathMoveToCommand = {
+            type: PathCommandType.MoveTo,
+            x,
+            y
+        };
+        return ret;
     }
     static lineTo(point: [number, number] | Point) {
-        assert.isCoordinateOrPoint(point, "point")
-        const [x, y] = point instanceof Point ? point.coordinate : point
-        return { type: PathCommandType.LineTo, coordinate: [x, y], uuid: util.uuid() }
+        assert.isCoordinateOrPoint(point, "point");
+        const [x, y] = point instanceof Point ? point.coordinate : point;
+        const ret: PathLineToCommand = {
+            type: PathCommandType.LineTo,
+            x,
+            y
+        };
+        return ret;
     }
     static bezierCurveTo(controlPoint1: [number, number] | Point, controlPoint2: [number, number] | Point, point: [number, number] | Point) {
-        assert.isCoordinateOrPoint(controlPoint1, "controlPoint1")
-        assert.isCoordinateOrPoint(controlPoint2, "controlPoint2")
-        assert.isCoordinateOrPoint(point, "point")
-        const [cp1x, cp1y] = controlPoint1 instanceof Point ? controlPoint1.coordinate : controlPoint1
-        const [cp2x, cp2y] = controlPoint2 instanceof Point ? controlPoint2.coordinate : controlPoint2
-        const [x, y] = point instanceof Point ? point.coordinate : point
-        return {
+        assert.isCoordinateOrPoint(controlPoint1, "controlPoint1");
+        assert.isCoordinateOrPoint(controlPoint2, "controlPoint2");
+        assert.isCoordinateOrPoint(point, "point");
+        const [controlPoint1X, controlPoint1Y] = controlPoint1 instanceof Point ? controlPoint1.coordinate : controlPoint1;
+        const [controlPoint2X, controlPoint2Y] = controlPoint2 instanceof Point ? controlPoint2.coordinate : controlPoint2;
+        const [x, y] = point instanceof Point ? point.coordinate : point;
+        const ret: PathBezierCurveToCommand = {
             type: PathCommandType.BezierCurveTo,
-            controlPoint1Coordinate: [cp1x, cp1y],
-            controlPoint2Coordinate: [cp2x, cp2y],
-            coordinate: [x, y],
-            uuid: util.uuid()
-        }
+            x,
+            y,
+            controlPoint1X,
+            controlPoint1Y,
+            controlPoint2X,
+            controlPoint2Y
+        };
+        return ret;
     }
     static quadraticBezierCurveTo(controlPoint: [number, number] | Point, point: [number, number] | Point) {
-        assert.isCoordinateOrPoint(controlPoint, "controlPoint")
-        assert.isCoordinateOrPoint(point, "point")
-        const [cpx, cpy] = controlPoint instanceof Point ? controlPoint.coordinate : controlPoint
-        const [x, y] = point instanceof Point ? point.coordinate : point
-        return { type: PathCommandType.QuadraticBezierCurveTo, controlPointCoordinate: [cpx, cpy], coordinate: [x, y], uuid: util.uuid() }
+        assert.isCoordinateOrPoint(controlPoint, "controlPoint");
+        assert.isCoordinateOrPoint(point, "point");
+        const [controlPointX, controlPointY] = controlPoint instanceof Point ? controlPoint.coordinate : controlPoint;
+        const [x, y] = point instanceof Point ? point.coordinate : point;
+        const ret: PathQuadraticBezierCurveToCommand = {
+            type: PathCommandType.QuadraticBezierCurveTo,
+            x,
+            y,
+            controlPointX,
+            controlPointY
+        };
+        return ret;
     }
     static arcTo(radiusX: number, radiusY: number, xAxisRotation: number, largeArc: boolean, positive: boolean, point: [number, number] | Point) {
-        assert.isPositiveNumber(radiusX, "radiusX")
-        assert.isPositiveNumber(radiusY, "radiusY")
-        assert.isRealNumber(xAxisRotation, "xAxisRotation")
-        assert.isBoolean(largeArc, "largeArc")
-        assert.isBoolean(positive, "positive")
-        assert.isCoordinateOrPoint(point, "point")
-        const [x, y] = point instanceof Point ? point.coordinate : point
-        return { type: PathCommandType.ArcTo, radiusX, radiusY, xAxisRotation, largeArc, positive, coordinate: [x, y], uuid: util.uuid() }
+        assert.isPositiveNumber(radiusX, "radiusX");
+        assert.isPositiveNumber(radiusY, "radiusY");
+        assert.isRealNumber(xAxisRotation, "xAxisRotation");
+        assert.isBoolean(largeArc, "largeArc");
+        assert.isBoolean(positive, "positive");
+        assert.isCoordinateOrPoint(point, "point");
+        const [x, y] = point instanceof Point ? point.coordinate : point;
+        const ret: PathArcToCommand = {
+            type: PathCommandType.ArcTo,
+            x,
+            y,
+            radiusX,
+            radiusY,
+            xAxisRotation,
+            largeArc,
+            positive
+        };
+        return ret;
     }
 
-    getCommandCount() {
-        return this._commands.length
+    move(deltaX: number, deltaY: number) {
+        assert.isRealNumber(deltaX, "deltaX");
+        assert.isRealNumber(deltaY, "deltaY");
+        return this.clone().moveSelf(deltaX, deltaY);
     }
-    getPathSegmentByUuid(uuid: string): Arc | LineSegment | Bezier | QuadraticBezier | null {
-        const foundIndex = this._commands.findIndex(c => c.uuid === uuid)
-        if (foundIndex === -1) return null
-        return this.getPathSegment(foundIndex)
+    moveSelf(deltaX: number, deltaY: number) {
+        assert.isRealNumber(deltaX, "deltaX");
+        assert.isRealNumber(deltaY, "deltaY");
+        if (deltaX === 0 && deltaY === 0) return this;
+
+        this._commands.forEach((cmd, i) => {
+            switch (cmd.type) {
+                case PathCommandType.MoveTo: {
+                    [cmd.x, cmd.y] = coord.move([cmd.x, cmd.y], deltaX, deltaY);
+                    break;
+                }
+                case PathCommandType.LineTo: {
+                    [cmd.x, cmd.y] = coord.move([cmd.x, cmd.y], deltaX, deltaY);
+                    break;
+                }
+                case PathCommandType.BezierCurveTo: {
+                    [cmd.controlPoint1X, cmd.controlPoint1Y] = coord.move([cmd.controlPoint1X, cmd.controlPoint1Y], deltaX, deltaY);
+                    [cmd.controlPoint2X, cmd.controlPoint2Y] = coord.move([cmd.controlPoint2X, cmd.controlPoint2Y], deltaX, deltaY);
+                    [cmd.x, cmd.y] = coord.move([cmd.x, cmd.y], deltaX, deltaY);
+                    break;
+                }
+                case PathCommandType.QuadraticBezierCurveTo: {
+                    [cmd.controlPointX, cmd.controlPointY] = coord.move([cmd.controlPointX, cmd.controlPointY], deltaX, deltaY);
+                    [cmd.x, cmd.y] = coord.move([cmd.x, cmd.y], deltaX, deltaY);
+                    break;
+                }
+                case PathCommandType.ArcTo: {
+                    [cmd.x, cmd.y] = coord.move([cmd.x, cmd.y], deltaX, deltaY);
+                    break;
+                }
+            }
+            this.trigger_(EventObject.collection(this, Path.events.commandChanged, i, cmd.uuid));
+        });
+        return this;
     }
-    getPathSegment(index: number): Arc | LineSegment | Bezier | QuadraticBezier | null {
-        const curr = this._commands[index]
-        const prev = index === 0 ? this._commands[this._commands.length - 1] : this._commands[index - 1]
-        const type = curr.type
+    moveAlongAngle(angle: number, distance: number) {
+        assert.isRealNumber(angle, "angle");
+        assert.isRealNumber(distance, "distance");
+
+        return this.clone().moveAlongAngleSelf(angle, distance);
+    }
+    moveAlongAngleSelf(angle: number, distance: number) {
+        assert.isRealNumber(angle, "angle");
+        assert.isRealNumber(distance, "distance");
+        if (distance === 0) return this;
+
+        const c: [number, number] = [0, 0];
+        const [dx, dy] = coord.moveAlongAngle(c, angle, distance);
+        return this.moveSelf(dx, dy);
+    }
+
+    private _isPathCommand(v: any): v is PathCommand {
+        if (!util.isPlainObject(v)) return false;
+        if (!v.type) return false;
+        switch (v.type) {
+            case PathCommandType.MoveTo: {
+                if (Object.keys(v).length !== 3) return false;
+                if (!util.isRealNumber(v.x)) return false;
+                if (!util.isRealNumber(v.y)) return false;
+                return true;
+            }
+            case PathCommandType.LineTo: {
+                if (Object.keys(v).length !== 3) return false;
+                if (!util.isRealNumber(v.x)) return false;
+                if (!util.isRealNumber(v.y)) return false;
+                return true;
+            }
+            case PathCommandType.BezierCurveTo: {
+                if (Object.keys(v).length !== 7) return false;
+                if (!util.isRealNumber(v.x)) return false;
+                if (!util.isRealNumber(v.y)) return false;
+                if (!util.isRealNumber(v.controlPoint1X)) return false;
+                if (!util.isRealNumber(v.controlPoint1Y)) return false;
+                if (!util.isRealNumber(v.controlPoint2X)) return false;
+                if (!util.isRealNumber(v.controlPoint2Y)) return false;
+                return true;
+            }
+            case PathCommandType.QuadraticBezierCurveTo: {
+                if (Object.keys(v).length !== 5) return false;
+                if (!util.isRealNumber(v.x)) return false;
+                if (!util.isRealNumber(v.y)) return false;
+                if (!util.isRealNumber(v.controlPointX)) return false;
+                if (!util.isRealNumber(v.controlPointY)) return false;
+                return true;
+            }
+            case PathCommandType.ArcTo: {
+                if (Object.keys(v).length !== 8) return false;
+                if (!util.isRealNumber(v.x)) return false;
+                if (!util.isRealNumber(v.y)) return false;
+                if (!util.isPositiveNumber(v.radiusX)) return false;
+                if (!util.isPositiveNumber(v.radiusY)) return false;
+                if (!util.isRealNumber(v.xAxisRotation)) return false;
+                if (!util.isBoolean(v.largeArc)) return false;
+                if (!util.isBoolean(v.positive)) return false;
+                return true;
+            }
+            default: {
+                return false;
+            }
+        }
+    }
+    private _assertIsPathCommand(value: PathCommand, p: string) {
+        assert.condition(this._isPathCommand(value), `[G]The \`${p}\` should be a \`PathCommand\`.`);
+    }
+    private _assertIsIndexOrUuid(value: number | string, p: string) {
+        assert.condition(!util.isString(value) && !(util.isInteger(value) && value >= 0), `[G]The \`${p}\` should be a string or an integer greater than or equal to 0.`);
+    }
+    private _parseIndexOrUuid(indexOrUuid: number | string): [number, string] | [undefined, undefined] {
+        if (util.isString(indexOrUuid)) {
+            const index = this._commands.findIndex(cmd => cmd.uuid === indexOrUuid);
+            if (index != -1) {
+                return [index, indexOrUuid];
+            }
+        } else {
+            if (math.inInterval(indexOrUuid, 0, this.commandCount - 1)) {
+                return [indexOrUuid, this._commands[indexOrUuid].uuid];
+            }
+        }
+        return [undefined, undefined];
+    }
+
+    getIndexOfUuid(uuid: string) {
+        assert.isString(uuid, "uuid");
+        return this._commands.findIndex(cmd => cmd.uuid === uuid);
+    }
+    getUuidOfIndex(index: number) {
+        assert.isInteger(index, "index");
+        return math.inInterval(index, 0, this.commandCount - 1) ? this._commands[index].uuid : "";
+    }
+
+    getPathSegment(indexOrUuid: number | string) {
+        this._assertIsIndexOrUuid(indexOrUuid, "indexOrUuid");
+        const [index] = this._parseIndexOrUuid(indexOrUuid);
+        if (index === undefined) return null;
+
+        const curr = util.nth(this._commands, index)!;
+        const prev = util.nth(this._commands, index - 1)!;
+        const type = curr.type;
+
         switch (type) {
             case PathCommandType.MoveTo: {
                 if (this.closed) {
-                    return new LineSegment(this.owner, prev.coordinate, curr.coordinate)
+                    return new LineSegment(this.owner, prev.x, prev.y, curr.x, curr.y);
                 } else {
-                    return null
+                    return null;
                 }
             }
             case PathCommandType.LineTo: {
-                return new LineSegment(this.owner, prev.coordinate, curr.coordinate)
+                return new LineSegment(this.owner, [prev.x, prev.y], [curr.x, curr.y]);
             }
             case PathCommandType.BezierCurveTo: {
-                return new Bezier(this.owner, prev.coordinate, curr.coordinate, curr.controlPoint1Coordinate, curr.controlPoint2Coordinate)
+                return new Bezier(this.owner, [prev.x, prev.y], [curr.x, curr.y], [curr.controlPoint1X, curr.controlPoint1Y], [curr.controlPoint2X, curr.controlPoint2Y]);
             }
             case PathCommandType.QuadraticBezierCurveTo: {
-                return new QuadraticBezier(this.owner, prev.coordinate, curr.coordinate, curr.controlPointCoordinate)
+                return new QuadraticBezier(this.owner, [prev.x, prev.y], [curr.x, curr.y], [curr.controlPointX, curr.controlPointY]);
             }
             case PathCommandType.ArcTo: {
-                return Arc.fromTwoPointsEtc.bind(this)(
-                    prev.coordinate,
-                    curr.coordinate,
-                    curr.radiusX,
-                    curr.radiusY,
-                    curr.largeArc,
-                    curr.positive,
-                    curr.xAxisRotation
-                )
+                return Arc.fromTwoPointsEtc.call(this, [prev.x, prev.y], [curr.x, curr.y], curr.radiusX, curr.radiusY, curr.largeArc, curr.positive, curr.xAxisRotation);
             }
             default: {
-                return null
+                return null;
             }
         }
     }
 
-    getCommand(index: number): PathCommand | null {
-        assert.isInteger(index, "index")
-        assert.comparison(index, "index", "ge", 0)
-        const cmd = this._commands[index]
-        return cmd ? util.cloneDeep(cmd) : null
+    getCommand(indexOrUuid: number | string): PathCommand | null {
+        this._assertIsIndexOrUuid(indexOrUuid, "indexOrUuid");
+
+        const [index] = this._parseIndexOrUuid(indexOrUuid);
+        if (index === undefined) return null;
+
+        const { uuid, ...rest } = util.cloneDeep(this._commands[index]);
+        return rest;
     }
-    setCommand(index: number, command: PathCommand) {
-        assert.isInteger(index, "index")
-        assert.comparison(index, "index", "ge", 0)
-        if (index > this._commands.length) return false
-        if (this._isPathCommand(command)) throw new Error("[G]The `command` is not a `PathCommand`.")
-        this.trigger([Path.events.commandChanged])
-        this._commands[index] = util.cloneDeep(command)
-        return true
+    setCommand(indexOrUuid: number | string, command: PathCommand) {
+        this._assertIsIndexOrUuid(indexOrUuid, "indexOrUuid");
+        this._assertIsPathCommand(command, "command");
+
+        const [index, uuid] = this._parseIndexOrUuid(indexOrUuid);
+        if (index === undefined || uuid === undefined) return false;
+
+        const oldCmd = this._commands[index];
+        const newCmd = util.cloneDeep(oldCmd);
+        util.assignDeep(newCmd, command);
+        if (!util.isEqualTo(oldCmd, newCmd)) this.trigger_(EventObject.collection(this, Path.events.commandChanged, index, uuid));
+        this._commands[index] = newCmd;
+        return true;
     }
-    insertCommand(index: number, command: PathCommand) {
-        if (this._isPathCommand(command)) throw new Error("[G]The `command` is not a `PathCommand`.")
-        this.trigger([Path.events.commandAdded])
-        this._commands.splice(index, 0, util.cloneDeep(command))
+    insertCommand(indexOrUuid: number | string, command: PathCommand) {
+        this._assertIsIndexOrUuid(indexOrUuid, "indexOrUuid");
+        this._assertIsPathCommand(command, "command");
+
+        const [index, uuid] = this._parseIndexOrUuid(indexOrUuid);
+        if (index === undefined || uuid === undefined) return false;
+
+        const cmd = Object.assign(util.cloneDeep(command), { uuid: util.uuid() });
+        this.trigger_(EventObject.collection(this, Path.events.commandAdded, index + 1, cmd.uuid));
+        this._commands.splice(index, 0, cmd);
+        return [index + 1, cmd.uuid] as [number, string];
     }
-    removeCommand(index: number) {
-        this.trigger([Path.events.commandRemoved])
-        this._commands.splice(index, 1)
+    removeCommand(indexOrUuid: number | string) {
+        this._assertIsIndexOrUuid(indexOrUuid, "indexOrUuid");
+
+        const [index, uuid] = this._parseIndexOrUuid(indexOrUuid);
+        if (index === undefined || uuid === undefined) return false;
+        this.trigger_(EventObject.collection(this, Path.events.commandRemoved, index, uuid));
+        this._commands.splice(index, 1);
+        return true;
     }
     appendCommand(command: PathCommand) {
-        if (this._isPathCommand(command)) throw new Error("[G]The `command` is not a `PathCommand`.")
-        this.trigger([Path.events.commandAdded])
-        this._commands.push(util.cloneDeep(command))
+        this._assertIsPathCommand(command, "command");
+
+        const cmd = Object.assign(util.cloneDeep(command), { uuid: util.uuid() });
+        const index = this.commandCount;
+        this.trigger_(EventObject.collection(this, Path.events.commandAdded, index, cmd.uuid));
+        this._commands.push(cmd);
+        return [index, cmd.uuid] as [number, string];
     }
 
-    private _isPathCommand(p: any): p is PathCommand {
-        if (!util.isPlainObject(p)) return false
-        if (!p.type) return false
-        if (!p.uuid) return false
-        switch (p.type) {
-            case PathCommandType.MoveTo: {
-                if (Object.keys(p).length !== 3) return false
-                if (!util.isCoordinate(p.coordinate)) return false
-                return true
+    getGraphics() {
+        const g = new Graphics();
+        if (!this.isValid()) return g;
+        this._commands.forEach(cmd => {
+            if (cmd.type === PathCommandType.MoveTo) {
+                g.moveTo(cmd.x, cmd.y);
             }
-            case PathCommandType.LineTo: {
-                if (Object.keys(p).length !== 3) return false
-                if (!util.isCoordinate(p.coordinate)) return false
-                return true
+            if (cmd.type === PathCommandType.LineTo) {
+                g.lineTo(cmd.x, cmd.y);
             }
-            case PathCommandType.BezierCurveTo: {
-                if (Object.keys(p).length !== 5) return false
-                if (!util.isCoordinate(p.controlPoint1Coordinate)) return false
-                if (!util.isCoordinate(p.controlPoint2Coordinate)) return false
-                if (!util.isCoordinate(p.coordinate)) return false
-                return true
+            if (cmd.type === PathCommandType.BezierCurveTo) {
+                g.bezierCurveTo(cmd.controlPoint1X, cmd.controlPoint1Y, cmd.controlPoint2X, cmd.controlPoint2Y, cmd.x, cmd.y);
             }
-            case PathCommandType.QuadraticBezierCurveTo: {
-                if (Object.keys(p).length !== 4) return false
-                if (!util.isCoordinate(p.controlPointCoordinate)) return false
-                if (!util.isCoordinate(p.coordinate)) return false
-                return true
+            if (cmd.type === PathCommandType.QuadraticBezierCurveTo) {
+                g.quadraticBezierCurveTo(cmd.controlPointX, cmd.controlPointY, cmd.x, cmd.y);
             }
-            case PathCommandType.ArcTo: {
-                const l = Object.keys(p).length
-                if (Object.keys(p).length !== 8) return false
-                if (!util.isPositiveNumber(p.radiusX)) return false
-                if (!util.isPositiveNumber(p.radiusY)) return false
-                if (!util.isRealNumber(p.xAxisRotation)) return false
-                if (!util.isBoolean(p.largeArc)) return false
-                if (!util.isBoolean(p.positive)) return false
-                if (!util.isCoordinate(p.coordinate)) return false
-                return true
+            if (cmd.type === PathCommandType.ArcTo) {
+                g.endpointArcTo(cmd.radiusX, cmd.radiusY, cmd.xAxisRotation, cmd.largeArc, cmd.positive, cmd.x, cmd.y);
             }
-            default: {
-                return false
-            }
+        });
+        if (this.closed) {
+            g.close();
         }
+        return g;
     }
-
-    clone(): BaseObject {
-        throw new Error("Method not implemented.")
+    clone() {
+        return new Path(this.owner, this.commands);
     }
-    copyFrom(object: BaseObject | null): this {
-        throw new Error("Method not implemented.")
+    copyFrom(shape: Path | null) {
+        if (shape === null) shape = new Path(this.owner);
+        this._setCommands(shape.commands);
+        return this;
     }
     toString(): string {
-        throw new Error("Method not implemented.")
+        throw new Error("Method not implemented.");
     }
     toArray(): any[] {
-        throw new Error("Method not implemented.")
+        throw new Error("Method not implemented.");
     }
     toObject(): object {
-        throw new Error("Method not implemented.")
+        throw new Error("Method not implemented.");
     }
 }
 
-export default Path
+validAndWithSameOwner(Path);
+
+/**
+ * @category Shape
+ */
+export default Path;

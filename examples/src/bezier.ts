@@ -1,12 +1,14 @@
-import Geomtoy from "../../src/geomtoy"
-import "./assets/misc"
-import { colors, mathFont } from "./assets/assets"
-import Interact from "./assets/interact"
-import { Collection, Drawable, Touchable } from "./assets/GeomObjectWrapper"
+import Geomtoy from "../../src/geomtoy";
+import "./assets/misc";
+import { colors, mathFont } from "./assets/assets";
+import Interact from "./assets/interact";
+import { Collection, Drawable, Touchable } from "./assets/GeomObjectWrapper";
 
-const canvas = document.querySelector("#canvas") as HTMLCanvasElement
-const svg = document.querySelector("#svg") as SVGSVGElement
-const description = document.querySelector("#description") as HTMLElement
+import type { EventObject, Text, Point, LineSegment } from "../../src/geomtoy/package";
+
+const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
+const svg = document.querySelector("#svg") as SVGSVGElement;
+const description = document.querySelector("#description") as HTMLElement;
 description.innerHTML = `
     <strong>Touchables</strong>
     <ul>
@@ -22,9 +24,9 @@ description.innerHTML = `
         <li>Point A, point B and point P will follow line AB to move.</li>
         <li>Move line AB or circle O to get the intersection points of them.</li>
     </ol>
-`
+`;
 
-svg.style.display = "none"
+svg.style.display = "none";
 
 const G = new Geomtoy(100, 100, {
     epsilon: 2 ** -32,
@@ -37,44 +39,64 @@ const G = new Geomtoy(100, 100, {
             noFoldback: false
         }
     }
-})
-G.yAxisPositiveOnBottom = false
-G.scale = 10
+});
+G.yAxisPositiveOnBottom = false;
+G.scale = 10;
 
-const renderer = new Geomtoy.adapters.VanillaCanvas(canvas, G, { lineJoin: "round" })
-const collection = new Collection()
-const interact = new Interact(renderer, collection)
+const renderer = new Geomtoy.adapters.VanillaCanvas(canvas, G);
+renderer.lineCap("round");
+const collection = new Collection();
+const interact = new Interact(renderer, collection);
 
-interact.startDragAndDrop()
-interact.startZoomAndPan()
+interact.startDragAndDrop();
+interact.startZoomAndPan();
 interact.startResponsive((width, height) => {
-    G.width = width
-    G.height = height
-    G.origin = [width / 2, height / 2]
-})
+    G.width = width;
+    G.height = height;
+    G.origin = [width / 2, height / 2];
+});
 
 const main = () => {
-    const pointA = G.Point(-25, -12)
-    const pointB = G.Point(-20, 25)
-    const pointC = G.Point(0, 0)
+    const pointA = G.Point(-25, -12);
+    const pointB = G.Point(-20, 25);
+    const pointC = G.Point(0, 0);
 
-    const offsetLabel = function ([...args]) {
-        this.point = args[0].move(1, 1)
-    }
-    const twoPointsLineSegment = function([...args]){
-        this.copyFrom(G.LineSegment(args[0],args[1]))
-    }
+    const offsetLabel = function (this: Text, [e]: [EventObject<Point>]) {
+        this.point = e.target.move(2, 2);
+    };
+    const twoPointsLineSegment = function (this: LineSegment, [e1, e2]: [EventObject<Point>, EventObject<Point>]) {
+        this.copyFrom(G.LineSegment(e1.target, e2.target));
+    };
 
-    const quadraticBezier = G.QuadraticBezier().bind([pointA, pointB, pointC], function ([p1, p2, p3]) {
-        this.copyFrom(G.QuadraticBezier(p1, p2, p3))
-    })
+    const quadraticBezier = G.QuadraticBezier().bind(
+        [
+            [pointA, "any"],
+            [pointB, "any"],
+            [pointC, "any"]
+        ],
+        function ([e1, e2, e3]) {
+            this.copyFrom(G.QuadraticBezier(e1.target, e2.target, e3.target));
+        }
+    );
 
-    const labelA = G.Text("A", ...mathFont).bind([pointA], offsetLabel)
-    const labelB = G.Text("B", ...mathFont).bind([pointB], offsetLabel)
-    const labelC = G.Text("Control", ...mathFont).bind([pointC], offsetLabel)
+    const labelA = G.Text("A", mathFont).bind([[pointA, "any"]], offsetLabel);
+    const labelB = G.Text("B", mathFont).bind([[pointB, "any"]], offsetLabel);
+    const labelC = G.Text("Control", mathFont).bind([[pointC, "any"]], offsetLabel);
 
-    const segmentCA = G.LineSegment().bind([pointC,pointA],twoPointsLineSegment)
-    const segmentCB = G.LineSegment().bind([pointC,pointB],twoPointsLineSegment)
+    const segmentCA = G.LineSegment().bind(
+        [
+            [pointC, "any"],
+            [pointA, "any"]
+        ],
+        twoPointsLineSegment
+    );
+    const segmentCB = G.LineSegment().bind(
+        [
+            [pointC, "any"],
+            [pointB, "any"]
+        ],
+        twoPointsLineSegment
+    );
 
     collection
         .setDrawable("coordinateSystemOriginPoint", new Drawable(G.Point.zero(), true, colors.grey, undefined, 0))
@@ -85,7 +107,7 @@ const main = () => {
         .setTouchable("pointC", new Touchable(pointC, false, colors.black, undefined, 0))
         .setDrawable("labelC", new Drawable(labelC, false, colors.black, undefined, 0))
         .setDrawable("quadraticBezier", new Drawable(quadraticBezier, false, undefined, colors.pink, 3))
-        .setDrawable("segmentCA", new Drawable(segmentCA, false, undefined, colors.pink, 3,[10]))
-        .setDrawable("segmentCB", new Drawable(segmentCB, false, undefined, colors.pink, 3,[10]))
-}
-main()
+        .setDrawable("segmentCA", new Drawable(segmentCA, false, undefined, colors.pink, 3, [10]))
+        .setDrawable("segmentCB", new Drawable(segmentCB, false, undefined, colors.pink, 3, [10]));
+};
+main();

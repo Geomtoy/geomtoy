@@ -1,13 +1,15 @@
-import Geomtoy from "../../src/geomtoy"
-import { modifyDatGuiStyle, rendererSwitch } from "./assets/misc"
-import { colors, mathFont } from "./assets/assets"
-import Interact from "./assets/interact"
-import { Collection, Drawable, Touchable } from "./assets/GeomObjectWrapper"
-import { Renderer } from "../../src/geomtoy/adaptor/adapter-types"
+import Geomtoy from "../../src/geomtoy";
+import { modifyDatGuiStyle, rendererSwitch } from "./assets/misc";
+import { colors, mathFont } from "./assets/assets";
+import Interact from "./assets/interact";
+import { Collection, Drawable, Touchable } from "./assets/GeomObjectWrapper";
+import { Renderer } from "../../src/geomtoy/types";
 
-const canvas = document.querySelector("#canvas") as HTMLCanvasElement
-const svg = document.querySelector("#svg") as SVGSVGElement
-const description = document.querySelector("#description") as HTMLElement
+import type { EventObject, Text, Point } from "../../src/geomtoy/package";
+
+const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
+const svg = document.querySelector("#svg") as SVGSVGElement;
+const description = document.querySelector("#description") as HTMLElement;
 description.innerHTML = `
     <strong>Touchables</strong>
     <ul>
@@ -23,7 +25,7 @@ description.innerHTML = `
         <li>Point A, point B and point P will follow line AB to move.</li>
         <li>Move line AB or circle O to get the intersection points of them.</li>
     </ol>
-`
+`;
 const G = new Geomtoy(100, 100, {
     epsilon: 2 ** -32,
     graphics: {
@@ -35,39 +37,40 @@ const G = new Geomtoy(100, 100, {
             noFoldback: true
         }
     }
-})
-G.xAxisPositiveOnRight = false
-G.yAxisPositiveOnBottom = false
-G.scale = 10
+});
+G.yAxisPositiveOnBottom = false;
+G.scale = 10;
 
-const canvasRenderer = new Geomtoy.adapters.VanillaCanvas(canvas, G, { lineJoin: "round" })
-const svgRenderer = new Geomtoy.adapters.VanillaSvg(svg, G, { lineJoin: "round" })
-const collection = new Collection()
-const interactCanvas = new Interact(canvasRenderer, collection)
-const interactSvg = new Interact(svgRenderer, collection)
+const canvasRenderer = new Geomtoy.adapters.VanillaCanvas(canvas, G);
+canvasRenderer.lineCap("round");
+const svgRenderer = new Geomtoy.adapters.VanillaSvg(svg, G);
+svgRenderer.lineCap("round");
+const collection = new Collection();
+const interactCanvas = new Interact(canvasRenderer, collection);
+const interactSvg = new Interact(svgRenderer, collection);
 
-let currentRendererType: string
-const rendererList: { [key: string]: Renderer } = { canvas: canvasRenderer, svg: svgRenderer }
-const interactList: { [key: string]: Interact } = { canvas: interactCanvas, svg: interactSvg }
+let currentRendererType: string;
+const rendererList: { [key: string]: Renderer } = { canvas: canvasRenderer, svg: svgRenderer };
+const interactList: { [key: string]: Interact } = { canvas: interactCanvas, svg: interactSvg };
 
-modifyDatGuiStyle()
+modifyDatGuiStyle();
 rendererSwitch(rendererList, "svg", (type: string) => {
-    currentRendererType = type
+    currentRendererType = type;
     Object.keys(rendererList)
         .filter(t => t !== type)
         .forEach(t => {
-            interactList[t].stopDragAndDrop()
-            interactList[t].stopZoomAndPan()
-            interactList[t].stopResponsive
-        })
-    interactList[type].startDragAndDrop()
-    interactList[type].startZoomAndPan()
+            interactList[t].stopDragAndDrop();
+            interactList[t].stopZoomAndPan();
+            interactList[t].stopResponsive;
+        });
+    interactList[type].startDragAndDrop();
+    interactList[type].startZoomAndPan();
     interactList[type].startResponsive((width, height) => {
-        G.width = width
-        G.height = height
-        G.origin = [width / 2, height / 2]
-    })
-})
+        G.width = width;
+        G.height = height;
+        G.origin = [width / 2, height / 2];
+    });
+});
 
 const setting = {
     sideLines: true,
@@ -92,7 +95,7 @@ const setting = {
     eulerLine: false,
     ninePointCenterPoint: false,
     ninePointCircle: false
-}
+};
 
 // //@ts-ignore
 // const gui = new dat.GUI()
@@ -129,32 +132,45 @@ const setting = {
 // })
 
 const main = () => {
-    const pointA = G.Point(-25, -12)
-    const pointB = G.Point(35, 25)
-    const pointC = G.Point(35, -16)
+    const pointA = G.Point(-25, -12);
+    const pointB = G.Point(35, 25);
+    const pointC = G.Point(35, -16);
 
-    const offsetLabel = function ([...args]) {
-        this.point = args[0].move(2, 2)
-    }
+    const offsetLabel = function (this: Text, [e]: [EventObject<Point>]) {
+        this.point = e.target.move(2, 2);
+    };
 
-    const labelA = G.Text("A", ...mathFont).bind([pointA], offsetLabel)
-    const labelB = G.Text("B", ...mathFont).bind([pointB], offsetLabel)
-    const labelC = G.Text("C", ...mathFont).bind([pointC], offsetLabel)
+    const labelA = G.Text("A", mathFont).bind([[pointA, "any"]], offsetLabel);
+    const labelB = G.Text("B", mathFont).bind([[pointB, "any"]], offsetLabel);
+    const labelC = G.Text("C", mathFont).bind([[pointC, "any"]], offsetLabel);
 
-    const vector = G.Vector().bind([pointA], function ([p1]) {
-        this.point = p1
-    })
-    const triangle = G.Triangle().bind([pointA, pointB, pointC], function ([p1, p2, p3]) {
-        this.copyFrom(G.Triangle(p1, p2, p3))
-    })
+    const vector = G.Vector().bind([[pointA, "any"]], function ([e]) {
+        this.point1 = e.target;
+    });
+    const triangle = G.Triangle().bind(
+        [
+            [pointA, "any"],
+            [pointB, "any"],
+            [pointC, "any"]
+        ],
+        function ([e1, e2, e3]) {
+            this.copyFrom(G.Triangle(e1.target, e2.target, e3.target));
+        }
+    );
 
-    const line = G.Line().bind([pointA, pointB], function ([p1, p2]) {
-        this.copyFrom(p1.isValid() && p2.isValid() ? G.Line.fromTwoPoints(pointA, pointB) : null)
-    })
+    const line = G.Line().bind(
+        [
+            [pointA, "any"],
+            [pointB, "any"]
+        ],
+        function ([e1, e2]) {
+            this.copyFrom(G.Line.fromTwoPoints(e1.target, e2.target));
+        }
+    );
 
-    const pointP = G.Point().bind([line], function ([l]) {
-        this.copyFrom(line.isValid() ? l.getPointWhereXEqualTo(5) : null)
-    })
+    const pointP = G.Point().bind([[line, "any"]], function ([e]) {
+        this.copyFrom(e.target.isValid() ? e.target.getPointWhereXEqualTo(5) : null);
+    });
 
     collection
         .setDrawable("coordinateSystemOriginPoint", new Drawable(G.Point.zero(), true, colors.grey, undefined))
@@ -165,9 +181,9 @@ const main = () => {
         .setTouchable("pointC", new Touchable(pointC, false, colors.black, undefined))
         .setDrawable("labelC", new Drawable(labelC, false, colors.black, undefined))
         .setDrawable("triangle", new Drawable(triangle, true, colors.red + "20", colors.red, 3))
-        .setDrawable("vector", new Drawable(vector, false, undefined, colors.blue, 3))
-}
-main()
+        .setDrawable("vector", new Drawable(vector, false, undefined, colors.blue, 3));
+};
+main();
 
 // function draw(renderer) {
 

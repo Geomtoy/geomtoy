@@ -20,8 +20,13 @@ const colors = {
     blueGrey: "#607d8b",
     black: "#000000",
     white: "#FFFFF"
-}
+};
 
-const mathFont = [28, "Cambria Math, Times New Roman, math, serif", false, true] as const
+const mathFont = {
+    fontSize: 28,
+    fontFamily: "Cambria Math, Times New Roman, math, serif",
+    fontBold: false,
+    fontItalic: true
+} as const;
 
-export { colors, mathFont }
+export { colors, mathFont };

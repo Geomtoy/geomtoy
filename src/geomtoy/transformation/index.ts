@@ -67,7 +67,7 @@ class Transformation extends BaseObject {
             c: math.sin(angle),
             d: math.cos(angle)
         })
-        if (origin !== undefined) {
+        if (originPoint !== undefined) {
             const [x, y] = originPoint instanceof Point ? originPoint.coordinate : originPoint
             const preTranslation = Object.assign(Matrix.identity, { e: x, f: y })
             const postTranslation = Object.assign(Matrix.identity, { e: -x, f: -y })
@@ -85,7 +85,7 @@ class Transformation extends BaseObject {
             a: factorX,
             d: factorY
         })
-        if (origin !== undefined) {
+        if (originPoint !== undefined) {
             const [x, y] = originPoint instanceof Point ? originPoint.coordinate : originPoint
             const preTranslation = Object.assign(Matrix.identity, { e: x, f: y })
             const postTranslation = Object.assign(Matrix.identity, { e: -x, f: -y })
@@ -104,7 +104,7 @@ class Transformation extends BaseObject {
             c: math.tan(angleX)
         })
 
-        if (origin !== undefined) {
+        if (originPoint !== undefined) {
             const [x, y] = originPoint instanceof Point ? originPoint.coordinate : originPoint
             const preTranslation = Object.assign(Matrix.identity, { e: x, f: y })
             const postTranslation = Object.assign(Matrix.identity, { e: -x, f: -y })

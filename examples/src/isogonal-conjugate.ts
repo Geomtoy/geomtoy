@@ -1,12 +1,14 @@
-import Geomtoy from "../../src/geomtoy"
-import "./assets/misc"
-import { colors, mathFont } from "./assets/assets"
-import Interact from "./assets/interact"
-import { Collection, Drawable, Touchable } from "./assets/GeomObjectWrapper"
+import Geomtoy from "../../src/geomtoy";
+import "./assets/misc";
+import { colors, mathFont } from "./assets/assets";
+import Interact from "./assets/interact";
+import { Collection, Drawable, Touchable } from "./assets/GeomObjectWrapper";
 
-const canvas = document.querySelector("#canvas") as HTMLCanvasElement
-const svg = document.querySelector("#svg") as SVGSVGElement
-const description = document.querySelector("#description") as HTMLElement
+import type { EventObject, Text, Point } from "../../src/geomtoy/package";
+
+const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
+const svg = document.querySelector("#svg") as SVGSVGElement;
+const description = document.querySelector("#description") as HTMLElement;
 description.innerHTML = `
     <strong>Touchables</strong>
     <ul>
@@ -22,9 +24,9 @@ description.innerHTML = `
         <li>Point A, point B and point P will follow line AB to move.</li>
         <li>Move line AB or circle O to get the intersection points of them.</li>
     </ol>
-`
+`;
 
-svg.style.display = "none"
+svg.style.display = "none";
 
 const G = new Geomtoy(100, 100, {
     epsilon: 2 ** -32,
@@ -37,83 +39,112 @@ const G = new Geomtoy(100, 100, {
             noFoldback: false
         }
     }
-})
-G.yAxisPositiveOnBottom = false
-G.scale = 10
+});
+G.yAxisPositiveOnBottom = false;
+G.scale = 10;
 
-const renderer = new Geomtoy.adapters.VanillaCanvas(canvas, G, { lineJoin: "round" })
-const collection = new Collection()
-const interact = new Interact(renderer, collection)
+const renderer = new Geomtoy.adapters.VanillaCanvas(canvas, G);
+renderer.lineJoin("round");
+const collection = new Collection();
+const interact = new Interact(renderer, collection);
 
-interact.startDragAndDrop()
-interact.startZoomAndPan()
+interact.startDragAndDrop();
+interact.startZoomAndPan();
 interact.startResponsive((width, height) => {
-    G.width = width
-    G.height = height
-    G.origin = [width / 2, height / 2]
-})
+    G.width = width;
+    G.height = height;
+    G.origin = [width / 2, height / 2];
+});
 
 const main = () => {
-    const pointA = G.Point(-25, -12)
-    const pointB = G.Point(-20, 25)
+    const pointA = G.Point(-25, -12);
+    const pointB = G.Point(-20, 25);
 
-    const offsetLabel = function ([...args]) {
-        this.point = args[0].move(1, 1)
-    }
+    const offsetLabel = function (this: Text, [e]: [EventObject<Point>]) {
+        this.coordinate = e.target.move(1, 1).coordinate;
+    };
+
     const lineAB = G.Line()
-        .bind([pointA, pointB], function ([p1, p2]) {
-            this.copyFrom(G.Line.fromTwoPoints(p1, p2))
-        })
-        .on("*", function () {
-            pointA.mute()
-            pointB.mute()
-            const [oldX, oldY] = pointA.coordinate
-            const [newX, newY] = this.point.coordinate
-            const [dx, dy] = [newX - oldX, newY - oldY]
-            pointA.moveSelf(dx, dy)
-            pointB.moveSelf(dx, dy)
-            pointA.unmute()
-            pointB.unmute()
-        })
-    const labelA = G.Text("A", ...mathFont).bind([pointA, lineAB], offsetLabel, true, 0)
-    const labelB = G.Text("B", ...mathFont).bind([pointB, lineAB], offsetLabel, true, 0)
+        .bind(
+            [
+                [pointA, "any"],
+                [pointB, "any"]
+            ],
+            function ([e1, e2]) {
+                this.copyFrom(G.Line.fromTwoPoints(e1.target, e2.target));
+            }
+        )
+        .on(
+            "any",
+            function () {
+                const [oldX, oldY] = pointA.coordinate;
+                const [newX, newY] = this.coordinate;
+                const [dx, dy] = [newX - oldX, newY - oldY];
+                pointA.moveSelf(dx, dy);
+                pointB.moveSelf(dx, dy);
+            },
+            { hasRecursiveEffect: true }
+        );
+
+    const labelA = G.Text("A", mathFont).bind([[pointA, "any"]], offsetLabel);
+    const labelB = G.Text("B", mathFont).bind([[pointB, "any"]], offsetLabel);
 
     const pointP = G.Point()
         .data("distToPointA", 5)
         .bind(
-            [pointA, lineAB],
-            function () {
-                const angle = G.Vector(pointA, pointB).angle
-                this.copyFrom(pointA.moveAlongAngle(angle, this.data("distToPointA")))
+            [
+                [pointA, "any"],
+                [pointB, "any"]
+            ],
+            function ([e1, e2]) {
+                const angle = G.Vector(e1.target, e2.target).angle;
+                this.copyFrom(e1.target.moveAlongAngle(angle, this.data("distToPointA")));
             },
-            true,
-            0
-        )
-    const labelP = G.Text("P", ...mathFont).bind([pointP, lineAB], offsetLabel, true, 0)
+            { immediately: true, priority: 0 }
+        );
+    const labelP = G.Text("P", mathFont).bind([[pointP, "any"]], offsetLabel, { priority: 0 });
 
     pointP.on("x y", function () {
         if (Math.abs(lineAB.slope) <= 1) {
-            this.y = lineAB.getYWhereXEqualTo(this.x)
+            this.y = lineAB.getYWhereXEqualTo(this.x);
         } else {
-            this.x = lineAB.getXWhereYEqualTo(this.y)
+            this.x = lineAB.getXWhereYEqualTo(this.y);
         }
-        const d1 = G.Vector(pointA, this).angle
-        const d2 = G.Vector(pointA, pointB).angle
-        this.data("distToPointA", (G.utils.approximatelyEqualTo(d1, d2) ? 1 : -1) * this.getDistanceBetweenPoint(pointA))
-    })
+        const d1 = G.Vector(pointA, this).angle;
+        const d2 = G.Vector(pointA, pointB).angle;
+        this.data("distToPointA", (G.utils.approximatelyEqualTo(d1, d2) ? 1 : -1) * this.getDistanceBetweenPoint(pointA));
+    });
 
-    const [pointInt1, pointInt2] = [G.Point.zero(), G.Point.zero()]
-    const circle = G.Circle(20, 20, 10)
-    const pointO = G.Point().bind([[circle, "centerCoordinate"]], function ([c]) {
-        this.copyFrom(c.centerPoint)
-    })
-    const labelO = G.Text("O", ...mathFont).bind([pointO], offsetLabel, true, 0)
+    const [pointInt1, pointInt2] = [G.Point.zero(), G.Point.zero()];
+    const circle = G.Circle(20, 20, 10);
+    const pointO = G.Point().bind([[circle, "any"]], function ([e]) {
+        this.copyFrom(e.target.centerPoint);
+    });
+    const labelO = G.Text("O", mathFont).bind([[pointO, "any"]], offsetLabel, { priority: 0 });
 
-    G.Group([pointInt1, pointInt2]).bind([lineAB, circle], function ([l, c]) {
-        const ret = l.getIntersectionPointsWithCircle(c)
-        this.items[0].copyFrom(ret === null ? null : ret[0])
-        this.items[1].copyFrom(ret === null ? null : ret[1])
-    })
+    G.Group([pointInt1, pointInt2]).bind(
+        [
+            [lineAB, "any"],
+            [circle, "any"]
+        ],
+        function ([e1, e2]) {
+            const ret = e1.target.getIntersectionPointsWithCircle(e2.target);
+            this.items[0].copyFrom(ret === null ? null : ret[0]);
+            this.items[1].copyFrom(ret === null ? null : ret[1]);
+        }
+    );
+
+    const image = G.Image(
+        1,
+        1,
+        314,
+        134,
+        198,
+        315,
+        157,
+        67,
+        "https://gimg2.baidu.com/image_search/src=http%3A%2F%2Ffile02.16sucai.com%2Fd%2Ffile%2F2014%2F0829%2Fb871e1addf5f8e96f3b390ece2b2da0d.jpg&refer=http%3A%2F%2Ffile02.16sucai.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1640132601&t=f76de25d7d398d40876eda69258d897c"
+    );
 
     collection
         .setDrawable("coordinateSystemOriginPoint", new Drawable(G.Point.zero(), true, colors.grey, undefined, 0))
@@ -130,5 +161,6 @@ const main = () => {
         .setDrawable("pointInt2", new Drawable(pointInt2, false, undefined, colors.lightBlue, 2))
         .setDrawable("pointO", new Drawable(pointO, false, undefined, colors.purple, 2))
         .setDrawable("labelO", new Drawable(labelO, false, colors.purple, undefined, 0))
-}
-main()
+        .setTouchable("image", new Touchable(image, false, colors.purple, colors.purple, 3));
+};
+main();

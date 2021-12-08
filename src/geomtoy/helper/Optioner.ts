@@ -1,8 +1,24 @@
-import Geomtoy from ".."
-import { defaultOptions } from "../consts"
-import { Options, RecursivePartial } from "../types"
 import util from "../utility"
 
+import type Geomtoy from ".."
+import type { Options, RecursivePartial } from "../types"
+
+export const defaultOptions: Options = {
+    epsilon: 2 ** -32,
+    graphics: {
+        pointSize: 2,
+        lineArrow: true,
+        vectorArrow: true,
+        rayArrow: true,
+        arrow: {
+            width: 5,
+            length: 10,
+            foldback: 1,
+            noFoldback: false
+        }
+    },
+    pathSampleRatio: 100
+}
 const optionerMap: WeakMap<Geomtoy, Optioner> = new WeakMap()
 
 function applyOptionsRules(target: Options) {
@@ -11,7 +27,7 @@ function applyOptionsRules(target: Options) {
 }
 
 class Optioner {
-    public options: Options
+    options: Options
     constructor() {
         this.options = util.cloneDeep(defaultOptions)
     }

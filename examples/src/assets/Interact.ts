@@ -83,14 +83,14 @@ class Interact {
 
     private _isPointInTouchable(touchable: Touchable, x: number, y: number) {
         const path = touchable.path!
-        let ret = true
+        let ret = false
 
         if (Array.isArray(path)) {
-            ret &&= path.every(p => this.renderer.isPointInFill(p, x, y))
-            ret &&= path.every(p => this.renderer.isPointInStroke(p, touchable.strokeWidth, x, y))
+            ret ||= path.every(p => this.renderer.isPointInFill(p, x, y))
+            ret ||= path.every(p => this.renderer.isPointInStroke(p, touchable.strokeWidth, x, y))
         } else {
-            ret &&= this.renderer.isPointInFill(path, x, y)
-            ret &&= this.renderer.isPointInStroke(path, touchable.strokeWidth, x, y)
+            ret ||= this.renderer.isPointInFill(path, x, y)
+            ret ||= this.renderer.isPointInStroke(path, touchable.strokeWidth, x, y)
         }
         return ret
     }

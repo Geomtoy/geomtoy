@@ -25,7 +25,11 @@ class Touchable {
         public path?: PathLike | PathLike[]
     ) {}
     move(deltaX: number, deltaY: number) {
-        this.object.moveSelf(deltaX, deltaY)
+        if (this.object instanceof Group) {
+            this.object.items.forEach(s => s.moveSelf(deltaX, deltaY))
+        } else {
+            this.object.moveSelf(deltaX, deltaY)
+        }
     }
 }
 

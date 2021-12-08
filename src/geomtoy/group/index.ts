@@ -2,13 +2,13 @@ import { validAndWithSameOwner } from "../decorator"
 import assert from "../utility/assertion"
 import util from "../utility"
 
-import BaseObject from "../base/BaseObject"
+import EventTarget from "../base/EventTarget"
 
 import type Geomtoy from ".."
 import type Shape from "../base/Shape"
 
-class Group extends BaseObject {
-    public _items: Shape[] = []
+class Group extends EventTarget {
+    private _items: Shape[] = []
 
     constructor(owner: Geomtoy, items: Shape[])
     constructor(owner: Geomtoy)
@@ -19,6 +19,12 @@ class Group extends BaseObject {
         }
         return Object.seal(this)
     }
+    static readonly events = Object.freeze({
+        itemsReset: "reset" as const,
+        shapeAdded: "shapeAdd" as const,
+        shapeRemoved: "shapeRemove" as const,
+        shapeChanged: "shapeChange" as const
+    });
 
     get items() {
         return this._items
@@ -27,6 +33,13 @@ class Group extends BaseObject {
         assert.isShapeArray(value, "items")
         this._items = value
     }
+    addShape(shape: Shape) {
+        this._items
+    }
+    removeShape(shape: Shape) {
+        
+    }
+
     toString() {
         // prettier-ignore
         return [
@@ -36,10 +49,10 @@ class Group extends BaseObject {
         ].join("\n")
     }
     toArray() {
-        return this.items
+        return []
     }
     toObject() {
-        return { items: this.items }
+        return {}
     }
 }
 

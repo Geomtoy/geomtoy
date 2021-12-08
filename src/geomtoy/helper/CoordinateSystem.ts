@@ -11,12 +11,6 @@ class Cartesian {
     }
     toBarycentric(c1: [number, number], c2: [number, number], c3: [number, number]) {
         let { x, y } = this,
-            // d = vec2.cross(vec2.from(c3, c1), vec2.from(c3, c2)),
-            // a1 = vec2.cross(vec2.from(c3, [x, y]), vec2.from(c3, c2)),
-            // a2 = vec2.cross(vec2.from(c3, [x, y]), vec2.from(c1, c3)),
-            // lambda1 = a1 / d,
-            // lambda2 = a2 / d,
-            // lambda3 = 1 - lambda1 - lambda2
             a1 = vec2.cross(vec2.from(c2,c3),vec2.from(c2,[x,y])),
             a2 = vec2.cross(vec2.from(c3,c1),vec2.from(c3,[x,y])),
             a3 = vec2.cross(vec2.from(c1,c2),vec2.from(c1,[x,y]))

@@ -1,351 +1,356 @@
-import util from "../../utility"
-import coord from "../../utility/coordinate"
-import size from "../../utility/size"
-import assert from "../../utility/assertion"
-import { validAndWithSameOwner } from "../../decorator"
+import util from "../../utility";
+import coord from "../../utility/coordinate";
+import size from "../../utility/size";
+import assert from "../../utility/assertion";
+import { validAndWithSameOwner } from "../../decorator";
 
-import Shape from "../../base/Shape"
-import Point from "./Point"
-import Graphics from "../../graphics"
+import Shape from "../../base/Shape";
+import Point from "./Point";
+import Graphics from "../../graphics";
+import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../.."
+import type Geomtoy from "../..";
 
 class Image extends Shape {
-    private _coordinate: [number, number] = [NaN, NaN]
-    private _sourceCoordinate: [number, number] = [NaN, NaN]
-    private _size: [number, number] = [NaN, NaN]
-    private _sourceSize: [number, number] = [NaN, NaN]
-    private _imageSource = ""
+    private _x = NaN;
+    private _y = NaN;
+    private _width = NaN;
+    private _height = NaN;
+    private _sourceX = NaN;
+    private _sourceY = NaN;
+    private _sourceWidth = NaN;
+    private _sourceHeight = NaN;
+    private _imageSource = "";
 
-    constructor(owner: Geomtoy, x: number, y: number, width: number, height: number, imageSource: string)
-    constructor(owner: Geomtoy, coordinate: [number, number], width: number, height: number, imageSource: string)
-    constructor(owner: Geomtoy, point: Point, width: number, height: number, imageSource: string)
-
-    constructor(owner: Geomtoy, x: number, y: number, size: [number, number], imageSource: string)
-    constructor(owner: Geomtoy, coordinate: [number, number], size: [number, number], imageSource: string)
-    constructor(owner: Geomtoy, point: Point, size: [number, number], imageSource: string)
-
-    //prettier-ignore
-    constructor(owner: Geomtoy, x: number, y: number, width: number, height: number, sourceX: number, sourceY: number, sourceWidth: number, sourceHeight: number, imageSource: string)
-    //prettier-ignore
-    constructor(owner: Geomtoy, coordinate: [number, number], width: number, height: number, sourceCoordinate: [number, number], sourceWidth: number, sourceHeight: number, imageSource: string)
-    constructor(owner: Geomtoy, point: Point, width: number, height: number, sourcePoint: Point, sourceWidth: number, sourceHeight: number, imageSource: string)
-
-    constructor(owner: Geomtoy, x: number, y: number, size: [number, number], sourceX: number, sourceY: number, sourceSize: [number, number], imageSource: string)
-    constructor(owner: Geomtoy, coordinate: [number, number], size: [number, number], sourceCoordinate: [number, number], sourceSize: [number, number], imageSource: string)
-    constructor(owner: Geomtoy, point: Point, size: [number, number], sourcePoint: Point, sourceSize: [number, number], imageSource: string)
-
-    constructor(owner: Geomtoy, imageSource: string)
-    constructor(owner: Geomtoy)
+    constructor(owner: Geomtoy, x: number, y: number, width: number, height: number, imageSource: string);
+    constructor(owner: Geomtoy, coordinate: [number, number], width: number, height: number, imageSource: string);
+    constructor(owner: Geomtoy, point: Point, width: number, height: number, imageSource: string);
+    constructor(owner: Geomtoy, x: number, y: number, size: [number, number], imageSource: string);
+    constructor(owner: Geomtoy, coordinate: [number, number], size: [number, number], imageSource: string);
+    constructor(owner: Geomtoy, point: Point, size: [number, number], imageSource: string);
+    constructor(owner: Geomtoy, x: number, y: number, width: number, height: number, sourceX: number, sourceY: number, sourceWidth: number, sourceHeight: number, imageSource: string);
+    constructor(owner: Geomtoy, coordinate: [number, number], width: number, height: number, sourceCoordinate: [number, number], sourceWidth: number, sourceHeight: number, imageSource: string);
+    constructor(owner: Geomtoy, point: Point, width: number, height: number, sourcePoint: Point, sourceWidth: number, sourceHeight: number, imageSource: string);
+    constructor(owner: Geomtoy, x: number, y: number, size: [number, number], sourceX: number, sourceY: number, sourceSize: [number, number], imageSource: string);
+    constructor(owner: Geomtoy, coordinate: [number, number], size: [number, number], sourceCoordinate: [number, number], sourceSize: [number, number], imageSource: string);
+    constructor(owner: Geomtoy, point: Point, size: [number, number], sourcePoint: Point, sourceSize: [number, number], imageSource: string);
+    constructor(owner: Geomtoy, imageSource: string);
+    constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any, a7?: any, a8?: any, a9?: any) {
-        super(o)
+        super(o);
         if (util.isNumber(a1)) {
             if (util.isNumber(a3)) {
                 if (util.isString(a5)) {
-                    Object.assign(this, { x: a1, y: a2, width: a3, height: a4, imageSource: a5 })
+                    Object.assign(this, { x: a1, y: a2, width: a3, height: a4, imageSource: a5 });
                 }
                 if (util.isNumber(a5)) {
-                    Object.assign(this, { x: a1, y: a2, width: a3, height: a4, sourceX: a5, sourceY: a6, sourceWidth: a7, sourceHeight: a8, imageSource: a9 })
+                    Object.assign(this, { x: a1, y: a2, width: a3, height: a4, sourceX: a5, sourceY: a6, sourceWidth: a7, sourceHeight: a8, imageSource: a9 });
                 }
             }
             if (util.isArray(a3)) {
                 if (util.isString(a4)) {
-                    Object.assign(this, { x: a1, y: a2, size: a3, imageSource: a4 })
+                    Object.assign(this, { x: a1, y: a2, size: a3, imageSource: a4 });
                 }
                 if (util.isNumber(a4)) {
-                    Object.assign(this, { x: a1, y: a2, size: a3, sourceX: a4, sourceY: a5, sourceSize: a6, imageSource: a7 })
+                    Object.assign(this, { x: a1, y: a2, size: a3, sourceX: a4, sourceY: a5, sourceSize: a6, imageSource: a7 });
                 }
             }
         }
         if (util.isArray(a1)) {
             if (util.isNumber(a2)) {
                 if (util.isString(a4)) {
-                    Object.assign(this, { coordinate: a1, width: a2, height: a3, imageSource: a4 })
+                    Object.assign(this, { coordinate: a1, width: a2, height: a3, imageSource: a4 });
                 }
                 if (util.isArray(a4)) {
-                    Object.assign(this, { coordinate: a1, width: a2, height: a3, sourceCoordinate: a4, sourceWidth: a5, sourceHeight: a6, imageSource: a7 })
+                    Object.assign(this, { coordinate: a1, width: a2, height: a3, sourceCoordinate: a4, sourceWidth: a5, sourceHeight: a6, imageSource: a7 });
                 }
             }
             if (util.isArray(a2)) {
                 if (util.isString(a3)) {
-                    Object.assign(this, { coordinate: a1, size: a2, imageSource: a3 })
+                    Object.assign(this, { coordinate: a1, size: a2, imageSource: a3 });
                 }
                 if (util.isArray(a3)) {
-                    Object.assign(this, { coordinate: a1, size: a2, sourceCoordinate: a3, sourceSize: a4, imageSource: a5 })
+                    Object.assign(this, { coordinate: a1, size: a2, sourceCoordinate: a3, sourceSize: a4, imageSource: a5 });
                 }
             }
         }
         if (a1 instanceof Point) {
             if (util.isNumber(a2)) {
                 if (util.isString(a4)) {
-                    Object.assign(this, { point: a1, width: a2, height: a3, imageSource: a4 })
+                    Object.assign(this, { point: a1, width: a2, height: a3, imageSource: a4 });
                 }
                 if (a4 instanceof Point) {
-                    Object.assign(this, { point: a1, width: a2, height: a3, sourcePoint: a4, sourceWidth: a5, sourceHeight: a6, imageSource: a7 })
+                    Object.assign(this, { point: a1, width: a2, height: a3, sourcePoint: a4, sourceWidth: a5, sourceHeight: a6, imageSource: a7 });
                 }
             }
             if (util.isArray(a2)) {
                 if (util.isString(a3)) {
-                    Object.assign(this, { point: a1, size: a2, imageSource: a3 })
+                    Object.assign(this, { point: a1, size: a2, imageSource: a3 });
                 }
                 if (a3 instanceof Point) {
-                    Object.assign(this, { point: a1, size: a2, sourcePoint: a3, sourceSize: a4, imageSource: a5 })
+                    Object.assign(this, { point: a1, size: a2, sourcePoint: a3, sourceSize: a4, imageSource: a5 });
                 }
             }
         }
         if (util.isString(a1)) {
             Object.assign(this, {
                 imageSource: a1
-            })
+            });
         }
-        return Object.seal(this)
+        return Object.seal(this);
     }
 
     static readonly events = Object.freeze({
-        xChanged: "xChanged",
-        yChanged: "yChanged",
-        sourceXChanged: "sourceXChanged",
-        sourceYChanged: "sourceYChanged",
-        widthChanged: "widthChanged",
-        heightChanged: "heightChanged",
-        sourceWidthChanged: "sourceWidthChanged",
-        sourceHeightChanged: "sourceHeightChanged",
-        imageSourceChanged: "imageSourceChanged"
-    })
+        xChanged: "x" as const,
+        yChanged: "y" as const,
+        sourceXChanged: "sourceX" as const,
+        sourceYChanged: "sourceY" as const,
+        widthChanged: "width" as const,
+        heightChanged: "height" as const,
+        sourceWidthChanged: "sourceWidth" as const,
+        sourceHeightChanged: "sourceHeight" as const,
+        imageSourceChanged: "imageSource" as const
+    });
 
     private _setX(value: number) {
-        this.willTrigger_(coord.x(this._coordinate), value, [Image.events.xChanged])
-        coord.x(this._coordinate, value)
+        if (!util.isEqualTo(this._x, value)) this.trigger_(EventObject.simple(this, Image.events.xChanged));
+        this._x = value;
     }
     private _setY(value: number) {
-        this.willTrigger_(coord.y(this._coordinate), value, [Image.events.yChanged])
-        coord.y(this._coordinate, value)
+        if (!util.isEqualTo(this._y, value)) this.trigger_(EventObject.simple(this, Image.events.yChanged));
+        this._y = value;
     }
     private _setWidth(value: number) {
-        this.willTrigger_(size.width(this._size), value, [Image.events.widthChanged])
-        size.width(this._size, value)
+        if (!util.isEqualTo(this._width, value)) this.trigger_(EventObject.simple(this, Image.events.widthChanged));
+        this._width = value;
     }
     private _setHeight(value: number) {
-        this.willTrigger_(size.height(this._size), value, [Image.events.heightChanged])
-        size.height(this._size, value)
+        if (!util.isEqualTo(this._height, value)) this.trigger_(EventObject.simple(this, Image.events.heightChanged));
+        this._height = value;
     }
-
     private _setSourceX(value: number) {
-        this.willTrigger_(coord.x(this._sourceCoordinate), value, [Image.events.sourceXChanged])
-        coord.x(this._sourceCoordinate, value)
+        if (!util.isEqualTo(this._sourceX, value)) this.trigger_(EventObject.simple(this, Image.events.sourceXChanged));
+        this._sourceX = value;
     }
     private _setSourceY(value: number) {
-        this.willTrigger_(coord.y(this._sourceCoordinate), value, [Image.events.sourceYChanged])
-        coord.y(this._sourceCoordinate, value)
+        if (!util.isEqualTo(this._sourceY, value)) this.trigger_(EventObject.simple(this, Image.events.sourceYChanged));
+        this._sourceY = value;
     }
     private _setSourceWidth(value: number) {
-        this.willTrigger_(size.width(this._sourceSize), value, [Image.events.sourceWidthChanged])
-        size.width(this._sourceSize, value)
+        if (!util.isEqualTo(this._sourceWidth, value)) this.trigger_(EventObject.simple(this, Image.events.sourceWidthChanged));
+        this._sourceWidth = value;
     }
     private _setSourceHeight(value: number) {
-        this.willTrigger_(size.height(this._sourceSize), value, [Image.events.sourceHeightChanged])
-        size.height(this._sourceSize, value)
+        if (!util.isEqualTo(this._sourceHeight, value)) this.trigger_(EventObject.simple(this, Image.events.sourceHeightChanged));
+        this._sourceHeight = value;
     }
-
     private _setImageSource(value: string) {
-        this.willTrigger_(this._imageSource, value, [Image.events.imageSourceChanged])
-        this._imageSource = value
+        if (!util.isEqualTo(this._imageSource, value)) this.trigger_(EventObject.simple(this, Image.events.imageSourceChanged));
+        this._imageSource = value;
     }
 
     get x() {
-        return coord.x(this._coordinate)
+        return this._x;
     }
     set x(value) {
-        assert.isRealNumber(value, "x")
-        this._setX(value)
+        assert.isRealNumber(value, "x");
+        this._setX(value);
     }
     get y() {
-        return coord.y(this._coordinate)
+        return this._y;
     }
     set y(value) {
-        assert.isRealNumber(value, "y")
-        this._setY(value)
+        assert.isRealNumber(value, "y");
+        this._setY(value);
     }
     get coordinate() {
-        return coord.clone(this._coordinate)
+        return [this._x, this._y] as [number, number];
     }
     set coordinate(value) {
-        assert.isCoordinate(value, "coordinate")
-        this._setX(coord.x(value))
-        this._setY(coord.y(value))
+        assert.isCoordinate(value, "coordinate");
+        this._setX(coord.x(value));
+        this._setY(coord.y(value));
     }
     get point() {
-        return new Point(this.owner, this._coordinate)
+        return new Point(this.owner, this._x, this._y);
     }
     set point(value) {
-        assert.isPoint(value, "point")
-        this._setX(value.x)
-        this._setY(value.y)
+        assert.isPoint(value, "point");
+        this._setX(value.x);
+        this._setY(value.y);
     }
     get width() {
-        return size.width(this._size)
+        return this._width;
     }
     set width(value) {
-        assert.isPositiveNumber(value, "width")
-        this._setWidth(value)
+        assert.isPositiveNumber(value, "width");
+        this._setWidth(value);
     }
     get height() {
-        return size.height(this._size)
+        return this._height;
     }
     set height(value) {
-        assert.isPositiveNumber(value, "height")
-        this._setHeight(value)
+        assert.isPositiveNumber(value, "height");
+        this._setHeight(value);
     }
     get size() {
-        return size.clone(this._size)
+        return [this._width, this._height] as [number, number];
     }
     set size(value) {
-        assert.isSize(value, "size")
-        this._setWidth(size.width(value))
-        this._setHeight(size.height(value))
+        assert.isSize(value, "size");
+        this._setWidth(size.width(value));
+        this._setHeight(size.height(value));
     }
 
     get sourceX() {
-        return coord.x(this._sourceCoordinate)
+        return this._sourceX;
     }
     set sourceX(value) {
-        assert.isRealNumber(value, "sourceX")
-        this._setSourceX(value)
+        assert.isRealNumber(value, "sourceX");
+        this._setSourceX(value);
     }
     get sourceY() {
-        return coord.y(this._sourceCoordinate)
+        return this._sourceY;
     }
     set sourceY(value) {
-        assert.isRealNumber(value, "sourceY")
-        this._setSourceY(value)
+        assert.isRealNumber(value, "sourceY");
+        this._setSourceY(value);
     }
     get sourceCoordinate() {
-        return coord.clone(this._sourceCoordinate)
+        return [this._sourceX, this._sourceY] as [number, number];
     }
     set sourceCoordinate(value) {
-        assert.isCoordinate(value, "sourceCoordinate")
-        this._setSourceX(coord.x(value))
-        this._setSourceY(coord.y(value))
+        assert.isCoordinate(value, "sourceCoordinate");
+        this._setSourceX(coord.x(value));
+        this._setSourceY(coord.y(value));
     }
     get sourcePoint() {
-        return new Point(this.owner, this._sourceCoordinate)
+        return new Point(this.owner, this._sourceX, this._sourceY);
     }
     set sourcePoint(value) {
-        assert.isPoint(value, "sourcePoint")
-        this._setSourceX(value.x)
-        this._setSourceY(value.y)
+        assert.isPoint(value, "sourcePoint");
+        this._setSourceX(value.x);
+        this._setSourceY(value.y);
     }
     get sourceWidth() {
-        return size.width(this._sourceSize)
+        return this._sourceWidth;
     }
     set sourceWidth(value) {
-        assert.isPositiveNumber(value, "sourceWidth")
-        this._setSourceWidth(value)
+        assert.isPositiveNumber(value, "sourceWidth");
+        this._setSourceWidth(value);
     }
     get sourceHeight() {
-        return size.height(this._sourceSize)
+        return this._sourceHeight;
     }
     set sourceHeight(value) {
-        assert.isPositiveNumber(value, "sourceHeight")
-        this._setSourceHeight(value)
+        assert.isPositiveNumber(value, "sourceHeight");
+        this._setSourceHeight(value);
     }
     get sourceSize() {
-        return size.clone(this._sourceSize)
+        return [this._sourceWidth, this._sourceHeight] as [number, number];
     }
     set sourceSize(value) {
-        assert.isSize(value, "sourceSize")
-        this._setSourceWidth(size.width(value))
-        this._setSourceHeight(size.height(value))
+        assert.isSize(value, "sourceSize");
+        this._setSourceWidth(size.width(value));
+        this._setSourceHeight(size.height(value));
     }
-
     get imageSource() {
-        return this._imageSource
+        return this._imageSource;
     }
     set imageSource(value) {
-        assert.isString(value, "imageSource")
-        this._setImageSource(value)
+        assert.isString(value, "imageSource");
+        this._setImageSource(value);
     }
 
     isValid() {
-        if (!coord.isValid(this._coordinate)) return false
-        if (!size.isValid(this._size)) return false
-        if (this._imageSource === "") return false
-        return true
+        const { coordinate: c, size: s } = this;
+        if (!coord.isValid(c)) return false;
+        if (!size.isValid(s)) return false;
+        if (this._imageSource === "") return false;
+        return true;
     }
     move(deltaX: number, deltaY: number) {
-        return this.clone().moveSelf(deltaX, deltaY)
+        return this.clone().moveSelf(deltaX, deltaY);
     }
     /**
      * Move text `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.coordinate = coord.move(this.coordinate, deltaX, deltaY)
-        return this
+        this.coordinate = coord.move(this.coordinate, deltaX, deltaY);
+        return this;
     }
     /**
      * Move text `this` with `distance` along `angle` to get new text.
      */
     moveAlongAngle(angle: number, distance: number) {
-        return this.clone().moveAlongAngleSelf(angle, distance)
+        return this.clone().moveAlongAngleSelf(angle, distance);
     }
     /**
      * Move text `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.coordinate = coord.moveAlongAngle(this.coordinate, angle, distance)
-        return this
+        this.coordinate = coord.moveAlongAngle(this.coordinate, angle, distance);
+        return this;
     }
 
     getGraphics() {
-        const g = new Graphics()
-        if (!this.isValid()) return g
+        const g = new Graphics();
+        if (!this.isValid()) return g;
 
-        const { x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight, imageSource } = this
-        g.image(x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight, imageSource)
-        return g
+        const { x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight, imageSource } = this;
+        g.image(x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight, imageSource);
+        return g;
     }
     clone() {
-        return new Image(this.owner, this.coordinate, this.size, this.sourceCoordinate, this.sourceSize, this.imageSource)
+        return new Image(this.owner, this.x, this.y, this.width, this.height, this.sourceX, this.sourceY, this.sourceWidth, this.sourceHeight, this.imageSource);
     }
-    copyFrom(image: Image | null) {
-        if (image === null) image = new Image(this.owner)
-        this._setX(coord.x(image._coordinate))
-        this._setY(coord.y(image._coordinate))
-        this._setWidth(size.width(image._size))
-        this._setHeight(size.height(image._size))
-        this._setSourceX(coord.x(image._sourceCoordinate))
-        this._setSourceY(coord.y(image._sourceCoordinate))
-        this._setSourceWidth(size.width(image._sourceSize))
-        this._setSourceHeight(size.height(image._sourceSize))
-        this._setImageSource(image._imageSource)
-        return this
+    copyFrom(shape: Image | null) {
+        if (shape === null) shape = new Image(this.owner);
+        this._setX(shape._x);
+        this._setY(shape._y);
+        this._setWidth(shape._width);
+        this._setHeight(shape._height);
+        this._setSourceX(shape._sourceX);
+        this._setSourceY(shape._sourceY);
+        this._setSourceWidth(shape._sourceWidth);
+        this._setSourceHeight(shape._sourceHeight);
+        this._setImageSource(shape._imageSource);
+        return this;
     }
     toString() {
         return [
             `${this.name}(${this.uuid}){`,
-            `\tcoordinate: ${this.coordinate.join(", ")}`,
-            `\tsize: ${this.size.join(", ")}`,
-            `\tsourceCoordinate: ${this.sourceCoordinate.join(", ")}`,
-            `\tsourceSize: ${this.sourceSize.join(", ")}`,
+            `\tx: ${this.x}`,
+            `\ty: ${this.y}`,
+            `\twidth: ${this.width}`,
+            `\theight: ${this.height}`,
+            `\tsourceX: ${this.sourceX}`,
+            `\tsourceY: ${this.sourceY}`,
+            `\tsourceWidth: ${this.sourceWidth}`,
+            `\tsourceHeight: ${this.sourceHeight}`,
             `\timageSource: ${this.imageSource}`,
             `} owned by Geomtoy(${this.owner.uuid})`
-        ].join("\n")
+        ].join("\n");
     }
     toArray() {
-        return [this.coordinate, this.size, this.sourceCoordinate, this.sourceSize, this.imageSource]
+        return [this.x, this.y, this.width, this.height, this.sourceX, this.sourceY, this.sourceWidth, this._sourceHeight, this.imageSource];
     }
     toObject() {
         return {
-            coordinate: this.coordinate,
-            size: this.size,
-            sourceCoordinate: this.sourceCoordinate,
-            sourceSize: this.sourceSize,
+            x: this.x,
+            y: this.y,
+            width: this.width,
+            height: this.height,
+            sourceX: this.sourceX,
+            sourceY: this.sourceY,
+            sourceWidth: this.sourceWidth,
+            sourceHeight: this.sourceHeight,
             imageSource: this.imageSource
-        }
+        };
     }
 }
-validAndWithSameOwner(Image)
+validAndWithSameOwner(Image);
 /**
  * @category Shape
  */
-export default Image
+export default Image;

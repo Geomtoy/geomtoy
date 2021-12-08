@@ -1,12 +1,11 @@
-import LineSegment from "../LineSegment";
-import { OwnerCarrier } from "../types";
+import LineSegment from "../shapes/basic/LineSegment";
 
-class Overlap{
-    static verb = "Overlaps" as const
+import type { OwnerCarrier } from "../types";
 
-    static lineSegmentOverlapLineSegment(this:OwnerCarrier, lineSegment:LineSegment,otherLineSegment:LineSegment){
-        
-    }
+class Overlap {
+    static verb = "Overlaps" as const;
+
+    static lineSegmentOverlapLineSegment(this: OwnerCarrier, lineSegment: LineSegment, otherLineSegment: LineSegment) {}
 }
 
-export default Overlap
+export default Overlap;

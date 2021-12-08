@@ -1,24 +1,25 @@
-import type Geomtoy from ".."
-import type BaseObject from "../base/BaseObject"
-import type EventTarget from "../base/EventTarget"
-import type Shape from "../base/Shape"
-import type Relationship from "../relationship"
+import type Geomtoy from "..";
+import type EventTarget from "../base/EventTarget";
+import type Shape from "../base/Shape";
+import type Relationship from "../relationship";
 
-import type Line from "../shapes/basic/Line"
-import type Point from "../shapes/basic/Point"
-import type Ray from "../shapes/basic/Ray"
-import type LineSegment from "../shapes/basic/LineSegment"
-import type Transformation from "../transformation"
+import type Line from "../shapes/basic/Line";
+import type Point from "../shapes/basic/Point";
+import type Ray from "../shapes/basic/Ray";
+import type LineSegment from "../shapes/basic/LineSegment";
+import type Transformation from "../transformation";
+import { shapes, objects } from "..";
+import type EventObject from "../event/EventObject";
 
 //#region Common
-export type Tail<A> = A extends [infer H, ...infer T] ? T : never
-
 export type BaseObjectCollection = {
-    [K in keyof typeof BaseObject.objects]: typeof BaseObject.objects[K]
-}
+    [K in keyof typeof objects]: typeof objects[K];
+};
 export type ShapeCollection = {
-    [K in keyof typeof Shape.shapes]: typeof Shape.shapes[K]
-}
+    [K in keyof typeof shapes]: typeof shapes[K];
+};
+
+export type Tail<A> = A extends [infer H, ...infer T] ? T : never;
 //prettier-ignore
 export type ConstructorOverloads<T> =
     T extends {
@@ -292,148 +293,159 @@ export type ConstructorOverloads<T> =
 
 //#region Geomtoy
 export type StaticMethodsMapper<T extends { new (...args: any[]): any }> = {
-    [K in keyof T as T[K] extends (...args: any[]) => any ? K : never]: T[K] extends (...args: any[]) => any ? T[K] : never
-}
-export type OwnerCarrier = { owner: Geomtoy }
+    [K in keyof T as T[K] extends (...args: any[]) => any ? K : never]: T[K] extends (...args: any[]) => any ? T[K] : never;
+};
+export type OwnerCarrier = { owner: Geomtoy };
 
 export type ConstructorTailer<T extends { new (...args: any[]): any }> = {
-    (...args: Tail<ConstructorParameters<ConstructorOverloads<T>[number]>>): InstanceType<T>
-}
-export type Factory<T extends { new (...args: any[]): any }> = ConstructorTailer<T> & StaticMethodsMapper<T> & OwnerCarrier
+    (...args: Tail<ConstructorParameters<ConstructorOverloads<T>[number]>>): InstanceType<T>;
+};
+export type Factory<T extends { new (...args: any[]): any }> = ConstructorTailer<T> & StaticMethodsMapper<T> & OwnerCarrier;
 
 // export
 export type RecursivePartial<T> = {
-    [K in keyof T]?: T[K] extends (infer U)[] ? RecursivePartial<U>[] : T[K] extends object ? RecursivePartial<T[K]> : T[K]
-}
+    [K in keyof T]?: T[K] extends (infer U)[] ? RecursivePartial<U>[] : T[K] extends object ? RecursivePartial<T[K]> : T[K];
+};
 
-export type BaseObjectCollectionFactory = {
-    [K in keyof BaseObjectCollection]: Factory<BaseObjectCollection[K]>
-}
+export type BaseObjectFactoryCollection = {
+    [K in keyof BaseObjectCollection]: Factory<BaseObjectCollection[K]>;
+};
 
 // Geomtoy global options
 export type Options = {
-    epsilon: number
+    epsilon: number;
     graphics: {
-        pointSize: number
-        lineArrow: boolean
-        vectorArrow: boolean
-        rayArrow: boolean
+        pointSize: number;
+        lineArrow: boolean;
+        vectorArrow: boolean;
+        rayArrow: boolean;
         arrow: {
-            width: number
-            length: number
-            foldback: number
-            noFoldback: boolean
-        }
-    }
-    pathSampleRatio: number
-}
+            width: number;
+            length: number;
+            foldback: number;
+            noFoldback: boolean;
+        };
+    };
+    pathSampleRatio: number;
+};
 //#endregion
 
 //#region Shape
-export type Direction = "positive" | "negative"
+export type Direction = "positive" | "negative";
 export interface ClosedShape extends Shape {
-    getLength(): number
-    getArea(): number
-    getWindingDirection(): Direction
-    setWindingDirection?(direction: Direction): void
-    isPointOn(point: [number, number] | Point): boolean
-    isPointOutside(point: [number, number] | Point): boolean
-    isPointInside(point: [number, number] | Point): boolean
+    getLength(): number;
+    getArea(): number;
+    getWindingDirection(): Direction;
+    setWindingDirection?(direction: Direction): void;
+    isPointOn(point: [number, number] | Point): boolean;
+    isPointOutside(point: [number, number] | Point): boolean;
+    isPointInside(point: [number, number] | Point): boolean;
 }
 export interface FiniteOpenShape {
-    getLength(): number
-    isPointOn(point: [number, number] | Point): boolean
+    getLength(): number;
+    isPointOn(point: [number, number] | Point): boolean;
 }
 export interface InfiniteOpenShape {
-    isPointOn(point: [number, number] | Point): boolean
+    isPointOn(point: [number, number] | Point): boolean;
 }
 
 export interface RotationFeaturedShape {
-    get rotation()
-    set rotation(value: number)
+    get rotation();
+    set rotation(value: number);
 }
 
 export interface TransformableShape {
-    apply(transformation: Transformation): Shape
+    apply(transformation: Transformation): Shape;
 }
 //#endregion
 
 //#region Data
 export type PointLineData = {
-    point: Point
-    line: Line
-}
+    point: Point;
+    line: Line;
+};
 export type PointsLineData = {
-    points: Point[]
-    line: Line
-}
+    points: Point[];
+    line: Line;
+};
 export type AnglePointLineData = {
-    angle: number
-    point: Point
-    line: Line
-}
+    angle: number;
+    point: Point;
+    line: Line;
+};
 export type LineSegmentLineData = {
-    lineSegment: LineSegment
-    line: Line
-}
+    lineSegment: LineSegment;
+    line: Line;
+};
 export type LineSegmentRayLineData = {
-    lineSegment: LineSegment
-    ray: Ray
-    line: Line
-}
+    lineSegment: LineSegment;
+    ray: Ray;
+    line: Line;
+};
 //#endregion
 
 //#region Event
-export type EventTargetEventNamesPair = EventTarget | [EventTarget, string]
+// export type EventTargetEventNamesPair<T extends EventTarget> = T | [T, string];
 
-export type EventTargetFromPair<T extends [...any[]]> = {
-    [K in keyof T]: T[K] extends [infer R, string] ? R : T[K]
-}
+// export type EventObjectFromEventTargetEventNamesPair<T extends EventTargetEventNamesPair<U>[], U extends EventTarget> = {
+//     [K in keyof T & number]:
+//         T[K] extends U
+//         ? EventObject<U>
+//         : T[K] extends [U, string]
+//         ? EventObject<T[K][0]>
+//         : never;
+// };
 
-export const enum EventHandlerType {
-    On,
-    Bind
-}
+export type EventTargetEventsPair = [EventTarget, string];
 
-export type EventHandler = OnEventHandler | BindEventHandler
+export type EventObjectFromPair<T extends EventTargetEventsPair[]> = {
+    [K in keyof T]: T[K] extends EventTargetEventsPair ? EventObject<T[K][0]> : never;
+};
 
-export type OnEventHandler = {
-    callback: (e: SimpleEventObject | CollectionEventObject) => void
-    context: EventTarget
-    priority: number
-    type: EventHandlerType.On
-}
-export type BindEventHandler = {
-    callback: (e: (EmptyEventObject | SimpleEventObject | CollectionEventObject)[]) => void
-    context: EventTarget
-    relatedEventTargets: EventTarget[]
-    priority: number
-    type: EventHandlerType.Bind
-}
+// export const enum EventHandlerType {
+//     On,
+//     Bind
+// }
 
-export const enum EventObjectType {
-    Empty,
-    Simple,
-    Collection
-}
-export type EventObject = EmptyEventObject | SimpleEventObject | CollectionEventObject
+// export type EventHandler = OnEventHandler | BindEventHandler
 
-export type EmptyEventObject = {
-    target: EventTarget
-    type: EventObjectType.Empty
-}
-export type SimpleEventObject = {
-    target: EventTarget
-    type: EventObjectType.Simple
-    eventName: string
-}
-export type CollectionEventObject = {
-    target: EventTarget
-    type: EventObjectType.Collection
-    eventName: string
-    uuid: string
-    index: number
-}
+// export type OnEventHandler = {
+//     callback: (e: SimpleEventObject | CollectionEventObject) => void
+//     context: EventTarget
+//     priority: number
+//     type: EventHandlerType.On
+// }
+// export type BindEventHandler = {
+//     callback: (e: (EmptyEventObject | SimpleEventObject | CollectionEventObject)[]) => void
+//     context: EventTarget
+//     relatedEventTargets: EventTarget[]
+//     priority: number
+//     type: EventHandlerType.Bind
+// }
+
+// export const enum EventObjectType {
+//     Empty,
+//     Simple,
+//     Collection
+// }
+// export type EventObject = EmptyEventObject | SimpleEventObject | CollectionEventObject
+
+// export type EmptyEventObject = {
+//     target: EventTarget
+//     type: EventObjectType.Empty
+// }
+// export type SimpleEventObject = {
+//     target: EventTarget
+//     type: EventObjectType.Simple
+//     eventName: string
+// }
+// export type CollectionEventObject = {
+//     target: EventTarget
+//     type: EventObjectType.Collection
+//     eventName: string
+//     uuid: string
+//     index: number
+// }
 //#endregion
 
 //#region Graphics
@@ -456,7 +468,7 @@ export type GraphicsCommand =
     | GraphicsArcToCommand
     | GraphicsCloseCommand
     | GraphicsTextCommand
-    | GraphicsImageCommand
+    | GraphicsImageCommand;
 
 export type GraphicsGeometryCommand =
     | GraphicsMoveToCommand
@@ -464,86 +476,88 @@ export type GraphicsGeometryCommand =
     | GraphicsBezierCurveToCommand
     | GraphicsQuadraticBezierCurveToCommand
     | GraphicsArcToCommand
-    | GraphicsCloseCommand
+    | GraphicsCloseCommand;
 
 export type GraphicsImageCommand = {
-    type: GraphicsCommandType.Image
-    x: number
-    y: number
-    width: number
-    height: number
-    sourceX: number
-    sourceY: number
-    sourceWidth: number
-    sourceHeight: number
-    imageSource: string
-}
+    type: GraphicsCommandType.Image;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    sourceX: number;
+    sourceY: number;
+    sourceWidth: number;
+    sourceHeight: number;
+    imageSource: string;
+};
 export type GraphicsTextCommand = {
-    type: GraphicsCommandType.Text
-    x: number
-    y: number
-    text: string
-    fontSize: number
-    fontFamily: string
-    fontBold: boolean
-    fontItalic: boolean
-}
+    type: GraphicsCommandType.Text;
+    x: number;
+    y: number;
+    text: string;
+    fontSize: number;
+    fontFamily: string;
+    fontBold: boolean;
+    fontItalic: boolean;
+};
 
 export type GraphicsMoveToCommand = {
-    type: GraphicsCommandType.MoveTo
-    x: number
-    y: number
-}
+    type: GraphicsCommandType.MoveTo;
+    x: number;
+    y: number;
+};
 export type GraphicsLineToCommand = {
-    type: GraphicsCommandType.LineTo
-    x: number
-    y: number
-}
+    type: GraphicsCommandType.LineTo;
+    x: number;
+    y: number;
+};
 export type GraphicsBezierCurveToCommand = {
-    type: GraphicsCommandType.BezierCurveTo
-    x: number
-    y: number
-    controlPoint1X: number
-    controlPoint1Y: number
-    controlPoint2X: number
-    controlPoint2Y: number
-}
+    type: GraphicsCommandType.BezierCurveTo;
+    x: number;
+    y: number;
+    controlPoint1X: number;
+    controlPoint1Y: number;
+    controlPoint2X: number;
+    controlPoint2Y: number;
+};
 export type GraphicsQuadraticBezierCurveToCommand = {
-    type: GraphicsCommandType.QuadraticBezierCurveTo
-    x: number
-    y: number
-    controlPointX: number
-    controlPointY: number
-}
+    type: GraphicsCommandType.QuadraticBezierCurveTo;
+    x: number;
+    y: number;
+    controlPointX: number;
+    controlPointY: number;
+};
 export type GraphicsArcToCommand = {
-    type: GraphicsCommandType.ArcTo
-    x: number
-    y: number
-    centerX: number
-    centerY: number
-    radiusX: number
-    radiusY: number
-    xAxisRotation: number
-    startAngle: number
-    endAngle: number
-    largeArc: boolean
-    positive: boolean
-}
+    type: GraphicsCommandType.ArcTo;
+    x: number;
+    y: number;
+    centerX: number;
+    centerY: number;
+    radiusX: number;
+    radiusY: number;
+    xAxisRotation: number;
+    startAngle: number;
+    endAngle: number;
+    largeArc: boolean;
+    positive: boolean;
+};
 export type GraphicsCloseCommand = {
-    type: GraphicsCommandType.Close
-}
+    type: GraphicsCommandType.Close;
+};
 
 //#endregion
 
 //#region Font
 export type FontConfig = {
-    fontSize: number
-    fontFamily: string
-    fontBold: boolean
-    fontItalic: boolean
-}
+    fontSize: number;
+    fontFamily: string;
+    fontBold: boolean;
+    fontItalic: boolean;
+};
 //#region Path
-export type PathCommand = PathMoveToCommand | PathLineToCommand | PathBezierCurveToCommand | PathQuadraticBezierCurveToCommand | PathArcToCommand
+export type PathCommand = PathMoveToCommand | PathLineToCommand | PathBezierCurveToCommand | PathQuadraticBezierCurveToCommand | PathArcToCommand;
+
+export type PathCommandWithUuid = PathCommand & { uuid: string };
 
 export const enum PathCommandType {
     MoveTo = "M",
@@ -554,59 +568,65 @@ export const enum PathCommandType {
 }
 
 export type PathMoveToCommand = {
-    type: PathCommandType.MoveTo
-    coordinate: [number, number]
-    uuid: string
-}
+    type: PathCommandType.MoveTo;
+    x: number;
+    y: number;
+};
 export type PathLineToCommand = {
-    type: PathCommandType.LineTo
-    coordinate: [number, number]
-    uuid: string
-}
+    type: PathCommandType.LineTo;
+    x: number;
+    y: number;
+};
 export type PathBezierCurveToCommand = {
-    type: PathCommandType.BezierCurveTo
-    controlPoint1Coordinate: [number, number]
-    controlPoint2Coordinate: [number, number]
-    coordinate: [number, number]
-    uuid: string
-}
+    type: PathCommandType.BezierCurveTo;
+    x: number;
+    y: number;
+    controlPoint1X: number;
+    controlPoint1Y: number;
+    controlPoint2X: number;
+    controlPoint2Y: number;
+};
 export type PathQuadraticBezierCurveToCommand = {
-    type: PathCommandType.QuadraticBezierCurveTo
-    controlPointCoordinate: [number, number]
-    coordinate: [number, number]
-    uuid: string
-}
+    type: PathCommandType.QuadraticBezierCurveTo;
+    x: number;
+    y: number;
+    controlPointX: number;
+    controlPointY: number;
+};
 export type PathArcToCommand = {
-    type: PathCommandType.ArcTo
-    radiusX: number
-    radiusY: number
-    xAxisRotation: number
-    largeArc: boolean
-    positive: boolean
-    coordinate: [number, number]
-    uuid: string
-}
+    type: PathCommandType.ArcTo;
+    x: number;
+    y: number;
+    radiusX: number;
+    radiusY: number;
+    xAxisRotation: number;
+    largeArc: boolean;
+    positive: boolean;
+};
 //#endregion
 
 //#region Polygon
 export type PolygonVertex = {
-    coordinate: [number, number]
-    uuid: string
-}
+    x: number;
+    y: number;
+};
+
+export type PolygonVertexWithUuid = PolygonVertex & { uuid: string };
+
 //#endregion
 
 //#region Relationship
-export type AnyShape = InstanceType<ShapeCollection[keyof ShapeCollection]>
+export type AnyShape = InstanceType<ShapeCollection[keyof ShapeCollection]>;
 
 export type KeyOfShape<T> = {
-    [K in keyof ShapeCollection]: ShapeCollection[K] extends T ? K : never
-}[keyof ShapeCollection]
+    [K in keyof ShapeCollection]: ShapeCollection[K] extends T ? K : never;
+}[keyof ShapeCollection];
 
 export type AnyRelationship = {
-    [K in keyof typeof Relationship.relationshipOperators]: typeof Relationship.relationshipOperators[K]
-}[keyof typeof Relationship.relationshipOperators]
+    [K in keyof typeof Relationship.relationshipOperators]: typeof Relationship.relationshipOperators[K];
+}[keyof typeof Relationship.relationshipOperators];
 
-export type VerbOfRelationship<T extends AnyRelationship> = T["verb"]
+export type VerbOfRelationship<T extends AnyRelationship> = T["verb"];
 
 // prettier-ignore
 export type RelationshipMethodName<T extends AnyShape, U extends AnyShape, V extends AnyRelationship> = 
@@ -614,41 +634,41 @@ export type RelationshipMethodName<T extends AnyShape, U extends AnyShape, V ext
 
 export type RelationshipMethod<T extends AnyShape, U extends AnyShape, V extends AnyRelationship> = V[RelationshipMethodName<T, U, V>] extends (...args: any[]) => any
     ? V[RelationshipMethodName<T, U, V>]
-    : never
+    : never;
 
 //#endregion
 
 //#region Renderer
-export type LineJoinType = "bevel" | "miter" | "round"
-export type LineCapType = "butt" | "round" | "square"
+export type LineJoinType = "bevel" | "miter" | "round";
+export type LineCapType = "butt" | "round" | "square";
 export type RendererConfig = {
-    stroke: string
-    strokeDash: number[]
-    strokeDashOffset: number
-    strokeWidth: number
-    fill: string
-    lineJoin: LineJoinType
-    miterLimit: number
-    lineCap: LineCapType
-}
-export type PathLike = SVGPathElement | Path2D
-export type ContainerElement = SVGSVGElement | HTMLCanvasElement
+    stroke: string;
+    strokeDash: number[];
+    strokeDashOffset: number;
+    strokeWidth: number;
+    fill: string;
+    lineJoin: LineJoinType;
+    miterLimit: number;
+    lineCap: LineCapType;
+};
+export type PathLike = SVGPathElement | Path2D;
+export type ContainerElement = SVGSVGElement | HTMLCanvasElement;
 export interface Renderer {
-    container: ContainerElement
-    geomtoy: Geomtoy
-    setup(): void
-    draw(shape: Shape, behind: boolean): PathLike
-    drawBatch(objects: Shape[], behind: boolean): PathLike[]
-    clear(): void
-    stroke(stroke: string): void
-    strokeWidth(strokeWidth: number): void
-    strokeDash(strokeDash: number[]): void
-    strokeDashOffset(strokeDashOffset: number): void
-    fill(fill: string): void
-    lineJoin(lineJoin: LineJoinType): void
-    lineCap(lineCap: LineCapType): void
-    miterLimit(miterLimit: number): void
-    isPointInFill(path: PathLike, x: number, y: number): boolean
-    isPointInStroke(path: PathLike, strokeWidth: number, x: number, y: number): boolean
+    container: ContainerElement;
+    geomtoy: Geomtoy;
+    setup(): void;
+    draw(shape: Shape, behind: boolean): PathLike;
+    drawBatch(objects: Shape[], behind: boolean): PathLike[];
+    clear(): void;
+    stroke(stroke: string): void;
+    strokeWidth(strokeWidth: number): void;
+    strokeDash(strokeDash: number[]): void;
+    strokeDashOffset(strokeDashOffset: number): void;
+    fill(fill: string): void;
+    lineJoin(lineJoin: LineJoinType): void;
+    lineCap(lineCap: LineCapType): void;
+    miterLimit(miterLimit: number): void;
+    isPointInFill(path: PathLike, x: number, y: number): boolean;
+    isPointInStroke(path: PathLike, strokeWidth: number, x: number, y: number): boolean;
 }
 //#endregion
