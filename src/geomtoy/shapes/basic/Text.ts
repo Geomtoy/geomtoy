@@ -1,6 +1,6 @@
 import { validAndWithSameOwner } from "../../decorator";
 import util from "../../utility";
-import coord from "../../utility/coordinate";
+import coord from "../../utility/coord";
 import assert from "../../utility/assertion";
 
 import Shape from "../../base/Shape";
@@ -23,9 +23,11 @@ class Text extends Shape {
     private _y = NaN;
     private _text = "";
     private _font: FontConfig = util.cloneDeep(defaultFontConfig);
+    //todo
+    private _constant = true
 
     constructor(owner: Geomtoy, x: number, y: number, text: string, font?: FontConfig);
-    constructor(owner: Geomtoy, coordinate: [number, number], text: string, font?: FontConfig);
+    constructor(owner: Geomtoy, coordinates: [number, number], text: string, font?: FontConfig);
     constructor(owner: Geomtoy, point: Point, text: string, font?: FontConfig);
     constructor(owner: Geomtoy, text: string, font?: FontConfig);
     constructor(owner: Geomtoy);
@@ -35,7 +37,7 @@ class Text extends Shape {
             Object.assign(this, { x: a1, y: a2, text: a3, font: a4 ?? util.cloneDeep(defaultFontConfig) });
         }
         if (util.isArray(a1)) {
-            Object.assign(this, { coordinate: a1, text: a2, font: a3 ?? util.cloneDeep(defaultFontConfig) });
+            Object.assign(this, { coordinates: a1, text: a2, font: a3 ?? util.cloneDeep(defaultFontConfig) });
         }
         if (a1 instanceof Point) {
             Object.assign(this, { point: a1, text: a2, font: a3 ?? util.cloneDeep(defaultFontConfig) });
@@ -85,11 +87,11 @@ class Text extends Shape {
         assert.isRealNumber(value, "y");
         this._setY(value);
     }
-    get coordinate() {
+    get coordinates() {
         return [this._x, this._y] as [number, number];
     }
-    set coordinate(value) {
-        assert.isCoordinate(value, "coordinate");
+    set coordinates(value) {
+        assert.isCoordinates(value, "coordinates");
         this._setX(coord.x(value));
         this._setY(coord.y(value));
     }
@@ -116,7 +118,7 @@ class Text extends Shape {
     }
 
     isValid() {
-        if (!coord.isValid(this.coordinate)) return false;
+        if (!coord.isValid(this.coordinates)) return false;
         return true;
     }
 
@@ -130,7 +132,7 @@ class Text extends Shape {
      * Move text `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.coordinate = coord.move(this.coordinate, deltaX, deltaY);
+        this.coordinates = coord.move(this.coordinates, deltaX, deltaY);
         return this;
     }
     /**
@@ -143,7 +145,7 @@ class Text extends Shape {
      * Move text `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.coordinate = coord.moveAlongAngle(this.coordinate, angle, distance);
+        this.coordinates = coord.moveAlongAngle(this.coordinates, angle, distance);
         return this;
     }
 

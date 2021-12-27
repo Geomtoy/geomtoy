@@ -136,7 +136,7 @@ const util = {
     isNonZeroNumber: (v: any): v is number => {
         return util.isRealNumber(v) && v !== 0;
     },
-    isCoordinate: (v: any): v is [number, number] => {
+    isCoordinates: (v: any): v is [number, number] => {
         return util.isArray(v) && v.length === 2 && v.every(util.isRealNumber);
     },
     isSize: (v: any): v is [number, number] => {
@@ -152,6 +152,9 @@ const util = {
             if (!util.compareDeep(value, otherValue)) return false;
         }
         return true;
+    },
+    now: () => {
+        return performance.now() || Date.now();
     },
     uuid: () => {
         return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {

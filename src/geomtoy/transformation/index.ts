@@ -68,7 +68,7 @@ class Transformation extends BaseObject {
             d: math.cos(angle)
         })
         if (originPoint !== undefined) {
-            const [x, y] = originPoint instanceof Point ? originPoint.coordinate : originPoint
+            const [x, y] = originPoint instanceof Point ? originPoint.coordinates : originPoint
             const preTranslation = Object.assign(Matrix.identity, { e: x, f: y })
             const postTranslation = Object.assign(Matrix.identity, { e: -x, f: -y })
             t.preMultiplySelf(preTranslation)
@@ -86,7 +86,7 @@ class Transformation extends BaseObject {
             d: factorY
         })
         if (originPoint !== undefined) {
-            const [x, y] = originPoint instanceof Point ? originPoint.coordinate : originPoint
+            const [x, y] = originPoint instanceof Point ? originPoint.coordinates : originPoint
             const preTranslation = Object.assign(Matrix.identity, { e: x, f: y })
             const postTranslation = Object.assign(Matrix.identity, { e: -x, f: -y })
             t.preMultiplySelf(preTranslation)
@@ -105,7 +105,7 @@ class Transformation extends BaseObject {
         })
 
         if (originPoint !== undefined) {
-            const [x, y] = originPoint instanceof Point ? originPoint.coordinate : originPoint
+            const [x, y] = originPoint instanceof Point ? originPoint.coordinates : originPoint
             const preTranslation = Object.assign(Matrix.identity, { e: x, f: y })
             const postTranslation = Object.assign(Matrix.identity, { e: -x, f: -y })
             t.preMultiplySelf(preTranslation)
@@ -135,7 +135,7 @@ class Transformation extends BaseObject {
      * Add a point reflection to transformation `this`.
      */
     pointReflect(point: [number, number] | Point) {
-        const [x, y] = point instanceof Point ? point.coordinate : point
+        const [x, y] = point instanceof Point ? point.coordinates : point
         const t = Object.assign(Matrix.identity, {
             a: -1,
             d: -1,
@@ -154,20 +154,20 @@ class Transformation extends BaseObject {
         return this
     }
     /**
-     * Transform coordinate `coordinate` with the current transformation
-     * to the coordinate corresponding to the identity matrix (in the initial state without transformation),
-     * and the visual position of the coordinate will not change.
+     * Transform `coordinates` with the current transformation
+     * to the coordinates corresponding to the identity matrix (the initial state without any transformation),
+     * and the visual position of the coordinates will not change.
      */
-    transformCoordinate(coordinate: [number, number]): [number, number] {
-        return this._matrix.transformCoordinate(coordinate)
+    transformCoordinates(coordinates: [number, number]): [number, number] {
+        return this._matrix.transformCoordinates(coordinates)
     }
     /**
-     * Transform coordinate `coordinate` corresponding to the identity matrix (in the initial state without transformation)
-     * to the coordinate with the current transformation,
-     * and the visual position of the coordinate will not change.
+     * Transform `coordinates` corresponding to the identity matrix (the initial state without any transformation)
+     * to the coordinates with the current transformation,
+     * and the visual position of the coordinates will not change.
      */
-    antitransformCoordinate(coordinate: [number, number]): [number, number] {
-        return this._matrix.antitransformCoordinate(coordinate)
+    antitransformCoordinates(coordinates: [number, number]): [number, number] {
+        return this._matrix.antitransformCoordinates(coordinates)
     }
     /**
      * Decompose transformation `this`.

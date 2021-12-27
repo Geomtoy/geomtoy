@@ -3,7 +3,7 @@ import assert from "../utility/assertion";
 import util from "../utility";
 import vec2 from "../utility/vec2";
 import math from "../utility/math";
-import coord from "../utility/coordinate";
+import coord from "../utility/coord";
 
 import BaseObject from "../base/BaseObject";
 import Point from "../shapes/basic/Point";
@@ -20,33 +20,33 @@ class Inversion extends BaseObject {
     private _power = defaultInversionPower;
 
     constructor(owner: Geomtoy, centerX: number, centerY: number, power?: number);
-    constructor(owner: Geomtoy, centerCoordinate: [number, number], power?: number);
+    constructor(owner: Geomtoy, centerCoordinates: [number, number], power?: number);
     constructor(owner: Geomtoy, centerPoint: Point, power?: number);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any) {
         super(o);
         if (util.isNumber(a1)) {
-            this.centerCoordinate([a1, a2]);
+            this.centerCoordinates([a1, a2]);
             this.power(a3);
         }
-        if (util.isCoordinate(a1)) {
-            this.centerCoordinate(a1);
+        if (util.isCoordinates(a1)) {
+            this.centerCoordinates(a1);
             this.power(a2);
         }
         if (a1 instanceof Point) {
-            this.centerCoordinate(a1);
+            this.centerCoordinates(a1);
             this.power(a2);
         }
         return Object.seal(this);
     }
 
-    centerCoordinate(): [number, number];
-    centerCoordinate(value: [number, number] | Point): void;
-    centerCoordinate(value?: any) {
+    centerCoordinates(): [number, number];
+    centerCoordinates(value: [number, number] | Point): void;
+    centerCoordinates(value?: any) {
         if (value === undefined) {
             return [this._centerX, this._centerY] as [number, number];
         }
-        assert.isCoordinateOrPoint(value, "value");
-        const c = value instanceof Point ? value.coordinate : value;
+        assert.isCoordinatesOrPoint(value, "value");
+        const c = value instanceof Point ? value.coordinates : value;
         this._centerX = coord.x(c);
         this._centerY = coord.y(c);
     }
@@ -73,11 +73,11 @@ class Inversion extends BaseObject {
         assert.isPoint(point, "point");
 
         // If `point` is the inversion center, the inverted point is the point at infinity, so we return `null`
-        if (point.isSameAs(new Point(this.owner, this.centerCoordinate()))) return null;
+        if (point.isSameAs(new Point(this.owner, this.centerCoordinates()))) return null;
 
-        const c0 = this.centerCoordinate();
+        const c0 = this.centerCoordinates();
         const power = this.power();
-        const c1 = point.coordinate;
+        const c1 = point.coordinates;
         const v01 = vec2.from(c0, c1);
         const d = vec2.magnitude(v01);
         const id = math.abs(power / d);
@@ -102,11 +102,11 @@ class Inversion extends BaseObject {
     invertLine(line: Line): Line | Circle {
         assert.isLine(line, "line");
 
-        if (line.isPointOn(this.centerCoordinate())) return line.clone();
+        if (line.isPointOn(this.centerCoordinates())) return line.clone();
 
-        const c0 = this.centerCoordinate();
+        const c0 = this.centerCoordinates();
         const power = this.power();
-        const c1 = line.getPerpendicularPointFromPoint(c0).coordinate;
+        const c1 = line.getPerpendicularPointFromPoint(c0).coordinates;
         const v01 = vec2.from(c0, c1);
         const d = vec2.magnitude(v01);
         const id = math.abs(power / d);
@@ -133,13 +133,13 @@ class Inversion extends BaseObject {
     invertCircle(circle: Circle): Line | Circle {
         assert.isCircle(circle, "circle");
 
-        const c0 = this.centerCoordinate();
+        const c0 = this.centerCoordinates();
         const power = this.power();
-        const c1 = circle.centerCoordinate;
+        const c1 = circle.centerCoordinates;
         const radius = circle.radius;
         const v01 = vec2.from(c0, c1);
 
-        if (circle.isPointOn(this.centerCoordinate())) {
+        if (circle.isPointOn(this.centerCoordinates())) {
             const id = math.abs((power / 2) * radius);
             const l = Line.fromTwoPoints.call(this, c0, c1)!;
 
@@ -172,10 +172,10 @@ class Inversion extends BaseObject {
     }
 
     toString() {
-        // prettier-ignore
+        //prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
-            `\tcenterCoordinate: {`,
+            `\tcenterCoordinates: {`,
             `\t\tx: ${this._centerX}`,
             `\t\ty: ${this._centerY}`,
             `\t}`,

@@ -19,7 +19,7 @@ const colors = {
     grey: "#9e9e9e",
     blueGrey: "#607d8b",
     black: "#000000",
-    white: "#FFFFF"
+    white: "#FFFFFF"
 };
 
 const mathFont = {

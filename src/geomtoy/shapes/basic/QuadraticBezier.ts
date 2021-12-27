@@ -1,7 +1,7 @@
 import { validAndWithSameOwner } from "../../decorator";
 import assert from "../../utility/assertion";
 import util from "../../utility";
-import coord from "../../utility/coordinate";
+import coord from "../../utility/coord";
 
 import Shape from "../../base/Shape";
 import Point from "./Point";
@@ -21,7 +21,7 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
     private _controlPointY = NaN;
 
     constructor(owner: Geomtoy, point1X: number, point1Y: number, point2X: number, point2Y: number, controlPointX: number, controlPointY: number);
-    constructor(owner: Geomtoy, point1Coordinate: [number, number], point2Coordinate: [number, number], controlPointCoordinate: [number, number]);
+    constructor(owner: Geomtoy, point1Coordinates: [number, number], point2Coordinates: [number, number], controlPointCoordinates: [number, number]);
     constructor(owner: Geomtoy, point1: Point, point2: Point, controlPoint: Point);
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any) {
@@ -30,7 +30,7 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
             Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4, controlPointX: a5, controlPointY: a6 });
         }
         if (util.isArray(a1)) {
-            Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2, controlPointCoordinate: a3 });
+            Object.assign(this, { point1Coordinates: a1, point2Coordinates: a2, controlPointCoordinates: a3 });
         }
         if (a1 instanceof Point) {
             Object.assign(this, { point1: a1, point2: a2, controlPoint: a3 });
@@ -86,11 +86,11 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
         assert.isRealNumber(value, "point1Y");
         this._setPoint1Y(value);
     }
-    get point1Coordinate() {
+    get point1Coordinates() {
         return [this._point1X, this._point1Y] as [number, number];
     }
-    set point1Coordinate(value) {
-        assert.isCoordinate(value, "point1Coordinate");
+    set point1Coordinates(value) {
+        assert.isCoordinates(value, "point1Coordinates");
         this._setPoint1X(coord.x(value));
         this._setPoint1Y(coord.y(value));
     }
@@ -116,11 +116,11 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
         assert.isRealNumber(value, "point2Y");
         this._setPoint2Y(value);
     }
-    get point2Coordinate() {
+    get point2Coordinates() {
         return [this._point2X, this._point2Y] as [number, number];
     }
-    set point2Coordinate(value) {
-        assert.isCoordinate(value, "point2Coordinate");
+    set point2Coordinates(value) {
+        assert.isCoordinates(value, "point2Coordinates");
         this._setPoint2X(coord.x(value));
         this._setPoint2Y(coord.y(value));
     }
@@ -146,11 +146,11 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
         assert.isRealNumber(value, "controlPointY");
         this._setControlPointY(value);
     }
-    get controlPointCoordinate() {
+    get controlPointCoordinates() {
         return [this._controlPointX, this._controlPointY] as [number, number];
     }
-    set controlPointCoordinate(value) {
-        assert.isCoordinate(value, "controlPointCoordinate");
+    set controlPointCoordinates(value) {
+        assert.isCoordinates(value, "controlPointCoordinates");
         this._setControlPointX(coord.x(value));
         this._setControlPointY(coord.y(value));
     }
@@ -164,7 +164,7 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
     }
 
     isValid() {
-        const { point1Coordinate: c1, point2Coordinate: c2, controlPointCoordinate: cpc } = this;
+        const { point1Coordinates: c1, point2Coordinates: c2, controlPointCoordinates: cpc } = this;
         const epsilon = this.options_.epsilon;
         if (!coord.isValid(c1)) return false;
         if (!coord.isValid(c2)) return false;
@@ -187,9 +187,9 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
     isSameAs2(quadraticBezier: QuadraticBezier) {
         const epsilon = this.options_.epsilon;
         return (
-            coord.isSameAs(this.point1Coordinate, quadraticBezier.point1Coordinate, epsilon) &&
-            coord.isSameAs(this.point2Coordinate, quadraticBezier.point2Coordinate, epsilon) &&
-            coord.isSameAs(this.controlPointCoordinate, quadraticBezier.controlPointCoordinate, epsilon)
+            coord.isSameAs(this.point1Coordinates, quadraticBezier.point1Coordinates, epsilon) &&
+            coord.isSameAs(this.point2Coordinates, quadraticBezier.point2Coordinates, epsilon) &&
+            coord.isSameAs(this.controlPointCoordinates, quadraticBezier.controlPointCoordinates, epsilon)
         );
     }
     /**
@@ -202,9 +202,9 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
      * Move triangle `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.point1Coordinate = coord.move(this.point1Coordinate, deltaX, deltaY);
-        this.point2Coordinate = coord.move(this.point2Coordinate, deltaX, deltaY);
-        this.controlPointCoordinate = coord.move(this.controlPointCoordinate, deltaX, deltaY);
+        this.point1Coordinates = coord.move(this.point1Coordinates, deltaX, deltaY);
+        this.point2Coordinates = coord.move(this.point2Coordinates, deltaX, deltaY);
+        this.controlPointCoordinates = coord.move(this.controlPointCoordinates, deltaX, deltaY);
         return this;
     }
     /**
@@ -217,9 +217,9 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
      * Move triangle `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.point1Coordinate = coord.moveAlongAngle(this.point1Coordinate, angle, distance);
-        this.point2Coordinate = coord.moveAlongAngle(this.point2Coordinate, angle, distance);
-        this.controlPointCoordinate = coord.moveAlongAngle(this.controlPointCoordinate, angle, distance);
+        this.point1Coordinates = coord.moveAlongAngle(this.point1Coordinates, angle, distance);
+        this.point2Coordinates = coord.moveAlongAngle(this.point2Coordinates, angle, distance);
+        this.controlPointCoordinates = coord.moveAlongAngle(this.controlPointCoordinates, angle, distance);
         return this;
     }
 
@@ -241,7 +241,7 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
         const g = new Graphics();
         if (!this.isValid()) return g;
 
-        const { point1Coordinate: c1, point2Coordinate: c2, controlPointCoordinate: cpc } = this;
+        const { point1Coordinates: c1, point2Coordinates: c2, controlPointCoordinates: cpc } = this;
         g.moveTo(...c1);
         g.quadraticBezierCurveTo(...cpc, ...c2);
         return g;

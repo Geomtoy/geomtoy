@@ -2,9 +2,8 @@ import { validAndWithSameOwner } from "../../decorator";
 import assert from "../../utility/assertion";
 import util from "../../utility";
 import math from "../../utility/math";
-import coord from "../../utility/coordinate";
+import coord from "../../utility/coord";
 import vec2 from "../../utility/vec2";
-import coordArray from "../../utility/coordinateArray";
 
 import Shape from "../../base/Shape";
 import Point from "./Point";
@@ -25,7 +24,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
     private _point2Y = NaN;
 
     constructor(owner: Geomtoy, point1X: number, point1Y: number, point2X: number, point2Y: number);
-    constructor(owner: Geomtoy, point1Coordinate: [number, number], point2Coordinate: [number, number]);
+    constructor(owner: Geomtoy, point1Coordinates: [number, number], point2Coordinates: [number, number]);
     constructor(owner: Geomtoy, point1: Point, point2: Point);
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any) {
@@ -34,7 +33,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
             Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4 });
         }
         if (util.isArray(a1)) {
-            Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2 });
+            Object.assign(this, { point1Coordinates: a1, point2Coordinates: a2 });
         }
         if (a1 instanceof Point) {
             Object.assign(this, { point1: a1, point2: a2 });
@@ -93,11 +92,11 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
         assert.isRealNumber(value, "point1Y");
         this._setPoint1Y(value);
     }
-    get point1Coordinate() {
+    get point1Coordinates() {
         return [this._point1X, this._point1Y] as [number, number];
     }
-    set point1Coordinate(value) {
-        assert.isCoordinate(value, "point1Coordinate");
+    set point1Coordinates(value) {
+        assert.isCoordinates(value, "point1Coordinates");
         this._setPoint1X(coord.x(value));
         this._setPoint1Y(coord.y(value));
     }
@@ -123,11 +122,11 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
         assert.isRealNumber(value, "point2Y");
         this._setPoint2Y(value);
     }
-    get point2Coordinate() {
+    get point2Coordinates() {
         return [this._point2X, this._point2Y] as [number, number];
     }
-    set point2Coordinate(value) {
-        assert.isCoordinate(value, "point2Coordinate");
+    set point2Coordinates(value) {
+        assert.isCoordinates(value, "point2Coordinates");
         this._setPoint2X(coord.x(value));
         this._setPoint2Y(coord.y(value));
     }
@@ -140,11 +139,11 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
         this._setPoint2Y(value.y);
     }
     get angle() {
-        return vec2.angle(vec2.from(this.point1Coordinate, this.point2Coordinate));
+        return vec2.angle(vec2.from(this.point1Coordinates, this.point2Coordinates));
     }
     set angle(value) {
         assert.isRealNumber(value, "angle");
-        const nc2 = vec2.add(this.point1Coordinate, vec2.from2(value, this.getLength()));
+        const nc2 = vec2.add(this.point1Coordinates, vec2.from2(value, this.getLength()));
         this._setPoint2X(coord.x(nc2));
         this._setPoint2Y(coord.y(nc2));
     }
@@ -152,7 +151,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
     static formingCondition = "The two endpoints of a `LineSegment` should be distinct, or the length of a `LineSegment` should greater than 0.";
 
     isValid() {
-        const { point1Coordinate: c1, point2Coordinate: c2 } = this;
+        const { point1Coordinates: c1, point2Coordinates: c2 } = this;
         const epsilon = this.options_.epsilon;
         if (!coord.isValid(c1)) return false;
         if (!coord.isValid(c2)) return false;
@@ -161,7 +160,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
     }
 
     static fromPointAndAngleAndLength(owner: Geomtoy, point: [number, number] | Point, angle: number, length: number) {
-        const c1 = point instanceof Point ? point.coordinate : point;
+        const c1 = point instanceof Point ? point.coordinates : point;
         const c2 = coord.moveAlongAngle(c1, angle, length);
         return new LineSegment(owner, c1, c2);
     }
@@ -196,8 +195,8 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      */
     isSameAs(lineSegment: LineSegment) {
         const epsilon = this.options_.epsilon;
-        const [ac1, ac2] = coordArray.sortSelf([this.point1Coordinate, this.point2Coordinate], epsilon);
-        const [bc1, bc2] = coordArray.sortSelf([lineSegment.point1Coordinate, lineSegment.point2Coordinate], epsilon);
+        const [ac1, ac2] = coord.sortArraySelf([this.point1Coordinates, this.point2Coordinates], epsilon);
+        const [bc1, bc2] = coord.sortArraySelf([lineSegment.point1Coordinates, lineSegment.point2Coordinates], epsilon);
         return coord.isSameAs(ac1, bc1, epsilon) && coord.isSameAs(ac2, bc2, epsilon);
     }
     /**
@@ -207,7 +206,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      */
     isSameAs2(lineSegment: LineSegment) {
         let epsilon = this.options_.epsilon;
-        return coord.isSameAs(this.point1Coordinate, lineSegment.point1Coordinate, epsilon) && coord.isSameAs(this.point2Coordinate, lineSegment.point2Coordinate, epsilon);
+        return coord.isSameAs(this.point1Coordinates, lineSegment.point1Coordinates, epsilon) && coord.isSameAs(this.point2Coordinates, lineSegment.point2Coordinates, epsilon);
     }
     /**
      * Move line segment `this` by `offsetX` and `offsetY` to get new line segment.
@@ -219,8 +218,8 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      * Move line segment `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.point1Coordinate = coord.move(this.point1Coordinate, deltaX, deltaY);
-        this.point2Coordinate = coord.move(this.point2Coordinate, deltaX, deltaY);
+        this.point1Coordinates = coord.move(this.point1Coordinates, deltaX, deltaY);
+        this.point2Coordinates = coord.move(this.point2Coordinates, deltaX, deltaY);
         return this;
     }
     /**
@@ -233,8 +232,8 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      * Move line segment `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.point1Coordinate = coord.moveAlongAngle(this.point1Coordinate, angle, distance);
-        this.point2Coordinate = coord.moveAlongAngle(this.point2Coordinate, angle, distance);
+        this.point1Coordinates = coord.moveAlongAngle(this.point1Coordinates, angle, distance);
+        this.point2Coordinates = coord.moveAlongAngle(this.point2Coordinates, angle, distance);
         return this;
     }
     /**
@@ -274,8 +273,8 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      * @returns {boolean}
      */
     isPerpendicularWithLineSegment(lineSegment: LineSegment): boolean {
-        let { point1Coordinate: c1, point2Coordinate: c2 } = this,
-            { point1Coordinate: c3, point2Coordinate: c4 } = lineSegment,
+        let { point1Coordinates: c1, point2Coordinates: c2 } = this,
+            { point1Coordinates: c3, point2Coordinates: c4 } = lineSegment,
             v12 = vec2.from(c1, c2),
             v34 = vec2.from(c3, c4),
             dp = vec2.dot(v12, v34),
@@ -288,8 +287,8 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      * @returns {boolean}
      */
     isParallelToLineSegment(lineSegment: LineSegment): boolean {
-        let { point1Coordinate: c1, point2Coordinate: c2 } = this,
-            { point1Coordinate: c3, point2Coordinate: c4 } = lineSegment,
+        let { point1Coordinates: c1, point2Coordinates: c2 } = this,
+            { point1Coordinates: c3, point2Coordinates: c4 } = lineSegment,
             v12 = vec2.from(c1, c2),
             v34 = vec2.from(c3, c4),
             cp = vec2.cross(v12, v34),
@@ -303,8 +302,8 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      * @returns {boolean}
      */
     isCollinearToLineSegment(lineSegment: LineSegment): boolean {
-        let { point1Coordinate: c1, point2Coordinate: c2 } = this,
-            { point1Coordinate: c3, point2Coordinate: c4 } = lineSegment,
+        let { point1Coordinates: c1, point2Coordinates: c2 } = this,
+            { point1Coordinates: c3, point2Coordinates: c4 } = lineSegment,
             v12 = vec2.from(c1, c2),
             v34 = vec2.from(c3, c4),
             v32 = vec2.from(c3, c2),
@@ -319,8 +318,8 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      * @returns {boolean | Point} 接点
      */
     isJointedWithLineSegment(lineSegment: LineSegment): boolean {
-        let { point1Coordinate: c1, point2Coordinate: c2 } = this,
-            { point1Coordinate: c3, point2Coordinate: c4 } = lineSegment,
+        let { point1Coordinates: c1, point2Coordinates: c2 } = this,
+            { point1Coordinates: c3, point2Coordinates: c4 } = lineSegment,
             epsilon = this.options_.epsilon,
             d1 = coord.isSameAs(c1, c3, epsilon),
             d2 = coord.isSameAs(c2, c4, epsilon),
@@ -330,8 +329,8 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
     }
     getJointPointWithLineSegment(lineSegment: LineSegment): Point | null {
         if (!this.isJointedWithLineSegment(lineSegment)) return null;
-        let { point1Coordinate: c1, point2Coordinate: c2 } = this,
-            { point1Coordinate: c3, point2Coordinate: c4 } = lineSegment,
+        let { point1Coordinates: c1, point2Coordinates: c2 } = this,
+            { point1Coordinates: c3, point2Coordinates: c4 } = lineSegment,
             epsilon = this.options_.epsilon;
         if (coord.isSameAs(c1, c3, epsilon) || coord.isSameAs(c1, c4, epsilon)) {
             return this.point1;
@@ -342,18 +341,18 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
     isContainedByLineSegment(lineSegment: LineSegment) {
         if (!this.isCollinearToLineSegment(lineSegment)) return false;
         const epsilon = this.options_.epsilon;
-        const [ac1, ac2] = coordArray.sortSelf([this.point1Coordinate, this.point2Coordinate], epsilon);
-        const [bc1, bc2] = coordArray.sortSelf([lineSegment.point1Coordinate, lineSegment.point2Coordinate], epsilon);
+        const [ac1, ac2] = coord.sortArraySelf([this.point1Coordinates, this.point2Coordinates], epsilon);
+        const [bc1, bc2] = coord.sortArraySelf([lineSegment.point1Coordinates, lineSegment.point2Coordinates], epsilon);
         return coord.compare(bc1, ac1, epsilon) <= 0 && coord.compare(bc2, ac2, epsilon) >= 0;
     }
 
     getLength() {
-        return vec2.magnitude(vec2.from(this.point1Coordinate, this.point2Coordinate));
+        return vec2.magnitude(vec2.from(this.point1Coordinates, this.point2Coordinates));
     }
     isPointOn(point: [number, number] | Point) {
-        const c1 = this.point1Coordinate;
-        const c2 = this.point2Coordinate;
-        const c3 = point instanceof Point ? point.coordinate : point;
+        const c1 = this.point1Coordinates;
+        const c2 = this.point2Coordinates;
+        const c3 = point instanceof Point ? point.coordinates : point;
         const epsilon = this.options_.epsilon;
         if (coord.isSameAs(c1, c3, epsilon) || coord.isSameAs(c2, c3, epsilon)) return true;
         const v13 = vec2.from(c1, c3);
@@ -371,8 +370,8 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
         if (!this.isCollinearToLineSegment(lineSegment)) return false;
 
         const epsilon = this.options_.epsilon;
-        const [ac1, ac2] = coordArray.sortSelf([this.point1Coordinate, this.point2Coordinate], epsilon);
-        const [bc1, bc2] = coordArray.sortSelf([lineSegment.point1Coordinate, lineSegment.point2Coordinate], epsilon);
+        const [ac1, ac2] = coord.sortArraySelf([this.point1Coordinates, this.point2Coordinates], epsilon);
+        const [bc1, bc2] = coord.sortArraySelf([lineSegment.point1Coordinates, lineSegment.point2Coordinates], epsilon);
 
         if (coord.compare(ac1, bc1, epsilon) <= 0) {
             return math.greaterThan(vec2.squaredMagnitude(vec2.from(ac1, ac2)), vec2.squaredMagnitude(vec2.from(ac1, bc1)), epsilon);
@@ -383,7 +382,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
     getOverlapLineSegmentWithLineSegment(lineSegment: LineSegment): LineSegment | null {
         if (!this.isOverlappedWithLineSegment(lineSegment)) return null;
         const epsilon = this.options_.epsilon;
-        let cs = coordArray.sortSelf([this.point1Coordinate, this.point2Coordinate, lineSegment.point1Coordinate, lineSegment.point2Coordinate], epsilon);
+        let cs = coord.sortArraySelf([this.point1Coordinates, this.point2Coordinates, lineSegment.point1Coordinates, lineSegment.point2Coordinates], epsilon);
         return new LineSegment(this.owner, util.nth(cs, 1)!, util.nth(cs, 2)!);
     }
     /**
@@ -501,7 +500,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      */
     getDivisionRatioByLine(line: Line): number {
         if (line.isParallelToLineSegment(this)) return NaN;
-        if (line.isPointOn(this.point2Coordinate)) return Infinity;
+        if (line.isPointOn(this.point2Coordinates)) return Infinity;
         let {
                 point1: { x: x1, y: y1 },
                 point2: { x: x2, y: y2 }
@@ -510,7 +509,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
         return -(a * x1 + b * y1 + c) / (a * x2 + b * y2 + c);
     }
     toLine() {
-        return Line.fromTwoPoints.bind(this)(this.point1Coordinate, this.point2Coordinate);
+        return Line.fromTwoPoints.bind(this)(this.point1Coordinates, this.point2Coordinates)!;
     }
 
     apply(transformation: Transformation): Shape {
@@ -519,7 +518,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
     getGraphics() {
         const g = new Graphics();
         if (!this.isValid()) return g;
-        const { point1Coordinate: c1, point2Coordinate: c2 } = this;
+        const { point1Coordinates: c1, point2Coordinates: c2 } = this;
         g.moveTo(...c1);
         g.lineTo(...c2);
         return g;

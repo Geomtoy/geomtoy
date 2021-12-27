@@ -20,7 +20,7 @@ function validText(constructor: any) {
         `\`${alwaysAvailablePublicInstanceMethods.join("`, `")}\`.`
     );
 }
-// prettier-ignore
+//prettier-ignore
 const sameOwnerText = 
     "\nOnly `BaseObject`s owned by the same `Geomtoy` can interop with each other. " +
     "\nIf you want to use a `BaseObject` from other `Geomtoy`s, adopt it first."

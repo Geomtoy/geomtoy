@@ -1,14 +1,10 @@
-import util from "./utility";
-import coord from "./utility/coordinate";
-import assert from "./utility/assertion";
-import bbox from "./utility/boundingBox";
+import util from "./utility"; 
+import assert from "./utility/assertion"; 
 import { sealed } from "./decorator";
 import Scheduler, { schedulerOf } from "./helper/Scheduler";
 import Optioner, { optionerOf } from "./helper/Optioner";
 
 import { Options, Tail, ConstructorOverloads, ConstructorTailer, RecursivePartial, Factory, StaticMethodsMapper, OwnerCarrier, BaseObjectFactoryCollection } from "./types";
-import VanillaCanvas from "./renderer/vanilla-canvas";
-import VanillaSvg from "./renderer/vanilla-svg";
 import BaseObject from "./base/BaseObject";
 import math from "./utility/math";
 import angle from "./utility/angle";
@@ -85,23 +81,13 @@ interface Geomtoy extends BaseObjectFactoryCollection {}
 class Geomtoy {
     private _uuid = util.uuid();
 
-    private _width: number = NaN;
-    private _height: number = NaN;
-    private _scale: number = 1;
-    private _offset: [number, number] = [0, 0];
-
-    private _xAxisPositiveOnRight: boolean = true;
-    private _yAxisPositiveOnBottom: boolean = true;
-    private _origin: [number, number] = [0, 0];
-
     private _scheduler: Scheduler;
     private _optioner: Optioner;
 
-    private _globalTransformation = new Transformation(this);
-    private _globalBoundingBox: [number, number, number, number] = [NaN, NaN, NaN, NaN];
+    // private _globalTransformation = new Transformation(this);
+    // private _globalBoundingBox: [number, number, number, number] = [NaN, NaN, NaN, NaN];
 
-    constructor(width: number, height: number, options: RecursivePartial<Options> = {}) {
-        Object.assign(this, { width, height });
+    constructor(options: RecursivePartial<Options> = {}) {
 
         Object.keys(objects).forEach((name: keyof typeof objects) => {
             Object.defineProperty(this, name, {
@@ -119,12 +105,13 @@ class Geomtoy {
         return Object.seal(this);
     }
 
-    static get adapters() {
-        return {
-            VanillaCanvas,
-            VanillaSvg
-        };
+    get name() {
+        return this.constructor.name;
     }
+    get uuid() {
+        return this._uuid;
+    }
+
     get utils() {
         const options = this._optioner.options;
         return {
@@ -141,86 +128,6 @@ class Geomtoy {
             degreeToRadian: angle.degreeToRadian,
             radianToDegree: angle.radianToDegree
         };
-    }
-
-    get width() {
-        return this._width;
-    }
-    set width(value) {
-        assert.isPositiveNumber(value, "width");
-        this._width = value;
-    }
-    get height() {
-        return this._height;
-    }
-    set height(value) {
-        assert.isPositiveNumber(value, "height");
-        this._height = value;
-    }
-    get scale() {
-        return this._scale;
-    }
-    set scale(value) {
-        assert.isPositiveNumber(value, "scale");
-        this._scale = value;
-        this._refresh();
-    }
-    get origin(): [number, number] {
-        return coord.clone(this._origin);
-    }
-    set origin(value) {
-        assert.isCoordinate(value, "origin");
-        this._origin = value;
-        this._refresh();
-    }
-
-    get offset(): [number, number] {
-        return [...this._offset];
-    }
-    set offset(value) {
-        assert.isCoordinate(value, "offset");
-        this._offset = value;
-        this._refresh();
-    }
-    get xAxisPositiveOnRight() {
-        return this._xAxisPositiveOnRight;
-    }
-    set xAxisPositiveOnRight(value) {
-        assert.isBoolean(value, "xAxisPositiveOnRight");
-        this._xAxisPositiveOnRight = value;
-        this._refresh();
-    }
-    get yAxisPositiveOnBottom() {
-        return this._yAxisPositiveOnBottom;
-    }
-    set yAxisPositiveOnBottom(value) {
-        assert.isBoolean(value, "yAxisPositiveOnBottom");
-        this._yAxisPositiveOnBottom = value;
-        this._refresh();
-    }
-
-    get name() {
-        return this.constructor.name;
-    }
-    get uuid() {
-        return this._uuid;
-    }
-    get globalTransformation() {
-        return this._globalTransformation.clone();
-    }
-    get globalBoundingBox() {
-        return bbox.clone(this._globalBoundingBox);
-    }
-
-    private _refresh() {
-        const { width, height, origin, scale, offset, xAxisPositiveOnRight: xpr, yAxisPositiveOnBottom: ypb } = this;
-        this._globalTransformation
-            .reset()
-            .translate(coord.x(origin) + coord.x(offset), coord.y(origin) + coord.y(offset))
-            .scale(xpr ? scale : -scale, ypb ? scale : -scale);
-
-        const [x, y] = this.globalTransformation.antitransformCoordinate([xpr ? 0 : width, ypb ? 0 : height]);
-        bbox.assign(this._globalBoundingBox, bbox.from([x, y], [width / scale, height / scale]));
     }
 
     options(): Options;

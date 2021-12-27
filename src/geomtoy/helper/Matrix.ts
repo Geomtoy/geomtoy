@@ -50,14 +50,14 @@ class Matrix {
         Object.assign(this, { a, b, c, d, e, f })
         return this
     }
-    transformCoordinate(coordinate: [number, number]): [number, number] {
+    transformCoordinates(coordinates: [number, number]): [number, number] {
         let { a, b, c, d, e, f } = this,
-            [x, y] = coordinate,
+            [x, y] = coordinates,
             [xp, yp] = mat3.dotVec3([a, c, e, b, d, f, 0, 0, 1], [x, y, 1])
         return [xp, yp]
     }
-    antitransformCoordinate(coordinate: [number, number]): [number, number] {
-        return this.invert().transformCoordinate(coordinate)
+    antitransformCoordinates(coordinates: [number, number]): [number, number] {
+        return this.invert().transformCoordinates(coordinates)
     }
     clone(): Matrix {
         let { a, b, c, d, e, f } = this

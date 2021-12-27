@@ -2,7 +2,7 @@ import { validAndWithSameOwner } from "../../decorator";
 import assert from "../../utility/assertion";
 import util from "../../utility";
 import math from "../../utility/math";
-import coord from "../../utility/coordinate";
+import coord from "../../utility/coord";
 
 import { arcEndpointToCenterParameterization } from "../../graphics/helper";
 import Shape from "../../base/Shape";
@@ -25,7 +25,7 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
     private _rotation = 0;
 
     constructor(owner: Geomtoy, centerX: number, centerY: number, radiusX: number, radiusY: number, startAngle: number, endAngle: number, positive: boolean, rotation?: number);
-    constructor(owner: Geomtoy, centerCoordinate: [number, number], radiusX: number, radiusY: number, startAngle: number, endAngle: number, positive: boolean, rotation?: number);
+    constructor(owner: Geomtoy, centerCoordinates: [number, number], radiusX: number, radiusY: number, startAngle: number, endAngle: number, positive: boolean, rotation?: number);
     constructor(owner: Geomtoy, centerPoint: Point, radiusX: number, radiusY: number, startAngle: number, endAngle: number, positive: boolean, rotation?: number);
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any, a7?: any, a8?: any) {
@@ -34,7 +34,7 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
             Object.assign(this, { centerX: a1, centerY: a2, radiusX: a3, radiusY: a4, startAngle: a5, endAngle: a6, positive: a7, rotation: a8 ?? 0 });
         }
         if (util.isArray(a1)) {
-            Object.assign(this, { centerCoordinate: a1, radiusX: a2, radiusY: a3, startAngle: a4, endAngle: a5, positive: a6, rotation: a7 ?? 0 });
+            Object.assign(this, { centerCoordinates: a1, radiusX: a2, radiusY: a3, startAngle: a4, endAngle: a5, positive: a6, rotation: a7 ?? 0 });
         }
         if (a1 instanceof Point) {
             Object.assign(this, { centerPoint: a1, radiusX: a2, radiusY: a3, startAngle: a4, endAngle: a5, positive: a6, rotation: a7 ?? 0 });
@@ -100,11 +100,11 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
         assert.isRealNumber(value, "centerY");
         this._setCenterY(value);
     }
-    get centerCoordinate() {
+    get centerCoordinates() {
         return [this._centerX, this._centerY] as [number, number];
     }
-    set centerCoordinate(value) {
-        assert.isCoordinate(value, "centerCoordinate");
+    set centerCoordinates(value) {
+        assert.isCoordinates(value, "centerCoordinates");
         this._setCenterX(coord.x(value));
         this._setCenterY(coord.y(value));
     }
@@ -160,7 +160,7 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
     }
 
     isValid() {
-        const { centerCoordinate: cc, startAngle: sa, endAngle: ea } = this;
+        const { centerCoordinates: cc, startAngle: sa, endAngle: ea } = this;
         const epsilon = this.options_.epsilon;
         if (!coord.isValid(cc)) return false;
         if (!util.isRealNumber(sa)) return false;
@@ -180,15 +180,15 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
         positive: boolean,
         rotation: number
     ) {
-        assert.isCoordinateOrPoint(point1, "point1");
-        assert.isCoordinateOrPoint(point2, "point2");
+        assert.isCoordinatesOrPoint(point1, "point1");
+        assert.isCoordinatesOrPoint(point2, "point2");
         assert.isPositiveNumber(radiusX, "radiusX");
         assert.isPositiveNumber(radiusY, "radiusY");
         assert.isBoolean(largeArc, "largeArc");
         assert.isBoolean(positive, "positive");
         assert.isRealNumber(rotation, "rotation");
-        const [x1, y1] = point1 instanceof Point ? point1.coordinate : point1;
-        const [x2, y2] = point2 instanceof Point ? point2.coordinate : point2;
+        const [x1, y1] = point1 instanceof Point ? point1.coordinates : point1;
+        const [x2, y2] = point2 instanceof Point ? point2.coordinates : point2;
         const {
             centerX,
             centerY,
@@ -220,7 +220,7 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
      * Move point `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.centerCoordinate = coord.move(this.centerCoordinate, deltaX, deltaY);
+        this.centerCoordinates = coord.move(this.centerCoordinates, deltaX, deltaY);
         return this;
     }
 
@@ -234,7 +234,7 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
      * Move point `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.centerCoordinate = coord.moveAlongAngle(this.centerCoordinate, angle, distance);
+        this.centerCoordinates = coord.moveAlongAngle(this.centerCoordinates, angle, distance);
         return this;
     }
 
@@ -252,7 +252,7 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
         const g = new Graphics();
         if (!this.isValid()) return g;
 
-        const c = this.centerCoordinate;
+        const c = this.centerCoordinates;
         g.centerArcTo(...c, this.radiusX, this.radiusY, this.rotation, this.startAngle, this.endAngle, this.positive);
         return g;
     }

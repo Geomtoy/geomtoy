@@ -1,7 +1,7 @@
 import { validAndWithSameOwner } from "../../decorator";
 import util from "../../utility";
 import assert from "../../utility/assertion";
-import coord from "../../utility/coordinate";
+import coord from "../../utility/coord";
 import math from "../../utility/math";
 
 import Shape from "../../base/Shape";
@@ -87,8 +87,8 @@ class Path extends Shape {
     }
 
     static moveTo(point: [number, number] | Point) {
-        assert.isCoordinateOrPoint(point, "point");
-        const [x, y] = point instanceof Point ? point.coordinate : point;
+        assert.isCoordinatesOrPoint(point, "point");
+        const [x, y] = point instanceof Point ? point.coordinates : point;
         const ret: PathMoveToCommand = {
             type: PathCommandType.MoveTo,
             x,
@@ -97,8 +97,8 @@ class Path extends Shape {
         return ret;
     }
     static lineTo(point: [number, number] | Point) {
-        assert.isCoordinateOrPoint(point, "point");
-        const [x, y] = point instanceof Point ? point.coordinate : point;
+        assert.isCoordinatesOrPoint(point, "point");
+        const [x, y] = point instanceof Point ? point.coordinates : point;
         const ret: PathLineToCommand = {
             type: PathCommandType.LineTo,
             x,
@@ -107,12 +107,12 @@ class Path extends Shape {
         return ret;
     }
     static bezierCurveTo(controlPoint1: [number, number] | Point, controlPoint2: [number, number] | Point, point: [number, number] | Point) {
-        assert.isCoordinateOrPoint(controlPoint1, "controlPoint1");
-        assert.isCoordinateOrPoint(controlPoint2, "controlPoint2");
-        assert.isCoordinateOrPoint(point, "point");
-        const [controlPoint1X, controlPoint1Y] = controlPoint1 instanceof Point ? controlPoint1.coordinate : controlPoint1;
-        const [controlPoint2X, controlPoint2Y] = controlPoint2 instanceof Point ? controlPoint2.coordinate : controlPoint2;
-        const [x, y] = point instanceof Point ? point.coordinate : point;
+        assert.isCoordinatesOrPoint(controlPoint1, "controlPoint1");
+        assert.isCoordinatesOrPoint(controlPoint2, "controlPoint2");
+        assert.isCoordinatesOrPoint(point, "point");
+        const [controlPoint1X, controlPoint1Y] = controlPoint1 instanceof Point ? controlPoint1.coordinates : controlPoint1;
+        const [controlPoint2X, controlPoint2Y] = controlPoint2 instanceof Point ? controlPoint2.coordinates : controlPoint2;
+        const [x, y] = point instanceof Point ? point.coordinates : point;
         const ret: PathBezierCurveToCommand = {
             type: PathCommandType.BezierCurveTo,
             x,
@@ -125,10 +125,10 @@ class Path extends Shape {
         return ret;
     }
     static quadraticBezierCurveTo(controlPoint: [number, number] | Point, point: [number, number] | Point) {
-        assert.isCoordinateOrPoint(controlPoint, "controlPoint");
-        assert.isCoordinateOrPoint(point, "point");
-        const [controlPointX, controlPointY] = controlPoint instanceof Point ? controlPoint.coordinate : controlPoint;
-        const [x, y] = point instanceof Point ? point.coordinate : point;
+        assert.isCoordinatesOrPoint(controlPoint, "controlPoint");
+        assert.isCoordinatesOrPoint(point, "point");
+        const [controlPointX, controlPointY] = controlPoint instanceof Point ? controlPoint.coordinates : controlPoint;
+        const [x, y] = point instanceof Point ? point.coordinates : point;
         const ret: PathQuadraticBezierCurveToCommand = {
             type: PathCommandType.QuadraticBezierCurveTo,
             x,
@@ -144,8 +144,8 @@ class Path extends Shape {
         assert.isRealNumber(xAxisRotation, "xAxisRotation");
         assert.isBoolean(largeArc, "largeArc");
         assert.isBoolean(positive, "positive");
-        assert.isCoordinateOrPoint(point, "point");
-        const [x, y] = point instanceof Point ? point.coordinate : point;
+        assert.isCoordinatesOrPoint(point, "point");
+        const [x, y] = point instanceof Point ? point.coordinates : point;
         const ret: PathArcToCommand = {
             type: PathCommandType.ArcTo,
             x,

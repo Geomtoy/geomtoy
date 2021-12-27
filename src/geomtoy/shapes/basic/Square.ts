@@ -1,5 +1,5 @@
 import util from "../../utility";
-import coord from "../../utility/coordinate";
+import coord from "../../utility/coord";
 import assert from "../../utility/assertion";
 
 import Shape from "../../base/Shape";
@@ -18,7 +18,7 @@ class Square extends Shape implements ClosedShape, TransformableShape, RotationF
     private _rotation = 0;
 
     constructor(owner: Geomtoy, originX: number, originY: number, sideLength: number, rotation?: number);
-    constructor(owner: Geomtoy, originCoordinate: [number, number], sideLength: number, rotation?: number);
+    constructor(owner: Geomtoy, originCoordinates: [number, number], sideLength: number, rotation?: number);
     constructor(owner: Geomtoy, originPoint: Point, sideLength: number, rotation?: number);
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any) {
@@ -27,7 +27,7 @@ class Square extends Shape implements ClosedShape, TransformableShape, RotationF
             Object.assign(this, { originX: a1, originY: a2, sideLength: a3, rotation: a4 ?? 0 });
         }
         if (util.isArray(a1)) {
-            Object.assign(this, { originCoordinate: a1, sideLength: a2, rotation: a3 ?? 0 });
+            Object.assign(this, { originCoordinates: a1, sideLength: a2, rotation: a3 ?? 0 });
         }
         if (a1 instanceof Point) {
             Object.assign(this, { originPoint: a1, sideLength: a2, rotation: a3 ?? 0 });
@@ -73,11 +73,11 @@ class Square extends Shape implements ClosedShape, TransformableShape, RotationF
         assert.isRealNumber(value, "originY");
         this._setOriginY(value);
     }
-    get originCoordinate() {
+    get originCoordinates() {
         return [this._originX, this._originY] as [number, number];
     }
-    set originCoordinate(value) {
-        assert.isCoordinate(value, "originCoordinate");
+    set originCoordinates(value) {
+        assert.isCoordinates(value, "originCoordinates");
         this._setOriginX(coord.x(value));
         this._setOriginY(coord.y(value));
     }

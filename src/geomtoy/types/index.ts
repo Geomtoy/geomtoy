@@ -308,7 +308,7 @@ export type RecursivePartial<T> = {
 };
 
 export type BaseObjectFactoryCollection = {
-    [K in keyof BaseObjectCollection]: Factory<BaseObjectCollection[K]>;
+    readonly [K in keyof BaseObjectCollection]: Factory<BaseObjectCollection[K]>;
 };
 
 // Geomtoy global options
@@ -328,6 +328,20 @@ export type Options = {
     };
     pathSampleRatio: number;
 };
+
+export interface ViewportDescriptor  {
+    width:number,
+    height:number,
+    density:number;
+    zoom:number;
+    origin: [number, number];
+    pan: [number, number];
+    xAxisPositiveOnRight:boolean
+    yAxisPositiveOnBottom :boolean
+    globalTransformation: Transformation
+    globalViewBox:[number, number, number, number];
+}
+
 //#endregion
 
 //#region Shape
@@ -488,7 +502,7 @@ export type GraphicsImageCommand = {
     sourceY: number;
     sourceWidth: number;
     sourceHeight: number;
-    imageSource: string;
+    imageSource: string | File;
 };
 export type GraphicsTextCommand = {
     type: GraphicsCommandType.Text;
@@ -554,6 +568,8 @@ export type FontConfig = {
     fontBold: boolean;
     fontItalic: boolean;
 };
+//#endregion
+
 //#region Path
 export type PathCommand = PathMoveToCommand | PathLineToCommand | PathBezierCurveToCommand | PathQuadraticBezierCurveToCommand | PathArcToCommand;
 
@@ -628,7 +644,7 @@ export type AnyRelationship = {
 
 export type VerbOfRelationship<T extends AnyRelationship> = T["verb"];
 
-// prettier-ignore
+//prettier-ignore
 export type RelationshipMethodName<T extends AnyShape, U extends AnyShape, V extends AnyRelationship> = 
     `${Uncapitalize<KeyOfShape<T>>}${VerbOfRelationship<V>}${KeyOfShape<U>}` & keyof V
 
@@ -636,39 +652,4 @@ export type RelationshipMethod<T extends AnyShape, U extends AnyShape, V extends
     ? V[RelationshipMethodName<T, U, V>]
     : never;
 
-//#endregion
-
-//#region Renderer
-export type LineJoinType = "bevel" | "miter" | "round";
-export type LineCapType = "butt" | "round" | "square";
-export type RendererConfig = {
-    stroke: string;
-    strokeDash: number[];
-    strokeDashOffset: number;
-    strokeWidth: number;
-    fill: string;
-    lineJoin: LineJoinType;
-    miterLimit: number;
-    lineCap: LineCapType;
-};
-export type PathLike = SVGPathElement | Path2D;
-export type ContainerElement = SVGSVGElement | HTMLCanvasElement;
-export interface Renderer {
-    container: ContainerElement;
-    geomtoy: Geomtoy;
-    setup(): void;
-    draw(shape: Shape, behind: boolean): PathLike;
-    drawBatch(objects: Shape[], behind: boolean): PathLike[];
-    clear(): void;
-    stroke(stroke: string): void;
-    strokeWidth(strokeWidth: number): void;
-    strokeDash(strokeDash: number[]): void;
-    strokeDashOffset(strokeDashOffset: number): void;
-    fill(fill: string): void;
-    lineJoin(lineJoin: LineJoinType): void;
-    lineCap(lineCap: LineCapType): void;
-    miterLimit(miterLimit: number): void;
-    isPointInFill(path: PathLike, x: number, y: number): boolean;
-    isPointInStroke(path: PathLike, strokeWidth: number, x: number, y: number): boolean;
-}
 //#endregion

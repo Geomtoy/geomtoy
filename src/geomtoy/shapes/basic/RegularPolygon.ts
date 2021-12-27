@@ -2,7 +2,7 @@ import { validAndWithSameOwner } from "../../decorator";
 import assert from "../../utility/assertion";
 import util from "../../utility";
 import math from "../../utility/math";
-import coord from "../../utility/coordinate";
+import coord from "../../utility/coord";
 
 import Shape from "../../base/Shape";
 import Point from "./Point";
@@ -26,7 +26,7 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
     private _windingDirection = "positive" as Direction;
 
     constructor(owner: Geomtoy, centerX: number, centerY: number, radius: number, sideCount: number, rotation?: number);
-    constructor(owner: Geomtoy, centerCoordinate: [number, number], radius: number, sideCount: number, rotation?: number);
+    constructor(owner: Geomtoy, centerCoordinates: [number, number], radius: number, sideCount: number, rotation?: number);
     constructor(owner: Geomtoy, centerPoint: Point, radius: number, sideCount: number, rotation?: number);
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any) {
@@ -35,7 +35,7 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
             Object.assign(this, { centerX: a1, centerY: a2, radius: a3, sideCount: a4, rotation: a5 ?? 0 });
         }
         if (util.isArray(a1)) {
-            Object.assign(this, { centerCoordinate: a1, radius: a2, sideCount: a3, rotation: a4 ?? 0 });
+            Object.assign(this, { centerCoordinates: a1, radius: a2, sideCount: a3, rotation: a4 ?? 0 });
         }
         if (a2 instanceof Point) {
             Object.assign(this, { centerPoint: a1, radius: a2, sideCount: a3, rotation: a4 ?? 0 });
@@ -86,11 +86,11 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
         assert.isRealNumber(value, "centerY");
         this._setCenterY(value);
     }
-    get centerCoordinate() {
+    get centerCoordinates() {
         return [this._centerX, this._centerY] as [number, number];
     }
-    set centerCoordinate(value) {
-        assert.isCoordinate(value, "centerCoordinate");
+    set centerCoordinates(value) {
+        assert.isCoordinates(value, "centerCoordinates");
         this._setCenterX(coord.x(value));
         this._setCenterY(coord.y(value));
     }
@@ -148,7 +148,7 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
         return (n * (n - 3)) / 2;
     }
     isValid() {
-        const { centerCoordinate: cc, radius: r, sideCount: n } = this;
+        const { centerCoordinates: cc, radius: r, sideCount: n } = this;
         if (!coord.isValid(cc)) return false;
         if (!util.isPositiveNumber(r)) return false;
         if (!util.isInteger(n || n < 3)) return false;
@@ -182,7 +182,7 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
      * Move regular polygon `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.centerCoordinate = coord.move(this.centerCoordinate, deltaX, deltaY);
+        this.centerCoordinates = coord.move(this.centerCoordinates, deltaX, deltaY);
         return this;
     }
     /**
@@ -195,22 +195,22 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
      * Move regular polygon `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.centerCoordinate = coord.moveAlongAngle(this.centerCoordinate, angle, distance);
+        this.centerCoordinates = coord.moveAlongAngle(this.centerCoordinates, angle, distance);
         return this;
     }
 
-    static fromApothemEtc(owner: Geomtoy, apothem: number, centerCoordinate: [number, number], sideCount: number, rotation: number = 0) {
+    static fromApothemEtc(owner: Geomtoy, apothem: number, centerCoordinates: [number, number], sideCount: number, rotation: number = 0) {
         let r = apothem / math.cos(Math.PI / sideCount);
-        return new RegularPolygon(owner, centerCoordinate, r, sideCount, rotation);
+        return new RegularPolygon(owner, centerCoordinates, r, sideCount, rotation);
     }
-    static fromSideLengthEtc(owner: Geomtoy, sideLength: number, centerCoordinate: [number, number], sideCount: number, rotation: number = 0) {
+    static fromSideLengthEtc(owner: Geomtoy, sideLength: number, centerCoordinates: [number, number], sideCount: number, rotation: number = 0) {
         let r = sideLength / math.sin(Math.PI / sideCount) / 2;
-        return new RegularPolygon(owner, centerCoordinate, r, sideCount, rotation);
+        return new RegularPolygon(owner, centerCoordinates, r, sideCount, rotation);
     }
 
     getPoints() {
         return util.range(0, this.sideCount).map(index => {
-            return new Point(this.owner, coord.moveAlongAngle(this.centerCoordinate, ((2 * Math.PI) / this.sideCount) * index + this.rotation, this.radius));
+            return new Point(this.owner, coord.moveAlongAngle(this.centerCoordinates, ((2 * Math.PI) / this.sideCount) * index + this.rotation, this.radius));
         });
     }
     getSideLineSegments() {
@@ -221,10 +221,10 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
     }
 
     getCircumscribedCircle() {
-        return new Circle(this.owner, this.centerCoordinate, this.radius);
+        return new Circle(this.owner, this.centerCoordinates, this.radius);
     }
     getInscribedCircle() {
-        return new Circle(this.owner, this.centerCoordinate, this.apothem);
+        return new Circle(this.owner, this.centerCoordinates, this.apothem);
     }
 
     getPerimeter(): number {
@@ -242,9 +242,9 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
         if (!this.isValid()) return g;
 
         const ps = this.getPoints();
-        g.moveTo(...util.head(ps)!.coordinate!);
+        g.moveTo(...util.head(ps)!.coordinates!);
         util.range(1, this.sideCount).forEach(index => {
-            g.lineTo(...ps[index].coordinate);
+            g.lineTo(...ps[index].coordinates);
         });
         g.close();
         return g;

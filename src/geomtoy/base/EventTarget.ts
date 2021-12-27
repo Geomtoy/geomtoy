@@ -63,9 +63,6 @@ abstract class EventTarget extends BaseObject {
     // event scheduled flag to mark if we have told the scheduler ready to go(put the event handlers of triggered events of this `EventTarget` in its queue)
     private _eventScheduled: boolean = false;
 
-    // event handling flag to mark if the event handlers of triggered events of this `EventTarget` are now being invoked
-    private _eventHandling: boolean = false;
-
     private _addHandler(eventPattern: string, callback: (...args: any[]) => void, context: EventTarget, relatedTargets: undefined | EventTarget[], priority: number, hasRecursiveEffect: boolean) {
         const hs = this._eventMap;
         const handler = new EventHandler(eventPattern, callback, context, relatedTargets, priority, hasRecursiveEffect);
@@ -266,8 +263,6 @@ abstract class EventTarget extends BaseObject {
             //             otherwise it will be an infinite loop. Don't worry, the scheduler will care about this.
             // #endregion
 
-            this._eventHandling = true;
-
             //Copy the event handlers in order to make it unchangeable during the event handling.
             const handlingCopy = [...this._eventMap];
             handlingCopy.forEach(h => {
@@ -295,10 +290,8 @@ abstract class EventTarget extends BaseObject {
             });
 
             this._eventCache.clear();
-            this._eventHandling = false;
             this._eventScheduled = false;
         });
-        if (!this._scheduler.flushed) this._scheduler.flushQueue();
     }
 
     protected trigger_(eventObject: EventObject<typeof this>) {

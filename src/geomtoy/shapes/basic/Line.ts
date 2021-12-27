@@ -2,10 +2,9 @@ import { validAndWithSameOwner } from "../../decorator";
 import assert from "../../utility/assertion";
 import util from "../../utility";
 import math from "../../utility/math";
-import coord from "../../utility/coordinate";
+import coord from "../../utility/coord";
 import angle from "../../utility/angle";
-import bbox from "../../utility/boundingBox";
-import coordArray from "../../utility/coordinateArray";
+import box from "../../utility/box";
 
 import Arrow from "../../helper/Arrow";
 import { optionerOf } from "../../helper/Optioner";
@@ -19,7 +18,7 @@ import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
 import type Geomtoy from "../..";
-import type { OwnerCarrier, InfiniteOpenShape, TransformableShape } from "../../types";
+import type { OwnerCarrier, InfiniteOpenShape, TransformableShape, ViewportDescriptor } from "../../types";
 import type Transformation from "../../transformation";
 
 class Line extends Shape implements InfiniteOpenShape, TransformableShape {
@@ -28,7 +27,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
     private _slope = NaN;
 
     constructor(owner: Geomtoy, x: number, y: number, slope: number);
-    constructor(owner: Geomtoy, coordinate: [number, number], slope: number);
+    constructor(owner: Geomtoy, coordinates: [number, number], slope: number);
     constructor(owner: Geomtoy, point: Point, slope: number);
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any) {
@@ -37,7 +36,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
             Object.assign(this, { x: a1, y: a2, slope: a3 });
         }
         if (util.isArray(a1)) {
-            Object.assign(this, { coordinate: a1, slope: a2 });
+            Object.assign(this, { coordinates: a1, slope: a2 });
         }
         if (a1 instanceof Point) {
             Object.assign(this, { point: a1, slope: a2 });
@@ -83,11 +82,11 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         assert.isRealNumber(value, "y");
         this._setY(value);
     }
-    get coordinate() {
+    get coordinates() {
         return [this._x, this._y] as [number, number];
     }
-    set coordinate(value) {
-        assert.isCoordinate(value, "coordinate");
+    set coordinates(value) {
+        assert.isCoordinates(value, "coordinates");
         this._setX(coord.x(value));
         this._setY(coord.y(value));
     }
@@ -114,7 +113,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
     }
     set slope(value) {
         assert.isNumberNotNaN(value, "slope");
-        // prettier-ignore
+        //prettier-ignore
         const s = value >= math.Tan90 
             ? Infinity 
             : value<= math.TanN90
@@ -131,7 +130,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
     set angle(value) {
         assert.isRealNumber(value, "angle");
         const a = angle.convert2(value);
-        // prettier-ignore
+        //prettier-ignore
         const s = a === Math.PI / 2 
             ? Infinity
             : a === - Math.PI / 2 
@@ -159,7 +158,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
     }
 
     isValid() {
-        const { coordinate: c, slope: slope } = this;
+        const { coordinates: c, slope: slope } = this;
         if (!coord.isValid(c)) return false;
         if (!util.isNumberNotNaN(slope)) return false;
         return true;
@@ -197,11 +196,11 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
      * @returns
      */
     static fromTwoPoints(this: OwnerCarrier, point1: [number, number] | Point, point2: [number, number] | Point, usePoint1 = true): Line | null {
-        assert.isCoordinateOrPoint(point1, "point1");
-        assert.isCoordinateOrPoint(point2, "point2");
+        assert.isCoordinatesOrPoint(point1, "point1");
+        assert.isCoordinatesOrPoint(point2, "point2");
         assert.isBoolean(usePoint1, "usePoint1");
-        const [x1, y1] = point1 instanceof Point ? point1.coordinate : point1;
-        const [x2, y2] = point2 instanceof Point ? point2.coordinate : point2;
+        const [x1, y1] = point1 instanceof Point ? point1.coordinates : point1;
+        const [x2, y2] = point2 instanceof Point ? point2.coordinates : point2;
         const epsilon = optionerOf(this.owner).options.epsilon;
         if (coord.isSameAs([x1, y1], [x2, y2], epsilon)) {
             console.warn("[G]The points `point1` and `point2` are the same, they can NOT determine a `Line`.");
@@ -267,7 +266,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
     moveSelf(deltaX: number, deltaY: number) {
         if (deltaX === 0 && deltaY === 0) return this;
 
-        this.coordinate = coord.move(this.coordinate, deltaX, deltaY);
+        this.coordinates = coord.move(this.coordinates, deltaX, deltaY);
         return this;
     }
     /**
@@ -281,7 +280,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
      */
     moveAlongAngleSelf(angle: number, distance: number) {
         if (distance === 0) return this;
-        this.coordinate = coord.moveAlongAngle(this.coordinate, angle, distance);
+        this.coordinates = coord.moveAlongAngle(this.coordinates, angle, distance);
         return this;
     }
 
@@ -292,8 +291,8 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         return [slope, -1, y - slope * x];
     }
     isPointOn(point: [number, number] | Point) {
-        assert.isCoordinateOrPoint(point, "point");
-        const [x, y] = point instanceof Point ? point.coordinate : point;
+        assert.isCoordinatesOrPoint(point, "point");
+        const [x, y] = point instanceof Point ? point.coordinates : point;
         const [a, b, c] = this.getGeneralEquationParameters();
         const epsilon = this.options_.epsilon;
         return math.equalTo(a * x + b * y + c, 0, epsilon);
@@ -518,11 +517,11 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
 
     /**
      * Find the perpendicular line of line `this` from point `point`.
-     * @param coordinate
+     * @param coordinates
      */
     getPerpendicularLineFromPoint(point: [number, number] | Point): Line {
         const k1 = this.slope;
-        const [x, y] = point instanceof Point ? point.coordinate : point;
+        const [x, y] = point instanceof Point ? point.coordinates : point;
         // If two line are perpendicular to each other, the slope multiplication is equal to -1.
         const k2 = k1 === Infinity ? 0 : k1 === 0 ? Infinity : -1 / k1;
         return new Line(this.owner, [x, y], k2);
@@ -536,7 +535,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
 
     getPerpendicularPointFromPoint(point: [number, number] | Point): Point {
         const [a, b, c] = this.getGeneralEquationParameters();
-        const [x, y] = point instanceof Point ? point.coordinate : point;
+        const [x, y] = point instanceof Point ? point.coordinates : point;
         const d = -(a * x + b * y + c) / (a ** 2 + b ** 2);
         return new Point(this.owner, [d * a + x, d * b + y]);
     }
@@ -566,14 +565,14 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         return [ret1, ret2, ret3, ret4].filter(v => v !== null) as Point[];
     }
 
-    getGraphics() {
+    getGraphics(viewport: ViewportDescriptor) {
         const g = new Graphics();
         if (!this.isValid()) return g;
 
-        const gbb = this.owner.globalBoundingBox;
+        const gbb = viewport.globalViewBox;
         const [a, b, c] = this.getGeneralEquationParameters();
         const cs: [number, number][] = [];
-        const [minX, minY, maxX, maxY] = [bbox.minX(gbb), bbox.minY(gbb), bbox.maxX(gbb), bbox.maxY(gbb)];
+        const [minX, minY, maxX, maxY] = [box.minX(gbb), box.minY(gbb), box.maxX(gbb), box.maxY(gbb)];
 
         const d1 = a * minX + b * minY + c;
         const d2 = a * maxX + b * minY + c;
@@ -588,18 +587,18 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         if (math.inInterval(lerp2, 0, 1, false, true)) cs.push([maxX, math.lerp(minY, maxY, lerp2)]);
         if (math.inInterval(lerp3, 0, 1, false, true)) cs.push([math.lerp(maxX, minX, lerp3), maxY]);
         if (math.inInterval(lerp4, 0, 1, false, true)) cs.push([minX, math.lerp(maxY, minY, lerp4)]);
-        // When `cs.length === 0`, there is no intersection between line `this` and the bbox.
-        // When `cs.length === 1`, line `this` only passes through one vertex of the bbox.
-        // When `cs.length === 2`, line `this` intersects the bbox or one of the lines of bbox.
+        // When `cs.length === 0`, there is no intersection between line `this` and the box.
+        // When `cs.length === 1`, line `this` only passes through one vertex of the box.
+        // When `cs.length === 2`, line `this` intersects the box or one of the lines of box.
 
         if (cs.length !== 2) return g;
-        const [c1, c2] = coordArray.sortSelf(cs, this.options_.epsilon);
+        const [c1, c2] = coord.sortArraySelf(cs, this.options_.epsilon);
         g.moveTo(...c1);
         g.lineTo(...c2);
 
         if (this.options_.graphics.lineArrow) {
-            const arrowGraphics1 = new Arrow(this.owner, c1, this.angle - Math.PI).getGraphics();
-            const arrowGraphics2 = new Arrow(this.owner, c2, this.angle).getGraphics();
+            const arrowGraphics1 = new Arrow(this.owner, c1, this.angle - Math.PI).getGraphics(viewport);
+            const arrowGraphics2 = new Arrow(this.owner, c2, this.angle).getGraphics(viewport);
             g.append(arrowGraphics1);
             g.append(arrowGraphics2);
         }
@@ -620,7 +619,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         return this;
     }
     toString() {
-        // prettier-ignore
+        //prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
             `\tx: ${this.x}`,

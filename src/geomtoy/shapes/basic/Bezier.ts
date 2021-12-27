@@ -1,7 +1,7 @@
 import { validAndWithSameOwner } from "../../decorator";
 import assert from "../../utility/assertion";
 import util from "../../utility";
-import coord from "../../utility/coordinate";
+import coord from "../../utility/coord";
 
 import Shape from "../../base/Shape";
 import Point from "./Point";
@@ -23,7 +23,7 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
     private _controlPoint2Y = NaN;
 
     constructor(owner: Geomtoy, point1X: number, point1Y: number, point2X: number, point2Y: number, controlPoint1X: number, controlPoint1Y: number, controlPoint2X: number, controlPoint2Y: number);
-    constructor(owner: Geomtoy, point1Coordinate: [number, number], point2Coordinate: [number, number], controlPoint1Coordinate: [number, number], controlPoint2Coordinate: [number, number]);
+    constructor(owner: Geomtoy, point1Coordinates: [number, number], point2Coordinates: [number, number], controlPoint1Coordinates: [number, number], controlPoint2Coordinates: [number, number]);
     constructor(owner: Geomtoy, point1: Point, point2: Point, controlPoint1: Point, controlPoint2: Point);
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any, a7?: any, a8?: any) {
@@ -32,7 +32,7 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
             Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4, controlPoint1X: a5, controlPoint1Y: a6, controlPoint2X: a7, controlPoint2Y: a8 });
         }
         if (util.isArray(a1)) {
-            Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2, controlPoint1Coordinate: a3, controlPoint2Coordinate: a4 });
+            Object.assign(this, { point1Coordinates: a1, point2Coordinates: a2, controlPoint1Coordinates: a3, controlPoint2Coordinates: a4 });
         }
         if (a1 instanceof Point) {
             Object.assign(this, { point1: a1, point2: a2, controlPoint1: a3, controlPoint2: a4 });
@@ -99,11 +99,11 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
         assert.isRealNumber(value, "point1Y");
         this._setPoint1Y(value);
     }
-    get point1Coordinate() {
+    get point1Coordinates() {
         return [this._point1X, this._point1Y] as [number, number];
     }
-    set point1Coordinate(value) {
-        assert.isCoordinate(value, "point1Coordinate");
+    set point1Coordinates(value) {
+        assert.isCoordinates(value, "point1Coordinates");
         this._setPoint1X(coord.x(value));
         this._setPoint1Y(coord.y(value));
     }
@@ -129,11 +129,11 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
         assert.isRealNumber(value, "point2Y");
         this._setPoint2Y(value);
     }
-    get point2Coordinate() {
+    get point2Coordinates() {
         return [this._point2X, this._point2Y] as [number, number];
     }
-    set point2Coordinate(value) {
-        assert.isCoordinate(value, "point2Coordinate");
+    set point2Coordinates(value) {
+        assert.isCoordinates(value, "point2Coordinates");
         this._setPoint2X(coord.x(value));
         this._setPoint2Y(coord.y(value));
     }
@@ -159,11 +159,11 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
         assert.isRealNumber(value, "controlPoint1Y");
         this._setControlPoint1Y(value);
     }
-    get controlPoint1Coordinate() {
+    get controlPoint1Coordinates() {
         return [this._controlPoint1X, this._controlPoint1Y] as [number, number];
     }
-    set controlPoint1Coordinate(value) {
-        assert.isCoordinate(value, "controlPoint1Coordinate");
+    set controlPoint1Coordinates(value) {
+        assert.isCoordinates(value, "controlPoint1Coordinates");
         this._setControlPoint1X(coord.x(value));
         this._setControlPoint1Y(coord.y(value));
     }
@@ -189,11 +189,11 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
         assert.isRealNumber(value, "controlPoint2Y");
         this._setControlPoint2Y(value);
     }
-    get controlPoint2Coordinate() {
+    get controlPoint2Coordinates() {
         return [this._controlPoint2X, this._controlPoint2Y] as [number, number];
     }
-    set controlPoint2Coordinate(value) {
-        assert.isCoordinate(value, "controlPoint2Coordinate");
+    set controlPoint2Coordinates(value) {
+        assert.isCoordinates(value, "controlPoint2Coordinates");
         this._setControlPoint2X(coord.x(value));
         this._setControlPoint2Y(coord.y(value));
     }
@@ -207,7 +207,7 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
     }
 
     isValid() {
-        const { point1Coordinate: c1, point2Coordinate: c2, controlPoint1Coordinate: cpc1, controlPoint2Coordinate: cpc2 } = this;
+        const { point1Coordinates: c1, point2Coordinates: c2, controlPoint1Coordinates: cpc1, controlPoint2Coordinates: cpc2 } = this;
         const epsilon = this.options_.epsilon;
         if (!coord.isValid(c1)) return false;
         if (!coord.isValid(c2)) return false;
@@ -228,10 +228,10 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
     isSameAs2(bezier: Bezier) {
         const epsilon = this.options_.epsilon;
         return (
-            coord.isSameAs(this.point1Coordinate, bezier.point1Coordinate, epsilon) &&
-            coord.isSameAs(this.point2Coordinate, bezier.point2Coordinate, epsilon) &&
-            coord.isSameAs(this.controlPoint1Coordinate, bezier.controlPoint1Coordinate, epsilon) &&
-            coord.isSameAs(this.controlPoint2Coordinate, bezier.controlPoint2Coordinate, epsilon)
+            coord.isSameAs(this.point1Coordinates, bezier.point1Coordinates, epsilon) &&
+            coord.isSameAs(this.point2Coordinates, bezier.point2Coordinates, epsilon) &&
+            coord.isSameAs(this.controlPoint1Coordinates, bezier.controlPoint1Coordinates, epsilon) &&
+            coord.isSameAs(this.controlPoint2Coordinates, bezier.controlPoint2Coordinates, epsilon)
         );
     }
 
@@ -239,20 +239,20 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
         return this.clone().moveSelf(deltaX, deltaY);
     }
     moveSelf(deltaX: number, deltaY: number) {
-        this.point1Coordinate = coord.move(this.point1Coordinate, deltaX, deltaY);
-        this.point2Coordinate = coord.move(this.point2Coordinate, deltaX, deltaY);
-        this.controlPoint1Coordinate = coord.move(this.controlPoint1Coordinate, deltaX, deltaY);
-        this.controlPoint2Coordinate = coord.move(this.controlPoint2Coordinate, deltaX, deltaY);
+        this.point1Coordinates = coord.move(this.point1Coordinates, deltaX, deltaY);
+        this.point2Coordinates = coord.move(this.point2Coordinates, deltaX, deltaY);
+        this.controlPoint1Coordinates = coord.move(this.controlPoint1Coordinates, deltaX, deltaY);
+        this.controlPoint2Coordinates = coord.move(this.controlPoint2Coordinates, deltaX, deltaY);
         return this;
     }
     moveAlongAngle(angle: number, distance: number) {
         return this.clone().moveAlongAngleSelf(angle, distance);
     }
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.point1Coordinate = coord.moveAlongAngle(this.point1Coordinate, angle, distance);
-        this.point2Coordinate = coord.moveAlongAngle(this.point2Coordinate, angle, distance);
-        this.controlPoint1Coordinate = coord.moveAlongAngle(this.controlPoint1Coordinate, angle, distance);
-        this.controlPoint2Coordinate = coord.moveAlongAngle(this.controlPoint2Coordinate, angle, distance);
+        this.point1Coordinates = coord.moveAlongAngle(this.point1Coordinates, angle, distance);
+        this.point2Coordinates = coord.moveAlongAngle(this.point2Coordinates, angle, distance);
+        this.controlPoint1Coordinates = coord.moveAlongAngle(this.controlPoint1Coordinates, angle, distance);
+        this.controlPoint2Coordinates = coord.moveAlongAngle(this.controlPoint2Coordinates, angle, distance);
         return this;
     }
 
@@ -274,7 +274,7 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
         const g = new Graphics();
         if (!this.isValid()) return g;
 
-        const { point1Coordinate: c1, point2Coordinate: c2, controlPoint1Coordinate: cpc1, controlPoint2Coordinate: cpc2 } = this;
+        const { point1Coordinates: c1, point2Coordinates: c2, controlPoint1Coordinates: cpc1, controlPoint2Coordinates: cpc2 } = this;
         g.moveTo(...c1);
         g.bezierCurveTo(...cpc1, ...cpc2, ...c2);
         return g;

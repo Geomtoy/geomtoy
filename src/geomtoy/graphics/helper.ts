@@ -45,7 +45,7 @@ function arcCenterToEndpointParameterization({
     const cosPhi = math.cos(phi)
     const sinPhi = math.sin(phi)
     const [rx, ry] = [math.abs(srcRx), math.abs(srcRy)]
-    // prettier-ignore
+    //prettier-ignore
     const [x1,y1] = vec2.add(
         mat2.dotVec2(
             [cosPhi, -sinPhi, sinPhi, cosPhi],
@@ -58,7 +58,7 @@ function arcCenterToEndpointParameterization({
         const approx = Math.PI / 1800
         ea = !anti ? ea - approx : ea + approx
     }
-    // prettier-ignore
+    //prettier-ignore
     const [x2, y2] = vec2.add(
         mat2.dotVec2(
             [cosPhi, -sinPhi, sinPhi, cosPhi], 
@@ -87,7 +87,7 @@ function arcEndpointToCenterParameterization({
 }: ArcEndpointParameterization): ArcCenterParameterization {
     const cosPhi = math.cos(phi)
     const sinPhi = math.sin(phi)
-    // prettier-ignore
+    //prettier-ignore
     const [x1P, y1P] = mat2.dotVec2(
         [cosPhi, sinPhi, -sinPhi, cosPhi], 
         [(x1 - x2) / 2, (y1 - y2) / 2]
@@ -100,12 +100,12 @@ function arcEndpointToCenterParameterization({
     }
     const [rx, ry] = [math.abs(srcRx), math.abs(srcRy)]
     const sign = laf !== sf ? 1 : -1
-    // prettier-ignore
+    //prettier-ignore
     const [cxP, cyP] = vec2.scalarMultiply(
         [(rx * y1P) / ry, (-ry * x1P) / rx], 
         sign * math.sqrt((rx ** 2 * ry ** 2 - rx ** 2 * y1P ** 2 - ry ** 2 * x1P ** 2) / (rx ** 2 * y1P ** 2 + ry ** 2 * x1P ** 2))
     )
-    // prettier-ignore
+    //prettier-ignore
     const [cx, cy] = vec2.add(
         mat2.dotVec2(
             [cosPhi, -sinPhi, sinPhi, cosPhi], 
@@ -118,7 +118,7 @@ function arcEndpointToCenterParameterization({
 
     const sa = vec2.angleTo([1, 0], a)
     const deltaAP = vec2.angleTo(a, b)
-    // prettier-ignore
+    //prettier-ignore
     const deltaA = 
         !sf && deltaAP > 0 
         ? deltaAP - 2 * Math.PI 

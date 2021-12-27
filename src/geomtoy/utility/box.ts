@@ -1,4 +1,4 @@
-const bbox = {
+const box = {
     from(c: [number, number], s: [number, number]): [number, number, number, number] {
         return [...c, ...s]
     },
@@ -6,7 +6,7 @@ const bbox = {
         return [lc[0], lc[1], uc[0] - uc[0], uc[1] - lc[1]]
     },
     standardize(b: [number, number, number, number]): [number, number, number, number] {
-        return bbox.standardizeSelf(bbox.clone(b))
+        return box.standardizeSelf([...b])
     },
     standardizeSelf(b: [number, number, number, number]): [number, number, number, number] {
         if (b[2] < 0) {
@@ -18,13 +18,6 @@ const bbox = {
             b[3] = -b[3]
         }
         return b
-    },
-    assign(b: [number, number, number, number], ref: [number, number, number, number]) {
-        let [x, y, w, h] = ref
-        b[0] = x
-        b[1] = y
-        b[2] = w
-        b[3] = h
     },
     x(b: [number, number, number, number], x?: number) {
         if (x !== undefined) b[0] = x
@@ -41,9 +34,6 @@ const bbox = {
     height(b: [number, number, number, number], h?: number) {
         if (h !== undefined) b[3] = h
         return b[3]
-    },
-    clone(b: [number, number, number, number]): [number, number, number, number] {
-        return [...b]
     },
     minX(b: [number, number, number, number]): number {
         return b[0]
@@ -71,4 +61,4 @@ const bbox = {
     }
 }
 
-export default bbox
+export default box

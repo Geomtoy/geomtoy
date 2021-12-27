@@ -1,6 +1,8 @@
 import EventObject, { isSameEventObject } from "../event/EventObject";
 import EventTarget from "../base/EventTarget";
 
+
+//todo change this to `Set` ??  EventPool
 class EventCache<T extends EventTarget> {
     objects: EventObject<T>[] = [];
 

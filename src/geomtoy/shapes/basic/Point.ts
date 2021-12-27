@@ -2,7 +2,7 @@ import { validAndWithSameOwner } from "../../decorator";
 import assert from "../../utility/assertion";
 import util from "../../utility";
 import math from "../../utility/math";
-import coord from "../../utility/coordinate";
+import coord from "../../utility/coord";
 import vec2 from "../../utility/vec2";
 
 import { optionerOf } from "../../helper/Optioner";
@@ -17,14 +17,14 @@ import EventObject from "../../event/EventObject";
 
 import type Geomtoy from "../..";
 import type Transformation from "../../transformation";
-import type { OwnerCarrier } from "../../types";
+import type { OwnerCarrier, ViewportDescriptor } from "../../types";
 
 class Point extends Shape {
     private _x = NaN;
     private _y = NaN;
 
     constructor(owner: Geomtoy, x: number, y: number);
-    constructor(owner: Geomtoy, coordinate: [number, number]);
+    constructor(owner: Geomtoy, coordinates: [number, number]);
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any) {
         super(o);
@@ -32,7 +32,7 @@ class Point extends Shape {
             Object.assign(this, { x: a1, y: a2 });
         }
         if (util.isArray(a1)) {
-            Object.assign(this, { coordinate: a1 });
+            Object.assign(this, { coordinates: a1 });
         }
         return Object.seal(this);
     }
@@ -65,11 +65,11 @@ class Point extends Shape {
         assert.isRealNumber(value, "y");
         this._setY(value);
     }
-    get coordinate() {
+    get coordinates() {
         return [this._x, this._y] as [number, number];
     }
-    set coordinate(value) {
-        assert.isCoordinate(value, "coordinate");
+    set coordinates(value) {
+        assert.isCoordinates(value, "coordinates");
         this._setX(coord.x(value));
         this._setY(coord.y(value));
     }
@@ -79,7 +79,7 @@ class Point extends Shape {
     }
 
     isValid(): boolean {
-        return coord.isValid(this.coordinate);
+        return coord.isValid(this.coordinates);
     }
 
     /**
@@ -91,9 +91,9 @@ class Point extends Shape {
      * @returns
      */
     static isThreePointsCollinear(owner: Geomtoy, point1: Point, point2: Point, point3: Point) {
-        const [x1, y1] = point1.coordinate;
-        const [x2, y2] = point2.coordinate;
-        const [x3, y3] = point3.coordinate;
+        const [x1, y1] = point1.coordinates;
+        const [x2, y2] = point2.coordinates;
+        const [x3, y3] = point3.coordinates;
         const d = x1 * y2 + x2 * y3 + x3 * y1 - (x2 * y1 + x3 * y2 + x1 * y3); //cross product shorthand
         const epsilon = optionerOf(owner).options.epsilon;
         return math.equalTo(d, 0, epsilon);
@@ -114,7 +114,7 @@ class Point extends Shape {
             throw new Error(`[G]\`n\` should be an integer and not less than 2, but we got \`${n}\`.`);
         }
 
-        const [c0, c1, c2] = [vertex.coordinate, leg1.coordinate, leg2.coordinate];
+        const [c0, c1, c2] = [vertex.coordinates, leg1.coordinates, leg2.coordinates];
         const epsilon = optionerOf(this.owner).options.epsilon;
         if (coord.isSameAs(c0, c1, epsilon) || coord.isSameAs(c0, c2, epsilon) || coord.isSameAs(c1, c2, epsilon)) {
             console.warn("[G]The points `vertex`, `leg1`, `leg2` are the same, there is no angle formed by them.");
@@ -123,7 +123,7 @@ class Point extends Shape {
         const a1 = vec2.angle(vec2.from(c0, c1));
         const a2 = vec2.angle(vec2.from(c0, c1));
         const d = (a2 - a1) / n;
-        return util.range(1, n).map(i => new Ray(this.owner, vertex.coordinate, a1 + d * i));
+        return util.range(1, n).map(i => new Ray(this.owner, vertex.coordinates, a1 + d * i));
     }
 
     //todo
@@ -135,7 +135,7 @@ class Point extends Shape {
      * @returns
      */
     static fromVector(owner: Geomtoy, vector: Vector) {
-        return new Point(owner, vector.point2Coordinate);
+        return new Point(owner, vector.point2Coordinates);
     }
     /**
      * Whether point `this` is the same as point `point`.
@@ -144,7 +144,7 @@ class Point extends Shape {
      */
     isSameAs(point: Point): boolean {
         if (point === this) return true;
-        return coord.isSameAs(this.coordinate, point.coordinate, this.options_.epsilon);
+        return coord.isSameAs(this.coordinates, point.coordinates, this.options_.epsilon);
     }
     /**
      * Move point `this` by `deltaX` and `deltaY` to get new point.
@@ -156,7 +156,7 @@ class Point extends Shape {
      * Move point `this` itself by `deltaX` and `deltaY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.coordinate = coord.move(this.coordinate, deltaX, deltaY);
+        this.coordinates = coord.move(this.coordinates, deltaX, deltaY);
         return this;
     }
     /**
@@ -169,20 +169,20 @@ class Point extends Shape {
      * Move point `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.coordinate = coord.moveAlongAngle(this.coordinate, angle, distance);
+        this.coordinates = coord.moveAlongAngle(this.coordinates, angle, distance);
         return this;
     }
     /**
      * Get the distance between point `this` and point `point`.
      */
     getDistanceBetweenPoint(point: Point): number {
-        return vec2.magnitude(vec2.from(this.coordinate, point.coordinate));
+        return vec2.magnitude(vec2.from(this.coordinates, point.coordinates));
     }
     /**
      * Get the distance square between point `this` and point `point`.
      */
     getSquaredDistanceBetweenPoint(point: Point): number {
-        return vec2.squaredMagnitude(vec2.from(this.coordinate, point.coordinate));
+        return vec2.squaredMagnitude(vec2.from(this.coordinates, point.coordinates));
     }
     /**
      * Get the distance between point `this` and line `line`.
@@ -227,8 +227,8 @@ class Point extends Shape {
      * @returns {number}
      */
     getSignedDistanceBetweenLineSegment(lineSegment: LineSegment): number {
-        const c = this.coordinate;
-        const { point1Coordinate: c1, point2Coordinate: c2 } = lineSegment;
+        const c = this.coordinates;
+        const { point1Coordinates: c1, point2Coordinates: c2 } = lineSegment;
         const v12 = vec2.from(c1, c2);
         const v10 = vec2.from(c1, c);
         return vec2.cross(v12, v10) / vec2.magnitude(vec2.from(c1, c2));
@@ -239,8 +239,8 @@ class Point extends Shape {
      * @returns {number}
      */
     getSquaredDistanceBetweenLineSegment(lineSegment: LineSegment): number {
-        const c = this.coordinate;
-        const { point1Coordinate: c1, point2Coordinate: c2 } = lineSegment;
+        const c = this.coordinates;
+        const { point1Coordinates: c1, point2Coordinates: c2 } = lineSegment;
         const v12 = vec2.from(c1, c2);
         const v10 = vec2.from(c1, c);
         return vec2.cross(v12, v10) ** 2 / vec2.squaredMagnitude(vec2.from(c1, c2));
@@ -255,9 +255,9 @@ class Point extends Shape {
      * @returns
      */
     isBetweenPoints(point1: Point, point2: Point, allowEqual: boolean = true): boolean {
-        let c0 = this.coordinate,
-            c1 = point1.coordinate,
-            c2 = point2.coordinate,
+        let c0 = this.coordinates,
+            c1 = point1.coordinates,
+            c2 = point2.coordinates,
             v12 = vec2.from(c1, c2),
             v10 = vec2.from(c1, c0),
             cp = vec2.cross(v12, v10),
@@ -271,8 +271,8 @@ class Point extends Shape {
         return math.equalTo(cp, 0, epsilon) && math.greaterThan(dp, 0, epsilon) && math.lessThan(dp, sm, epsilon);
     }
     isOnLineSegmentLyingLine(lineSegment: LineSegment): boolean {
-        let v1 = vec2.from(lineSegment.point1Coordinate, lineSegment.point2Coordinate),
-            v2 = vec2.from(lineSegment.point1Coordinate, this.coordinate),
+        let v1 = vec2.from(lineSegment.point1Coordinates, lineSegment.point2Coordinates),
+            v2 = vec2.from(lineSegment.point1Coordinates, this.coordinates),
             epsilon = this.options_.epsilon,
             dp = vec2.dot(v1, v2);
         return math.equalTo(dp, 0, epsilon);
@@ -282,13 +282,13 @@ class Point extends Shape {
         return this.isBetweenPoints(lineSegment.point1, lineSegment.point2, true);
     }
 
-    getGraphics() {
+    getGraphics(viewport:ViewportDescriptor) {
         const g = new Graphics();
         if (!this.isValid()) return g;
-        const scale = this.owner.scale;
+        const scale = viewport.density * viewport.zoom;
         const pointSize = this.options_.graphics.pointSize / scale;
 
-        g.centerArcTo(...this.coordinate, pointSize, pointSize, 0, 0, 2 * Math.PI);
+        g.centerArcTo(...this.coordinates, pointSize, pointSize, 0, 0, 2 * Math.PI);
         g.close();
         return g;
     }
@@ -298,7 +298,7 @@ class Point extends Shape {
      * @returns
      */
     apply(transformation: Transformation) {
-        let c = transformation.transformCoordinate(this.coordinate);
+        let c = transformation.transformCoordinates(this.coordinates);
         return new Point(this.owner, c);
     }
     clone() {
@@ -311,7 +311,7 @@ class Point extends Shape {
         return this;
     }
     toString() {
-        // prettier-ignore
+        //prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
             `\tx: ${this.x}`,

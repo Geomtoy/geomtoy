@@ -7,6 +7,8 @@ import EventTarget from "../base/EventTarget"
 import type Geomtoy from ".."
 import type Shape from "../base/Shape"
 
+//Use Proxy Array
+
 class Group extends EventTarget {
     private _items: Shape[] = []
 
@@ -20,10 +22,7 @@ class Group extends EventTarget {
         return Object.seal(this)
     }
     static readonly events = Object.freeze({
-        itemsReset: "reset" as const,
-        shapeAdded: "shapeAdd" as const,
-        shapeRemoved: "shapeRemove" as const,
-        shapeChanged: "shapeChange" as const
+        itemsReset: "reset" as const
     });
 
     get items() {
@@ -33,15 +32,10 @@ class Group extends EventTarget {
         assert.isShapeArray(value, "items")
         this._items = value
     }
-    addShape(shape: Shape) {
-        this._items
-    }
-    removeShape(shape: Shape) {
-        
-    }
+
 
     toString() {
-        // prettier-ignore
+        //prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
             `\tlength: ${this.items.length}`,

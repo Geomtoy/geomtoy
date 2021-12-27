@@ -15,13 +15,13 @@ class Wrap {
     static verb = "Wraps" as const;
     //#region Circle
     static circleWrapsCircle(this: OwnerCarrier, circle: Circle, otherCircle: Circle) {
-        const sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinate, otherCircle.centerCoordinate));
+        const sd = vec2.squaredMagnitude(vec2.from(circle.centerCoordinates, otherCircle.centerCoordinates));
         const sdr = (circle.radius - otherCircle.radius) ** 2;
         const epsilon = optionerOf(this.owner).options.epsilon;
         return math.greaterThan(circle.radius, otherCircle.radius, epsilon) && math.lessThan(sd, sdr, epsilon);
     }
     static circleWrapsLineSegment(this: OwnerCarrier, circle: Circle, lineSegment: LineSegment) {
-        return circle.isPointInside(lineSegment.point1Coordinate) && circle.isPointInside(lineSegment.point2Coordinate);
+        return circle.isPointInside(lineSegment.point1Coordinates) && circle.isPointInside(lineSegment.point2Coordinates);
     }
     static circleWrapsArc(this: OwnerCarrier, circle: Circle, arc: Arc) {}
     static circleWrapsBezier(this: OwnerCarrier, circle: Circle, bezier: Bezier) {}

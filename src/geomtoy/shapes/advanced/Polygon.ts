@@ -3,8 +3,7 @@ import math from "../../utility/math";
 import util from "../../utility";
 import vec2 from "../../utility/vec2";
 import assert from "../../utility/assertion";
-import coordArray from "../../utility/coordinateArray";
-import coord from "../../utility/coordinate";
+import coord from "../../utility/coord";
 
 import Shape from "../../base/Shape";
 import Point from "../basic/Point";
@@ -71,12 +70,12 @@ class Polygon extends Shape implements TransformableShape {
         return this._vertices.length;
     }
 
-    private get _vertexCoordinates() {
+    private get _vertexCoordinatesArray() {
         return this._vertices.map(v => [v.x, v.y] as [number, number]);
     }
 
     isValid() {
-        const cs = this._vertexCoordinates;
+        const cs = this._vertexCoordinatesArray;
         const l = cs.length;
         if (l < polygonMinVertexCount) return false;
 
@@ -92,7 +91,7 @@ class Polygon extends Shape implements TransformableShape {
     static formingCondition = `There should be at least ${polygonMinVertexCount} distinct vertices in a \`Polygon\`.`;
 
     static fromPoints(this: OwnerCarrier, points: ([number, number] | Point)[]) {
-        assert.isCoordinateOrPointArray(points, "points");
+        assert.isCoordinatesOrPointArray(points, "points");
         return new Polygon(
             this.owner,
             points.map(p => Polygon.vertex(p))
@@ -103,13 +102,13 @@ class Polygon extends Shape implements TransformableShape {
         return new Polygon(this.owner, [Polygon.vertex(p1), Polygon.vertex(p2), Polygon.vertex(p3), Polygon.vertex(p4)]);
     }
     static fromTriangle(this: OwnerCarrier, triangle: Triangle) {
-        const { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = triangle;
+        const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = triangle;
         return new Polygon(this.owner, [Polygon.vertex(c1), Polygon.vertex(c2), Polygon.vertex(c3)]);
     }
 
     static vertex(point: [number, number] | Point) {
-        assert.isCoordinateOrPoint(point, "point");
-        const [x, y] = point instanceof Point ? point.coordinate : point;
+        assert.isCoordinatesOrPoint(point, "point");
+        const [x, y] = point instanceof Point ? point.coordinates : point;
         const ret: PolygonVertex = { x, y };
         return ret;
     }
@@ -266,7 +265,7 @@ class Polygon extends Shape implements TransformableShape {
 
     getPerimeter() {
         const l = this.vertexCount;
-        const cs = this._vertexCoordinates;
+        const cs = this._vertexCoordinatesArray;
         let p = 0;
 
         util.range(0, l).forEach(index => {
@@ -279,7 +278,7 @@ class Polygon extends Shape implements TransformableShape {
 
     getArea() {
         const l = this.vertexCount;
-        const cs = this._vertexCoordinates;
+        const cs = this._vertexCoordinatesArray;
         let a = 0;
 
         util.range(0, l).forEach(index => {
@@ -292,7 +291,7 @@ class Polygon extends Shape implements TransformableShape {
     }
     getCentroidPoint() {
         const l = this.vertexCount;
-        const cs = this._vertexCoordinates;
+        const cs = this._vertexCoordinatesArray;
         let sumX = 0;
         let sumY = 0;
 
@@ -305,7 +304,7 @@ class Polygon extends Shape implements TransformableShape {
     }
     getWeightedCentroidPoint() {
         const l = this.vertexCount;
-        const cs = this._vertexCoordinates;
+        const cs = this._vertexCoordinatesArray;
         let a = 0;
         let sumX = 0;
         let sumY = 0;
@@ -327,7 +326,7 @@ class Polygon extends Shape implements TransformableShape {
         let maxX = -math.Infinity;
         let minY = math.Infinity;
         let maxY = -math.Infinity;
-        this._vertexCoordinates.forEach((_, index, collection) => {
+        this._vertexCoordinatesArray.forEach((_, index, collection) => {
             const [x, y] = collection[index];
             if (x < minX) minX = x;
             if (x > maxX) maxX = x;
@@ -339,8 +338,8 @@ class Polygon extends Shape implements TransformableShape {
 
     isPointOnPolygon(point: Point) {
         let l = this.vertexCount,
-            cs = this._vertexCoordinates,
-            c = point.coordinate,
+            cs = this._vertexCoordinatesArray,
+            c = point.coordinates,
             epsilon = this.options_.epsilon,
             ret = false;
         util.range(0, l).forEach(index => {
@@ -362,8 +361,8 @@ class Polygon extends Shape implements TransformableShape {
     }
     isPointInsidePolygon(point: Point) {
         let l = this.vertexCount,
-            cs = this._vertexCoordinates,
-            c = point.coordinate,
+            cs = this._vertexCoordinatesArray,
+            c = point.coordinates,
             epsilon = this.options_.epsilon,
             ret = false;
         util.range(0, l).forEach(index => {
@@ -390,7 +389,7 @@ class Polygon extends Shape implements TransformableShape {
     getGraphics() {
         const g = new Graphics();
         if (!this.isValid()) return g;
-        const cs = this._vertexCoordinates;
+        const cs = this._vertexCoordinatesArray;
         g.moveTo(...util.head(cs)!);
         util.tail(cs).forEach(c => {
             g.lineTo(...c);

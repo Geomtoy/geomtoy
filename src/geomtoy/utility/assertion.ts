@@ -13,10 +13,10 @@ interface Assertion {
     isPositiveNumber(value: any, p: string): asserts value is number;
     isNegativeNumber(value: any, p: string): asserts value is number;
     isNonZeroNumber(value: any, p: string): asserts value is number;
-    isCoordinate(value: any, p: string): asserts value is [number, number];
+    isCoordinates(value: any, p: string): asserts value is [number, number];
     isPoint(value: any, p: string): asserts value is Point;
-    isCoordinateOrPoint(value: any, p: string): asserts value is [number, number] | Point;
-    isCoordinateOrPointArray(value: any, p: string): asserts value is ([number, number] | Point)[];
+    isCoordinatesOrPoint(value: any, p: string): asserts value is [number, number] | Point;
+    isCoordinatesOrPointArray(value: any, p: string): asserts value is ([number, number] | Point)[];
     isSize(value: any, p: string): asserts value is [number, number];
     isBoolean(value: any, p: string): asserts value is boolean;
     isArray(value: any, p: string): asserts value is any[];
@@ -65,9 +65,9 @@ const assert: Assertion = {
             throw new TypeError(`[G]The \`${p}\` should be a nonzero number.`);
         }
     },
-    isCoordinate(value: any, p: string): asserts value is [number, number] {
-        if (!util.isCoordinate(value)) {
-            throw new TypeError(`[G]The \`${p}\` should be a coordinate.`);
+    isCoordinates(value: any, p: string): asserts value is [number, number] {
+        if (!util.isCoordinates(value)) {
+            throw new TypeError(`[G]The \`${p}\` should be coordinates.`);
         }
     },
     isPoint(value: any, p: string): asserts value is Point {
@@ -75,14 +75,14 @@ const assert: Assertion = {
             throw new Error(`[G]The \`${p}\` should be a \`Point\`.`);
         }
     },
-    isCoordinateOrPoint(value: any, p: string): asserts value is [number, number] | Point {
-        if (!util.isCoordinate(value) && !(value instanceof Point)) {
-            throw new TypeError(`[G]The \`${p}\` should be a coordinate or a \`Point\`.`);
+    isCoordinatesOrPoint(value: any, p: string): asserts value is [number, number] | Point {
+        if (!util.isCoordinates(value) && !(value instanceof Point)) {
+            throw new TypeError(`[G]The \`${p}\` should be coordinates or a \`Point\`.`);
         }
     },
-    isCoordinateOrPointArray(value: any, p: string): asserts value is ([number, number] | Point)[] {
-        if (!(util.isArray(value) && value.every(p => util.isCoordinate(value) || p instanceof Point))) {
-            throw new Error(`[G]The \`${p}\`  an array of coordinate or \`Point\`.`);
+    isCoordinatesOrPointArray(value: any, p: string): asserts value is ([number, number] | Point)[] {
+        if (!(util.isArray(value) && value.every(p => util.isCoordinates(value) || p instanceof Point))) {
+            throw new Error(`[G]The \`${p}\`  an array of coordinates or \`Point\`.`);
         }
     },
     isSize(value: any, p: string): asserts value is [number, number] {

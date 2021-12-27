@@ -1,15 +1,15 @@
 import Geomtoy from "../../src/geomtoy";
-import "./assets/misc";
 import { colors, mathFont } from "./assets/assets";
-import Interact from "./assets/interact";
-import { Collection, Drawable, Touchable } from "./assets/GeomObjectWrapper";
+import View from "../../src/geomtoy-kit/frontend/View";
+import ViewElement from "../../src/geomtoy-kit/frontend/ViewElement";
 
 import type { EventObject, Text, Point } from "../../src/geomtoy/package";
+import { initRenderer, setDescription, switchRenderer } from "./assets/default";
+import CanvasRenderer from "../../src/geomtoy-kit/renderer/CanvasRenderer";
+import SvgRenderer from "../../src/geomtoy-kit/renderer/SvgRenderer";
 
-const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-const svg = document.querySelector("#svg") as SVGSVGElement;
-const description = document.querySelector("#description") as HTMLElement;
-description.innerHTML = `
+const [canvas, svg] = initRenderer();
+setDescription(`
     <strong>Touchables</strong>
     <ul>
         <li>Points: A, B, P</li>
@@ -24,11 +24,9 @@ description.innerHTML = `
         <li>Point A, point B and point P will follow line AB to move.</li>
         <li>Move line AB or circle O to get the intersection points of them.</li>
     </ol>
-`;
+`);
 
-svg.style.display = "none";
-
-const G = new Geomtoy(100, 100, {
+const G = new Geomtoy({
     epsilon: 2 ** -32,
     graphics: {
         pointSize: 6,
@@ -40,20 +38,24 @@ const G = new Geomtoy(100, 100, {
         }
     }
 });
-G.yAxisPositiveOnBottom = false;
-G.scale = 10;
 
-const renderer = new Geomtoy.adapters.VanillaCanvas(canvas, G);
-renderer.lineJoin("round");
-const collection = new Collection();
-const interact = new Interact(renderer, collection);
+const canvasRenderer = new CanvasRenderer(canvas, G);
+const svgRenderer = new SvgRenderer(svg, G);
+svgRenderer.display.density = 10
+svgRenderer.display.zoom = 1
+svgRenderer.display.yAxisPositiveOnBottom  =false
+svgRenderer.display.xAxisPositiveOnRight  =false
 
-interact.startDragAndDrop();
-interact.startZoomAndPan();
-interact.startResponsive((width, height) => {
-    G.width = width;
-    G.height = height;
-    G.origin = [width / 2, height / 2];
+const view = new View(G, canvasRenderer);
+view.startInteractive();
+view.startResponsive((width, height) => view.renderer.display.origin = [width / 2, height / 2]);
+const rendererList = { canvas: canvasRenderer, svg: svgRenderer };
+switchRenderer(rendererList, "canvas", type => {
+    view.stopInteractive();
+    view.stopResponsive();
+    view.renderer = rendererList[type as keyof typeof rendererList];
+    view.startInteractive();
+    view.startResponsive((width, height) => view.renderer.display.origin = [width / 2, height / 2]);
 });
 
 const main = () => {
@@ -61,7 +63,7 @@ const main = () => {
     const pointB = G.Point(-20, 25);
 
     const offsetLabel = function (this: Text, [e]: [EventObject<Point>]) {
-        this.coordinate = e.target.move(1, 1).coordinate;
+        this.coordinates = e.target.move(1, 1).coordinates;
     };
 
     const lineAB = G.Line()
@@ -77,8 +79,8 @@ const main = () => {
         .on(
             "any",
             function () {
-                const [oldX, oldY] = pointA.coordinate;
-                const [newX, newY] = this.coordinate;
+                const [oldX, oldY] = pointA.coordinates;
+                const [newX, newY] = this.coordinates;
                 const [dx, dy] = [newX - oldX, newY - oldY];
                 pointA.moveSelf(dx, dy);
                 pointB.moveSelf(dx, dy);
@@ -116,7 +118,7 @@ const main = () => {
     });
 
     const [pointInt1, pointInt2] = [G.Point.zero(), G.Point.zero()];
-    const circle = G.Circle(20, 20, 10);
+    const circle = G.Circle(0, 0, 10);
     const pointO = G.Point().bind([[circle, "any"]], function ([e]) {
         this.copyFrom(e.target.centerPoint);
     });
@@ -134,33 +136,45 @@ const main = () => {
         }
     );
 
-    const image = G.Image(
-        1,
-        1,
-        314,
-        134,
-        198,
-        315,
-        157,
-        67,
-        "https://gimg2.baidu.com/image_search/src=http%3A%2F%2Ffile02.16sucai.com%2Fd%2Ffile%2F2014%2F0829%2Fb871e1addf5f8e96f3b390ece2b2da0d.jpg&refer=http%3A%2F%2Ffile02.16sucai.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1640132601&t=f76de25d7d398d40876eda69258d897c"
-    );
+    // const image = G.Image(
+    //     1,
+    //     1,
+    //     314,
+    //     134,
+    //     198,
+    //     315,
+    //     157,
+    //     67,
+    //     "https://gimg2.baidu.com/image_search/src=http%3A%2F%2Ffile02.16sucai.com%2Fd%2Ffile%2F2014%2F0829%2Fb871e1addf5f8e96f3b390ece2b2da0d.jpg&refer=http%3A%2F%2Ffile02.16sucai.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1640132601&t=f76de25d7d398d40876eda69258d897c"
+    // );
+    const image = G.Image(0, 0, 500, 493, "https://img2.baidu.com/it/u=2911187851,1970588509&fm=26&fmt=auto");
+ 
 
-    collection
-        .setDrawable("coordinateSystemOriginPoint", new Drawable(G.Point.zero(), true, colors.grey, undefined, 0))
-        .setTouchable("pointA", new Touchable(pointA, false, colors.black, undefined, 0))
-        .setDrawable("labelA", new Drawable(labelA, false, colors.black, undefined, 0))
-        .setTouchable("pointB", new Touchable(pointB, false, colors.black, undefined, 0))
-        .setDrawable("labelB", new Drawable(labelB, false, colors.black, undefined, 0))
+    const hoverStyle = {
+        fill: colors.white + "AA",
+        stroke: colors.white + "AA"
+    };
+    const activeStyle = {
+        fill: colors.blue + "AA",
+        stroke: colors.blue + "AA"
+    };
 
-        .setTouchable("lineAB", new Touchable(lineAB, true, undefined, colors.red, 3))
-        .setTouchable("pointP", new Touchable(pointP, false, colors.green, undefined, 0))
-        .setDrawable("labelP", new Drawable(labelP, false, colors.green, undefined, 0))
-        .setTouchable("circle", new Touchable(circle, false, colors.purple + "20", colors.purple, 3))
-        .setDrawable("pointInt1", new Drawable(pointInt1, false, undefined, colors.lightBlue, 2))
-        .setDrawable("pointInt2", new Drawable(pointInt2, false, undefined, colors.lightBlue, 2))
-        .setDrawable("pointO", new Drawable(pointO, false, undefined, colors.purple, 2))
-        .setDrawable("labelO", new Drawable(labelO, false, colors.purple, undefined, 0))
-        .setTouchable("image", new Touchable(image, false, colors.purple, colors.purple, 3));
+    view.add(new ViewElement(G.Point.zero(), false, { fill: colors.grey }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointA, true, { fill: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelA, true, { fill: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointB, true, { fill: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelB, true, { fill: colors.black }, hoverStyle, activeStyle))
+
+        .add(new ViewElement(lineAB, true, { stroke: colors.orange, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointP, true, { fill: colors.green }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelP, false, { fill: colors.green }, hoverStyle, activeStyle))
+
+        .add(new ViewElement(labelO, false, { fill: colors.purple }))
+        // .add(new ViewElement(circle, true, { fill: colors.purple + "20", stroke: colors.purple, strokeWidth: 1 }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointO, false, { stroke: colors.purple, strokeWidth: 2 }, hoverStyle, activeStyle))
+
+        .add(new ViewElement(pointInt1, false, { stroke: colors.lightBlue, strokeWidth: 2 }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointInt2, false, { stroke: colors.lightBlue, strokeWidth: 2 }, hoverStyle, activeStyle))
+        // .add(new ViewElement(image, true, {}, hoverStyle, activeStyle));
 };
 main();

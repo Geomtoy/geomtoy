@@ -1,10 +1,9 @@
 import { validAndWithSameOwner } from "../../decorator";
 import assert from "../../utility/assertion";
 import util from "../../utility";
-import coord from "../../utility/coordinate";
+import coord from "../../utility/coord";
 import math from "../../utility/math";
 import vec2 from "../../utility/vec2";
-import coordArray from "../../utility/coordinateArray";
 
 import { Cartesian, Trilinear } from "../../helper/CoordinateSystem";
 
@@ -29,7 +28,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
     private _point3Y = NaN;
 
     constructor(owner: Geomtoy, point1X: number, point1Y: number, point2X: number, point2Y: number, point3X: number, point3Y: number);
-    constructor(owner: Geomtoy, point1Coordinate: [number, number], point2Coordinate: [number, number], point3Coordinate: [number, number]);
+    constructor(owner: Geomtoy, point1Coordinates: [number, number], point2Coordinates: [number, number], point3Coordinates: [number, number]);
     constructor(owner: Geomtoy, point1: Point, point2: Point, point3: Point);
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any) {
@@ -38,7 +37,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
             Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4, point3X: a5, point3Y: a6 });
         }
         if (util.isArray(a1)) {
-            Object.assign(this, { point1Coordinate: a1, point2Coordinate: a2, point3Coordinate: a3 });
+            Object.assign(this, { point1Coordinates: a1, point2Coordinates: a2, point3Coordinates: a3 });
         }
         if (a1 instanceof Point) {
             Object.assign(this, { point1: a1, point2: a2, point3: a3 });
@@ -94,11 +93,11 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
         assert.isRealNumber(value, "point1Y");
         this._setPoint1Y(value);
     }
-    get point1Coordinate() {
+    get point1Coordinates() {
         return [this._point1X, this._point1Y] as [number, number];
     }
-    set point1Coordinate(value) {
-        assert.isCoordinate(value, "point1Coordinate");
+    set point1Coordinates(value) {
+        assert.isCoordinates(value, "point1Coordinates");
         this._setPoint1X(coord.x(value));
         this._setPoint1Y(coord.y(value));
     }
@@ -124,11 +123,11 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
         assert.isRealNumber(value, "point2Y");
         this._setPoint2Y(value);
     }
-    get point2Coordinate() {
+    get point2Coordinates() {
         return [this._point2X, this._point2Y] as [number, number];
     }
-    set point2Coordinate(value) {
-        assert.isCoordinate(value, "point2Coordinate");
+    set point2Coordinates(value) {
+        assert.isCoordinates(value, "point2Coordinates");
         this._setPoint2X(coord.x(value));
         this._setPoint2Y(coord.y(value));
     }
@@ -154,11 +153,11 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
         assert.isRealNumber(value, "point3Y");
         this._setPoint3Y(value);
     }
-    get point3Coordinate() {
+    get point3Coordinates() {
         return [this._point3X, this._point3Y] as [number, number];
     }
-    set point3Coordinate(value) {
-        assert.isCoordinate(value, "point3Coordinate");
+    set point3Coordinates(value) {
+        assert.isCoordinates(value, "point3Coordinates");
         this._setPoint3X(coord.x(value));
         this._setPoint3Y(coord.y(value));
     }
@@ -174,46 +173,46 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * Get the length of the opposite side of `point1` which is line segment from `point2` to `point3`.
      */
     get side1Length() {
-        return vec2.magnitude(vec2.from(this.point2Coordinate, this.point3Coordinate));
+        return vec2.magnitude(vec2.from(this.point2Coordinates, this.point3Coordinates));
     }
     /**
      * Get the length of the opposite side of `point2` which is line segment from `point3` to `point1`.
      */
     get side2Length() {
-        return vec2.magnitude(vec2.from(this.point3Coordinate, this.point1Coordinate));
+        return vec2.magnitude(vec2.from(this.point3Coordinates, this.point1Coordinates));
     }
     /**
      * Get the length of the opposite side of `point3` which is line segment from `point1` to `point2`.
      */
     get side3Length() {
-        return vec2.magnitude(vec2.from(this.point1Coordinate, this.point2Coordinate));
+        return vec2.magnitude(vec2.from(this.point1Coordinates, this.point2Coordinates));
     }
     /**
      * Get the `angle1` at `point1`.
      */
     get angle1() {
-        let { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = this;
+        let { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
         return math.abs(vec2.angleTo(vec2.from(c1, c2), vec2.from(c1, c3)));
     }
     /**
      * Get the `angle2` at `point2`.
      */
     get angle2() {
-        let { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = this;
+        let { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
         return math.abs(vec2.angleTo(vec2.from(c2, c3), vec2.from(c2, c1)));
     }
     /**
      * Get the `angle3` at `point3`.
      */
     get angle3() {
-        let { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = this;
+        let { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
         return math.abs(vec2.angleTo(vec2.from(c3, c1), vec2.from(c3, c2)));
     }
 
     static formingCondition = "The three vertices of a `Triangle` should not be collinear, or the sum of the length of any two sides is greater than the third side.";
 
     isValid() {
-        const { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = this;
+        const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
         const epsilon = this.options_.epsilon;
         if (!coord.isValid(c1)) return false;
         if (!coord.isValid(c2)) return false;
@@ -233,7 +232,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * Get the winding direction of vertices of triangle `this`.
      */
     getWindingDirection(): Direction {
-        let { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = this,
+        let { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this,
             cp = vec2.cross(vec2.from(c1, c2), vec2.from(c1, c3));
         if (cp < 0) {
             return "negative";
@@ -242,8 +241,8 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
     }
 
     static equilateralTriangleFromLineSegment(owner: Geomtoy, lineSegment: LineSegment, positive = true) {
-        let c1 = lineSegment.point1Coordinate,
-            c2 = lineSegment.point2Coordinate,
+        let c1 = lineSegment.point1Coordinates,
+            c2 = lineSegment.point2Coordinates,
             v3 = vec2.rotate(vec2.from(c1, c2), positive ? Math.PI / 3 : -Math.PI / 3),
             c3 = vec2.add(c1, v3);
         return new Triangle(owner, c1, c2, c3);
@@ -256,8 +255,8 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      */
     isSameAs(triangle: Triangle) {
         const epsilon = this.options_.epsilon;
-        const [ac1, ac2, ac3] = coordArray.sortSelf([this.point1Coordinate, this.point2Coordinate, this.point3Coordinate], epsilon);
-        const [bc1, bc2, bc3] = coordArray.sortSelf([triangle.point1Coordinate, triangle.point2Coordinate, triangle.point3Coordinate], epsilon);
+        const [ac1, ac2, ac3] = coord.sortArraySelf([this.point1Coordinates, this.point2Coordinates, this.point3Coordinates], epsilon);
+        const [bc1, bc2, bc3] = coord.sortArraySelf([triangle.point1Coordinates, triangle.point2Coordinates, triangle.point3Coordinates], epsilon);
         return coord.isSameAs(ac1, bc1, epsilon) && coord.isSameAs(ac2, bc2, epsilon) && coord.isSameAs(ac3, bc3, epsilon);
     }
     /**
@@ -267,9 +266,9 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
     isSameAs2(triangle: Triangle) {
         const epsilon = this.options_.epsilon;
         return (
-            coord.isSameAs(this.point1Coordinate, triangle.point1Coordinate, epsilon) &&
-            coord.isSameAs(this.point2Coordinate, triangle.point2Coordinate, epsilon) &&
-            coord.isSameAs(this.point3Coordinate, triangle.point3Coordinate, epsilon)
+            coord.isSameAs(this.point1Coordinates, triangle.point1Coordinates, epsilon) &&
+            coord.isSameAs(this.point2Coordinates, triangle.point2Coordinates, epsilon) &&
+            coord.isSameAs(this.point3Coordinates, triangle.point3Coordinates, epsilon)
         );
     }
     /**
@@ -282,9 +281,9 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * Move triangle `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.point1Coordinate = coord.move(this.point1Coordinate, deltaX, deltaY);
-        this.point2Coordinate = coord.move(this.point2Coordinate, deltaX, deltaY);
-        this.point3Coordinate = coord.move(this.point3Coordinate, deltaX, deltaY);
+        this.point1Coordinates = coord.move(this.point1Coordinates, deltaX, deltaY);
+        this.point2Coordinates = coord.move(this.point2Coordinates, deltaX, deltaY);
+        this.point3Coordinates = coord.move(this.point3Coordinates, deltaX, deltaY);
         return this;
     }
     /**
@@ -297,9 +296,9 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * Move triangle `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.point1Coordinate = coord.moveAlongAngle(this.point1Coordinate, angle, distance);
-        this.point2Coordinate = coord.moveAlongAngle(this.point2Coordinate, angle, distance);
-        this.point3Coordinate = coord.moveAlongAngle(this.point3Coordinate, angle, distance);
+        this.point1Coordinates = coord.moveAlongAngle(this.point1Coordinates, angle, distance);
+        this.point2Coordinates = coord.moveAlongAngle(this.point2Coordinates, angle, distance);
+        this.point3Coordinates = coord.moveAlongAngle(this.point3Coordinates, angle, distance);
         return this;
     }
     /**
@@ -307,16 +306,16 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      */
     getSideLineSegments(): [LineSegment, LineSegment, LineSegment] {
         return [
-            new LineSegment(this.owner, this.point2Coordinate, this.point3Coordinate),
-            new LineSegment(this.owner, this.point3Coordinate, this.point1Coordinate),
-            new LineSegment(this.owner, this.point1Coordinate, this.point2Coordinate)
+            new LineSegment(this.owner, this.point2Coordinates, this.point3Coordinates),
+            new LineSegment(this.owner, this.point3Coordinates, this.point1Coordinates),
+            new LineSegment(this.owner, this.point1Coordinates, this.point2Coordinates)
         ];
     }
     /**
      * Get the altitudes as line segments of triangle `this`.
      */
     getAltitudeLineSegments(): [LineSegment, LineSegment, LineSegment] {
-        const { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = this;
+        const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
         const c1p = vec2.add(c2, vec2.project(vec2.from(c2, c1), vec2.from(c2, c3)));
         const c2p = vec2.add(c3, vec2.project(vec2.from(c3, c2), vec2.from(c3, c1)));
         const c3p = vec2.add(c1, vec2.project(vec2.from(c1, c3), vec2.from(c1, c2)));
@@ -326,7 +325,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * Get the medians as line segments of triangle `this`.
      */
     getMedianLineSegments(): [LineSegment, LineSegment, LineSegment] {
-        const { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = this;
+        const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
         const c1p = vec2.add(vec2.scalarMultiply(c2, 1 / 2), vec2.scalarMultiply(c3, 1 / 2));
         const c2p = vec2.add(vec2.scalarMultiply(c3, 1 / 2), vec2.scalarMultiply(c1, 1 / 2));
         const c3p = vec2.add(vec2.scalarMultiply(c1, 1 / 2), vec2.scalarMultiply(c2, 1 / 2));
@@ -337,7 +336,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      */
     getSymmedianLineSegments() {
         let ls = [this.side1Length, this.side2Length, this.side3Length],
-            cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate];
+            cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates];
         return util.range(0, 3).map(i => {
             let c0 = cs[i],
                 c1 = cs[(i + 1) % 3],
@@ -354,7 +353,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      */
     getAngleBisectingLineSegments(): [LineSegment, LineSegment, LineSegment] {
         let ls = [this.side1Length, this.side2Length, this.side3Length],
-            cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate];
+            cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates];
         return util.range(0, 3).map(i => {
             let c0 = cs[i],
                 c1 = cs[(i + 1) % 3],
@@ -370,7 +369,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * Get the perpendicular bisectors as line segments of triangle `this`.
      */
     getPerpendicularlyBisectingLineSegments(): [LineSegment, LineSegment, LineSegment] {
-        let cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate];
+        let cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates];
         return util.range(0, 3).map(i => {
             let c0 = cs[i],
                 c1 = cs[(i + 1) % 3],
@@ -480,30 +479,30 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * Get area of triangle `this`.
      */
     getArea() {
-        let [x1, y1] = this.point1Coordinate,
-            [x2, y2] = this.point2Coordinate,
-            [x3, y3] = this.point3Coordinate,
+        let [x1, y1] = this.point1Coordinates,
+            [x2, y2] = this.point2Coordinates,
+            [x3, y3] = this.point3Coordinates,
             a = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2); //cross product shorthand
         a = a / 2;
         return Math.abs(a);
     }
     // #region using trilinear
     /**
-     * Get the point at the `trilinear` coordinate respect to triangle `this`.
+     * Get the point at the `trilinear` coordinates respect to triangle `this`.
      * @param trilinear
      */
     getPointAtTrilinear(trilinear: [number, number, number]) {
         let t = new Trilinear(trilinear[0], trilinear[1], trilinear[2]),
-            c = t.toCartesian(this.point1Coordinate, this.point2Coordinate, this.point3Coordinate);
+            c = t.toCartesian(this.point1Coordinates, this.point2Coordinates, this.point3Coordinates);
         return new Point(this.owner, c.valueOf());
     }
     /**
-     * Get the trilinear coordinate of point `point` respect to triangle `this`.
+     * Get the trilinear coordinates of point `point` respect to triangle `this`.
      * @param point
      */
     getTrilinearOfPoint(point: Point) {
-        let c = new Cartesian(...point.coordinate),
-            t = c.toTrilinear(this.point1Coordinate, this.point2Coordinate, this.point3Coordinate);
+        let c = new Cartesian(...point.coordinates),
+            t = c.toTrilinear(this.point1Coordinates, this.point2Coordinates, this.point3Coordinates);
         return t.valueOf();
     }
     /**
@@ -570,7 +569,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      */
     getMedialTriangle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         const t1 = new Trilinear(0, c * a, a * b);
         const t2 = new Trilinear(b * c, 0, a * b);
         const t3 = new Trilinear(b * c, c * a, 0);
@@ -584,7 +583,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      */
     getAntimedialTriangle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         const t1 = new Trilinear(-b * c, c * a, a * b);
         const t2 = new Trilinear(b * c, -c * a, a * b);
         const t3 = new Trilinear(b * c, c * a, -a * b);
@@ -611,7 +610,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
         let [a, b, c] = [this.side1Length, this.side2Length, this.side3Length],
             area = this.getArea(),
             r = math.sqrt((a * b * c) ** 2 / (4 * area ** 2) - (a ** 2 + b ** 2 + c ** 2) / 2);
-        return new Circle(this.owner, this._getOrthocenterCoordinate(), r);
+        return new Circle(this.owner, this._getOrthocenterCoordinates(), r);
     }
     /**
      * Get the orthic triangle of triangle `this`.
@@ -622,7 +621,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
     getOrthicTriangle() {
         if (this.isRightTriangle()) return null;
         const [a1, a2, a3] = [this.angle1, this.angle2, this.angle3];
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         const t1 = new Trilinear(0, math.sec(a2), math.sec(a3));
         const t2 = new Trilinear(math.sec(a1), 0, math.sec(a3));
         const t3 = new Trilinear(math.sec(a1), math.sec(a2), 0);
@@ -660,7 +659,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      */
     getNinePointCenterPoint() {
         // Nine-point center = cos(B-C) : cos(C-A) : cos(A-B)
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         let t = new Trilinear(math.cos(this.angle2 - this.angle3), math.cos(this.angle3 - this.angle1), math.cos(this.angle1 - this.angle2)),
             cc = t.toCartesian(...cs);
         return new Point(this.owner, cc.valueOf());
@@ -673,14 +672,14 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
             [a, b, c] = [this.side1Length, this.side2Length, this.side3Length],
             area = this.getArea(),
             r = (a * b * c) / (8 * area);
-        return new Circle(this.owner, p.coordinate, r);
+        return new Circle(this.owner, p.coordinates, r);
     }
     /**
      * Get the Nagel point of triangle `this`.
      */
     getNagelPoint() {
         // Nagel = (b+c-a)/a : (c+a-b)/b : (a+b-c)/c = csc^2(A/2) : csc^2(B/2) : csc^2(C/2)
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         let [a, b, c] = [this.side1Length, this.side2Length, this.side3Length],
             d1 = (-a + b + c) / a,
             d2 = (a - b + c) / b,
@@ -693,7 +692,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * Get the Nagel triangle of triangle `this`.
      */
     getNagelTriangle() {
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         let [a1, a2, a3] = [this.angle1, this.angle2, this.angle3],
             d1 = a1 / 2,
             d2 = a2 / 2,
@@ -710,7 +709,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * Get the Gergonne point of triangle `this`.
      */
     getGergonnePoint() {
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         let [a, b, c] = [this.side1Length, this.side2Length, this.side3Length],
             d1 = (b * c) / (-a + b + c),
             d2 = (a * c) / (a - b + c),
@@ -724,7 +723,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * @see {@link https://en.wikipedia.org/wiki/Incircle_and_excircles_of_a_triangle_Gergonne_triangle_and_point}
      */
     getGergonneTriangle() {
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         let [a1, a2, a3] = [this.angle1, this.angle2, this.angle3],
             d1 = a1 / 2,
             d2 = a2 / 2,
@@ -740,7 +739,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
 
     getLemoinePoint() {
         // Lemoine = a : b : c = sinA : sinB : sinC
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         let [a, b, c] = [this.side1Length, this.side2Length, this.side3Length],
             t = new Trilinear(a, b, c),
             cc = t.toCartesian(...cs);
@@ -755,7 +754,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      */
     getFeuerbachPoint() {
         // Feuerbach = 1−cos(B−C) : 1−cos(C−A) : 1−cos(A−B)
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         let t = new Trilinear(1 - math.cos(this.angle2 - this.angle3), 1 - math.cos(this.angle3 - this.angle1), 1 - math.cos(this.angle1 - this.angle2)),
             cc = t.toCartesian(...cs);
         return new Point(this.owner, cc.valueOf());
@@ -765,7 +764,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * @see {@link https://mathworld.wolfram.com/FeuerbachTriangle.html}
      */
     getFeuerbachTriangle() {
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         let [a1, a2, a3] = [this.angle1, this.angle2, this.angle3],
             d1 = (a2 - a3) / 2,
             d2 = (a3 - a1) / 2,
@@ -785,7 +784,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      */
     getFirstFermatPoint() {
         // Fermat1 = csc(A+PI/3) : csc(B+PI/3) : csc(C+PI/3)
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         let t = new Trilinear(math.csc(this.angle1 + Math.PI / 3), math.csc(this.angle2 + Math.PI / 3), math.csc(this.angle3 + Math.PI / 3)),
             cc = t.toCartesian(...cs);
         return new Point(this.owner, cc.valueOf());
@@ -796,7 +795,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      */
     getSecondFermatPoint() {
         // Fermat2 = csc(A-PI/3) : csc(B-PI/3) : csc(C-PI/3)
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         let t = new Trilinear(math.csc(this.angle1 - Math.PI / 3), math.csc(this.angle2 - Math.PI / 3), math.csc(this.angle3 - Math.PI / 3)),
             cc = t.toCartesian(...cs);
         return new Point(this.owner, cc.valueOf());
@@ -810,7 +809,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
     getFirstIsodynamicPoint() {
         // isodynamic1 = sin(A+PI/3) : sin(B+PI/3) : sin(C+PI/3)
         if (this.isEquilateralTriangle()) return null;
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         let t = new Trilinear(math.sin(this.angle1 + Math.PI / 3), math.sin(this.angle2 + Math.PI / 3), math.sin(this.angle3 + Math.PI / 3)),
             cc = t.toCartesian(...cs);
         return new Point(this.owner, cc.valueOf());
@@ -824,7 +823,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
     getSecondIsodynamicPoint() {
         // isodynamic2 = sin(A-PI/3) : sin(B-PI/3) : sin(C-PI/3)
         if (this.isEquilateralTriangle()) return null;
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         let t = new Trilinear(math.sin(this.angle1 - Math.PI / 3), math.sin(this.angle2 - Math.PI / 3), math.sin(this.angle3 - Math.PI / 3)),
             cc = t.toCartesian(...cs);
         return new Point(this.owner, cc.valueOf());
@@ -834,10 +833,10 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * @see {@link https://mathworld.wolfram.com/EulerPoints.html}
      */
     getEulerPoints(): [Point, Point, Point] {
-        let [hx, hy] = this._getOrthocenterCoordinate(),
-            [x1, y1] = this.point1Coordinate,
-            [x2, y2] = this.point2Coordinate,
-            [x3, y3] = this.point3Coordinate,
+        let [hx, hy] = this._getOrthocenterCoordinates(),
+            [x1, y1] = this.point1Coordinates,
+            [x2, y2] = this.point2Coordinates,
+            [x3, y3] = this.point3Coordinates,
             e1: [number, number] = [(hx + x1) / 2, (hy + y1) / 2],
             e2: [number, number] = [(hx + x2) / 2, (hy + y2) / 2],
             e3: [number, number] = [(hx + x3) / 2, (hy + y3) / 2];
@@ -859,8 +858,8 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      */
     getEulerLine() {
         if (this.isEquilateralTriangle()) return null;
-        let c1 = this._getCircumcenterCoordinate(),
-            c2 = this._getOrthocenterCoordinate();
+        let c1 = this._getCircumcenterCoordinates(),
+            c2 = this._getOrthocenterCoordinates();
         return Line.fromTwoPoints.call(this, c1, c2);
     }
 
@@ -871,7 +870,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * @see {@link https://en.wikipedia.org/wiki/Tangential_triangle}
      */
     getTangentialTriangle() {
-        const cs = [this.point1Coordinate, this.point2Coordinate, this.point3Coordinate] as const;
+        const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         let [a, b, c] = [this.side1Length, this.side2Length, this.side3Length],
             t1 = new Trilinear(-a, b, c),
             t2 = new Trilinear(a, -b, c),
@@ -892,10 +891,10 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
     getExtouchTriangle() {}
     getIncentralTriangle() {}
 
-    _getOrthocenterCoordinate(): [number, number] {
-        let [x1, y1] = this.point1Coordinate,
-            [x2, y2] = this.point2Coordinate,
-            [x3, y3] = this.point3Coordinate,
+    _getOrthocenterCoordinates(): [number, number] {
+        let [x1, y1] = this.point1Coordinates,
+            [x2, y2] = this.point2Coordinates,
+            [x3, y3] = this.point3Coordinates,
             a1 = x1 - x2,
             a2 = x2 - x3,
             a3 = x3 - x1,
@@ -908,10 +907,10 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
         return [x, y];
     }
 
-    _getIncenterCoordinate(): [number, number] {
-        let [x1, y1] = this.point1Coordinate,
-            [x2, y2] = this.point2Coordinate,
-            [x3, y3] = this.point3Coordinate,
+    _getIncenterCoordinates(): [number, number] {
+        let [x1, y1] = this.point1Coordinates,
+            [x2, y2] = this.point2Coordinates,
+            [x3, y3] = this.point3Coordinates,
             [a, b, c] = [this.side1Length, this.side2Length, this.side3Length],
             d = a + b + c, // this.getPerimeter()
             x = (a * x1 + b * x2 + c * x3) / d,
@@ -922,7 +921,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * Get the incenter point of triangle `this`.
      */
     getIncenterPoint() {
-        return new Point(this.owner, this._getIncenterCoordinate());
+        return new Point(this.owner, this._getIncenterCoordinates());
     }
     /**
      * Get the inscribed circle of triangle `this`.
@@ -931,13 +930,13 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
         let s = this.getArea(),
             d = this.getPerimeter(),
             r = (2 * s) / d;
-        return new Circle(this.owner, this._getIncenterCoordinate(), r);
+        return new Circle(this.owner, this._getIncenterCoordinates(), r);
     }
 
-    _getCircumcenterCoordinate(): [number, number] {
-        let [x1, y1] = this.point1Coordinate,
-            [x2, y2] = this.point2Coordinate,
-            [x3, y3] = this.point3Coordinate,
+    _getCircumcenterCoordinates(): [number, number] {
+        let [x1, y1] = this.point1Coordinates,
+            [x2, y2] = this.point2Coordinates,
+            [x3, y3] = this.point3Coordinates,
             a1 = 2 * (x2 - x1),
             b1 = 2 * (y2 - y1),
             c1 = x2 ** 2 + y2 ** 2 - (x1 ** 2 + y1 ** 2),
@@ -953,7 +952,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * Get the circumcenter point of triangle `this`.
      */
     getCircumcenterPoint() {
-        return new Point(this.owner, this._getCircumcenterCoordinate());
+        return new Point(this.owner, this._getCircumcenterCoordinates());
     }
     /**
      * Get the circumscribed circle of triangle `this`.
@@ -962,14 +961,14 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
         let [a, b, c] = [this.side1Length, this.side2Length, this.side3Length],
             area = this.getArea(),
             r = (a * b * c) / (4 * area);
-        return new Circle(this.owner, this._getCircumcenterCoordinate(), r);
+        return new Circle(this.owner, this._getCircumcenterCoordinates(), r);
     }
 
     _getEscenterCoordinates(): [[number, number], [number, number], [number, number]] {
         let [a, b, c] = [this.side1Length, this.side2Length, this.side3Length],
-            [x1, y1] = this.point1Coordinate,
-            [x2, y2] = this.point2Coordinate,
-            [x3, y3] = this.point3Coordinate,
+            [x1, y1] = this.point1Coordinates,
+            [x2, y2] = this.point2Coordinates,
+            [x3, y3] = this.point3Coordinates,
             ead = -a + b + c,
             ea: [number, number] = [(-a * x1 + b * x2 + c * x3) / ead, (-a * y1 + b * y2 + c * y3) / ead],
             ebd = a - b + c,
@@ -1016,7 +1015,7 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
         const g = new Graphics();
         if (!this.isValid()) return g;
 
-        const { point1Coordinate: c1, point2Coordinate: c2, point3Coordinate: c3 } = this;
+        const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
         g.moveTo(...c1);
         g.lineTo(...c2);
         g.lineTo(...c3);

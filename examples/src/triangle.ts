@@ -1,16 +1,17 @@
 import Geomtoy from "../../src/geomtoy";
-import { modifyDatGuiStyle, rendererSwitch } from "./assets/misc";
 import { colors, mathFont } from "./assets/assets";
-import Interact from "./assets/interact";
-import { Collection, Drawable, Touchable } from "./assets/GeomObjectWrapper";
-import { Renderer } from "../../src/geomtoy/types";
+import View from "../../src/geomtoy-kit/frontend/View";
+import ViewElement from "../../src/geomtoy-kit/frontend/ViewElement";
+
+import { Renderer } from "../../src/geomtoy-kit/types";
 
 import type { EventObject, Text, Point } from "../../src/geomtoy/package";
+import { initRenderer, switchRenderer, setDescription } from "./assets/default";
+import VanillaCanvas from "../../src/geomtoy-kit/renderer/CanvasRenderer";
+import VanillaSvg from "../../src/geomtoy-kit/renderer/SvgRenderer";
 
-const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-const svg = document.querySelector("#svg") as SVGSVGElement;
-const description = document.querySelector("#description") as HTMLElement;
-description.innerHTML = `
+const [canvas, svg] = initRenderer();
+setDescription(`
     <strong>Touchables</strong>
     <ul>
         <li>Points: A, B, P</li>
@@ -25,7 +26,8 @@ description.innerHTML = `
         <li>Point A, point B and point P will follow line AB to move.</li>
         <li>Move line AB or circle O to get the intersection points of them.</li>
     </ol>
-`;
+`);
+
 const G = new Geomtoy(100, 100, {
     epsilon: 2 ** -32,
     graphics: {
@@ -41,95 +43,29 @@ const G = new Geomtoy(100, 100, {
 G.yAxisPositiveOnBottom = false;
 G.scale = 10;
 
-const canvasRenderer = new Geomtoy.adapters.VanillaCanvas(canvas, G);
-canvasRenderer.lineCap("round");
-const svgRenderer = new Geomtoy.adapters.VanillaSvg(svg, G);
-svgRenderer.lineCap("round");
-const collection = new Collection();
-const interactCanvas = new Interact(canvasRenderer, collection);
-const interactSvg = new Interact(svgRenderer, collection);
+const canvasRenderer = new VanillaCanvas(canvas, G);
+const svgRenderer = new VanillaSvg(svg, G);
 
-let currentRendererType: string;
-const rendererList: { [key: string]: Renderer } = { canvas: canvasRenderer, svg: svgRenderer };
-const interactList: { [key: string]: Interact } = { canvas: interactCanvas, svg: interactSvg };
-
-modifyDatGuiStyle();
-rendererSwitch(rendererList, "svg", (type: string) => {
-    currentRendererType = type;
-    Object.keys(rendererList)
-        .filter(t => t !== type)
-        .forEach(t => {
-            interactList[t].stopDragAndDrop();
-            interactList[t].stopZoomAndPan();
-            interactList[t].stopResponsive;
-        });
-    interactList[type].startDragAndDrop();
-    interactList[type].startZoomAndPan();
-    interactList[type].startResponsive((width, height) => {
+const view = new View(G, svgRenderer);
+view.startInteractive();
+view.startResponsive((width, height) => {
+    G.width = width;
+    0;
+    G.height = height;
+    G.origin = [width / 2, height / 2];
+});
+const rendererList = { canvas: canvasRenderer, svg: svgRenderer };
+switchRenderer(rendererList, "svg", type => {
+    view.stopInteractive();
+    view.stopResponsive();
+    view.renderer = rendererList[type as keyof typeof rendererList];
+    view.startInteractive();
+    view.startResponsive((width, height) => {
         G.width = width;
         G.height = height;
         G.origin = [width / 2, height / 2];
     });
 });
-
-const setting = {
-    sideLines: true,
-    medianSegments: false,
-    centroidPoint: false,
-    medialTriangle: false,
-    antimedialTriangle: false,
-    angleBisectingSegments: false,
-    incenterPoint: false,
-    inscribedCircle: false,
-    altitudeLines: false,
-    orthocenterPoint: false,
-    orthicTriangle: false,
-    polarCircle: false,
-    perpendicularlyBisectingLines: false,
-    circumcenterPoint: false,
-    circumscribedCircle: false,
-    escenterPoints: false,
-    escribedCircles: false,
-    symmedianSegments: false,
-    lemoinePoint: false,
-    eulerLine: false,
-    ninePointCenterPoint: false,
-    ninePointCircle: false
-};
-
-// //@ts-ignore
-// const gui = new dat.GUI()
-// function newGuiObject(folder, touchable) {
-//     if ((touchable.type = "point")) {
-//         let controllerX = folder
-//             .add(touchable.object, "x", -200, 200, 0.1)
-//             .listen()
-//             .onChange(() => G.nextTick(() => draw(currentRenderer)))
-//         touchable.controller.x = controllerX
-//         let controllerY = folder
-//             .add(touchable.object, "y", -200, 200, 0.1)
-//             .listen()
-//             .onChange(() => G.nextTick(() => draw(currentRenderer)))
-//         touchable.controller.y = controllerY
-//     }
-// }
-
-// const guiObject = gui.addFolder("objects")
-// guiObject.open()
-// Object.keys(touchables).forEach(name => {
-//     let folder = guiObject.addFolder(name)
-//     folder.open()
-//     newGuiObject(folder, touchables[name])
-// })
-
-// const guiSetting = gui.addFolder("setting")
-// guiSetting.open()
-// Object.keys(setting).forEach(name => {
-//     guiSetting
-//         .add(setting, name)
-//         .listen()
-//         .onChange(() => draw(currentRenderer))
-// })
 
 const main = () => {
     const pointA = G.Point(-25, -12);
@@ -172,86 +108,187 @@ const main = () => {
         this.copyFrom(e.target.isValid() ? e.target.getPointWhereXEqualTo(5) : null);
     });
 
-    collection
-        .setDrawable("coordinateSystemOriginPoint", new Drawable(G.Point.zero(), true, colors.grey, undefined))
-        .setTouchable("pointA", new Touchable(pointA, false, colors.black, undefined))
-        .setDrawable("labelA", new Drawable(labelA, false, colors.black, undefined))
-        .setTouchable("pointB", new Touchable(pointB, false, colors.black, undefined))
-        .setDrawable("labelB", new Drawable(labelB, false, colors.black, undefined))
-        .setTouchable("pointC", new Touchable(pointC, false, colors.black, undefined))
-        .setDrawable("labelC", new Drawable(labelC, false, colors.black, undefined))
-        .setDrawable("triangle", new Drawable(triangle, true, colors.red + "20", colors.red, 3))
-        .setDrawable("vector", new Drawable(vector, false, undefined, colors.blue, 3));
+    const triangleBind = [triangle, "any"] as [typeof triangle, string];
+
+    const medianSegments = G.Group([G.LineSegment(), G.LineSegment(), G.LineSegment()]).bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            const [a, b, c] = e.target.getMedianLineSegments();
+            this.items[0].copyFrom(a);
+            this.items[1].copyFrom(b);
+            this.items[2].copyFrom(c);
+        }
+    });
+    // const angleBisectingSegments = G.Group([G.LineSegment(), G.LineSegment(), G.LineSegment()]).bind([triangleBind], function ([e]) {
+    //     if (triangle.isValid()) {
+    //         const [a, b, c] = e.target.getAngleBisectingLineSegments();
+    //         this.items[0].copyFrom(a);
+    //         this.items[1].copyFrom(b);
+    //         this.items[2].copyFrom(c);
+    //     }
+    // });
+    // const altitudeLines = G.Group([G.Line(), G.Line(), G.Line()]).bind([triangleBind], function ([e]) {
+    //     if (triangle.isValid()) {
+    //         const [a, b, c] = e.target.getAltitudeLineSegments().map(s => s.toLine());
+    //         this.items[0].copyFrom(a);
+    //         this.items[1].copyFrom(b);
+    //         this.items[2].copyFrom(c);
+    //     }
+    // });
+
+    const incenterPoint = G.Point().bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            this.copyFrom(e.target.getIncenterPoint());
+        }
+    });
+    const inscribedCircle = G.Circle().bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            this.copyFrom(e.target.getInscribedCircle());
+        }
+    });
+
+    const centroidPoint = G.Point().bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            this.copyFrom(e.target.getCentroidPoint());
+        }
+    });
+    const orthocenterPoint = G.Point().bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            this.copyFrom(e.target.getOrthocenterPoint());
+        }
+    });
+
+    const antimedialTriangle = G.Triangle().bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            this.copyFrom(e.target.getAntimedialTriangle());
+        }
+    });
+
+    const orthicTriangle = G.Triangle().bind([triangleBind], function ([e]) {
+        if (e.target.isValid()) {
+            this.copyFrom(e.target.getOrthicTriangle());
+        }
+    });
+
+    const polarCircle = G.Circle().bind([triangleBind], function ([e]) {
+        if (e.target.isValid()) {
+            this.copyFrom(e.target.getPolarCircle());
+        }
+    });
+
+    const perpendicularlyBisectingLines = G.Group([G.Line(), G.Line(), G.Line()]).bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            const [a, b, c] = e.target.getPerpendicularlyBisectingLineSegments().map(s => s.toLine());
+            this.items[0].copyFrom(a);
+            this.items[1].copyFrom(b);
+            this.items[2].copyFrom(c);
+        }
+    });
+    const circumcenterPoint = G.Point().bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            this.copyFrom(e.target.getCircumcenterPoint());
+        }
+    });
+
+    const circumscribedCircle = G.Circle().bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            this.copyFrom(e.target.getCircumscribedCircle());
+        }
+    });
+
+    const escenterPoints = G.Group([G.Point(), G.Point(), G.Point()]).bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            const [a, b, c] = e.target.getEscenterPoints();
+            this.items[0].copyFrom(a);
+            this.items[1].copyFrom(b);
+            this.items[2].copyFrom(c);
+        }
+    });
+    const escribedCircles = G.Group([G.Circle(), G.Circle(), G.Circle()]).bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            const [a, b, c] = e.target.getEscribedCircles();
+            this.items[0].copyFrom(a);
+            this.items[1].copyFrom(b);
+            this.items[2].copyFrom(c);
+        }
+    });
+
+    const symmedianSegments = G.Group([G.LineSegment(), G.LineSegment(), G.LineSegment()]).bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            const [a, b, c] = e.target.getSymmedianLineSegments();
+            this.items[0].copyFrom(a);
+            this.items[1].copyFrom(b);
+            this.items[2].copyFrom(c);
+        }
+    });
+
+    const lemoinePoint = G.Point().bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            this.copyFrom(e.target.getLemoinePoint());
+        }
+    });
+
+    const eulerLine = G.Line().bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            this.copyFrom(e.target.getEulerLine());
+        }
+    });
+
+    const ninePointCenterPoint = G.Point().bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            this.copyFrom(e.target.getNinePointCenterPoint());
+        }
+    });
+
+    const ninePointCircle = G.Circle().bind([triangleBind], function ([e]) {
+        if (triangle.isValid()) {
+            this.copyFrom(e.target.getNinePointCircle());
+        }
+    });
+
+    const commonZIndex = 1000;
+
+    const hoverStyle = {
+        fill: colors.white + "AA",
+        stroke: colors.white + "AA"
+    };
+    const activeStyle = {
+        fill: colors.blue + "AA",
+        stroke: colors.blue + "AA"
+    };
+
+    view.add(new ViewElement(G.Point.zero(), false, { fill: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointA, true, { fill: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelA, false, { fill: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointB, true, { fill: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelB, false, { fill: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointC, true, { fill: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelC, false, { fill: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(triangle, false, { stroke: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(vector, true, { fill: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(medianSegments, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(incenterPoint, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(inscribedCircle, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(centroidPoint, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(orthocenterPoint, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(antimedialTriangle, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(orthicTriangle, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(polarCircle, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(perpendicularlyBisectingLines, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(circumcenterPoint, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(circumscribedCircle, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(escenterPoints, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(escribedCircles, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(symmedianSegments, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(lemoinePoint, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(eulerLine, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(ninePointCenterPoint, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(ninePointCircle, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle));
+
+    view.foremost(pointA.uuid);
+    view.foremost(labelA.uuid);
+    view.foremost(pointB.uuid);
+    view.foremost(labelB.uuid);
+    view.foremost(pointC.uuid);
+    view.foremost(labelC.uuid);
 };
 main();
-
-// function draw(renderer) {
-
-//     renderer.stroke(colors.grey)
-//     setting.sideLines &&
-//         renderer.drawBatch(
-//             objects.triangle.getSideSegments().map(s => s.toLine()),
-//             true
-//         )
-// }
-
-// renderer.strokeWidth(4)
-// renderer.strokeDash([10,10])
-// renderer.strokeDash([10,10])
-// Object.assign(objectCollection.triangle, {
-//     point1: touchables.pointA.object,
-//     point2: touchables.pointB.object,
-//     point3: touchables.pointC.object
-// })
-
-// if (objectCollection.triangle.isValid()) {
-//     renderer.fill("transparent")
-//     renderer.draw(objectCollection.triangle)
-
-// renderer.stroke(colors.grey + "CC")
-// renderer.strokeDash([2, 2])
-// setting.sideLines &&
-//     renderer.drawBatch(
-//         tri.getSideSegments().map(s => s.toLine()),
-//         true
-//     )
-// renderer.strokeDash([])
-// renderer.stroke(colors.red + "CC")
-// setting.medianSegments && renderer.drawBatch(tri.getMedianSegments(), true)
-// setting.centroidPoint && renderer.draw(tri.getCentroidPoint(), true)
-// setting.medialTriangle && renderer.draw(tri.getMedialTriangle(), true)
-// setting.antimedialTriangle && renderer.draw(tri.getAntimedialTriangle(), true)
-// renderer.stroke(colors.green + "CC")
-// setting.angleBisectingSegments && renderer.drawBatch(tri.getAngleBisectingSegments(), true)
-// setting.incenterPoint && renderer.draw(tri.getIncenterPoint(), true)
-// setting.inscribedCircle && renderer.draw(tri.getInscribedCircle(), true)
-// renderer.stroke(colors.purple + "CC")
-// setting.altitudeLines &&
-//     renderer.drawBatch(
-//         tri.getAltitudeSegments().map(s => s.toLine()),
-//         true
-//     )
-// setting.orthocenterPoint && renderer.draw(tri.getOrthocenterPoint(), true)
-// let ot, pc
-// setting.orthicTriangle && (ot = tri.getOrthicTriangle()) !== null && renderer.draw(ot, true)
-// setting.polarCircle && (pc = tri.getPolarCircle()) !== null && renderer.draw(pc, true)
-// renderer.stroke(colors.indigo + "CC")
-// setting.perpendicularlyBisectingLines &&
-//     renderer.drawBatch(
-//         tri.getPerpendicularlyBisectingSegments().map(s => s.toLine()),
-//         true
-//     )
-// setting.circumcenterPoint && renderer.draw(tri.getCircumcenterPoint(), true)
-// setting.circumscribedCircle && renderer.draw(tri.getCircumscribedCircle(), true)
-// renderer.stroke(colors.teal + "CC")
-// setting.escenterPoints && renderer.drawBatch(tri.getEscenterPoints(), true)
-// setting.escribedCircles && renderer.drawBatch(tri.getEscribedCircles(), true)
-// renderer.stroke(colors.yellow + "CC")
-// setting.symmedianSegments && renderer.drawBatch(tri.getSymmedianSegments(), true)
-// setting.lemoinePoint && renderer.draw(tri.getLemoinePoint(), true)
-// renderer.stroke(colors.brown + "CC")
-// setting.eulerLine && renderer.draw(tri.getEulerLine(), true)
-// setting.ninePointCenterPoint && renderer.draw(tri.getNinePointCenterPoint(), true)
-// setting.ninePointCircle && renderer.draw(tri.getNinePointCircle(), true)
-// }
-// }
