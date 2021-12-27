@@ -46,11 +46,11 @@ svgRenderer.display.zoom = 1
 svgRenderer.display.yAxisPositiveOnBottom  =false
 svgRenderer.display.xAxisPositiveOnRight  =false
 
-const view = new View(G, canvasRenderer);
+const view = new View(G, svgRenderer);
 view.startInteractive();
 view.startResponsive((width, height) => view.renderer.display.origin = [width / 2, height / 2]);
 const rendererList = { canvas: canvasRenderer, svg: svgRenderer };
-switchRenderer(rendererList, "canvas", type => {
+switchRenderer(rendererList, "svg", type => {
     view.stopInteractive();
     view.stopResponsive();
     view.renderer = rendererList[type as keyof typeof rendererList];

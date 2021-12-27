@@ -1,5 +1,6 @@
 import util from "../../geomtoy/utility";
-import type { InterfaceOptions, Renderer } from "../types";
+import type Renderer from "./Renderer";
+import type { InterfaceOptions } from "../types";
 
 const defaultInterfaceOptions: InterfaceOptions = {
     showAxis: true,
@@ -31,7 +32,6 @@ export default abstract class Interface {
     private _tOy = NaN;
     // ratio
     private _ratio = NaN;
-    // scale
     // grid pattern grid size
     private _gridSize = NaN;
     // grid pattern image size
@@ -152,10 +152,7 @@ export default abstract class Interface {
         const scale = density * zoom;
 
         const [startXPosition, startYPosition] = [tOxRem, tOyRem];
-        const [startXValue, startYValue] = [
-            this._exactValue(xPr ? (this._tOxRem - this._tOx) / scale : (this._tOx - this._tOxRem) / scale),
-            this._exactValue(yPb ? (this._tOyRem - this._tOy) / scale : (this._tOy - this._tOyRem) / scale)
-        ];
+        const [startXValue, startYValue] = [this._exactValue(xPr ? (tOxRem - tOx) / scale : (tOx - tOxRem) / scale), this._exactValue(yPb ? (tOyRem - tOy) / scale : (tOy - tOyRem) / scale)];
 
         let xAxisLabels = "";
         let yAxisLabels = "";
@@ -205,9 +202,8 @@ export default abstract class Interface {
         axisColor = this._adjustHexColorString(axisColor);
 
         const { axisArrowLength, axisArrowWidth } = Interface;
-
-        const { width: w, height: h, xAxisPositiveOnRight: xPr, yAxisPositiveOnBottom: yPb } = this.renderer.display;
         const { _tOx: tOx, _tOy: tOy } = this;
+        const { width: w, height: h, xAxisPositiveOnRight: xPr, yAxisPositiveOnBottom: yPb } = this.renderer.display;
 
         const axisImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
         axisImage.setAttribute("width", `${w}`);
@@ -218,12 +214,12 @@ export default abstract class Interface {
         let xArrowD = "";
         let yArrowD = "";
 
-        xAxisD = `M0,${tOy}L${w},${tOy}`;
+        xAxisD = `M0,${tOy}h${w}`;
         xArrowD = xPr
             ? `M${w - axisArrowLength},${tOy - axisArrowWidth}L${w},${tOy}L${w - axisArrowLength},${tOy + axisArrowWidth}`
             : `M${axisArrowLength},${tOy - axisArrowWidth}L0,${tOy}L${axisArrowLength},${tOy + axisArrowWidth}`;
 
-        yAxisD = `M${tOx},0L${tOx},${h}`;
+        yAxisD = `M${tOx},0v${h}`;
         yArrowD = yPb
             ? `M${tOx - axisArrowWidth},${h - axisArrowLength}L${tOx},${h}L${tOx + axisArrowWidth},${h - axisArrowLength}`
             : `M${tOx - axisArrowWidth},${axisArrowLength}L${tOx},0L${tOx + axisArrowWidth},${axisArrowLength}`;

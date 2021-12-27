@@ -1,3 +1,5 @@
+import box from "../../geomtoy/utility/box";
+
 import Renderer from "./Renderer";
 import SvgInterface from "./SvgInterface";
 
@@ -9,8 +11,8 @@ import type Shape from "../../geomtoy/base/Shape";
  * @category Renderer
  */
 export default class SvgRenderer extends Renderer {
-    surface: SVGGElement;
-    interfaceSurface: SVGGElement;
+    private _surface: SVGGElement;
+    private _interfaceSurface: SVGGElement;
 
     private _container: SVGSVGElement;
     private _interface: SvgInterface;
@@ -21,8 +23,8 @@ export default class SvgRenderer extends Renderer {
         super(geomtoy);
 
         if (container instanceof SVGSVGElement) {
-            this.manageRendererInitialized_();
             this._container = container;
+            this.manageRendererInitialized_();
             this._interface = new SvgInterface(this);
 
             this.container.style["touch-action" as any] = "none";
@@ -30,29 +32,20 @@ export default class SvgRenderer extends Renderer {
             this.container.style["-webkit-tap-highlight-color" as any] = "transparent";
             this.container.style["-webkit-touch-callout" as any] = "none";
 
-            // if the svg is not empty
-            this.container.innerHTML = "";
-            this.container.insertAdjacentHTML(
-                "beforeend",
-                `
+            this.container.innerHTML = `
                 <style>
-                    #geomtoyTools, #geomtoyScene, #geomtoyScene *{
+                    #geomtoyInterface, #geomtoy, #geomtoy *{
                         pointer-events: none;
                     }
-                    #geomtoyScene text {
+                    #geomtoy text {
                         user-select: none;
                     }
                 </style>
-            `
-            );
-
-            this.interfaceSurface = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            this.interfaceSurface.setAttribute("id", "geomtoyInterface");
-            this.container.append(this.interfaceSurface);
-
-            this.surface = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            this.surface.setAttribute("id", "geomtoyScene");
-            this.container.append(this.surface);
+                <g id="geomtoyInterface"></g>
+                <g id="geomtoy"></g>
+            `;
+            this._surface = this.container.querySelector("#geomtoy")!;
+            this._interfaceSurface = this.container.querySelector("#geomtoyInterface")!;
 
             return this;
         }
@@ -63,25 +56,15 @@ export default class SvgRenderer extends Renderer {
         return this._container;
     }
 
-    private _getBoundingBox(x: number, y: number, w: number, h: number) {
-        return [
-            [x, y],
-            [x + w, y],
-            [x + w, y + h],
-            [x, y + h]
-        ] as const;
-    }
-
     private _setStyle(pathEl: SVGPathElement | SVGTextElement, [noFill = false, noStroke = false] = []) {
         if (noFill) {
-            pathEl.setAttribute("fill", "transparent");
+            pathEl.setAttribute("fill", "none");
         } else {
             this.style_.fill && pathEl.setAttribute("fill", this.style_.fill);
         }
 
         if (noStroke) {
-            pathEl.setAttribute("stroke", "transparent");
-            pathEl.setAttribute("stroke-width", "0");
+            pathEl.setAttribute("stroke", "none");
         } else {
             this.style_.stroke && pathEl.setAttribute("stroke", this.style_.stroke);
             this.style_.strokeWidth && pathEl.setAttribute("stroke-width", `${this.style_.strokeWidth}`);
@@ -98,8 +81,8 @@ export default class SvgRenderer extends Renderer {
     private _drawImage(cmd: GraphicsImageCommand, pathEl: SVGPathElement, onTop = false) {
         const { imageSource, x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight } = cmd;
 
-        const obtained = this.imageSourceManager_.successful(imageSource);
-        const imageEl = obtained ? this.imageSourceManager_.take(imageSource)! : this.imageSourceManager_.placeholderForSvg(width, height);
+        const obtained = this.imageSourceManager.successful(imageSource);
+        const imageEl = obtained ? this.imageSourceManager.take(imageSource)! : this.imageSourceManager.placeholderForSvg(width, height);
 
         const imageWrapper = document.createElementNS("http://www.w3.org/2000/svg", "g");
         const imageClipper = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -125,8 +108,8 @@ export default class SvgRenderer extends Renderer {
         }
 
         // draw bounding box
-        const box = this._getBoundingBox(x, y, atW, atH);
-        pathEl.setAttribute("d", `M${box[0].join(",")}L${box[1].join(",")}L${box[2].join(",")}L${box[3].join(",")}Z`);
+        const b: [number, number, number, number] = [x, y, atW, atH];
+        pathEl.setAttribute("d", `M${box.nn(b).join(",")}L${box.mn(b).join(",")}L${box.mm(b).join(",")}L${box.nm(b).join(",")}Z`);
         this._setStyle(pathEl);
 
         if (onTop) {
@@ -151,7 +134,7 @@ export default class SvgRenderer extends Renderer {
         fontItalic && textEl.setAttribute("font-style", "italic");
 
         const [tX, tY] = this.display.globalTransformation.transformCoordinates([x, y]);
-        const textBox = this.textMeasurer_.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", text);
+        const textBox = this.textMeasurer.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", text);
         const scale = this.display.density * this.display.zoom;
         const [atW, atH] = [textBox.width / scale, textBox.height / scale];
         const offsetX = this.display.xAxisPositiveOnRight ? 0 : atW;
@@ -167,8 +150,8 @@ export default class SvgRenderer extends Renderer {
         textEl.setAttribute("transform", `matrix(${this.display.globalTransformation.invert().get().join(" ")})`);
 
         // draw bounding box
-        const box = this._getBoundingBox(x - offsetX, y - offsetY, atW, atH);
-        pathEl.setAttribute("d", `M${box[0].join(",")}L${box[1].join(",")}L${box[2].join(",")}L${box[3].join(",")}Z`);
+        const b: [number, number, number, number] = [x - offsetX, y - offsetY, atW, atH];
+        pathEl.setAttribute("d", `M${box.nn(b).join(",")}L${box.mn(b).join(",")}L${box.mm(b).join(",")}L${box.nm(b).join(",")}Z`);
         this._setStyle(pathEl, [true, false]);
 
         if (onTop) {
@@ -207,20 +190,21 @@ export default class SvgRenderer extends Renderer {
 
         Promise.resolve().then(() => {
             const gt = this.display.globalTransformation.get();
-            this.surface.setAttribute("transform", `matrix(${gt.join(" ")})`);
-            this.interfaceSurface.replaceChildren(createdInterface);
-            this.surface.replaceChildren(this._buffer);
+            this._surface.setAttribute("transform", `matrix(${gt.join(" ")})`);
+            this._interfaceSurface.replaceChildren(createdInterface);
+            this._surface.replaceChildren(this._buffer);
             this._bufferFlushScheduled = false;
         });
     }
+    private _initBuffer() {}
+
     draw(shape: Shape, onTop = false) {
         this.isShapeOwnerEqual(shape);
+        this._initBuffer();
 
         const cmds = shape.getGraphics(this.display).commands;
         const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-
         const onlyOneCommand = cmds.length === 1 && cmds[0];
-
         if (onlyOneCommand && onlyOneCommand.type === "text") {
             this._drawText(onlyOneCommand, pathEl, onTop);
         } else if (onlyOneCommand && onlyOneCommand.type === "image") {
@@ -233,6 +217,6 @@ export default class SvgRenderer extends Renderer {
         return pathEl;
     }
     drawBatch(shapes: Shape[], onTop = false) {
-        return shapes.map(o => this.draw(o, onTop));
+        return shapes.map(shape => this.draw(shape, onTop));
     }
 }

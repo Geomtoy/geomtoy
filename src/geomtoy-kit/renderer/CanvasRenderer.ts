@@ -1,3 +1,5 @@
+import box from "../../geomtoy/utility/box";
+
 import Renderer from "./Renderer";
 import CanvasInterface from "./CanvasInterface";
 
@@ -9,26 +11,27 @@ import type Shape from "../../geomtoy/base/Shape";
  * @category Renderer
  */
 export default class CanvasRenderer extends Renderer {
-    context: CanvasRenderingContext2D;
+    private _surface: CanvasRenderingContext2D;
+    private _interfaceSurface: CanvasRenderingContext2D;
 
     private _container: HTMLCanvasElement;
     private _interface: CanvasInterface;
-
-    private _bufferCanvas = document.createElement("canvas");
-    private _buffer = this._bufferCanvas.getContext("2d")!;
+    private _buffer = document.createElement("canvas").getContext("2d")!;
     private _bufferFlushScheduled: boolean = false;
 
     constructor(container: HTMLCanvasElement, geomtoy: Geomtoy) {
         super(geomtoy);
         if (container instanceof HTMLCanvasElement) {
             this._container = container;
+            this.manageRendererInitialized_();
             this._interface = new CanvasInterface(this);
-
-            this.context = this.container.getContext("2d")!;
 
             this.container.style["touch-action" as any] = "none";
             this.container.style["-webkit-tap-highlight-color" as any] = "transparent";
             this.container.style["-webkit-touch-callout" as any] = "none";
+
+            this._surface = this.container.getContext("2d")!;
+            this._interfaceSurface = this._surface;
 
             return this;
         }
@@ -37,15 +40,6 @@ export default class CanvasRenderer extends Renderer {
 
     get container() {
         return this._container;
-    }
-
-    private _getBoundingBox(x: number, y: number, w: number, h: number) {
-        return [
-            [x, y],
-            [x + w, y],
-            [x + w, y + h],
-            [x, y + h]
-        ] as const;
     }
 
     private _setStyle([noFill = false, noStroke = false] = []) {
@@ -74,8 +68,8 @@ export default class CanvasRenderer extends Renderer {
     private _drawImage(cmd: GraphicsImageCommand, path2D: Path2D, onTop = false) {
         const { imageSource, x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight } = cmd;
 
-        const obtained = this.imageSourceManager_.successful(imageSource);
-        const image = obtained ? this.imageSourceManager_.take(imageSource)! : this.imageSourceManager_.placeholderForCanvas(width, height);
+        const obtained = this.imageSourceManager.successful(imageSource);
+        const image = obtained ? this.imageSourceManager.take(imageSource)! : this.imageSourceManager.placeholderForCanvas(width, height);
 
         if (onTop) {
             this._buffer.globalCompositeOperation = "source-over";
@@ -101,12 +95,12 @@ export default class CanvasRenderer extends Renderer {
         this._buffer.restore();
 
         // draw bounding box
-        const box = this._getBoundingBox(x - offsetX, y - offsetY, atW, atH);
+        const b: [number, number, number, number] = [x - offsetX, y - offsetY, atW, atH];
         this._setStyle();
-        path2D.moveTo(...box[0]);
-        path2D.lineTo(...box[1]);
-        path2D.lineTo(...box[2]);
-        path2D.lineTo(...box[3]);
+        path2D.moveTo(...box.nn(b));
+        path2D.lineTo(...box.mn(b));
+        path2D.lineTo(...box.mm(b));
+        path2D.lineTo(...box.nm(b));
         path2D.closePath();
         this._buffer.fill(path2D);
         this._buffer.stroke(path2D);
@@ -124,7 +118,7 @@ export default class CanvasRenderer extends Renderer {
         this._buffer.font = fontStyle;
 
         const [tX, tY] = this.display.globalTransformation.transformCoordinates([x, y]);
-        const textBox = this.textMeasurer_.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", text);
+        const textBox = this.textMeasurer.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", text);
         const scale = this.display.density * this.display.zoom;
         const [atW, atH] = [textBox.width / scale, textBox.height / scale];
         const offsetX = this.display.xAxisPositiveOnRight ? 0 : atW;
@@ -145,12 +139,12 @@ export default class CanvasRenderer extends Renderer {
         this._buffer.restore();
 
         // draw bounding box
-        const box = this._getBoundingBox(x - offsetX, y - offsetY, atW, atH);
+        const b: [number, number, number, number] = [x - offsetX, y - offsetY, atW, atH];
         this._setStyle([true, true]);
-        path2D.moveTo(...box[0]);
-        path2D.lineTo(...box[1]);
-        path2D.lineTo(...box[2]);
-        path2D.lineTo(...box[3]);
+        path2D.moveTo(...box.nn(b));
+        path2D.lineTo(...box.mn(b));
+        path2D.lineTo(...box.mm(b));
+        path2D.lineTo(...box.nm(b));
         path2D.closePath();
 
         if (onTop) {
@@ -188,27 +182,28 @@ export default class CanvasRenderer extends Renderer {
         const createdInterface = await this._interface.create();
 
         Promise.resolve().then(() => {
-            this.context.clearRect(0, 0, this.container.width, this.container.height);
-            this.context.drawImage(createdInterface, 0, 0);
-            this.context.drawImage(this._bufferCanvas, 0, 0);
+            this._surface.clearRect(0, 0, this.container.width, this.container.height);
+            this._interfaceSurface.drawImage(createdInterface, 0, 0);
+            this._surface.drawImage(this._buffer.canvas, 0, 0);
             this._bufferFlushScheduled = false;
         });
+    }
+    private _initBuffer() {
+        if (!this._bufferFlushScheduled) {
+            // Setting canvas's width/height will clear the canvas and reset its transform which we exactly want.
+            this._buffer.canvas.width = this.container.width;
+            this._buffer.canvas.height = this.container.height;
+            this._buffer.setTransform(...this.display.globalTransformation.get());
+        }
     }
 
     draw(shape: Shape, onTop = false) {
         this.isShapeOwnerEqual(shape);
-        if (!this._bufferFlushScheduled) {
-            // Setting canvas's width/height will clear the canvas and reset its transform which we exactly want.
-            this._bufferCanvas.width = this.container.width;
-            this._bufferCanvas.height = this.container.height;
-            this._buffer.setTransform(...this.display.globalTransformation.get());
-        }
+        this._initBuffer();
 
         const cmds = shape.getGraphics(this.display).commands;
         const path2D = new Path2D();
-
         const onlyOneCommand = cmds.length === 1 && cmds[0];
-
         if (onlyOneCommand && onlyOneCommand.type === "text") {
             this._drawText(onlyOneCommand, path2D, onTop);
         } else if (onlyOneCommand && onlyOneCommand.type === "image") {
@@ -216,10 +211,11 @@ export default class CanvasRenderer extends Renderer {
         } else {
             this._drawGeometry(cmds as GraphicsGeometryCommand[], path2D, onTop);
         }
+
         this._flushBuffer();
         return path2D;
     }
     drawBatch(shapes: Shape[], onTop = false) {
-        return shapes.map(o => this.draw(o, onTop));
+        return shapes.map(shape => this.draw(shape, onTop));
     }
 }

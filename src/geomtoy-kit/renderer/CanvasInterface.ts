@@ -1,11 +1,10 @@
-import { Renderer } from "../types";
 import Interface from "./Interface";
+import type CanvasRenderer from "./CanvasRenderer";
 
 export default class CanvasInterface extends Interface {
-    private _interfaceBufferCanvas = document.createElement("canvas");
-    private _interfaceBuffer = this._interfaceBufferCanvas.getContext("2d")!;
+    private _interfaceBuffer = document.createElement("canvas").getContext("2d")!;
 
-    constructor(renderer: Renderer) {
+    constructor(renderer: CanvasRenderer) {
         super(renderer);
     }
 
@@ -14,18 +13,17 @@ export default class CanvasInterface extends Interface {
         await this.createGrid();
         await this.createAxis();
         await this.createLabel();
-        return this._interfaceBufferCanvas;
+        return this._interfaceBuffer.canvas;
     }
 
     prepare() {
         super.prepare();
-        this._interfaceBufferCanvas.width = this.renderer.display.width;
-        this._interfaceBufferCanvas.height = this.renderer.display.height;
+        this._interfaceBuffer.canvas.width = this.renderer.display.width;
+        this._interfaceBuffer.canvas.height = this.renderer.display.height;
     }
 
     async createLabel() {
         if (!this.options_.showLabel) return;
-
         const [promise, img] = this.labelImage();
         return promise.then(() => {
             this._interfaceBuffer.drawImage(img, 0, 0);
@@ -37,7 +35,7 @@ export default class CanvasInterface extends Interface {
         return promise.then(() => {
             const pattern = this._interfaceBuffer.createPattern(img, "repeat");
             this._interfaceBuffer.fillStyle = pattern!;
-            this._interfaceBuffer.fillRect(0, 0, this._interfaceBufferCanvas.width, this._interfaceBufferCanvas.height);
+            this._interfaceBuffer.fillRect(0, 0, this.renderer.display.width, this.renderer.display.height);
         });
     }
 

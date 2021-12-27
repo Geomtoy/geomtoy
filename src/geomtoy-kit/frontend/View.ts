@@ -2,10 +2,13 @@ import Shape from "../../geomtoy/base/Shape";
 import Group from "../../geomtoy/group";
 import Image from "../../geomtoy/shapes/basic/Image";
 
-import type { Renderer, Style } from "../types";
-import ViewElement from "./ViewElement";
-import type Geomtoy from "../../geomtoy";
+import Renderer from "../renderer/Renderer";
 import PointChecker from "../helper/PointChecker";
+import ViewElement from "./ViewElement";
+
+import type { Style } from "../types";
+import type Geomtoy from "../../geomtoy";
+
 
 const defaultDefaultStyle: Style = {
     fill: "transparent",
