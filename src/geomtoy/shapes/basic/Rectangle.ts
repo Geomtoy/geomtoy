@@ -186,14 +186,14 @@ class Rectangle extends Shape implements ClosedShape, TransformableShape, Rotati
 
     getCornerPoints(): [Point, Point, Point, Point] {
         const { originX: x, originY: y, width: w, height: h } = this;
-        const box: [number, number, number, number] = [x, y, w, h];
+        const b: [number, number, number, number] = [x, y, w, h];
 
         const t = new Transformation(this.owner);
         t.rotate(this.rotation, this.getCenterPoint());
-        const nn = t.transformCoordinates(box.nn(box));
-        const mn = t.transformCoordinates(box.mn(box));
-        const mm = t.transformCoordinates(box.mm(box));
-        const nm = t.transformCoordinates(box.nm(box));
+        const nn = t.transformCoordinates(box.nn(b));
+        const mn = t.transformCoordinates(box.mn(b));
+        const mm = t.transformCoordinates(box.mm(b));
+        const nm = t.transformCoordinates(box.nm(b));
         return [new Point(this.owner, nn), new Point(this.owner, mn), new Point(this.owner, mm), new Point(this.owner, nm)];
     }
 
