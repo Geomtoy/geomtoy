@@ -144,7 +144,7 @@ export default class Graphics {
         });
         return this;
     }
-    image(x: number, y: number, width: number, height: number, sourceX: number, sourceY: number, sourceWidth: number, sourceHeight: number, imageSource: string | File) {
+    image(x: number, y: number, width: number, height: number, sourceX: number, sourceY: number, sourceWidth: number, sourceHeight: number, imageSource: string) {
         this.commands.push({
             type: GraphicsCommandType.Image,
             x,

@@ -23,8 +23,6 @@ class Text extends Shape {
     private _y = NaN;
     private _text = "";
     private _font: FontConfig = util.cloneDeep(defaultFontConfig);
-    //todo
-    private _constant = true
 
     constructor(owner: Geomtoy, x: number, y: number, text: string, font?: FontConfig);
     constructor(owner: Geomtoy, coordinates: [number, number], text: string, font?: FontConfig);
@@ -51,8 +49,7 @@ class Text extends Shape {
     static readonly events = Object.freeze({
         xChanged: "x" as const,
         yChanged: "y" as const,
-        textChanged: "text" as const,
-        fontChanged: "font" as const
+        textChanged: "text" as const
     });
 
     private _setX(value: number) {
@@ -66,11 +63,6 @@ class Text extends Shape {
     private _setText(value: string) {
         if (!util.isEqualTo(this._text, value)) this.trigger_(EventObject.simple(this, Text.events.textChanged));
         this._text = value;
-    }
-    private _setFont(value: Partial<FontConfig>) {
-        const newFontConfig = util.assignDeep(util.cloneDeep(this._font), value);
-        if (!util.isEqualTo(this._text, newFontConfig)) this.trigger_(EventObject.simple(this, Text.events.fontChanged));
-        util.assignDeep(this._font, value);
     }
 
     get x() {
@@ -114,36 +106,25 @@ class Text extends Shape {
         return util.cloneDeep(this._font);
     }
     set font(value: Partial<FontConfig>) {
-        this._setFont(value);
+        util.assignDeep(this._font, value);
     }
 
     isValid() {
         if (!coord.isValid(this.coordinates)) return false;
+        if (this.text === "") return false;
         return true;
     }
 
-    /**
-     * Move text `this` by `deltaX` and `deltaY` to get new text.
-     */
     move(deltaX: number, deltaY: number) {
         return this.clone().moveSelf(deltaX, deltaY);
     }
-    /**
-     * Move text `this` itself by `offsetX` and `offsetY`.
-     */
     moveSelf(deltaX: number, deltaY: number) {
         this.coordinates = coord.move(this.coordinates, deltaX, deltaY);
         return this;
     }
-    /**
-     * Move text `this` with `distance` along `angle` to get new text.
-     */
     moveAlongAngle(angle: number, distance: number) {
         return this.clone().moveAlongAngleSelf(angle, distance);
     }
-    /**
-     * Move text `this` itself with `distance` along `angle`.
-     */
     moveAlongAngleSelf(angle: number, distance: number) {
         this.coordinates = coord.moveAlongAngle(this.coordinates, angle, distance);
         return this;
@@ -169,7 +150,7 @@ class Text extends Shape {
         this._setX(shape._x);
         this._setY(shape._y);
         this._setText(shape._text);
-        this._setFont(shape._font);
+        this.font = shape._font;
         return this;
     }
     toString() {

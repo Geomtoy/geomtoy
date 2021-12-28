@@ -502,7 +502,7 @@ export type GraphicsImageCommand = {
     sourceY: number;
     sourceWidth: number;
     sourceHeight: number;
-    imageSource: string | File;
+    imageSource: string;
 };
 export type GraphicsTextCommand = {
     type: GraphicsCommandType.Text;

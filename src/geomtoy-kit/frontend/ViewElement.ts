@@ -5,21 +5,19 @@ import type { Style, InteractiveStyle, PathLike } from "../types";
 import type View from "./View";
 
 class ViewElement {
-    public object: Shape | Group;
+    private _object: Shape | Group;
+    private _interactable: boolean = true;
 
-    private _uuid: string;
     private _style: Partial<Style> = {};
     private _hoverStyle: Partial<InteractiveStyle> = {};
     private _activeStyle: Partial<InteractiveStyle> = {};
-    private _interactable: boolean = true;
 
     public parent?: View;
     public path?: PathLike | PathLike[];
 
     constructor(object: Shape | Group, interactable = false, style: Partial<Style> = {}, hoverStyle: Partial<InteractiveStyle> = {}, activeStyle: Partial<InteractiveStyle> = {}) {
-        this.object = object;
-        this._uuid = this.object.uuid;
-        this.interactable = interactable;
+        this._object = object;
+        this._interactable = interactable;
 
         this.style(style);
         this.hoverStyle(hoverStyle);
@@ -33,8 +31,12 @@ class ViewElement {
         this._interactable = value;
         this.parent !== undefined && this.parent.refreshInteractables();
     }
+
+    get object() {
+        return this._object;
+    }
     get uuid() {
-        return this._uuid;
+        return this._object.uuid;
     }
 
     style(): Partial<Style>;

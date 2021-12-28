@@ -9,7 +9,6 @@ import ViewElement from "./ViewElement";
 import type { Style } from "../types";
 import type Geomtoy from "../../geomtoy";
 
-
 const defaultDefaultStyle: Style = {
     fill: "transparent",
     stroke: "transparent",
@@ -652,16 +651,9 @@ class View {
         const renderer = this.renderer;
         this.geomtoy.nextTick(() => {
             this._elements.forEach(el => {
-                if (el.object instanceof Image && renderer.imageSourceManager.notLoaded(el.object.imageSource)) {
+                if (el.object instanceof Image) {
                     const imageSource = el.object.imageSource;
-                    renderer.imageSourceManager
-                        .load(imageSource)
-                        .then(() => {
-                            this.render();
-                        })
-                        .catch(() => {
-                            console.warn(`[G]Failed to get image: ${imageSource}`);
-                        });
+                    renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.render);
                 }
 
                 const s = el.style();

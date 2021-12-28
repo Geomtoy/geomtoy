@@ -20,29 +20,27 @@ class Image extends Shape {
     private _sourceY = NaN;
     private _sourceWidth = NaN;
     private _sourceHeight = NaN;
-    private _imageSource: string | File = "";
-    //todo
-    private _constant = true 
+    private _imageSource: string = "";
 
-    constructor(owner: Geomtoy, x: number, y: number, width: number, height: number, imageSource: string | File);
-    constructor(owner: Geomtoy, coordinates: [number, number], width: number, height: number, imageSource: string | File);
-    constructor(owner: Geomtoy, point: Point, width: number, height: number, imageSource: string | File);
-    constructor(owner: Geomtoy, x: number, y: number, size: [number, number], imageSource: string | File);
-    constructor(owner: Geomtoy, coordinates: [number, number], size: [number, number], imageSource: string | File);
-    constructor(owner: Geomtoy, point: Point, size: [number, number], imageSource: string | File);
-    constructor(owner: Geomtoy, x: number, y: number, width: number, height: number, sourceX: number, sourceY: number, sourceWidth: number, sourceHeight: number, imageSource: string | File);
-    constructor(owner: Geomtoy, coordinates: [number, number], width: number, height: number, sourceCoordinates: [number, number], sourceWidth: number, sourceHeight: number, imageSource: string | File);
-    constructor(owner: Geomtoy, point: Point, width: number, height: number, sourcePoint: Point, sourceWidth: number, sourceHeight: number, imageSource: string | File);
-    constructor(owner: Geomtoy, x: number, y: number, size: [number, number], sourceX: number, sourceY: number, sourceSize: [number, number], imageSource: string | File);
-    constructor(owner: Geomtoy, coordinates: [number, number], size: [number, number], sourceCoordinates: [number, number], sourceSize: [number, number], imageSource: string | File);
-    constructor(owner: Geomtoy, point: Point, size: [number, number], sourcePoint: Point, sourceSize: [number, number], imageSource: string | File);
-    constructor(owner: Geomtoy, imageSource: string | File);
+    constructor(owner: Geomtoy, x: number, y: number, width: number, height: number, imageSource: string);
+    constructor(owner: Geomtoy, coordinates: [number, number], width: number, height: number, imageSource: string);
+    constructor(owner: Geomtoy, point: Point, width: number, height: number, imageSource: string);
+    constructor(owner: Geomtoy, x: number, y: number, size: [number, number], imageSource: string);
+    constructor(owner: Geomtoy, coordinates: [number, number], size: [number, number], imageSource: string);
+    constructor(owner: Geomtoy, point: Point, size: [number, number], imageSource: string);
+    constructor(owner: Geomtoy, x: number, y: number, width: number, height: number, sourceX: number, sourceY: number, sourceWidth: number, sourceHeight: number, imageSource: string);
+    constructor(owner: Geomtoy, coordinates: [number, number], width: number, height: number, sourceCoordinates: [number, number], sourceWidth: number, sourceHeight: number, imageSource: string);
+    constructor(owner: Geomtoy, point: Point, width: number, height: number, sourcePoint: Point, sourceWidth: number, sourceHeight: number, imageSource: string);
+    constructor(owner: Geomtoy, x: number, y: number, size: [number, number], sourceX: number, sourceY: number, sourceSize: [number, number], imageSource: string);
+    constructor(owner: Geomtoy, coordinates: [number, number], size: [number, number], sourceCoordinates: [number, number], sourceSize: [number, number], imageSource: string);
+    constructor(owner: Geomtoy, point: Point, size: [number, number], sourcePoint: Point, sourceSize: [number, number], imageSource: string);
+    constructor(owner: Geomtoy, imageSource: string);
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any, a7?: any, a8?: any, a9?: any) {
         super(o);
         if (util.isNumber(a1)) {
             if (util.isNumber(a3)) {
-                if (util.isString(a5) || a5 instanceof File) {
+                if (util.isString(a5)) {
                     Object.assign(this, { x: a1, y: a2, width: a3, height: a4, imageSource: a5 });
                 }
                 if (util.isNumber(a5)) {
@@ -50,7 +48,7 @@ class Image extends Shape {
                 }
             }
             if (util.isArray(a3)) {
-                if (util.isString(a4) || a4 instanceof File) {
+                if (util.isString(a4)) {
                     Object.assign(this, { x: a1, y: a2, size: a3, imageSource: a4 });
                 }
                 if (util.isNumber(a4)) {
@@ -60,7 +58,7 @@ class Image extends Shape {
         }
         if (util.isArray(a1)) {
             if (util.isNumber(a2)) {
-                if (util.isString(a4) || a4 instanceof File) {
+                if (util.isString(a4)) {
                     Object.assign(this, { coordinates: a1, width: a2, height: a3, imageSource: a4 });
                 }
                 if (util.isArray(a4)) {
@@ -68,7 +66,7 @@ class Image extends Shape {
                 }
             }
             if (util.isArray(a2)) {
-                if (util.isString(a3) || a3 instanceof File) {
+                if (util.isString(a3)) {
                     Object.assign(this, { coordinates: a1, size: a2, imageSource: a3 });
                 }
                 if (util.isArray(a3)) {
@@ -78,7 +76,7 @@ class Image extends Shape {
         }
         if (a1 instanceof Point) {
             if (util.isNumber(a2)) {
-                if (util.isString(a4) || a4 instanceof File) {
+                if (util.isString(a4)) {
                     Object.assign(this, { point: a1, width: a2, height: a3, imageSource: a4 });
                 }
                 if (a4 instanceof Point) {
@@ -86,7 +84,7 @@ class Image extends Shape {
                 }
             }
             if (util.isArray(a2)) {
-                if (util.isString(a3) || a3 instanceof File) {
+                if (util.isString(a3)) {
                     Object.assign(this, { point: a1, size: a2, imageSource: a3 });
                 }
                 if (a3 instanceof Point) {
@@ -94,7 +92,7 @@ class Image extends Shape {
                 }
             }
         }
-        if (util.isString(a1) || a1 instanceof File) {
+        if (util.isString(a1)) {
             Object.assign(this, {
                 imageSource: a1
             });
@@ -146,7 +144,7 @@ class Image extends Shape {
         if (!util.isEqualTo(this._sourceHeight, value)) this.trigger_(EventObject.simple(this, Image.events.sourceHeightChanged));
         this._sourceHeight = value;
     }
-    private _setImageSource(value: string | File) {
+    private _setImageSource(value: string) {
         if (!util.isEqualTo(this._imageSource, value)) this.trigger_(EventObject.simple(this, Image.events.imageSourceChanged));
         this._imageSource = value;
     }
@@ -260,15 +258,9 @@ class Image extends Shape {
         return this._imageSource;
     }
     set imageSource(value) {
-        if (!util.isString(value) && !(value instanceof File)) {
-            throw new Error("[G]The `imageSource` should be a string or a `File`.");
-        }
+        assert.isString(value,"imageSource")
         this._setImageSource(value);
     }
-    get imageSourceName(){
-        return this.imageSource instanceof File? this.imageSource.name :this.imageSource
-    }
-
 
     isValid() {
         const { coordinates: c, size: s } = this;
@@ -336,12 +328,12 @@ class Image extends Shape {
             `\tsourceY: ${this.sourceY}`,
             `\tsourceWidth: ${this.sourceWidth}`,
             `\tsourceHeight: ${this.sourceHeight}`,
-            `\timageSource: ${this.imageSourceName}`,
+            `\timageSource: ${this.imageSource}`,
             `} owned by Geomtoy(${this.owner.uuid})`
         ].join("\n");
     }
     toArray() {
-        return [this.x, this.y, this.width, this.height, this.sourceX, this.sourceY, this.sourceWidth, this._sourceHeight, this.imageSourceName];
+        return [this.x, this.y, this.width, this.height, this.sourceX, this.sourceY, this.sourceWidth, this._sourceHeight, this.imageSource];
     }
     toObject() {
         return {
@@ -353,7 +345,7 @@ class Image extends Shape {
             sourceY: this.sourceY,
             sourceWidth: this.sourceWidth,
             sourceHeight: this.sourceHeight,
-            imageSource: this.imageSourceName
+            imageSource: this.imageSource
         };
     }
 }

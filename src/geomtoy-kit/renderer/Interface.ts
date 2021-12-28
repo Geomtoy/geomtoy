@@ -181,7 +181,7 @@ export default abstract class Interface {
         labelImage.setAttribute("height", `${h}`);
 
         //prettier-ignore
-        const svgBase64 =
+        const svgDataUrl =
             `data:image/svg+xml;charset=utf8,` +
             `%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} ${h}' width='${w}' height='${h}'%3E` +
             `%3Cg fill='${labelFillColor}' dominant-baseline='middle' font-size='${labelFontSize}' font-family='sans-serif' stroke='${labelStrokeColor}' stroke-width='3' paint-order='stroke'%3E`+
@@ -191,7 +191,7 @@ export default abstract class Interface {
             `%3C/g%3E`+
             `%3C/svg%3E`;
 
-        labelImage.setAttribute("href", svgBase64);
+        labelImage.setAttribute("href", svgDataUrl);
 
         //@ts-ignore
         return [labelImage.decode() as Promise<void>, labelImage] as const;
@@ -224,7 +224,7 @@ export default abstract class Interface {
             ? `M${tOx - axisArrowWidth},${h - axisArrowLength}L${tOx},${h}L${tOx + axisArrowWidth},${h - axisArrowLength}`
             : `M${tOx - axisArrowWidth},${axisArrowLength}L${tOx},0L${tOx + axisArrowWidth},${axisArrowLength}`;
 
-        const svgBase64 =
+        const svgDataUrl =
             `data:image/svg+xml;charset=utf8,` +
             `%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} ${h}' width='${w}' height='${h}'%3E` +
             `%3Cpath d='${xAxisD}' vector-effect='non-scaling-stroke' shape-rendering='crispEdges' stroke='${axisColor}' stroke-width='1'/%3E` +
@@ -233,7 +233,7 @@ export default abstract class Interface {
             `%3Cpath d='${yArrowD}' stroke='${axisColor}' fill='none' stroke-width='1'/%3E` +
             `%3C/svg%3E`;
 
-        axisImage.setAttribute("href", svgBase64);
+        axisImage.setAttribute("href", svgDataUrl);
 
         //@ts-ignore
         return [axisImage.decode() as Promise<void>, axisImage] as const;
@@ -254,7 +254,7 @@ export default abstract class Interface {
         gridPatternImage.setAttribute("width", `${imageSize}`);
         gridPatternImage.setAttribute("height", `${imageSize}`);
 
-        const svgBase64 =
+        const svgDataUrl =
             `data:image/svg+xml;charset=utf8,` +
             `%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='${viewBoxX} ${viewBoxY} ${onlyGridPatternImageSize} ${onlyGridPatternImageSize}' width='${imageSize}' height='${imageSize}'%3E` +
             (!showPrimaryGridOnly
@@ -267,12 +267,12 @@ export default abstract class Interface {
                     id='primaryGrid' stroke='${primaryGridColor}' stroke-width='1'/%3E` +
             `%3C/svg%3E`;
 
-        gridPatternImage.setAttribute("href", svgBase64);
+        gridPatternImage.setAttribute("href", svgDataUrl);
 
         // The `decode()` is not like `onload` event. It returns a `Promise` instead of a callback placed in the `Task` queue.
         // It should be in the `MicroTask` queue. So the `decode()` returned `Promise` will be fulfilled before the next execution in the `Task` queue.
         // Plus:
-        // Compared with ordinary URLs, base64 are decoded first and then `onload` is triggered. (This may means the base64 never need to be loaded.)
+        // Compared with the ordinary URLs, the data URL are decoded first and then `onload` is triggered. (This may means the data URL never need to be loaded.)
         // Ordinary URL triggers `onload` first, then it gets decoded.
 
         //@ts-ignore
