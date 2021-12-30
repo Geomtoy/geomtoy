@@ -90,7 +90,6 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
         return new Point(this.owner, this._centerX, this._centerY);
     }
     set centerPoint(value) {
-        assert.isPoint(value, "centerPoint");
         this._setCenterX(value.x);
         this._setCenterY(value.y);
     }

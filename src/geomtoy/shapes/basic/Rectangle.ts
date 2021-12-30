@@ -111,7 +111,6 @@ class Rectangle extends Shape implements ClosedShape, TransformableShape, Rotati
         return new Point(this.owner, this._originX, this._originY);
     }
     set originPoint(value) {
-        assert.isPoint(value, "originPoint");
         this._setOriginX(value.x);
         this._setOriginY(value.y);
     }

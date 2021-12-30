@@ -18,9 +18,8 @@ import { PathCommandType } from "../../types";
 import type Geomtoy from "../..";
 import type { PathCommand, PathCommandWithUuid, PathMoveToCommand, PathLineToCommand, PathBezierCurveToCommand, PathQuadraticBezierCurveToCommand, PathArcToCommand } from "../../types";
 
-
 class Path extends Shape {
-    private _closed = true;
+    closed = true;
     private _commands: PathCommandWithUuid[] = [];
 
     constructor(owner: Geomtoy, commands: PathCommand[], closed?: boolean);
@@ -58,14 +57,6 @@ class Path extends Shape {
         this._setCommands(value);
     }
 
-    get closed() {
-        return this._closed;
-    }
-    set closed(value: boolean) {
-        assert.isBoolean(value, "closed");
-        this._closed = value;
-    }
-
     get commandCount() {
         return this._commands.length;
     }
@@ -87,8 +78,7 @@ class Path extends Shape {
     }
 
     static moveTo(point: [number, number] | Point) {
-        assert.isCoordinatesOrPoint(point, "point");
-        const [x, y] = point instanceof Point ? point.coordinates : point;
+        const [x, y] = point instanceof Point ? point.coordinates : (assert.isCoordinates(point, "point"), point);
         const ret: PathMoveToCommand = {
             type: PathCommandType.MoveTo,
             x,
@@ -97,8 +87,7 @@ class Path extends Shape {
         return ret;
     }
     static lineTo(point: [number, number] | Point) {
-        assert.isCoordinatesOrPoint(point, "point");
-        const [x, y] = point instanceof Point ? point.coordinates : point;
+        const [x, y] = point instanceof Point ? point.coordinates : (assert.isCoordinates(point, "point"), point);
         const ret: PathLineToCommand = {
             type: PathCommandType.LineTo,
             x,
@@ -107,12 +96,9 @@ class Path extends Shape {
         return ret;
     }
     static bezierCurveTo(controlPoint1: [number, number] | Point, controlPoint2: [number, number] | Point, point: [number, number] | Point) {
-        assert.isCoordinatesOrPoint(controlPoint1, "controlPoint1");
-        assert.isCoordinatesOrPoint(controlPoint2, "controlPoint2");
-        assert.isCoordinatesOrPoint(point, "point");
-        const [controlPoint1X, controlPoint1Y] = controlPoint1 instanceof Point ? controlPoint1.coordinates : controlPoint1;
-        const [controlPoint2X, controlPoint2Y] = controlPoint2 instanceof Point ? controlPoint2.coordinates : controlPoint2;
-        const [x, y] = point instanceof Point ? point.coordinates : point;
+        const [controlPoint1X, controlPoint1Y] = controlPoint1 instanceof Point ? controlPoint1.coordinates : (assert.isCoordinates(controlPoint1, "controlPoint1"), controlPoint1);
+        const [controlPoint2X, controlPoint2Y] = controlPoint2 instanceof Point ? controlPoint2.coordinates : (assert.isCoordinates(controlPoint2, "controlPoint2"), controlPoint2);
+        const [x, y] = point instanceof Point ? point.coordinates : (assert.isCoordinates(point, "point"), point);
         const ret: PathBezierCurveToCommand = {
             type: PathCommandType.BezierCurveTo,
             x,
@@ -125,10 +111,8 @@ class Path extends Shape {
         return ret;
     }
     static quadraticBezierCurveTo(controlPoint: [number, number] | Point, point: [number, number] | Point) {
-        assert.isCoordinatesOrPoint(controlPoint, "controlPoint");
-        assert.isCoordinatesOrPoint(point, "point");
-        const [controlPointX, controlPointY] = controlPoint instanceof Point ? controlPoint.coordinates : controlPoint;
-        const [x, y] = point instanceof Point ? point.coordinates : point;
+        const [controlPointX, controlPointY] = controlPoint instanceof Point ? controlPoint.coordinates : (assert.isCoordinates(controlPoint, "controlPoint"), controlPoint);
+        const [x, y] = point instanceof Point ? point.coordinates : (assert.isCoordinates(point, "point"), point);
         const ret: PathQuadraticBezierCurveToCommand = {
             type: PathCommandType.QuadraticBezierCurveTo,
             x,
@@ -142,10 +126,7 @@ class Path extends Shape {
         assert.isPositiveNumber(radiusX, "radiusX");
         assert.isPositiveNumber(radiusY, "radiusY");
         assert.isRealNumber(xAxisRotation, "xAxisRotation");
-        assert.isBoolean(largeArc, "largeArc");
-        assert.isBoolean(positive, "positive");
-        assert.isCoordinatesOrPoint(point, "point");
-        const [x, y] = point instanceof Point ? point.coordinates : point;
+        const [x, y] = point instanceof Point ? point.coordinates : (assert.isCoordinates(point, "point"), point);
         const ret: PathArcToCommand = {
             type: PathCommandType.ArcTo,
             x,
@@ -286,7 +267,6 @@ class Path extends Shape {
     }
 
     getIndexOfUuid(uuid: string) {
-        assert.isString(uuid, "uuid");
         return this._commands.findIndex(cmd => cmd.uuid === uuid);
     }
     getUuidOfIndex(index: number) {
@@ -417,7 +397,8 @@ class Path extends Shape {
         return this;
     }
     toString(): string {
-        throw new Error("Method not implemented.");
+        // throw new Error("Method not implemented.");
+        return [`${this.name}(${this.uuid}){`, `\tcommands: ${this.commands}`, `\t}`, `} owned by Geomtoy(${this.owner.uuid})`].join("\n");
     }
     toArray(): any[] {
         throw new Error("Method not implemented.");

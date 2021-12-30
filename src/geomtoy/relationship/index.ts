@@ -30,9 +30,6 @@ class Relationship extends BaseObject {
     };
 
     private _relationship<T extends AnyShape, U extends AnyShape, V extends AnyRelationship>(rsOp: V, shape: T, otherShape: U, quick?: boolean) {
-        assert.isShape(shape, "shape");
-        assert.isShape(otherShape, "otherShape");
-
         const type1 = shape.type;
         const type2 = otherShape.type;
         const opName = rsOp.name;

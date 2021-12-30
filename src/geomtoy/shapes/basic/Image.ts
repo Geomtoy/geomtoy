@@ -175,7 +175,6 @@ class Image extends Shape {
         return new Point(this.owner, this._x, this._y);
     }
     set point(value) {
-        assert.isPoint(value, "point");
         this._setX(value.x);
         this._setY(value.y);
     }
@@ -228,7 +227,6 @@ class Image extends Shape {
         return new Point(this.owner, this._sourceX, this._sourceY);
     }
     set sourcePoint(value) {
-        assert.isPoint(value, "sourcePoint");
         this._setSourceX(value.x);
         this._setSourceY(value.y);
     }
@@ -258,7 +256,6 @@ class Image extends Shape {
         return this._imageSource;
     }
     set imageSource(value) {
-        assert.isString(value,"imageSource")
         this._setImageSource(value);
     }
 

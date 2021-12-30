@@ -83,7 +83,6 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
         return new Point(this.owner, this._x, this._y);
     }
     set point(value) {
-        assert.isPoint(value, "point");
         this._setX(value.x);
         this._setY(value.y);
     }

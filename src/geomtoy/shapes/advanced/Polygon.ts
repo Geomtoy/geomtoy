@@ -20,7 +20,7 @@ import LineSegment from "../basic/LineSegment";
 const polygonMinVertexCount = 2;
 
 class Polygon extends Shape implements TransformableShape {
-    private _closed = true;
+    closed = true;
     private _vertices: PolygonVertexWithUuid[] = [];
 
     constructor(owner: Geomtoy, vertices: PolygonVertex[], closed?: boolean);
@@ -58,14 +58,6 @@ class Polygon extends Shape implements TransformableShape {
         this._setVertices(value);
     }
 
-    get closed() {
-        return this._closed;
-    }
-    set closed(value: boolean) {
-        assert.isBoolean(value, "value");
-        this._closed = value;
-    }
-
     get vertexCount() {
         return this._vertices.length;
     }
@@ -91,7 +83,6 @@ class Polygon extends Shape implements TransformableShape {
     static formingCondition = `There should be at least ${polygonMinVertexCount} distinct vertices in a \`Polygon\`.`;
 
     static fromPoints(this: OwnerCarrier, points: ([number, number] | Point)[]) {
-        assert.isCoordinatesOrPointArray(points, "points");
         return new Polygon(
             this.owner,
             points.map(p => Polygon.vertex(p))
@@ -107,8 +98,7 @@ class Polygon extends Shape implements TransformableShape {
     }
 
     static vertex(point: [number, number] | Point) {
-        assert.isCoordinatesOrPoint(point, "point");
-        const [x, y] = point instanceof Point ? point.coordinates : point;
+        const [x, y] = point instanceof Point ? point.coordinates : (assert.isCoordinates(point, "point"), point);
         const ret: PolygonVertex = { x, y };
         return ret;
     }
@@ -156,7 +146,7 @@ class Polygon extends Shape implements TransformableShape {
     private _parseIndexOrUuid(indexOrUuid: number | string): [number, string] | [undefined, undefined] {
         if (util.isString(indexOrUuid)) {
             const index = this._vertices.findIndex(vtx => vtx.uuid === indexOrUuid);
-            if (index > -1) {
+            if (index !== -1) {
                 return [index, indexOrUuid];
             }
         } else {
@@ -168,7 +158,6 @@ class Polygon extends Shape implements TransformableShape {
     }
 
     getIndexOfUuid(uuid: string) {
-        assert.isString(uuid, "uuid");
         return this._vertices.findIndex(vtx => vtx.uuid === uuid);
     }
     getUuidOfIndex(index: number) {

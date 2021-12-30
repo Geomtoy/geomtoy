@@ -45,8 +45,7 @@ class Inversion extends BaseObject {
         if (value === undefined) {
             return [this._centerX, this._centerY] as [number, number];
         }
-        assert.isCoordinatesOrPoint(value, "value");
-        const c = value instanceof Point ? value.coordinates : value;
+        const c = value instanceof Point ? value.coordinates : (assert.isCoordinates(value, "value"), value);
         this._centerX = coord.x(c);
         this._centerY = coord.y(c);
     }
@@ -70,8 +69,6 @@ class Inversion extends BaseObject {
      * @returns
      */
     invertPoint(point: Point) {
-        assert.isPoint(point, "point");
-
         // If `point` is the inversion center, the inverted point is the point at infinity, so we return `null`
         if (point.isSameAs(new Point(this.owner, this.centerCoordinates()))) return null;
 
@@ -100,8 +97,6 @@ class Inversion extends BaseObject {
      * @returns
      */
     invertLine(line: Line): Line | Circle {
-        assert.isLine(line, "line");
-
         if (line.isPointOn(this.centerCoordinates())) return line.clone();
 
         const c0 = this.centerCoordinates();
@@ -131,8 +126,6 @@ class Inversion extends BaseObject {
      * @returns
      */
     invertCircle(circle: Circle): Line | Circle {
-        assert.isCircle(circle, "circle");
-
         const c0 = this.centerCoordinates();
         const power = this.power();
         const c1 = circle.centerCoordinates;

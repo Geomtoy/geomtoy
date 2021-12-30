@@ -91,7 +91,6 @@ class Text extends Shape {
         return new Point(this.owner, this._x, this._y);
     }
     set point(value) {
-        assert.isPoint(value, "point");
         this._setX(value.x);
         this._setY(value.y);
     }
@@ -99,7 +98,6 @@ class Text extends Shape {
         return this._text;
     }
     set text(value) {
-        assert.isString(value, "text");
         this._setText(value);
     }
     get font(): FontConfig {

@@ -111,7 +111,6 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
         return new Point(this.owner, this._point1X, this._point1Y);
     }
     set point1(value) {
-        assert.isPoint(value, "point1");
         this._setPoint1X(value.x);
         this._setPoint1Y(value.y);
     }
@@ -141,7 +140,6 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
         return new Point(this.owner, this._point2X, this._point2Y);
     }
     set point2(value) {
-        assert.isPoint(value, "point2");
         this._setPoint2X(value.x);
         this._setPoint2Y(value.y);
     }
@@ -171,7 +169,6 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
         return new Point(this.owner, this._controlPoint1X, this._controlPoint1Y);
     }
     set controlPoint1(value) {
-        assert.isPoint(value, "controlPoint1");
         this._setControlPoint1X(value.x);
         this._setControlPoint1Y(value.y);
     }
@@ -201,7 +198,6 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
         return new Point(this.owner, this._controlPoint2X, this._controlPoint2Y);
     }
     set controlPoint2(value) {
-        assert.isPoint(value, "controlPoint2");
         this._setControlPoint2X(value.x);
         this._setControlPoint2Y(value.y);
     }

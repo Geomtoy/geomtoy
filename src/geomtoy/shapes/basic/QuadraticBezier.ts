@@ -98,7 +98,6 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
         return new Point(this.owner, this._point1X, this._point1Y);
     }
     set point1(value) {
-        assert.isPoint(value, "point1");
         this._setPoint1X(value.x);
         this._setPoint1Y(value.y);
     }
@@ -128,7 +127,6 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
         return new Point(this.owner, this._point2X, this._point2Y);
     }
     set point2(value) {
-        assert.isPoint(value, "point2");
         this._setPoint2X(value.x);
         this._setPoint2Y(value.y);
     }
@@ -158,7 +156,6 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
         return new Point(this.owner, this._controlPointX, this._controlPointY);
     }
     set controlPoint(value) {
-        assert.isPoint(value, "controlPoint");
         this._setControlPointX(value.x);
         this._setControlPointY(value.y);
     }

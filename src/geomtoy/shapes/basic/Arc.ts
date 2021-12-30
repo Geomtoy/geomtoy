@@ -112,7 +112,6 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
         return new Point(this.owner, this._centerX, this._centerY);
     }
     set centerPoint(value) {
-        assert.isPoint(value, "centerPoint");
         this._setCenterX(value.x);
         this._setCenterY(value.y);
     }
@@ -148,7 +147,6 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
         return this._positive;
     }
     set positive(value) {
-        assert.isBoolean(value, "positive");
         this._setPositive(value);
     }
     get rotation() {
@@ -180,15 +178,11 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
         positive: boolean,
         rotation: number
     ) {
-        assert.isCoordinatesOrPoint(point1, "point1");
-        assert.isCoordinatesOrPoint(point2, "point2");
         assert.isPositiveNumber(radiusX, "radiusX");
         assert.isPositiveNumber(radiusY, "radiusY");
-        assert.isBoolean(largeArc, "largeArc");
-        assert.isBoolean(positive, "positive");
         assert.isRealNumber(rotation, "rotation");
-        const [x1, y1] = point1 instanceof Point ? point1.coordinates : point1;
-        const [x2, y2] = point2 instanceof Point ? point2.coordinates : point2;
+        const [x1, y1] = point1 instanceof Point ? point1.coordinates : (assert.isCoordinates(point1, "point1"), point1);
+        const [x2, y2] = point2 instanceof Point ? point2.coordinates : (assert.isCoordinates(point2, "point2"), point2);
         const {
             centerX,
             centerY,

@@ -94,7 +94,6 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         return new Point(this.owner, this._x, this._y);
     }
     set point(value) {
-        assert.isPoint(value, "point");
         this._setX(value.x);
         this._setY(value.y);
     }
@@ -196,11 +195,8 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
      * @returns
      */
     static fromTwoPoints(this: OwnerCarrier, point1: [number, number] | Point, point2: [number, number] | Point, usePoint1 = true): Line | null {
-        assert.isCoordinatesOrPoint(point1, "point1");
-        assert.isCoordinatesOrPoint(point2, "point2");
-        assert.isBoolean(usePoint1, "usePoint1");
-        const [x1, y1] = point1 instanceof Point ? point1.coordinates : point1;
-        const [x2, y2] = point2 instanceof Point ? point2.coordinates : point2;
+        const [x1, y1] = point1 instanceof Point ? point1.coordinates : (assert.isCoordinates(point1, "point1"), point1);
+        const [x2, y2] = point2 instanceof Point ? point2.coordinates : (assert.isCoordinates(point2, "point2"), point2);
         const epsilon = optionerOf(this.owner).options.epsilon;
         if (coord.isSameAs([x1, y1], [x2, y2], epsilon)) {
             console.warn("[G]The points `point1` and `point2` are the same, they can NOT determine a `Line`.");
@@ -291,8 +287,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         return [slope, -1, y - slope * x];
     }
     isPointOn(point: [number, number] | Point) {
-        assert.isCoordinatesOrPoint(point, "point");
-        const [x, y] = point instanceof Point ? point.coordinates : point;
+        const [x, y] = point instanceof Point ? point.coordinates : (assert.isCoordinates(point, "point"), point);
         const [a, b, c] = this.getGeneralEquationParameters();
         const epsilon = this.options_.epsilon;
         return math.equalTo(a * x + b * y + c, 0, epsilon);

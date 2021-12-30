@@ -105,7 +105,6 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
         return new Point(this.owner, this._point1X, this._point1Y);
     }
     set point1(value) {
-        assert.isPoint(value, "point1");
         this._setPoint1X(value.x);
         this._setPoint1Y(value.y);
     }
@@ -135,7 +134,6 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
         return new Point(this.owner, this._point2X, this._point2Y);
     }
     set point2(value) {
-        assert.isPoint(value, "point2");
         this._setPoint2X(value.x);
         this._setPoint2Y(value.y);
     }
@@ -165,7 +163,6 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
         return new Point(this.owner, this._point3X, this._point3Y);
     }
     set point3(value) {
-        assert.isPoint(value, "point3");
         this._setPoint3X(value.x);
         this._setPoint3Y(value.y);
     }

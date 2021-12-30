@@ -116,7 +116,6 @@ class Vector extends Shape implements TransformableShape {
         return new Point(this.owner, this._x, this._y);
     }
     set point(value) {
-        assert.isPoint(value, "point");
         this._setX(value.x);
         this._setY(value.y);
     }
@@ -146,7 +145,6 @@ class Vector extends Shape implements TransformableShape {
         return new Point(this.owner, this._point1X, this._point1Y);
     }
     set point1(value) {
-        assert.isPoint(value, "point1");
         this._setPoint1X(value.x);
         this._setPoint1Y(value.y);
     }
@@ -177,7 +175,6 @@ class Vector extends Shape implements TransformableShape {
         return new Point(this.owner, vec2.add(this.point1Coordinates, this.coordinates));
     }
     set point2(value) {
-        assert.isPoint(value, "point2");
         const c = vec2.from(this.point1Coordinates, value.coordinates);
         this._setX(coord.x(c));
         this._setY(coord.y(c));
@@ -317,7 +314,7 @@ class Vector extends Shape implements TransformableShape {
         let c = transformation.transformCoordinates(this.coordinates);
         return new Vector(this.owner, this.point1Coordinates, c);
     }
-    getGraphics(viewport:ViewportDescriptor) {
+    getGraphics(viewport: ViewportDescriptor) {
         const g = new Graphics();
         if (!this.isValid()) return g;
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;

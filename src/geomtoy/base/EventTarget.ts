@@ -80,8 +80,8 @@ abstract class EventTarget extends BaseObject {
         return hs.findIndex(h => h.eventPattern === eventPattern && h.callback === callback && h.context === context) != -1;
     }
     private _hasEvent(eventName: string) {
-        if(eventName === eventNameForAll) return true
-        if(eventName === eventNameForAny) return true
+        if (eventName === eventNameForAll) return true;
+        if (eventName === eventNameForAny) return true;
 
         return Object.values(this.constructor.events).includes(eventName);
     }
@@ -157,10 +157,7 @@ abstract class EventTarget extends BaseObject {
             hasRecursiveEffect: boolean;
         }> = {}
     ) {
-        assert.isString(events, "events");
-        assert.isFunction(callback, "callback");
         assert.isRealNumber(priority, "priority");
-        assert.isBoolean(hasRecursiveEffect, "hasRecursiveEffect");
 
         this._parseEvents(events).forEach(p => {
             if (this._hasHandler(p, callback, this))
@@ -170,17 +167,12 @@ abstract class EventTarget extends BaseObject {
         return this;
     }
     off(events: string, callback: (...args: any[]) => void) {
-        assert.isString(events, "events");
-        assert.isFunction(callback, "callback");
-
         this._parseEvents(events).forEach(p => {
             this._removeHandler(p, callback, this);
         });
         return this;
     }
     clear(events?: string) {
-        events !== undefined && assert.isString(events, "events");
-
         if (events === undefined) {
             this._eventMap = [];
             return this;
@@ -339,11 +331,7 @@ abstract class EventTarget extends BaseObject {
             hasRecursiveEffect: boolean;
         }> = {}
     ) {
-        assert.isArray(eventTargetEventsPairs, "eventTargetEventsPairs");
-        assert.isFunction(callback, "callback");
-        assert.isBoolean(immediately, "immediately");
         assert.isRealNumber(priority, "priority");
-        assert.isBoolean(hasRecursiveEffect, "hasRecursiveEffect");
 
         let immediatelyCalled = false;
         const { targets, pairs } = this._parsePairs(eventTargetEventsPairs);
@@ -368,9 +356,6 @@ abstract class EventTarget extends BaseObject {
     }
 
     unbind(eventTargetEventsPairs: EventTargetEventsPair[], callback: (...args: any[]) => void) {
-        assert.isArray(eventTargetEventsPairs, "eventTargetEventsPairs");
-        assert.isFunction(callback, "callback");
-
         const { pairs } = this._parsePairs(eventTargetEventsPairs);
         pairs.forEach(te => {
             const [target, events] = te;

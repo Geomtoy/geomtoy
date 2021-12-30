@@ -93,7 +93,6 @@ class Ellipse extends Shape implements ClosedShape, TransformableShape, Rotation
         return new Point(this.owner, this._centerX, this._centerY);
     }
     set centerPoint(value) {
-        assert.isPoint(value, "centerPoint");
         this._setCenterX(value.x);
         this._setCenterY(value.y);
     }
