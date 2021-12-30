@@ -9,29 +9,28 @@ export default class SvgInterface extends Interface {
     }
 
     async create() {
-        this.prepare();
-        await this.createGrid();
-        await this.createAxis();
-        await this.createLabel();
+        this.prepare_();
+        await this._createGrid();
+        await this._createAxis();
+        await this._createLabel();
         return this._interfaceBuffer;
     }
 
-    async createLabel() {
+    private async _createLabel() {
         if (!this.options_.showLabel) return;
-        const [promise, img] = this.labelImage();
+        const [promise, img] = this.labelImage_();
         return promise.then(() => {
             this._interfaceBuffer.append(img);
         });
     }
-    async createAxis() {
+    private async _createAxis() {
         if (!this.options_.showAxis) return;
-        const [promise, img] = this.axisImage();
+        const [promise, img] = this.axisImage_();
         return promise.then(() => {
             this._interfaceBuffer.append(img);
         });
     }
-
-    async createGrid() {
+    private async _createGrid() {
         if (!this.options_.showGrid) return;
         const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
         const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -40,7 +39,7 @@ export default class SvgInterface extends Interface {
         rect.setAttribute("width", `${this.renderer.display.width}`);
         rect.setAttribute("height", `${this.renderer.display.height}`);
         rect.setAttribute("fill", "url(#gridPattern)");
-        const [promise, img] = this.gridPatternImage();
+        const [promise, img] = this.gridPatternImage_();
         return promise.then(() => {
             defs.innerHTML = ` 
                 <pattern id='gridPattern' x='0' y='0' patternUnits='userSpaceOnUse' width='${img.getAttribute("width")}' height='${img.getAttribute("height")}'>
@@ -51,4 +50,5 @@ export default class SvgInterface extends Interface {
             this._interfaceBuffer.append(rect);
         });
     }
+
 }

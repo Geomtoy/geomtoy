@@ -15,9 +15,7 @@ const defaultInterfaceOptions: InterfaceOptions = {
 };
 
 export default abstract class Interface {
-    protected options_ = util.cloneDeep(defaultInterfaceOptions);
     private _renderer: Renderer;
-
     // x-axis exceeded on top
     private _xEt = false;
     // x-axis exceeded on bottom
@@ -41,9 +39,12 @@ export default abstract class Interface {
     // transformed origin y-coordinate remainder
     private _tOyRem = NaN;
 
+    protected options_ = util.cloneDeep(defaultInterfaceOptions);
+    
     constructor(renderer: Renderer) {
         this._renderer = renderer;
     }
+
     get renderer() {
         return this._renderer;
     }
@@ -67,29 +68,6 @@ export default abstract class Interface {
         util.assignDeep(this.options_, value);
     }
 
-    prepare() {
-        const { globalTransformation, width, height, zoom } = this.renderer.display;
-
-        const [tOx, tOy] = globalTransformation.transformCoordinates([0, 0]);
-        [this._tOx, this._tOy] = [tOx, tOy];
-        this._xEt = tOy <= 0;
-        this._xEb = tOy >= height - Interface.labelXOffset;
-        this._yEl = tOx <= Interface.labelYOffset;
-        this._yEr = tOx >= width;
-
-        const ratio = this._ratioOf(zoom);
-        this._ratio = ratio;
-
-        const gridSize = this._exactValue(this._ratio * Interface.onlyGridPatternGridSize);
-        const imageSize = this._exactValue(this._ratio * Interface.onlyGridPatternImageSize);
-
-        this._gridSize = gridSize;
-        this._imageSize = imageSize;
-
-        const [tOxRem, tOyRem] = [tOx < 0 ? (tOx % gridSize) + gridSize : tOx % gridSize, tOy < 0 ? (tOy % gridSize) + gridSize : tOy % gridSize];
-        [this._tOxRem, this._tOyRem] = [tOxRem, tOyRem];
-    }
-
     abstract create(): Promise<DocumentFragment | HTMLCanvasElement>;
 
     private _disassembleExponentialNotation(n: number) {
@@ -97,7 +75,6 @@ export default abstract class Interface {
         if (m === null) throw new Error("[G]The `zoom` is `NaN` or `Infinity`.");
         return [Number(m.groups!["coef"]), Number(m.groups!["exp"])] as [number, number];
     }
-
     private _ratioOf(zoom: number) {
         const [coef] = this._disassembleExponentialNotation(zoom);
         // 1,2,5 are the only three integers in [1, 10)(1-9). The result of dividing numbers 1-9 by them has at most one decimal place.
@@ -120,17 +97,14 @@ export default abstract class Interface {
             ).toFixed(2)
         );
     }
-
     private _adjustHexColorString(hexColor: string) {
         return hexColor.replace("#", "%23");
     }
-
     private _exactValue(n: number, precision = 14) {
         // see https://stackoverflow.com/questions/28045787/how-many-decimal-places-does-the-primitive-float-and-double-support#answer-28047413
         // 15 not working like: 1.9-1.8 = 0.09999999999999987, only 14 precision.
         return Number(n.toPrecision(precision));
     }
-
     private _labelValue(n: number) {
         // do `_exactValue` again
         n = this._exactValue(n);
@@ -141,7 +115,29 @@ export default abstract class Interface {
         return n.toString();
     }
 
-    labelImage() {
+    protected prepare_() {
+        const { globalTransformation, width, height, zoom } = this.renderer.display;
+
+        const [tOx, tOy] = globalTransformation.transformCoordinates([0, 0]);
+        [this._tOx, this._tOy] = [tOx, tOy];
+        this._xEt = tOy <= 0;
+        this._xEb = tOy >= height - Interface.labelXOffset;
+        this._yEl = tOx <= Interface.labelYOffset;
+        this._yEr = tOx >= width;
+
+        const ratio = this._ratioOf(zoom);
+        this._ratio = ratio;
+
+        const gridSize = this._exactValue(this._ratio * Interface.onlyGridPatternGridSize);
+        const imageSize = this._exactValue(this._ratio * Interface.onlyGridPatternImageSize);
+
+        this._gridSize = gridSize;
+        this._imageSize = imageSize;
+
+        const [tOxRem, tOyRem] = [tOx < 0 ? (tOx % gridSize) + gridSize : tOx % gridSize, tOy < 0 ? (tOy % gridSize) + gridSize : tOy % gridSize];
+        [this._tOxRem, this._tOyRem] = [tOxRem, tOyRem];
+    }
+    protected labelImage_() {
         let { labelFillColor, labelStrokeColor } = this.options_;
         labelFillColor = this._adjustHexColorString(labelFillColor);
         labelStrokeColor = this._adjustHexColorString(labelStrokeColor);
@@ -196,8 +192,7 @@ export default abstract class Interface {
         //@ts-ignore
         return [labelImage.decode() as Promise<void>, labelImage] as const;
     }
-
-    axisImage() {
+    protected axisImage_() {
         let { axisColor } = this.options_;
         axisColor = this._adjustHexColorString(axisColor);
 
@@ -238,8 +233,7 @@ export default abstract class Interface {
         //@ts-ignore
         return [axisImage.decode() as Promise<void>, axisImage] as const;
     }
-
-    gridPatternImage() {
+    protected gridPatternImage_() {
         let { showPrimaryGridOnly, primaryGridColor, secondaryGridColor } = this.options_;
         primaryGridColor = this._adjustHexColorString(primaryGridColor);
         secondaryGridColor = this._adjustHexColorString(secondaryGridColor);
