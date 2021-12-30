@@ -6,6 +6,7 @@ import CanvasInterface from "./CanvasInterface";
 import type { GraphicsGeometryCommand, GraphicsImageCommand, GraphicsTextCommand } from "../../geomtoy/types";
 import type Geomtoy from "../../geomtoy";
 import type Shape from "../../geomtoy/base/Shape";
+import type { InterfaceOptions } from "../types";
 
 /**
  * @category Renderer
@@ -17,14 +18,15 @@ export default class CanvasRenderer extends Renderer {
     private _container: HTMLCanvasElement;
     private _interface: CanvasInterface;
     private _buffer = document.createElement("canvas").getContext("2d")!;
-    private _bufferFlushScheduled: boolean = false;
+    private _bufferFlushScheduled = false;
 
-    constructor(container: HTMLCanvasElement, geomtoy: Geomtoy) {
+    constructor(container: HTMLCanvasElement, geomtoy: Geomtoy, interfaceOptions: Partial<InterfaceOptions> = {}) {
         super(geomtoy);
         if (container instanceof HTMLCanvasElement) {
             this._container = container;
             this.manageRendererInitialized_();
             this._interface = new CanvasInterface(this);
+            this._interface.options(interfaceOptions);
 
             this.container.style["touch-action" as any] = "none";
             this.container.style["-webkit-tap-highlight-color" as any] = "transparent";
@@ -52,129 +54,109 @@ export default class CanvasRenderer extends Renderer {
             this._buffer.strokeStyle = "transparent";
         } else {
             this.style_.stroke && (this._buffer.strokeStyle = this.style_.stroke);
-
             //see https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineWidth#options
             this.style_.strokeWidth ? (this._buffer.lineWidth = this.style_.strokeWidth) : (this._buffer.strokeStyle = "transparent");
             if (this.style_.strokeDash?.length) {
                 this._buffer.setLineDash(this.style_.strokeDash);
                 this.style_.strokeDashOffset && (this._buffer.lineDashOffset = this.style_.strokeDashOffset);
             }
-            this.style_.lineJoin && (this._buffer.lineJoin = this.style_.lineJoin);
-            this.style_.miterLimit && (this._buffer.miterLimit = this.style_.miterLimit);
-            this.style_.lineCap && (this._buffer.lineCap = this.style_.lineCap);
+            this.style_.strokeLineJoin && (this._buffer.lineJoin = this.style_.strokeLineJoin);
+            this.style_.strokeMiterLimit && (this._buffer.miterLimit = this.style_.strokeMiterLimit);
+            this.style_.strokeLineCap && (this._buffer.lineCap = this.style_.strokeLineCap);
         }
     }
-
-    private _drawImage(cmd: GraphicsImageCommand, path2D: Path2D, onTop = false) {
+    private _drawImage(cmd: GraphicsImageCommand, path: Path2D, onTop: boolean) {
         const { imageSource, x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight } = cmd;
-
         const obtained = this.imageSourceManager.successful(imageSource);
         const image = obtained ? this.imageSourceManager.take(imageSource)! : this.imageSourceManager.placeholderForCanvas(width, height);
 
-        if (onTop) {
-            this._buffer.globalCompositeOperation = "source-over";
-        } else {
-            this._buffer.globalCompositeOperation = "destination-over";
-        }
+        const [tx, ty] = this.display.globalTransformation.transformCoordinates([x, y]);
+        const scale = this.display.density * this.display.zoom;
+        const imageScale = this.constantImage ? this.display.density : this.display.density * this.display.zoom;
+        const [imageWidth, imageHeight] = [width * imageScale, height * imageScale];
+        const [atImageWidth, atImageHeight] = [imageWidth / scale, imageHeight / scale];
+        const [offsetX, offsetY] = [this.display.xAxisPositiveOnRight ? 0 : imageWidth, this.display.yAxisPositiveOnBottom ? 0 : imageHeight];
+
+        const b: [number, number, number, number] = [x, y, atImageWidth, atImageHeight];
+        path.moveTo(...box.nn(b));
+        path.lineTo(...box.mn(b));
+        path.lineTo(...box.mm(b));
+        path.lineTo(...box.nm(b));
+        path.closePath();
 
         this._buffer.save();
-        // image orientation
-        this._buffer.resetTransform();
+        this._setStyle([, true]);
+        if (onTop) {
+            this._buffer.globalCompositeOperation = "source-over";
+            this._buffer.resetTransform();
+            if (obtained && !isNaN(sourceX) && !isNaN(sourceY) && !isNaN(sourceWidth) && !isNaN(sourceHeight)) {
+                this._buffer.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, tx - offsetX, ty - offsetY, imageWidth, imageHeight);
+            } else {
+                this._buffer.drawImage(image, tx - offsetX, ty - offsetY, imageWidth, imageHeight);
+            }
+            this._buffer.setTransform(...this.display.globalTransformation.get());
+            this._buffer.fill(path);
+            this._buffer.stroke(path);
+        } else {
+            this._buffer.globalCompositeOperation = "destination-over";
+            this._buffer.fill(path);
+            this._buffer.stroke(path);
+            this._buffer.resetTransform();
+            if (obtained && !isNaN(sourceX) && !isNaN(sourceY) && !isNaN(sourceWidth) && !isNaN(sourceHeight)) {
+                this._buffer.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, tx - offsetX, ty - offsetY, imageWidth, imageHeight);
+            } else {
+                this._buffer.drawImage(image, tx - offsetX, ty - offsetY, imageWidth, imageHeight);
+            }
+        }
+        this._buffer.restore();
+    }
+    private _drawText(cmd: GraphicsTextCommand, path: Path2D, onTop: boolean) {
+        const { x, y, text, fontSize, fontFamily, fontBold, fontItalic } = cmd;
 
         const [tx, ty] = this.display.globalTransformation.transformCoordinates([x, y]);
         const scale = this.display.density * this.display.zoom;
-        const [atW, atH] = [width / scale, height / scale];
-        const offsetX = this.display.xAxisPositiveOnRight ? 0 : atW;
-        const offsetY = this.display.yAxisPositiveOnBottom ? 0 : atH;
+        const [textWidth, textHeight] = this.textMeasurer.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", text);
+        const [atTextWidth, atTextHeight] = [textWidth / scale, textHeight / scale];
+        const [offsetX, offsetY] = [this.display.xAxisPositiveOnRight ? 0 : textWidth, this.display.yAxisPositiveOnBottom ? 0 : textHeight];
 
-        if (!obtained || isNaN(sourceX) || isNaN(sourceY) || isNaN(sourceWidth) || isNaN(sourceHeight)) {
-            this._buffer.drawImage(image, tx, ty, width, height);
-        } else {
-            this._buffer.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, tx, ty, width, height);
-        }
-        this._buffer.restore();
-
-        // draw bounding box
-        const b: [number, number, number, number] = [x - offsetX, y - offsetY, atW, atH];
-        this._setStyle();
-        path2D.moveTo(...box.nn(b));
-        path2D.lineTo(...box.mn(b));
-        path2D.lineTo(...box.mm(b));
-        path2D.lineTo(...box.nm(b));
-        path2D.closePath();
-        this._buffer.fill(path2D);
-        this._buffer.stroke(path2D);
-    }
-    private _drawText(cmd: GraphicsTextCommand, path2D: Path2D, onTop = false) {
-        const { x, y, text, fontSize, fontFamily, fontBold, fontItalic } = cmd;
-        // text baseline
+        this._buffer.save();
         this._buffer.textBaseline = "hanging";
-        // text font style
         let fontStyle = "";
         fontBold && (fontStyle += "bold ");
         fontItalic && (fontStyle += "italic ");
         fontStyle += `${fontSize}px `;
         fontStyle += fontFamily;
         this._buffer.font = fontStyle;
-
-        const [tX, tY] = this.display.globalTransformation.transformCoordinates([x, y]);
-        const textBox = this.textMeasurer.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", text);
-        const scale = this.display.density * this.display.zoom;
-        const [atW, atH] = [textBox.width / scale, textBox.height / scale];
-        const offsetX = this.display.xAxisPositiveOnRight ? 0 : atW;
-        const offsetY = this.display.yAxisPositiveOnBottom ? 0 : atH;
-
-        if (onTop) {
-            this._buffer.globalCompositeOperation = "source-over";
-        } else {
-            this._buffer.globalCompositeOperation = "destination-over";
-        }
-        this._buffer.save();
-        // text orientation
+        this._buffer.globalCompositeOperation = onTop ? "source-over" : "destination-over";
         this._buffer.resetTransform();
-        // text style
-        this._setStyle([false, true]);
-        // text content
-        this._buffer.fillText(text, tX, tY);
+        this._setStyle([, true]);
+        this._buffer.fillText(text, tx - offsetX, ty - offsetY);
         this._buffer.restore();
 
-        // draw bounding box
-        const b: [number, number, number, number] = [x - offsetX, y - offsetY, atW, atH];
-        this._setStyle([true, true]);
-        path2D.moveTo(...box.nn(b));
-        path2D.lineTo(...box.mn(b));
-        path2D.lineTo(...box.mm(b));
-        path2D.lineTo(...box.nm(b));
-        path2D.closePath();
-
-        if (onTop) {
-            this._buffer.globalCompositeOperation = "source-over";
-        } else {
-            this._buffer.globalCompositeOperation = "destination-over";
-        }
-        this._buffer.fill(path2D);
-        this._buffer.stroke(path2D);
+        // implicit bounding box
+        const b: [number, number, number, number] = [x, y, atTextWidth, atTextHeight];
+        path.moveTo(...box.nn(b));
+        path.lineTo(...box.mn(b));
+        path.lineTo(...box.mm(b));
+        path.lineTo(...box.nm(b));
+        path.closePath();
     }
-
-    private _drawGeometry(cmds: GraphicsGeometryCommand[], path2D: Path2D, onTop = false) {
+    private _drawGeometry(cmds: GraphicsGeometryCommand[], path: Path2D, onTop: boolean) {
         cmds.forEach(cmd => {
-            if (cmd.type === "moveTo") path2D.moveTo(cmd.x, cmd.y);
-            if (cmd.type === "lineTo") path2D.lineTo(cmd.x, cmd.y);
-            if (cmd.type === "bezierCurveTo") path2D.bezierCurveTo(cmd.controlPoint1X, cmd.controlPoint1Y, cmd.controlPoint2X, cmd.controlPoint2Y, cmd.x, cmd.y);
-            if (cmd.type === "quadraticBezierCurveTo") path2D.quadraticCurveTo(cmd.controlPointX, cmd.controlPointY, cmd.x, cmd.y);
-            if (cmd.type === "arcTo") path2D.ellipse(cmd.centerX, cmd.centerY, cmd.radiusX, cmd.radiusY, cmd.xAxisRotation, cmd.startAngle, cmd.endAngle, !cmd.positive);
-            if (cmd.type === "close") path2D.closePath();
+            if (cmd.type === "moveTo") path.moveTo(cmd.x, cmd.y);
+            if (cmd.type === "lineTo") path.lineTo(cmd.x, cmd.y);
+            if (cmd.type === "bezierCurveTo") path.bezierCurveTo(cmd.controlPoint1X, cmd.controlPoint1Y, cmd.controlPoint2X, cmd.controlPoint2Y, cmd.x, cmd.y);
+            if (cmd.type === "quadraticBezierCurveTo") path.quadraticCurveTo(cmd.controlPointX, cmd.controlPointY, cmd.x, cmd.y);
+            if (cmd.type === "arcTo") path.ellipse(cmd.centerX, cmd.centerY, cmd.radiusX, cmd.radiusY, cmd.xAxisRotation, cmd.startAngle, cmd.endAngle, !cmd.positive);
+            if (cmd.type === "close") path.closePath();
         });
+        this._buffer.save();
         this._setStyle();
-        if (onTop) {
-            this._buffer.globalCompositeOperation = "source-over";
-        } else {
-            this._buffer.globalCompositeOperation = "destination-over";
-        }
-        this._buffer.fill(path2D);
-        this._buffer.stroke(path2D);
+        this._buffer.globalCompositeOperation = onTop ? "source-over" : "destination-over";
+        this._buffer.fill(path);
+        this._buffer.stroke(path);
+        this._buffer.restore();
     }
-
     private async _flushBuffer() {
         if (this._bufferFlushScheduled) return;
         this._bufferFlushScheduled = true;
@@ -198,22 +180,22 @@ export default class CanvasRenderer extends Renderer {
     }
 
     draw(shape: Shape, onTop = false) {
-        this.isShapeOwnerEqual(shape);
+        this.isShapeOwnerEqual_(shape);
         this._initBuffer();
 
         const cmds = shape.getGraphics(this.display).commands;
-        const path2D = new Path2D();
+        const path = new Path2D();
         const onlyOneCommand = cmds.length === 1 && cmds[0];
         if (onlyOneCommand && onlyOneCommand.type === "text") {
-            this._drawText(onlyOneCommand, path2D, onTop);
+            this._drawText(onlyOneCommand, path, onTop);
         } else if (onlyOneCommand && onlyOneCommand.type === "image") {
-            this._drawImage(onlyOneCommand, path2D, onTop);
+            this._drawImage(onlyOneCommand, path, onTop);
         } else {
-            this._drawGeometry(cmds as GraphicsGeometryCommand[], path2D, onTop);
+            this._drawGeometry(cmds as GraphicsGeometryCommand[], path, onTop);
         }
 
         this._flushBuffer();
-        return path2D;
+        return path;
     }
     drawBatch(shapes: Shape[], onTop = false) {
         return shapes.map(shape => this.draw(shape, onTop));

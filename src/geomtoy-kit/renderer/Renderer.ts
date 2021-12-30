@@ -2,7 +2,7 @@ import ImageSourceManager from "../helper/ImageSourceManager";
 import TextMeasurer from "../helper/TextMeasurer";
 import Display from "./Display";
 
-import type { ContainerElement, LineCapType, LineJoinType, PathLike, Style } from "../types";
+import type { ContainerElement, StrokeLineCapType, StrokeLineJoinType, PathLike, Style } from "../types";
 import type Geomtoy from "../../geomtoy";
 import type Shape from "../../geomtoy/base/Shape";
 
@@ -15,8 +15,9 @@ export default abstract class Renderer {
     private _display: Display;
     private _imageSourceManager = new ImageSourceManager();
     private _textMeasurer = new TextMeasurer();
-    
     protected style_: Partial<Style> = {};
+
+    constantImage = false;
 
     constructor(geomtoy: Geomtoy) {
         this._geomtoy = geomtoy;
@@ -37,12 +38,12 @@ export default abstract class Renderer {
     }
 
     protected manageRendererInitialized_() {
-        if (this.container.getAttribute(dataKeyRendererInitialized) === "true") {
+        if (this.container.getAttribute(dataKeyRendererInitialized) !== null) {
             throw new Error("[G]A renderer has been initialized on this element.");
         }
-        this.container.setAttribute(dataKeyRendererInitialized, "true");
+        this.container.setAttribute(dataKeyRendererInitialized, "");
     }
-    protected isShapeOwnerEqual(shape: Shape) {
+    protected isShapeOwnerEqual_(shape: Shape) {
         if (shape.owner !== this.geomtoy) {
             throw new Error("[G]A `Shape` can only be drawn by a `Renderer` that has the same `geomtoy` as its `owner`.");
         }
@@ -69,13 +70,13 @@ export default abstract class Renderer {
         const scale = this.display.density * this.display.zoom;
         this.style_.strokeDashOffset = strokeDashOffset / scale;
     }
-    lineJoin(lineJoin: LineJoinType) {
-        this.style_.lineJoin = lineJoin;
+    strokeLineJoin(strokeLineJoin: StrokeLineJoinType) {
+        this.style_.strokeLineJoin = strokeLineJoin;
     }
-    lineCap(lineCap: LineCapType) {
-        this.style_.lineCap = lineCap;
+    strokeLineCap(strokeLineCap: StrokeLineCapType) {
+        this.style_.strokeLineCap = strokeLineCap;
     }
-    miterLimit(miterLimit: number) {
-        this.style_.miterLimit = miterLimit;
+    strokeMiterLimit(strokeMiterLimit: number) {
+        this.style_.strokeMiterLimit = strokeMiterLimit;
     }
 }
