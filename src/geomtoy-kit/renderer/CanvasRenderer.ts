@@ -67,15 +67,15 @@ export default class CanvasRenderer extends Renderer {
     }
     private _drawImage(cmd: GraphicsImageCommand, path: Path2D, onTop: boolean) {
         const { imageSource, x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight } = cmd;
-        const obtained = this.imageSourceManager.successful(imageSource);
-        const image = obtained ? this.imageSourceManager.take(imageSource)! : this.imageSourceManager.placeholderForCanvas(width, height);
-
         const [tx, ty] = this.display.globalTransformation.transformCoordinates([x, y]);
         const scale = this.display.density * this.display.zoom;
         const imageScale = this.constantImage ? this.display.density : this.display.density * this.display.zoom;
         const [imageWidth, imageHeight] = [width * imageScale, height * imageScale];
         const [atImageWidth, atImageHeight] = [imageWidth / scale, imageHeight / scale];
         const [offsetX, offsetY] = [this.display.xAxisPositiveOnRight ? 0 : imageWidth, this.display.yAxisPositiveOnBottom ? 0 : imageHeight];
+
+        const obtained = this.imageSourceManager.successful(imageSource);
+        const image = obtained ? this.imageSourceManager.take(imageSource)! : this.imageSourceManager.placeholderForCanvas(imageWidth, imageHeight);
 
         const b: [number, number, number, number] = [x, y, atImageWidth, atImageHeight];
         path.moveTo(...box.nn(b));

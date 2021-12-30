@@ -81,15 +81,15 @@ export default class SvgRenderer extends Renderer {
     }
     private _drawImage(cmd: GraphicsImageCommand, path: SVGPathElement, onTop: boolean) {
         const { imageSource, x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight } = cmd;
-        const obtained = this.imageSourceManager.successful(imageSource);
-        const imageEl = obtained ? this.imageSourceManager.take(imageSource)! : this.imageSourceManager.placeholderForSvg(width, height);
-
         const [tx, ty] = this.display.globalTransformation.transformCoordinates([x, y]);
         const scale = this.display.density * this.display.zoom;
         const imageScale = this.constantImage ? this.display.density : this.display.density * this.display.zoom;
         const [imageWidth, imageHeight] = [width * imageScale, height * imageScale];
         const [atImageWidth, atImageHeight] = [imageWidth / scale, imageHeight / scale];
         const [offsetX, offsetY] = [this.display.xAxisPositiveOnRight ? 0 : imageWidth, this.display.yAxisPositiveOnBottom ? 0 : imageHeight];
+
+        const obtained = this.imageSourceManager.successful(imageSource);
+        const imageEl = obtained ? this.imageSourceManager.take(imageSource)! : this.imageSourceManager.placeholderForSvg(imageWidth, imageHeight);
 
         const imageWrapper = document.createElementNS("http://www.w3.org/2000/svg", "g");
         imageWrapper.setAttribute("transform", `matrix(${this.display.globalTransformation.invert().get().join(" ")})`);
