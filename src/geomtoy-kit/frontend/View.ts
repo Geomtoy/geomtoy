@@ -622,7 +622,7 @@ export default class View {
             this._elements.forEach(el => {
                 if (el.object.prototypeNameChain().includes("Image")) {
                     const imageSource = (el.object as Image).imageSource;
-                    renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.render.bind(this));
+                    renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.render.bind(this)).catch(console.error);
                 }
 
                 const ds = this._defaultStyle;

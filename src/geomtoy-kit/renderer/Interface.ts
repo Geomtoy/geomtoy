@@ -40,10 +40,19 @@ export default abstract class Interface {
     // transformed origin y-coordinate remainder
     private _tOyRem = NaN;
 
+    /**
+     * Safari(<=15 tested) do not support `SVGImageElement.decode()`, and implement `HTMLImageElement.decode()` in the task queue.
+     * Plus: CanvasRenderingContext2D.createPattern can't use svg image. This is a big todo....
+     */
+    private _svgImageElementDecodeSupported = true;
+
     protected options_ = util.cloneDeep(defaultInterfaceOptions);
 
     constructor(renderer: Renderer) {
         this._renderer = renderer;
+
+        const tempSvgImageElement = document.createElementNS("http://www.w3.org/2000/svg", "image");
+        this._svgImageElementDecodeSupported = "decode" in tempSvgImageElement;
     }
 
     get renderer() {
@@ -138,6 +147,31 @@ export default abstract class Interface {
         const [tOxRem, tOyRem] = [tOx < 0 ? (tOx % gridSize) + gridSize : tOx % gridSize, tOy < 0 ? (tOy % gridSize) + gridSize : tOy % gridSize];
         [this._tOxRem, this._tOyRem] = [tOxRem, tOyRem];
     }
+
+    private _decodeImage(width: number, height: number, svgDataUrl: string) {
+        const image = document.createElementNS("http://www.w3.org/2000/svg", "image");
+        image.setAttribute("width", `${width}`);
+        image.setAttribute("height", `${height}`);
+
+        let promise;
+        if (!this._svgImageElementDecodeSupported) {
+            promise = new Promise<void>((resolve, reject) => {
+                image.onload = function () {
+                    resolve();
+                };
+                image.onerror = function () {
+                    reject();
+                };
+            });
+            image.setAttribute("href", svgDataUrl);
+        } else {
+            image.setAttribute("href", svgDataUrl);
+            //@ts-ignore
+            promise = image.decode() as Promise<void>;
+        }
+        return [promise, image] as const;
+    }
+
     protected labelImage_() {
         let { labelFillColor, labelStrokeColor } = this.options_;
         labelFillColor = this._adjustHexColorString(labelFillColor);
@@ -173,10 +207,6 @@ export default abstract class Interface {
             originLabel += `%3Ctext x='${tOx - labelYOffset}' y='${tOy + labelXOffset}' text-anchor='end'%3E0%3C/text%3E`;
         }
 
-        const labelImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
-        labelImage.setAttribute("width", `${w}`);
-        labelImage.setAttribute("height", `${h}`);
-
         //prettier-ignore
         const svgDataUrl =
             `data:image/svg+xml;charset=utf8,` +
@@ -188,10 +218,7 @@ export default abstract class Interface {
             `%3C/g%3E`+
             `%3C/svg%3E`;
 
-        labelImage.setAttribute("href", svgDataUrl);
-
-        //@ts-ignore
-        return [labelImage.decode() as Promise<void>, labelImage] as const;
+        return this._decodeImage(w, h, svgDataUrl);
     }
     protected axisImage_() {
         let { axisColor } = this.options_;
@@ -200,10 +227,6 @@ export default abstract class Interface {
         const { axisArrowLength, axisArrowWidth } = Interface;
         const { _tOx: tOx, _tOy: tOy } = this;
         const { width: w, height: h, xAxisPositiveOnRight: xPr, yAxisPositiveOnBottom: yPb } = this.renderer.display;
-
-        const axisImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
-        axisImage.setAttribute("width", `${w}`);
-        axisImage.setAttribute("height", `${h}`);
 
         let xAxisD = "";
         let yAxisD = "";
@@ -229,10 +252,7 @@ export default abstract class Interface {
             `%3Cpath d='${yArrowD}' stroke='${axisColor}' fill='none' stroke-width='1'/%3E` +
             `%3C/svg%3E`;
 
-        axisImage.setAttribute("href", svgDataUrl);
-
-        //@ts-ignore
-        return [axisImage.decode() as Promise<void>, axisImage] as const;
+        return this._decodeImage(w, h, svgDataUrl);
     }
     protected gridPatternImage_() {
         let { showPrimaryGridOnly, primaryGridColor, secondaryGridColor } = this.options_;
@@ -244,10 +264,6 @@ export default abstract class Interface {
 
         // viewBoxX, viewBoxY are always in the interval: [0, 50)
         const [viewBoxX, viewBoxY] = [tOxRem === 0 ? 0 : onlyGridPatternGridSize - tOxRem / ratio, tOyRem === 0 ? 0 : onlyGridPatternGridSize - tOyRem / ratio];
-
-        const gridPatternImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
-        gridPatternImage.setAttribute("width", `${imageSize}`);
-        gridPatternImage.setAttribute("height", `${imageSize}`);
 
         const svgDataUrl =
             `data:image/svg+xml;charset=utf8,` +
@@ -262,15 +278,11 @@ export default abstract class Interface {
                     id='primaryGrid' stroke='${primaryGridColor}' stroke-width='1'/%3E` +
             `%3C/svg%3E`;
 
-        gridPatternImage.setAttribute("href", svgDataUrl);
-
         // The `decode()` is not like `onload` event. It returns a `Promise` instead of a callback placed in the task queue.
         // It should be in the microtask queue. So the `decode()` returned `Promise` will be fulfilled before the next execution in the task queue.
         // Ps:
         // Compared with the ordinary URLs, the data URL are decoded first and then `onload` is triggered. (This may means the data URL never need to be loaded.)
         // Ordinary URL triggers `onload` first, then it gets decoded.
-
-        //@ts-ignore
-        return [gridPatternImage.decode() as Promise<void>, gridPatternImage] as const;
+        return this._decodeImage(imageSize, imageSize, svgDataUrl);
     }
 }
