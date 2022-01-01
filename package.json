@@ -1,8 +1,8 @@
 {
     "name": "geomtoy",
-    "version": "0.0.1",
-    "description": "",
-    "main": "index.js",
+    "version": "0.0.2",
+    "description": "A 2D geometry responsive computing, visualizing and interacting library.",
+    "main": "dist/geomtoy.umd.js",
     "scripts": {
         "test": "jest",
         "doc": "node ./typedoc.js",
@@ -13,17 +13,14 @@
         "bundle-dts": "rollup --config --environment TASK:bundle-dts",
         "bundle-js": "rollup --config --environment TASK:bundle-js"
     },
+    "files": [
+        "/dist"
+    ],
     "author": "Fish Eleven",
-    "config": {
-        "umdName": "Geomtoy",
-        "srcDir": "src/geomtoy",
-        "srcIndex": "index.ts",
-        "examplesDir": "examples",
-        "docsGenDir": "docs",
-        "docsIncludesDir": "includes",
-        "docsMediaDir": "media",
-        "declsGenDir": "decls",
-        "distDir": "dist"
+    "homepage": "https://github.com/mog1347/geomtoy.git/#README",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mog1347/geomtoy.git"
     },
     "license": "MIT",
     "devDependencies": {
@@ -41,7 +38,7 @@
         "rollup-plugin-livereload": "^2.0.5",
         "rollup-plugin-serve": "^1.1.0",
         "rollup-plugin-terser": "^7.0.2",
-        "typedoc": "^0.21.4",
+        "typedoc": "^0.21.9",
         "typescript": "^4.4.2"
     }
 }
