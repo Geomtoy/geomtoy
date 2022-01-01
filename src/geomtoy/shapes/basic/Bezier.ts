@@ -8,7 +8,7 @@ import Point from "./Point";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type Transformation from "../../transformation";
 import type { FiniteOpenShape, TransformableShape } from "../../types";
 
@@ -322,8 +322,5 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
 }
 
 validAndWithSameOwner(Bezier);
-/**
- *
- * @category Shape
- */
+
 export default Bezier;

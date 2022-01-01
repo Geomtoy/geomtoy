@@ -12,7 +12,7 @@ import Circle from "./Circle";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type Transformation from "../../transformation";
 import type { Direction, ClosedShape, TransformableShape } from "../../types";
 
@@ -287,7 +287,4 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
 
 validAndWithSameOwner(RegularPolygon);
 
-/**
- * @category BaseObject
- */
 export default RegularPolygon;

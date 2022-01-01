@@ -7,7 +7,7 @@ import Point from "./Point";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type Transformation from "../../transformation";
 import type { ClosedShape, Direction, RotationFeaturedShape, TransformableShape } from "../../types";
 

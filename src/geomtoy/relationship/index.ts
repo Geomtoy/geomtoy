@@ -10,7 +10,7 @@ import Separate from "./Separate";
 import Touch from "./Touch";
 import Wrap from "./Wrap";
 
-import type Geomtoy from "..";
+import type Geomtoy from "../geomtoy";
 import type { AnyRelationship, AnyShape, RelationshipMethod, RelationshipMethodName } from "../types";
 
 class Relationship extends BaseObject {

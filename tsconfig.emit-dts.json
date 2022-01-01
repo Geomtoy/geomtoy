@@ -1,11 +1,12 @@
 {
-    "extends": "./tsconfig.json",
+    "extends": "./tsconfig.base.json",
     "compilerOptions": {
         "noEmit": false,
         "declaration": true,
         "emitDeclarationOnly": true,
         "declarationDir": "./decls/",
-        "stripInternal": false
+        "stripInternal": true,
+        "removeComments": true
     },
-    "include": ["./src"]
+    "files": ["./src/geomtoy/index.ts", "./src/geomtoy-kit/index.ts"]
 }

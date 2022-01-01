@@ -2,7 +2,7 @@ import util from "../utility";
 import BaseObject from "../base/BaseObject";
 import Shape from "../base/Shape";
 
-import type Geomtoy from "..";
+import type Geomtoy from "../geomtoy";
 import type { OwnerCarrier } from "../types";
 
 function article(name: string, adj?: string) {

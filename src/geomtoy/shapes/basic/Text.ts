@@ -8,7 +8,7 @@ import Point from "./Point";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type { FontConfig } from "../../types";
 
 const defaultFontConfig: FontConfig = {
@@ -184,7 +184,5 @@ class Text extends Shape {
     }
 }
 validAndWithSameOwner(Text);
-/**
- * @category Shape
- */
+
 export default Text;

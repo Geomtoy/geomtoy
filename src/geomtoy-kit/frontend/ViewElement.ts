@@ -1,19 +1,40 @@
-import Shape from "../../geomtoy/base/Shape";
-import Group from "../../geomtoy/group";
+import util from "../../geomtoy/utility";
 
 import type { Style, InteractiveStyle, PathLike } from "../types";
 import type View from "./View";
 
-class ViewElement {
+//@internal
+import type Shape from "../../geomtoy/base/Shape";
+//@internal
+import type Group from "../../geomtoy/group";
+
+export default class ViewElement {
     private _object: Shape | Group;
     private _interactable: boolean = true;
 
-    private _style: Partial<Style> = {};
-    private _hoverStyle: Partial<InteractiveStyle> = {};
-    private _activeStyle: Partial<InteractiveStyle> = {};
+    private _style: Partial<Style> = {
+        fill: undefined,
+        stroke: undefined,
+        strokeWidth: undefined,
+        strokeDash: undefined,
+        strokeDashOffset: undefined,
+        strokeLineJoin: undefined,
+        strokeMiterLimit: undefined,
+        strokeLineCap: undefined
+    };
+    private _hoverStyle: Partial<InteractiveStyle> = {
+        fill: undefined,
+        stroke: undefined,
+        strokeWidth: undefined
+    };
+    private _activeStyle: Partial<InteractiveStyle> = {
+        fill: undefined,
+        stroke: undefined,
+        strokeWidth: undefined
+    };
 
-    public parent?: View;
-    public path?: PathLike | PathLike[];
+    parent?: View;
+    path?: PathLike | PathLike[];
 
     constructor(object: Shape | Group, interactable = false, style: Partial<Style> = {}, hoverStyle: Partial<InteractiveStyle> = {}, activeStyle: Partial<InteractiveStyle> = {}) {
         this._object = object;
@@ -39,22 +60,20 @@ class ViewElement {
         return this._object.uuid;
     }
 
+    isObjectGroup(): this is { object: Group } {
+        return this._object.prototypeNameChain().includes("Group");
+    }
+    isObjectShape(): this is { object: Shape } {
+        return this._object.prototypeNameChain().includes("Shape");
+    }
+
     style(): Partial<Style>;
     style(value: Partial<Style>): void;
     style(value?: Partial<Style>) {
         if (value === undefined) {
-            if (this._style.strokeDash === undefined) {
-                return { ...this._style };
-            } else {
-                return { ...this._style, ...{ strokeDash: [...this._style.strokeDash] } };
-            }
+            return util.cloneDeep(this._style);
         }
-
-        if (value.strokeDash === undefined) {
-            this._style = { ...this.style, ...value };
-        } else {
-            this._style = { ...this.style, ...value, ...{ strokeDash: [...value.strokeDash] } };
-        }
+        util.assignDeep(this._style, value);
     }
 
     hoverStyle(): Partial<InteractiveStyle>;
@@ -76,12 +95,10 @@ class ViewElement {
     }
 
     move(deltaX: number, deltaY: number) {
-        if (this.object instanceof Group) {
+        if (this.isObjectGroup()) {
             this.object.items.forEach(s => s.moveSelf(deltaX, deltaY));
-        } else if (this.object instanceof Shape) {
+        } else if (this.isObjectShape()) {
             this.object.moveSelf(deltaX, deltaY);
         }
     }
 }
-
-export default ViewElement;

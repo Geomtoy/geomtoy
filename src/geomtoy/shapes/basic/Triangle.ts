@@ -15,7 +15,7 @@ import Line from "./Line";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type Transformation from "../../transformation";
 import type { Direction, ClosedShape, TransformableShape } from "../../types";
 
@@ -1061,8 +1061,4 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
 
 validAndWithSameOwner(Triangle);
 
-/**
- *
- * @category Shape
- */
 export default Triangle;

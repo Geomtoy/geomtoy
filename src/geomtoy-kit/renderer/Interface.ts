@@ -1,4 +1,5 @@
 import util from "../../geomtoy/utility";
+
 import type Renderer from "./Renderer";
 import type { InterfaceOptions } from "../types";
 
@@ -40,7 +41,7 @@ export default abstract class Interface {
     private _tOyRem = NaN;
 
     protected options_ = util.cloneDeep(defaultInterfaceOptions);
-    
+
     constructor(renderer: Renderer) {
         this._renderer = renderer;
     }
@@ -263,9 +264,9 @@ export default abstract class Interface {
 
         gridPatternImage.setAttribute("href", svgDataUrl);
 
-        // The `decode()` is not like `onload` event. It returns a `Promise` instead of a callback placed in the `Task` queue.
-        // It should be in the `MicroTask` queue. So the `decode()` returned `Promise` will be fulfilled before the next execution in the `Task` queue.
-        // Plus:
+        // The `decode()` is not like `onload` event. It returns a `Promise` instead of a callback placed in the task queue.
+        // It should be in the microtask queue. So the `decode()` returned `Promise` will be fulfilled before the next execution in the task queue.
+        // Ps:
         // Compared with the ordinary URLs, the data URL are decoded first and then `onload` is triggered. (This may means the data URL never need to be loaded.)
         // Ordinary URL triggers `onload` first, then it gets decoded.
 

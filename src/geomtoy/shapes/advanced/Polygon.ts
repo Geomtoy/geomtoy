@@ -12,7 +12,7 @@ import Triangle from "../basic/Triangle";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type { OwnerCarrier, PolygonVertex, PolygonVertexWithUuid, TransformableShape } from "../../types";
 import type Transformation from "../../transformation";
 import LineSegment from "../basic/LineSegment";
@@ -408,7 +408,5 @@ class Polygon extends Shape implements TransformableShape {
 }
 
 validAndWithSameOwner(Polygon);
-/**
- * @category BaseObject
- */
+
 export default Polygon;

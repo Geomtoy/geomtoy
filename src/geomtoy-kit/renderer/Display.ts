@@ -1,10 +1,12 @@
-import Transformation from "../../geomtoy/transformation";
-import { ViewportDescriptor } from "../../geomtoy/types";
 import assert from "../../geomtoy/utility/assertion";
 import box from "../../geomtoy/utility/box";
 import coord from "../../geomtoy/utility/coord";
-import math from "../../geomtoy/utility/math"; 
-import Renderer from "./Renderer";
+import math from "../../geomtoy/utility/math";
+
+import Matrix from "../../geomtoy/helper/Matrix";
+
+import type Renderer from "./Renderer";
+import type { ViewportDescriptor } from "../../geomtoy/types";
 
 // 300x150 is the browser default size for both `<canvas>` and `<svg>`
 const defaultContainerWidth = 300;
@@ -19,7 +21,6 @@ const minOrigin = -math.pow(2, 32);
 const maxPan = math.pow(2, 44);
 const minPan = -math.pow(2, 44);
 
-
 export default class Display implements ViewportDescriptor {
     private _renderer: Renderer;
 
@@ -30,12 +31,11 @@ export default class Display implements ViewportDescriptor {
     private _xAxisPositiveOnRight = true;
     private _yAxisPositiveOnBottom = true;
 
-    private _globalTransformation;
+    private _globalTransformation = Matrix.identity;
     private _globalViewBox = [NaN, NaN, NaN, NaN] as [number, number, number, number];
 
     constructor(renderer: Renderer) {
         this._renderer = renderer;
-        this._globalTransformation = new Transformation(renderer.geomtoy);
     }
 
     //? What if the user set `width` or `height` with percentage?
@@ -60,9 +60,7 @@ export default class Display implements ViewportDescriptor {
     }
     set density(value) {
         assert.isPositiveNumber(value, "density");
-        if (!/^1e[+-]\d+$/i.test(value.toExponential())) {
-            throw new Error("[G]The `density` should be a power of 10.");
-        }
+        assert.condition(/^1e[+-]\d+$/i.test(value.toExponential()), "[G]The `density` should be a power of 10.");
         value = math.clamp(value, minDensity, maxDensity);
         this._density = value;
         this._refresh();
@@ -110,7 +108,6 @@ export default class Display implements ViewportDescriptor {
         return this._xAxisPositiveOnRight;
     }
     set xAxisPositiveOnRight(value) {
-        assert.isBoolean(value, "xAxisPositiveOnRight");
         this._xAxisPositiveOnRight = value;
         this._refresh();
     }
@@ -118,12 +115,11 @@ export default class Display implements ViewportDescriptor {
         return this._yAxisPositiveOnBottom;
     }
     set yAxisPositiveOnBottom(value) {
-        assert.isBoolean(value, "yAxisPositiveOnBottom");
         this._yAxisPositiveOnBottom = value;
         this._refresh();
     }
 
-    get globalTransformation() {
+    get globalTransformation(): Matrix {
         return this._globalTransformation.clone();
     }
     get globalViewBox(): [number, number, number, number] {
@@ -137,9 +133,9 @@ export default class Display implements ViewportDescriptor {
         const offset: [number, number] = [coord.x(origin) + coord.x(pan), coord.y(origin) + coord.y(pan)];
 
         this._globalTransformation
-            .reset()
-            .translate(...offset)
-            .scale(xPr ? scale : -scale, yPb ? scale : -scale);
+            .identitySelf()
+            .postMultiplySelf(new Matrix(1, 0, 0, 1, ...offset))
+            .postMultiplySelf(new Matrix(xPr ? scale : -scale, 0, 0, yPb ? scale : -scale, 0, 0));
 
         const [x, y] = this.globalTransformation.antitransformCoordinates([xPr ? 0 : width, yPb ? 0 : height]);
         this._globalViewBox = box.from([x, y], [width / scale, height / scale]);

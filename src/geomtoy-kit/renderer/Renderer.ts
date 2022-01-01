@@ -1,9 +1,15 @@
+import util from "../../geomtoy/utility";
+import assert from "../../geomtoy/utility/assertion";
+
 import ImageSourceManager from "../helper/ImageSourceManager";
 import TextMeasurer from "../helper/TextMeasurer";
 import Display from "./Display";
 
 import type { ContainerElement, StrokeLineCapType, StrokeLineJoinType, PathLike, Style } from "../types";
-import type Geomtoy from "../../geomtoy";
+
+//@internal
+import type Geomtoy from "../../geomtoy/geomtoy";
+//@internal
 import type Shape from "../../geomtoy/base/Shape";
 
 const dataKeyRendererInitialized = "data-renderer-initialized";
@@ -59,14 +65,20 @@ export default abstract class Renderer {
         this.style_.stroke = stroke;
     }
     strokeWidth(strokeWidth: number) {
+        assert.isPositiveNumber(strokeWidth, "strokeWidth");
         const scale = this.display.density * this.display.zoom;
         this.style_.strokeWidth = strokeWidth / scale;
     }
     strokeDash(strokeDash: number[]) {
+        assert.condition(
+            strokeDash.every(n => util.isRealNumber(n)),
+            "[G]The `strokeDash` should be an array of real numbers."
+        );
         const scale = this.display.density * this.display.zoom;
         this.style_.strokeDash = strokeDash.map(n => n / scale);
     }
     strokeDashOffset(strokeDashOffset: number) {
+        assert.isRealNumber(strokeDashOffset, "strokeDashOffset");
         const scale = this.display.density * this.display.zoom;
         this.style_.strokeDashOffset = strokeDashOffset / scale;
     }

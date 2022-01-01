@@ -9,7 +9,7 @@ import Point from "./Point";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 
 class Image extends Shape {
     private _x = NaN;
@@ -347,7 +347,5 @@ class Image extends Shape {
     }
 }
 validAndWithSameOwner(Image);
-/**
- * @category Shape
- */
+
 export default Image;

@@ -1,8 +1,7 @@
 import type { PathLike } from "../types";
 
-class PointChecker {
-    private _canvas = document.createElement("canvas");
-    private _context = this._canvas.getContext("2d")!;
+export default class PointChecker {
+    private _context = document.createElement("canvas").getContext("2d")!;
 
     /**
      * Check if point(`x`, `y`)(in identity) is in the path.
@@ -30,5 +29,3 @@ class PointChecker {
         }
     }
 }
-
-export default PointChecker;

@@ -1,4 +1,5 @@
 import Interface from "./Interface";
+
 import type SvgRenderer from "./SvgRenderer";
 
 export default class SvgInterface extends Interface {
@@ -50,5 +51,4 @@ export default class SvgInterface extends Interface {
             this._interfaceBuffer.append(rect);
         });
     }
-
 }

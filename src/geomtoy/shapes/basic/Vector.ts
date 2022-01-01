@@ -15,7 +15,7 @@ import LineSegment from "./LineSegment";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type Transformation from "../../transformation";
 import type { TransformableShape, ViewportDescriptor } from "../../types";
 
@@ -363,8 +363,4 @@ class Vector extends Shape implements TransformableShape {
 
 validAndWithSameOwner(Vector);
 
-/**
- *
- * @category Shape
- */
 export default Vector;

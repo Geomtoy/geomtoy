@@ -13,7 +13,7 @@ import Transformation from "../../transformation";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type { ClosedShape, Direction, RotationFeaturedShape, TransformableShape } from "../../types";
 
 class Rectangle extends Shape implements ClosedShape, TransformableShape, RotationFeaturedShape {
@@ -351,7 +351,5 @@ class Rectangle extends Shape implements ClosedShape, TransformableShape, Rotati
     }
 }
 validAndWithSameOwner(Rectangle);
-/**
- * @category Shape
- */
+
 export default Rectangle;

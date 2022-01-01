@@ -1,4 +1,5 @@
 import Interface from "./Interface";
+
 import type CanvasRenderer from "./CanvasRenderer";
 
 export default class CanvasInterface extends Interface {

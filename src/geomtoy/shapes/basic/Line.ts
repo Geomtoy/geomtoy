@@ -17,7 +17,7 @@ import Circle from "./Circle";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type { OwnerCarrier, InfiniteOpenShape, TransformableShape, ViewportDescriptor } from "../../types";
 import type Transformation from "../../transformation";
 
@@ -632,7 +632,5 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
 }
 
 validAndWithSameOwner(Line);
-/**
- * @category Shape
- */
+
 export default Line;

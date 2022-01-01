@@ -47,14 +47,14 @@
 
 <body>
     <aside id="switch">
-        <input id="rendererSVG" name="renderer" type="radio" value="svg">
-        <label for="rendererSVG">SVG</label>
-        <input id="rendererCanvas" name="renderer" type="radio" value="canvas">
-        <label for="rendererCanvas">Canvas</label>
+        <form name="rendererSwitch">
+            <input id="rendererSVG" name="renderer" type="radio" value="svg">
+            <label for="rendererSVG">SVG</label>
+            <input id="rendererCanvas" name="renderer" type="radio" value="canvas">
+            <label for="rendererCanvas">Canvas</label>
+        </form>
     </aside>
-    <article id="description">
-
-    </article>
+    <article id="description"></article>
 
 
     <canvas id="canvas"></canvas>

@@ -10,7 +10,7 @@ import Point from "../shapes/basic/Point";
 import Line from "../shapes/basic/Line";
 import Circle from "../shapes/basic/Circle";
 
-import type Geomtoy from "..";
+import type Geomtoy from "../geomtoy";
 
 const defaultInversionPower = 10000;
 

@@ -2,10 +2,10 @@ import util from "../utility";
 
 import { optionerOf } from "../helper/Optioner";
 
-import Geomtoy from "..";
+import Geomtoy from "../geomtoy";
 import type { Options } from "../types";
 
-abstract class BaseObject {
+export default abstract class BaseObject {
     private _owner = null as unknown as Geomtoy;
     private _uuid = util.uuid();
     protected options_: Options;
@@ -31,6 +31,15 @@ abstract class BaseObject {
         return this._uuid;
     }
 
+    prototypeNameChain() {
+        let cs: string[] = [];
+        let pt = this;
+        do {
+            if ((pt = Object.getPrototypeOf(pt))) cs.push(pt.constructor.name);
+        } while (pt != null);
+        return cs;
+    }
+
     data(key: string, value: any): this;
     data(key: string): any;
     data(key: string, value?: any) {
@@ -43,8 +52,3 @@ abstract class BaseObject {
     abstract toArray(): any[];
     abstract toObject(): object;
 }
-
-/**
- * @category Base
- */
-export default BaseObject;

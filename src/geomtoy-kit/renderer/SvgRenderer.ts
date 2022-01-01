@@ -4,9 +4,12 @@ import Renderer from "./Renderer";
 import SvgInterface from "./SvgInterface";
 
 import type { GraphicsGeometryCommand, GraphicsImageCommand, GraphicsTextCommand } from "../../geomtoy/types";
-import type Geomtoy from "../../geomtoy";
-import type Shape from "../../geomtoy/base/Shape";
 import type { InterfaceOptions } from "../types";
+
+//@internal
+import type Geomtoy from "../../geomtoy/geomtoy";
+//@internal
+import type Shape from "../../geomtoy/base/Shape";
 
 /**
  * @category Renderer
@@ -92,7 +95,7 @@ export default class SvgRenderer extends Renderer {
         const imageEl = obtained ? this.imageSourceManager.take(imageSource)! : this.imageSourceManager.placeholderForSvg(imageWidth, imageHeight);
 
         const imageWrapper = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        imageWrapper.setAttribute("transform", `matrix(${this.display.globalTransformation.invert().get().join(" ")})`);
+        imageWrapper.setAttribute("transform", `matrix(${this.display.globalTransformation.invert().toArray().join(" ")})`);
 
         const b: [number, number, number, number] = [x, y, atImageWidth, atImageHeight];
         path.setAttribute("d", `M${box.nn(b).join(",")}L${box.mn(b).join(",")}L${box.mm(b).join(",")}L${box.nm(b).join(",")}Z`);
@@ -140,7 +143,7 @@ export default class SvgRenderer extends Renderer {
         textEl.setAttribute("font-family", `${fontFamily}`);
         fontBold && textEl.setAttribute("font-weight", "bold");
         fontItalic && textEl.setAttribute("font-style", "italic");
-        textEl.setAttribute("transform", `matrix(${this.display.globalTransformation.invert().get().join(" ")})`);
+        textEl.setAttribute("transform", `matrix(${this.display.globalTransformation.invert().toArray().join(" ")})`);
         textEl.setAttribute("x", `${tx - offsetX}`);
         textEl.setAttribute("y", `${ty - offsetY}`);
         this._setStyle(textEl, [, true]);
@@ -172,8 +175,7 @@ export default class SvgRenderer extends Renderer {
         const createdInterface = await this._interface.create();
 
         Promise.resolve().then(() => {
-            const gt = this.display.globalTransformation.get();
-            this._surface.setAttribute("transform", `matrix(${gt.join(" ")})`);
+            this._surface.setAttribute("transform", `matrix(${this.display.globalTransformation.toArray().join(" ")})`);
             this._interfaceSurface.replaceChildren(createdInterface);
             this._surface.replaceChildren(this._buffer);
             this._bufferFlushScheduled = false;

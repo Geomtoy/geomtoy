@@ -4,9 +4,12 @@ import Renderer from "./Renderer";
 import CanvasInterface from "./CanvasInterface";
 
 import type { GraphicsGeometryCommand, GraphicsImageCommand, GraphicsTextCommand } from "../../geomtoy/types";
-import type Geomtoy from "../../geomtoy";
-import type Shape from "../../geomtoy/base/Shape";
 import type { InterfaceOptions } from "../types";
+
+//@internal
+import type Geomtoy from "../../geomtoy/geomtoy";
+//@internal
+import type Shape from "../../geomtoy/base/Shape";
 
 /**
  * @category Renderer
@@ -94,7 +97,7 @@ export default class CanvasRenderer extends Renderer {
             } else {
                 this._buffer.drawImage(image, tx - offsetX, ty - offsetY, imageWidth, imageHeight);
             }
-            this._buffer.setTransform(...this.display.globalTransformation.get());
+            this._buffer.setTransform(...this.display.globalTransformation.toArray());
             this._buffer.fill(path);
             this._buffer.stroke(path);
         } else {
@@ -175,7 +178,7 @@ export default class CanvasRenderer extends Renderer {
             // Setting canvas's width/height will clear the canvas and reset its transform which we exactly want.
             this._buffer.canvas.width = this.container.width;
             this._buffer.canvas.height = this.container.height;
-            this._buffer.setTransform(...this.display.globalTransformation.get());
+            this._buffer.setTransform(...this.display.globalTransformation.toArray());
         }
     }
 

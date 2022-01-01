@@ -2,13 +2,10 @@ import Geomtoy from "../../src/geomtoy";
 import { colors, mathFont } from "./assets/assets";
 import View from "../../src/geomtoy-kit/frontend/View";
 import ViewElement from "../../src/geomtoy-kit/frontend/ViewElement";
-
-import { Renderer } from "../../src/geomtoy-kit/types";
-
-import type { EventObject, Text, Point } from "../../src/geomtoy/package";
+import type { EventObject, Text, Point } from "../../src/geomtoy";
 import { initRenderer, switchRenderer, setDescription } from "./assets/default";
-import VanillaCanvas from "../../src/geomtoy-kit/renderer/CanvasRenderer";
-import VanillaSvg from "../../src/geomtoy-kit/renderer/SvgRenderer";
+import CanvasRenderer from "../../src/geomtoy-kit/renderer/CanvasRenderer";
+import SvgRenderer from "../../src/geomtoy-kit/renderer/SvgRenderer";
 
 const [canvas, svg] = initRenderer();
 setDescription(`
@@ -28,7 +25,7 @@ setDescription(`
     </ol>
 `);
 
-const G = new Geomtoy(100, 100, {
+const G = new Geomtoy( {
     epsilon: 2 ** -32,
     graphics: {
         pointSize: 6,
@@ -40,33 +37,24 @@ const G = new Geomtoy(100, 100, {
         }
     }
 });
-G.yAxisPositiveOnBottom = false;
-G.scale = 10;
 
-const canvasRenderer = new VanillaCanvas(canvas, G);
-const svgRenderer = new VanillaSvg(svg, G);
 
-const view = new View(G, svgRenderer);
-view.startInteractive();
-view.startResponsive((width, height) => {
-    G.width = width;
-    0;
-    G.height = height;
-    G.origin = [width / 2, height / 2];
+const canvasRenderer = new CanvasRenderer(canvas, G);
+canvasRenderer.display.density = 10;
+canvasRenderer.display.zoom = 1;
+canvasRenderer.display.yAxisPositiveOnBottom = false;
+canvasRenderer.display.xAxisPositiveOnRight = false;
+
+const svgRenderer = new SvgRenderer(svg, G);
+svgRenderer.display.density = 10;
+svgRenderer.display.zoom = 1;
+// svgRenderer.display.yAxisPositiveOnBottom = false;
+// svgRenderer.display.xAxisPositiveOnRight = false;
+
+const view = new View(G, { hoverForemost: false });
+switchRenderer({ canvas: canvasRenderer, svg: svgRenderer }, "canvas", renderer => {
+    view.use(renderer, (width, height) => (view.renderer.display.origin = [width / 2, height / 2]));
 });
-const rendererList = { canvas: canvasRenderer, svg: svgRenderer };
-switchRenderer(rendererList, "svg", type => {
-    view.stopInteractive();
-    view.stopResponsive();
-    view.renderer = rendererList[type as keyof typeof rendererList];
-    view.startInteractive();
-    view.startResponsive((width, height) => {
-        G.width = width;
-        G.height = height;
-        G.origin = [width / 2, height / 2];
-    });
-});
-
 const main = () => {
     const pointA = G.Point(-25, -12);
     const pointB = G.Point(35, 25);

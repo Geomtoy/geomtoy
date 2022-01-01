@@ -1,4 +1,4 @@
-import type Geomtoy from "..";
+import type Geomtoy from "../geomtoy";
 import type EventTarget from "../base/EventTarget";
 import type Shape from "../base/Shape";
 import type Relationship from "../relationship";
@@ -8,8 +8,10 @@ import type Point from "../shapes/basic/Point";
 import type Ray from "../shapes/basic/Ray";
 import type LineSegment from "../shapes/basic/LineSegment";
 import type Transformation from "../transformation";
+import type Matrix from "../helper/Matrix";
 import { shapes, objects } from "..";
 import type EventObject from "../event/EventObject";
+
 
 //#region Common
 export type BaseObjectCollection = {
@@ -329,24 +331,24 @@ export type Options = {
     pathSampleRatio: number;
 };
 
-export interface ViewportDescriptor  {
-    width:number,
-    height:number,
-    density:number;
-    zoom:number;
+export interface ViewportDescriptor {
+    width: number;
+    height: number;
+    density: number;
+    zoom: number;
     origin: [number, number];
     pan: [number, number];
-    xAxisPositiveOnRight:boolean
-    yAxisPositiveOnBottom :boolean
-    globalTransformation: Transformation
-    globalViewBox:[number, number, number, number];
+    xAxisPositiveOnRight: boolean;
+    yAxisPositiveOnBottom: boolean;
+    globalTransformation: Matrix;
+    globalViewBox: [number, number, number, number];
 }
 
 //#endregion
 
 //#region Shape
 export type Direction = "positive" | "negative";
-export interface ClosedShape extends Shape {
+export interface ClosedShape {
     getLength(): number;
     getArea(): number;
     getWindingDirection(): Direction;

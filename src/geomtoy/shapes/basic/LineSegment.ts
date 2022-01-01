@@ -13,7 +13,7 @@ import Ray from "./Ray";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type Transformation from "../../transformation";
 import type { FiniteOpenShape, TransformableShape } from "../../types";
 
@@ -551,8 +551,5 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
 }
 
 validAndWithSameOwner(LineSegment);
-/**
- *
- * @category BaseObject
- */
+
 export default LineSegment;

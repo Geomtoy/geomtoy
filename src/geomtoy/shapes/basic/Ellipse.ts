@@ -8,7 +8,7 @@ import Point from "./Point";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type Transformation from "../../transformation";
 import type { OwnerCarrier, Direction, ClosedShape, TransformableShape, RotationFeaturedShape } from "../../types";
 
@@ -233,7 +233,5 @@ class Ellipse extends Shape implements ClosedShape, TransformableShape, Rotation
 }
 
 validAndWithSameOwner(Ellipse);
-/**
- * @category Shape
- */
+
 export default Ellipse;

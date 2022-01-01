@@ -17,7 +17,7 @@ import Inversion from "../../inversion";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type Transformation from "../../transformation";
 import type { OwnerCarrier, Direction, AnglePointLineData, PointLineData, PointsLineData, ClosedShape, TransformableShape } from "../../types";
 
@@ -501,7 +501,5 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
 }
 
 validAndWithSameOwner(Circle);
-/**
- * @category Shape
- */
+
 export default Circle;

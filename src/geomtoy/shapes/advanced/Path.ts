@@ -15,7 +15,7 @@ import EventObject from "../../event/EventObject";
 
 import { PathCommandType } from "../../types";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type { PathCommand, PathCommandWithUuid, PathMoveToCommand, PathLineToCommand, PathBezierCurveToCommand, PathQuadraticBezierCurveToCommand, PathArcToCommand } from "../../types";
 
 class Path extends Shape {
@@ -410,7 +410,4 @@ class Path extends Shape {
 
 validAndWithSameOwner(Path);
 
-/**
- * @category Shape
- */
 export default Path;

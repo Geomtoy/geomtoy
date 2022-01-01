@@ -165,7 +165,7 @@ export default class Graphics {
     prepend(g: Graphics) {
         this.commands = [...g.commands, ...this.commands];
     }
-    empty(g: Graphics) {
+    empty() {
         this.commands = [];
     }
 }

@@ -1,9 +1,9 @@
-import Geomtoy from "..";
 import EventTarget from "../base/EventTarget";
 import util from "../utility";
 
-const flushTimeout = 1000; //1000ms
+import type Geomtoy from "../geomtoy";
 
+const flushTimeout = 1000; //1000ms
 const schedulerMap = new WeakMap<Geomtoy, Scheduler>();
 
 class Scheduler {
@@ -33,7 +33,7 @@ class Scheduler {
         // We now do the final flush the queue to end the current loop.
         // First set the flag.
         this.flushed = true;
-        // Use a resolved `Promise` to do the `microtask`. Try queueMicrotask() ?
+        // Use a resolved `Promise` to do the microtask. Try queueMicrotask() ?
         Promise.resolve().then(() => {
             const timeOrigin = util.now();
             while (this.internalQueue.length !== 0) {
@@ -58,7 +58,7 @@ class Scheduler {
         if (!this.flushed) this.flushQueue();
     }
     nextTick(todo: () => any) {
-        if(this.externalQueue.includes(todo)) return
+        if (this.externalQueue.includes(todo)) return;
 
         this.externalQueue.push(todo);
         if (!this.flushed) this.flushQueue();

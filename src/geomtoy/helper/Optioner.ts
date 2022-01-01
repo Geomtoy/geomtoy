@@ -1,6 +1,6 @@
 import util from "../utility"
 
-import type Geomtoy from ".."
+import type Geomtoy from "../geomtoy"
 import type { Options, RecursivePartial } from "../types"
 
 export const defaultOptions: Options = {

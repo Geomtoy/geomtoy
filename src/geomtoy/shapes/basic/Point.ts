@@ -15,7 +15,7 @@ import Line from "./Line";
 import Graphics from "../../graphics";
 import EventObject from "../../event/EventObject";
 
-import type Geomtoy from "../..";
+import type Geomtoy from "../../geomtoy";
 import type Transformation from "../../transformation";
 import type { OwnerCarrier, ViewportDescriptor } from "../../types";
 
@@ -84,7 +84,6 @@ class Point extends Shape {
 
     /**
      * Whether points `point1`, `point2`, `point3` are collinear.
-     * @category Static
      * @param point1
      * @param point2
      * @param point3
@@ -130,7 +129,6 @@ class Point extends Shape {
     static isFourPointsConcyclic(this: OwnerCarrier, point1: Point, point2: Point, point3: Point, point4: Point) {}
     /**
      * Determine a point from vector `vector`.
-     * @category Static
      * @param vector
      * @returns
      */
@@ -329,7 +327,4 @@ class Point extends Shape {
 
 validAndWithSameOwner(Point);
 
-/**
- * @category Shape
- */
 export default Point;

@@ -3,7 +3,7 @@ import { colors, mathFont } from "./assets/assets";
 import View from "../../src/geomtoy-kit/frontend/View";
 import ViewElement from "../../src/geomtoy-kit/frontend/ViewElement";
 
-import type { EventObject, Text, Point } from "../../src/geomtoy/package";
+import type { EventObject, Text, Point } from "../../src/geomtoy";
 import { initRenderer, setDescription, switchRenderer } from "./assets/default";
 import CanvasRenderer from "../../src/geomtoy-kit/renderer/CanvasRenderer";
 import SvgRenderer from "../../src/geomtoy-kit/renderer/SvgRenderer";
@@ -31,31 +31,29 @@ const G = new Geomtoy({
     graphics: {
         pointSize: 6,
         arrow: {
-            width: 3,
+            width: 9,
             length: 20,
             foldback: 0,
-            noFoldback: false
+            noFoldback: true
         }
     }
 });
 
 const canvasRenderer = new CanvasRenderer(canvas, G);
-const svgRenderer = new SvgRenderer(svg, G);
-svgRenderer.display.density = 10
-svgRenderer.display.zoom = 1
-svgRenderer.display.yAxisPositiveOnBottom  =false
-svgRenderer.display.xAxisPositiveOnRight  =false
+canvasRenderer.display.density = 10;
+canvasRenderer.display.zoom = 1;
+canvasRenderer.display.yAxisPositiveOnBottom = false;
+canvasRenderer.display.xAxisPositiveOnRight = false;
 
-const view = new View(G, svgRenderer);
-view.startInteractive();
-view.startResponsive((width, height) => view.renderer.display.origin = [width / 2, height / 2]);
-const rendererList = { canvas: canvasRenderer, svg: svgRenderer };
-switchRenderer(rendererList, "svg", type => {
-    view.stopInteractive();
-    view.stopResponsive();
-    view.renderer = rendererList[type as keyof typeof rendererList];
-    view.startInteractive();
-    view.startResponsive((width, height) => view.renderer.display.origin = [width / 2, height / 2]);
+const svgRenderer = new SvgRenderer(svg, G);
+svgRenderer.display.density = 10;
+svgRenderer.display.zoom = 1;
+// svgRenderer.display.yAxisPositiveOnBottom = false;
+// svgRenderer.display.xAxisPositiveOnRight = false;
+
+const view = new View(G, { hoverForemost: false });
+switchRenderer({ canvas: canvasRenderer, svg: svgRenderer }, "canvas", renderer => {
+    view.use(renderer, (width, height) => (view.renderer.display.origin = [width / 2, height / 2]));
 });
 
 const main = () => {
@@ -135,46 +133,52 @@ const main = () => {
             this.items[1].copyFrom(ret === null ? null : ret[1]);
         }
     );
+    // const path = G.Path()
+    // path.appendCommand(G.Path.moveTo([0,0]))
+    // path.appendCommand(G.Path.lineTo([20,20]))
+    // path.appendCommand(G.Path.bezierCurveTo([20,20],[50,50],[30,25]))
 
-    // const image = G.Image(
-    //     1,
-    //     1,
-    //     314,
-    //     134,
-    //     198,
-    //     315,
-    //     157,
-    //     67,
-    //     "https://gimg2.baidu.com/image_search/src=http%3A%2F%2Ffile02.16sucai.com%2Fd%2Ffile%2F2014%2F0829%2Fb871e1addf5f8e96f3b390ece2b2da0d.jpg&refer=http%3A%2F%2Ffile02.16sucai.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1640132601&t=f76de25d7d398d40876eda69258d897c"
-    // );
-    const image = G.Image(0, 0, 500, 493, "https://img2.baidu.com/it/u=2911187851,1970588509&fm=26&fmt=auto");
- 
+    const image = G.Image(
+        1,
+        1,
+        314,
+        50,
+        // 314,
+        // 134,
+        198,
+        315,
+        157,
+        67,
+        "https://gimg2.baidu.com/image_search/src=http%3A%2F%2Ffile02.16sucai.com%2Fd%2Ffile%2F2014%2F0829%2Fb871e1addf5f8e96f3b390ece2b2da0d.jpg&refer=http%3A%2F%2Ffile02.16sucai.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1640132601&t=f76de25d7d398d40876eda69258d897c"
+    );
+    // const image = G.Image(0, 0, 25, 60, "https://img2.baidu.com/it/u=2911187851,1970588509&fm=26&fmt=auto");
 
     const hoverStyle = {
-        fill: colors.white + "AA",
-        stroke: colors.white + "AA"
+        fill: colors.orange,
+        stroke: colors.orange + "AA"
     };
     const activeStyle = {
         fill: colors.blue + "AA",
         stroke: colors.blue + "AA"
     };
 
-    view.add(new ViewElement(G.Point.zero(), false, { fill: colors.grey }, hoverStyle, activeStyle))
-        .add(new ViewElement(pointA, true, { fill: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(labelA, true, { fill: colors.black }, hoverStyle, activeStyle))
+    view.add(new ViewElement(pointA, true, { fill: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelA, false, { fill: colors.black }, hoverStyle, activeStyle))
         .add(new ViewElement(pointB, true, { fill: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(labelB, true, { fill: colors.black }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelB, false, { fill: colors.black }, hoverStyle, activeStyle))
 
-        .add(new ViewElement(lineAB, true, { stroke: colors.orange, strokeWidth: 3 }, hoverStyle, activeStyle))
         .add(new ViewElement(pointP, true, { fill: colors.green }, hoverStyle, activeStyle))
         .add(new ViewElement(labelP, false, { fill: colors.green }, hoverStyle, activeStyle))
+        .add(new ViewElement(lineAB, true, { stroke: colors.orange, strokeWidth: 3, fill: "transparent" }, hoverStyle, activeStyle))
 
         .add(new ViewElement(labelO, false, { fill: colors.purple }))
-        // .add(new ViewElement(circle, true, { fill: colors.purple + "20", stroke: colors.purple, strokeWidth: 1 }, hoverStyle, activeStyle))
+        .add(new ViewElement(circle, true, { fill: colors.purple + "20", stroke: colors.purple, strokeWidth: 1 }, hoverStyle, activeStyle))
         .add(new ViewElement(pointO, false, { stroke: colors.purple, strokeWidth: 2 }, hoverStyle, activeStyle))
 
         .add(new ViewElement(pointInt1, false, { stroke: colors.lightBlue, strokeWidth: 2 }, hoverStyle, activeStyle))
         .add(new ViewElement(pointInt2, false, { stroke: colors.lightBlue, strokeWidth: 2 }, hoverStyle, activeStyle))
-        // .add(new ViewElement(image, true, {}, hoverStyle, activeStyle));
+        .add(new ViewElement(image, true, { fill: colors.red + "AA" }, hoverStyle, activeStyle))
+        .add(new ViewElement(G.Point.zero(), false, { fill: colors.grey }, hoverStyle, activeStyle));
+    // .add(new ViewElement(path, true, { fill:colors.red +"AA" }, hoverStyle, activeStyle));
 };
 main();

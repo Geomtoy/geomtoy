@@ -6,7 +6,7 @@ import BaseObject from "../base/BaseObject"
 import Point from "../shapes/basic/Point"
 import Line from "../shapes/basic/Line"
 
-import type Geomtoy from ".."
+import type Geomtoy from "../geomtoy"
 
 class Transformation extends BaseObject {
     private _matrix: Matrix = Matrix.identity
@@ -14,11 +14,6 @@ class Transformation extends BaseObject {
     constructor(owner: Geomtoy) {
         super(owner)
         return Object.seal(this)
-    }
-    eventNames = Object.freeze([])
-
-    isValid() {
-        return true
     }
     /**
      * Get the matrix of transformation `this`.

@@ -4,7 +4,7 @@ import util from "../utility";
 import EventObject from "../event/EventObject";
 import EventTarget from "../base/EventTarget";
 
-import type Geomtoy from "..";
+import type Geomtoy from "../geomtoy";
 import type Shape from "../base/Shape";
 
 class Group extends EventTarget {
@@ -52,7 +52,5 @@ class Group extends EventTarget {
 }
 
 validAndWithSameOwner(Group);
-/**
- * @category BaseObject
- */
+
 export default Group;

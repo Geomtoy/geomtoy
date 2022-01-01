@@ -1,4 +1,4 @@
-import type { Renderer } from "../../../src/geomtoy-kit/types";
+import type Renderer from "../../../src/geomtoy-kit/renderer/Renderer";
 
 export function setDescription(text: string) {
     const description = document.querySelector("#description") as HTMLElement;
@@ -13,13 +13,18 @@ export function initRenderer(useSwitch: boolean = true) {
     return [canvas, svg] as [HTMLCanvasElement, SVGSVGElement];
 }
 
-export function switchRenderer(rendererList: { [key: string]: Renderer }, defaultType: "svg" | "canvas" = "canvas", callback: (...args: any[]) => void) {
+export function switchRenderer(rendererList: { "svg": Renderer ,"canvas":Renderer}, defaultType: "svg" | "canvas" = "canvas", callback: (renderer:Renderer) => void) {
+    const form = document.forms["rendererSwitch" as any] as HTMLFormElement;
+    form.addEventListener("change", e => showRenderer((e.target as HTMLInputElement).value as "svg" | "canvas"));
+
+    (form.renderer as RadioNodeList).value = defaultType;
     showRenderer(defaultType);
+
     function showRenderer(type: "svg" | "canvas") {
-        Object.keys(rendererList).forEach(t => {
+        Object.keys(rendererList).forEach((t: keyof typeof rendererList) => {
             rendererList[t].container.style.display = "none";
         });
         rendererList[type].container.style.display = "block";
-        callback(type);
+        callback(rendererList[type]);
     }
 }

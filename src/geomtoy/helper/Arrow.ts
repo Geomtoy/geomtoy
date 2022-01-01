@@ -1,8 +1,9 @@
-import Geomtoy from "..";
 import Graphics from "../graphics";
 import coord from "../utility/coord";
 import { optionerOf } from "./Optioner";
-import { ViewportDescriptor } from "../types";
+
+import type { ViewportDescriptor } from "../types";
+import type Geomtoy from "../geomtoy";
 
 class Arrow {
     constructor(public owner: Geomtoy, public coordinates: [number, number], public angle: number) {}

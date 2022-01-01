@@ -1,13 +1,12 @@
-class TextMeasurer {
-    private _canvas = document.createElement("canvas");
-    private _context = this._canvas.getContext("2d")!;
+export default class TextMeasurer {
+    private _context = document.createElement("canvas").getContext("2d")!;
 
     /**
      * Measure the width and height of the text(in identity).
-     * @param style 
-     * @param baseline 
-     * @param text 
-     * @returns 
+     * @param style
+     * @param baseline
+     * @param text
+     * @returns
      */
     measure(
         style: {
@@ -23,11 +22,6 @@ class TextMeasurer {
         this._context.textBaseline = baseline;
 
         const metrics = this._context.measureText(text);
-        return {
-            width: metrics.width,
-            height: metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent
-        };
+        return [metrics.width, metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent] as [number, number];
     }
 }
-
-export default TextMeasurer;

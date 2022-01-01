@@ -1,6 +1,6 @@
 import EventTarget from "./EventTarget";
 
-import type Geomtoy from "..";
+import type Geomtoy from "../geomtoy";
 import type Graphics from "../graphics";
 import { ViewportDescriptor } from "../types";
 

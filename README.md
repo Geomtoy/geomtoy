@@ -4,7 +4,7 @@
     <img alt="logo" src="./logo.png" style="max-height:300px;">
 </p>
 
-> A lightweight 2D geometric responsive computing library
+> A 2D geometry responsive computing, visualizing and interacting library.
 
 ## Install
 

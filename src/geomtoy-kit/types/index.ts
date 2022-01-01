@@ -1,5 +1,5 @@
-export type LineJoinType = "bevel" | "miter" | "round";
-export type LineCapType = "butt" | "round" | "square";
+export type StrokeLineJoinType = "bevel" | "miter" | "round";
+export type StrokeLineCapType = "butt" | "round" | "square";
 
 export type Style = {
     fill: string;
@@ -7,11 +7,11 @@ export type Style = {
     strokeWidth: number;
     strokeDash: number[];
     strokeDashOffset: number;
-    lineJoin: LineJoinType;
-    miterLimit: number;
-    lineCap: LineCapType;
+    strokeLineJoin: StrokeLineJoinType;
+    strokeMiterLimit: number;
+    strokeLineCap: StrokeLineCapType;
 };
-export type InteractiveStyle = Omit<Style, "strokeDash" | "strokeDashOffset" | "lineJoin" | "miterLimit" | "lineCap">;
+export type InteractiveStyle = Omit<Style, "strokeDash" | "strokeDashOffset" | "strokeLineJoin" | "strokeMiterLimit" | "strokeLineCap">;
 
 export type InterfaceOptions = {
     showAxis: boolean;

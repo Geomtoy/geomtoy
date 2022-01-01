@@ -27,10 +27,7 @@ const util = {
                         assignDeepInner(target[key], source[key]);
                     }
                 } else {
-                    // same type check
-                    if (Object.prototype.toString.call(target[key]) === Object.prototype.toString.call(source[key])) {
-                        target[key] = source[key];
-                    }
+                    if (source[key] !== undefined) target[key] = source[key];
                 }
             });
         }
