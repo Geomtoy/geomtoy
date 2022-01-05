@@ -2,7 +2,6 @@
     "name": "geomtoy",
     "version": "0.0.2",
     "description": "A 2D geometry responsive computing, visualizing and interacting library.",
-    "main": "dist/geomtoy.umd.js",
     "scripts": {
         "test": "jest",
         "doc": "node ./typedoc.js",
@@ -13,9 +12,6 @@
         "bundle-dts": "rollup --config --environment TASK:bundle-dts",
         "bundle-js": "rollup --config --environment TASK:bundle-js"
     },
-    "files": [
-        "/dist"
-    ],
     "author": "Fish Eleven",
     "homepage": "https://github.com/mog1347/geomtoy.git/#README",
     "repository": {
@@ -23,6 +19,10 @@
         "url": "https://github.com/mog1347/geomtoy.git"
     },
     "license": "MIT",
+    "main": "index.cjs",
+    "module": "index.mjs",
+    "browser": "index.js",
+    "types": "index.d.ts",
     "devDependencies": {
         "@babel/core": "^7.14.6",
         "@babel/plugin-proposal-decorators": "^7.14.5",
@@ -34,6 +34,8 @@
         "jest": "^27.0.6",
         "katex": "^0.13.16",
         "rollup": "^2.56.3",
+        "rollup-plugin-copy": "^3.4.0",
+        "rollup-plugin-delete": "^2.0.0",
         "rollup-plugin-dts": "^4.0.0",
         "rollup-plugin-livereload": "^2.0.5",
         "rollup-plugin-serve": "^1.1.0",

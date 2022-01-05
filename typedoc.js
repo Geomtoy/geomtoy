@@ -24,7 +24,8 @@ async function main() {
     app.bootstrap({
         name: "Geomtoy&GeomtoyKit",
         // typedoc options here
-        entryPoints: [pkgConfig.geomtoy.src, pkgConfig.geomtoyKit.src],
+        // entryPoints: [pkgConfig.geomtoy.src, pkgConfig.geomtoyKit.src],
+        entryPoints: [pkgConfig.geomtoy.src],
         includeVersion: true,
         excludePrivate: true,
         excludeProtected: true,
@@ -63,29 +64,29 @@ async function main() {
         ) {
             reflection.name = node.name.getText();
         }
-        // remove `owner` property
-        if (reflection.kindOf(ReflectionKind.Property) && reflection.name === "owner") {
-            let pc = reflection.parent.children,
-                index = pc.indexOf(reflection);
-            pc.splice(index, 1);
-        }
+        // // remove `owner` property
+        // if (reflection.kindOf(ReflectionKind.Property) && reflection.name === "owner") {
+        //     let pc = reflection.parent.children,
+        //         index = pc.indexOf(reflection);
+        //     pc.splice(index, 1);
+        // }
     });
 
     app.converter.on(Converter.EVENT_CREATE_SIGNATURE, (_context, reflection, node) => {
-        // remove `owner` parameter
-        if (reflection.kindOf(ReflectionKind.ConstructorSignature) || reflection.kindOf(ReflectionKind.CallSignature)) {
-            if (reflection.parameters) {
-                let foundIndex = reflection.parameters.findIndex(paramRef => paramRef.name === "owner");
-                if (~foundIndex) reflection.parameters.splice(foundIndex, 1);
-            }
-        }
-        // remove `owner` getter/setter
-        if ((reflection.kindOf(ReflectionKind.SetSignature) || reflection.kindOf(ReflectionKind.GetSignature)) && reflection.name === "owner") {
-            let accessorReflection = reflection.parent,
-                classReflection = reflection.parent.parent,
-                foundIndex = classReflection.children.indexOf(accessorReflection);
-            if (~foundIndex) classReflection.children.splice(foundIndex, 1);
-        }
+        // // remove `owner` parameter
+        // if (reflection.kindOf(ReflectionKind.ConstructorSignature) || reflection.kindOf(ReflectionKind.CallSignature)) {
+        //     if (reflection.parameters) {
+        //         let foundIndex = reflection.parameters.findIndex(paramRef => paramRef.name === "owner");
+        //         if (~foundIndex) reflection.parameters.splice(foundIndex, 1);
+        //     }
+        // }
+        // // remove `owner` getter/setter
+        // if ((reflection.kindOf(ReflectionKind.SetSignature) || reflection.kindOf(ReflectionKind.GetSignature)) && reflection.name === "owner") {
+        //     let accessorReflection = reflection.parent,
+        //         classReflection = reflection.parent.parent,
+        //         foundIndex = classReflection.children.indexOf(accessorReflection);
+        //     if (~foundIndex) classReflection.children.splice(foundIndex, 1);
+        // }
     });
 
     const project = app.convert();

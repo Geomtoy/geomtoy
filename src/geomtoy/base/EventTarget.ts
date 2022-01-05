@@ -286,14 +286,13 @@ abstract class EventTarget extends BaseObject {
         });
     }
 
-    protected trigger_(eventObject: EventObject<EventTarget>) {
+    protected trigger_<T extends EventTarget>(this:T,eventObject: EventObject<T>) {
         if (this._muted) return this;
-        const eventObjectOfThis = eventObject as EventObject<typeof this>;
         // Here we put the triggering event name in to the `_eventCache` instead of directly invoking the event handlers in the event.
         // Doing so to avoid repeatedly invoking the event handlers in one loop.
         // No matter how many times an event of `EventTarget` is triggered,
         // we only need to record here, the event has been triggered, and the event handlers of it need to be invoked.
-        if (!this._eventCache.has(eventObjectOfThis)) this._eventCache.add(eventObjectOfThis);
+        if (!this._eventCache.has(eventObject)) this._eventCache.add(eventObject);
         // If the event handling of this `EventTarget` is in progress,
         // only uncached events can have their callbacks unmarked.
         // We can't change the invoking status of the callbacks of cached event.
