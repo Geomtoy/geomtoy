@@ -1,4 +1,4 @@
-import Geomtoy from "../../src/geomtoy"
+import Geomtoy from "@geomtoy/core"
 
 class myAdapter {
     constructor(svgDotJsContainer, geomtoy) {

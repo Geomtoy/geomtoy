@@ -1,11 +1,8 @@
-import Geomtoy from "../../src/geomtoy";
+import Geomtoy from "@geomtoy/core";
 import { colors, mathFont } from "./assets/assets";
-import View from "../../packages/view/frontend/View";
-import ViewElement from "../../packages/view/frontend/ViewElement";
-import type { EventObject, Text, Point } from "../../src/geomtoy";
+import { View, ViewElement, CanvasRenderer, SvgRenderer } from "@geomtoy/view";
+import type { EventObject, Text, Point } from "@geomtoy/core";
 import { initRenderer, switchRenderer, setDescription } from "./assets/default";
-import CanvasRenderer from "../../packages/view/renderer/CanvasRenderer";
-import SvgRenderer from "../../packages/view/renderer/SvgRenderer";
 
 const [canvas, svg] = initRenderer();
 setDescription(`
@@ -25,7 +22,7 @@ setDescription(`
     </ol>
 `);
 
-const G = new Geomtoy( {
+const G = new Geomtoy({
     epsilon: 2 ** -32,
     graphics: {
         pointSize: 6,
@@ -37,7 +34,6 @@ const G = new Geomtoy( {
         }
     }
 });
-
 
 const canvasRenderer = new CanvasRenderer(canvas, G);
 canvasRenderer.display.density = 10;

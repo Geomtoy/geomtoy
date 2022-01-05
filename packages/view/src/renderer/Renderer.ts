@@ -1,5 +1,5 @@
-import util from "../../core/utility";
-import assert from "../../core/utility/assertion";
+import util from "../../../core/src/utility";
+import assert from "../../../core/src/utility/assertion";
 
 import ImageSourceManager from "../helper/ImageSourceManager";
 import TextMeasurer from "../helper/TextMeasurer";
@@ -7,10 +7,8 @@ import Display from "./Display";
 
 import type { ContainerElement, StrokeLineCapType, StrokeLineJoinType, PathLike, Style } from "../types";
 
-//@internal
-import type Geomtoy from "../../core/geomtoy";
-//@internal
-import type Shape from "../../core/base/Shape";
+import type Geomtoy from "@geomtoy/core";
+import type { Shape } from "@geomtoy/core";
 
 const dataKeyRendererInitialized = "data-renderer-initialized";
 

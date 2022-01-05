@@ -1,12 +1,10 @@
-import util from "../../core/utility";
+import util from "../../../core/src/utility";
 
 import type { Style, InteractiveStyle, PathLike } from "../types";
 import type View from "./View";
 
-//@internal
-import type Shape from "../../core/base/Shape";
-//@internal
-import type Group from "../../core/group";
+import type { Shape } from "@geomtoy/core";
+import type { Group } from "@geomtoy/core";
 
 export default class ViewElement {
     private _object: Shape | Group;

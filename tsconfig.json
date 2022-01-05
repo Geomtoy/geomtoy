@@ -1,4 +1,24 @@
 {
-    "extends": "./tsconfig.base.json",
-    "include": ["./src", "./test", "./examples/src", "packages/geomtoy-kit"]
+    "compilerOptions": {
+        "target": "ES2015",
+        "module": "ES2015",
+        "moduleResolution": "node",
+        "allowJs": true,
+        "alwaysStrict": true,
+        // "noUnusedLocals": true,
+        // "noUnusedParameters": true,
+        // !Even the typescript official example code to demonstrate parameter decorator with `TypedPropertyDescriptor<Function>` will have warnings if following flag is `true`
+        "strictFunctionTypes": false,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "strictNullChecks": true,
+        "strictBindCallApply": true,
+        "strictPropertyInitialization": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "stripInternal": true,
+        "noEmit": true
+    }
 }

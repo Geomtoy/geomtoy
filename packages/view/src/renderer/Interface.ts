@@ -1,4 +1,4 @@
-import util from "../../core/utility";
+import util from "../../../core/src/utility";
 
 import type Renderer from "./Renderer";
 import type { InterfaceOptions } from "../types";

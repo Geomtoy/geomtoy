@@ -1,12 +1,12 @@
-import assert from "../../core/utility/assertion";
-import box from "../../core/utility/box";
-import coord from "../../core/utility/coord";
-import math from "../../core/utility/math";
+import assert from "../../../core/src/utility/assertion";
+import box from "../../../core/src/utility/box";
+import coord from "../../../core/src/utility/coord";
+import math from "../../../core/src/utility/math";
 
-import Matrix from "../../core/helper/Matrix";
+import Matrix from "../../../core/src/helper/Matrix";
 
 import type Renderer from "./Renderer";
-import type { ViewportDescriptor } from "../../core/types";
+import type { ViewportDescriptor } from "@geomtoy/core";
 
 // 300x150 is the browser default size for both `<canvas>` and `<svg>`
 const defaultContainerWidth = 300;

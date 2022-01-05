@@ -1,4 +1,4 @@
-import Geomtoy from "../../src/geomtoy"
+import Geomtoy from "@geomtoy/core"
 
 let c = document.querySelector("#canOrigin")
 let ctx = c.getContext("2d")

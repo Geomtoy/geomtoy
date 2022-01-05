@@ -1,0 +1,23 @@
+{
+    "name": "@geomtoy/doc",
+    "version": "0.0.0",
+    "description": "A 2D geometry responsive computing, visualizing and interacting library.",
+    "author": "Fish Eleven",
+    "homepage": "https://github.com/mog1347/geomtoy.git/#README",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mog1347/geomtoy.git"
+    },
+    "license": "MIT",
+    "scripts": {
+        "doc": "node ./typedoc.js"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "devDependencies": {
+        "katex": "^0.15.1",
+        "typedoc": "^0.22.10",
+        "typescript": "^4.5.4"
+    }
+}
