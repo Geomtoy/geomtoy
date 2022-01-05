@@ -1,15 +1,15 @@
-import box from "../../geomtoy/utility/box";
+import box from "../../core/utility/box";
 
 import Renderer from "./Renderer";
 import SvgInterface from "./SvgInterface";
 
-import type { GraphicsGeometryCommand, GraphicsImageCommand, GraphicsTextCommand } from "../../geomtoy/types";
+import type { GraphicsGeometryCommand, GraphicsImageCommand, GraphicsTextCommand } from "../../core/types";
 import type { InterfaceOptions } from "../types";
 
 //@internal
-import type Geomtoy from "../../geomtoy/geomtoy";
+import type Geomtoy from "../../core/geomtoy";
 //@internal
-import type Shape from "../../geomtoy/base/Shape";
+import type Shape from "../../core/base/Shape";
 
 /**
  * @category Renderer

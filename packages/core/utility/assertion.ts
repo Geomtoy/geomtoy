@@ -1,4 +1,4 @@
-import util from "../utility";
+import util from ".";
 
 interface Assertion {
     condition(condition: any, msg?: string): asserts condition;

@@ -1,4 +1,4 @@
-import type Renderer from "../../../src/geomtoy-kit/renderer/Renderer";
+import type Renderer from "../../../packages/view/renderer/Renderer";
 
 export function setDescription(text: string) {
     const description = document.querySelector("#description") as HTMLElement;

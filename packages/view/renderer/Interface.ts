@@ -1,4 +1,4 @@
-import util from "../../geomtoy/utility";
+import util from "../../core/utility";
 
 import type Renderer from "./Renderer";
 import type { InterfaceOptions } from "../types";

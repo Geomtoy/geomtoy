@@ -1,11 +1,11 @@
 import Geomtoy from "../../src/geomtoy";
 import { colors, mathFont } from "./assets/assets";
-import View from "../../src/geomtoy-kit/frontend/View";
-import ViewElement from "../../src/geomtoy-kit/frontend/ViewElement";
+import View from "../../packages/view/frontend/View";
+import ViewElement from "../../packages/view/frontend/ViewElement";
 import type { EventObject, Text, Point } from "../../src/geomtoy";
 import { initRenderer, switchRenderer, setDescription } from "./assets/default";
-import CanvasRenderer from "../../src/geomtoy-kit/renderer/CanvasRenderer";
-import SvgRenderer from "../../src/geomtoy-kit/renderer/SvgRenderer";
+import CanvasRenderer from "../../packages/view/renderer/CanvasRenderer";
+import SvgRenderer from "../../packages/view/renderer/SvgRenderer";
 
 const [canvas, svg] = initRenderer();
 setDescription(`

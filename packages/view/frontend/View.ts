@@ -1,6 +1,6 @@
-import util from "../../geomtoy/utility";
-import math from "../../geomtoy/utility/math";
-import assert from "../../geomtoy/utility/assertion";
+import util from "../../core/utility";
+import math from "../../core/utility/math";
+import assert from "../../core/utility/assertion";
 
 import PointChecker from "../helper/PointChecker";
 import ViewElement from "./ViewElement";
@@ -9,9 +9,9 @@ import type Renderer from "../renderer/Renderer";
 import type { Style } from "../types";
 
 //@internal
-import type Geomtoy from "../../geomtoy/geomtoy";
+import type Geomtoy from "../../core/geomtoy";
 //@internal
-import type Image from "../../geomtoy/shapes/basic/Image";
+import type Image from "../../core/shapes/basic/Image";
 
 const defaultDefaultStyle: Style = {
     fill: "transparent",
