@@ -1,4 +1,7 @@
 {
     "extends": "../../tsconfig.json",
-    "exclude": ["./node_modules"]
+    "files": ["./typedoc.js"],
+    "compilerOptions": {
+        "stripInternal": true
+    }
 }

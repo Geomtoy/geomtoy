@@ -1,13 +1,13 @@
 {
     "compilationOptions": {
         "followSymlinks": false,
-        "preferredConfigPath": "./tsconfig.dts.json"
+        "preferredConfigPath": "./tsconfig.json"
     },
-
     "entries": [
         {
             "filePath": "./src/index.ts",
             "outFile": "./dist/index.d.ts",
+            "noCheck": true,
             "output": {
                 "noBanner": true
             }

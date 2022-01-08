@@ -1,16 +1,16 @@
-module.exports = {
-    presets: [
+{
+    "presets": [
         [
             "@babel/preset-env",
             {
-                bugfixes: true,
-                loose: true
+                "bugfixes": true,
+                "loose": true
             }
         ],
         [
             "@babel/preset-typescript",
             {
-                optimizeConstEnums: true
+                "optimizeConstEnums": true
             }
         ]
     ]

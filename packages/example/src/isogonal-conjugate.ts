@@ -60,6 +60,7 @@ const main = () => {
     const offsetLabel = function (this: Text, [e]: [EventObject<Point>]) {
         this.coordinates = e.target.move(1, 1).coordinates;
     };
+    
 
     const lineAB = G.Line()
         .bind(

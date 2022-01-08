@@ -6,6 +6,16 @@
 
 > A 2D geometry responsive computing, visualizing and interacting library.
 
+## Develop
+
+```sh
+# run these below in the repo root directory:
+# install `lerna` monorepo tool at the workspace `root`.
+npm ci 
+# install dependencies for each `leaf` package.
+npx lerna bootstrap --ci
+```
+
 ## Install
 
 ```js

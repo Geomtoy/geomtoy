@@ -1,6 +1,4 @@
 const TypeDoc = require("typedoc");
-const { Converter, ReflectionKind, DeclarationReflection } = require("typedoc");
-const ts = require("typescript");
 const fs = require("fs/promises");
 const path = require("path");
 
@@ -20,13 +18,14 @@ async function main() {
     app.options.addReader(new TypeDoc.TSConfigReader());
 
     app.bootstrap({
-        name: "Geomtoy",
         // typedoc options here
+        name: "Geomtoy",
         entryPointStrategy: "packages",
         entryPoints: [pkgConfig.src.core, pkgConfig.src.view],
-        includeVersion: true,
+        includeVersion: false,
         excludePrivate: true,
         excludeProtected: true,
+        excludeInternal: true,
         disableSources: true,
         readme: "none",
         includes: pkgConfig.docsIncludesDir,
@@ -47,44 +46,8 @@ async function main() {
                 }
             }
         },
-        plugin: "none",
         categorizeByGroup: true,
         categoryOrder: ["Entry", "Base", "Adaptor", "*"]
-    });
-
-    app.converter.on(Converter.EVENT_CREATE_DECLARATION, (_context, reflection, node) => {
-        // `default` rename
-        if (
-            reflection.name === "default" &&
-            node &&
-            (ts.isVariableDeclaration(node) || ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node) || ts.isInterfaceDeclaration(node)) &&
-            node.name
-        ) {
-            reflection.name = node.name.getText();
-        }
-        // // remove `owner` property
-        // if (reflection.kindOf(ReflectionKind.Property) && reflection.name === "owner") {
-        //     let pc = reflection.parent.children,
-        //         index = pc.indexOf(reflection);
-        //     pc.splice(index, 1);
-        // }
-    });
-
-    app.converter.on(Converter.EVENT_CREATE_SIGNATURE, (_context, reflection, node) => {
-        // // remove `owner` parameter
-        // if (reflection.kindOf(ReflectionKind.ConstructorSignature) || reflection.kindOf(ReflectionKind.CallSignature)) {
-        //     if (reflection.parameters) {
-        //         let foundIndex = reflection.parameters.findIndex(paramRef => paramRef.name === "owner");
-        //         if (~foundIndex) reflection.parameters.splice(foundIndex, 1);
-        //     }
-        // }
-        // // remove `owner` getter/setter
-        // if ((reflection.kindOf(ReflectionKind.SetSignature) || reflection.kindOf(ReflectionKind.GetSignature)) && reflection.name === "owner") {
-        //     let accessorReflection = reflection.parent,
-        //         classReflection = reflection.parent.parent,
-        //         foundIndex = classReflection.children.indexOf(accessorReflection);
-        //     if (~foundIndex) classReflection.children.splice(foundIndex, 1);
-        // }
     });
 
     const project = app.convert();
@@ -125,7 +88,7 @@ async function main() {
                     {left: '$', right: '$', display: false},
                 ]
             })
-        })()`; 
+        })()`;
         await fs.writeFile(docCssPath, docCss);
         await fs.writeFile(docJsPath, docJs);
         // Copy Katex fonts
