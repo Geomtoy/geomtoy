@@ -1,22 +1,24 @@
+import { shapes, objects } from "../collection";
+
 import type Geomtoy from "../geomtoy";
 import type EventTarget from "../base/EventTarget";
 import type Shape from "../base/Shape";
 import type Relationship from "../relationship";
-
 import type Line from "../shapes/basic/Line";
 import type Point from "../shapes/basic/Point";
 import type Ray from "../shapes/basic/Ray";
 import type LineSegment from "../shapes/basic/LineSegment";
 import type Transformation from "../transformation";
 import type Matrix from "../helper/Matrix";
-import { shapes, objects } from "..";
 import type EventObject from "../event/EventObject";
 
 
 //#region Common
-export type BaseObjectCollection = {
+/** @internal */
+export type ObjectCollection = {
     [K in keyof typeof objects]: typeof objects[K];
 };
+/** @internal */
 export type ShapeCollection = {
     [K in keyof typeof shapes]: typeof shapes[K];
 };
@@ -309,8 +311,9 @@ export type RecursivePartial<T> = {
     [K in keyof T]?: T[K] extends (infer U)[] ? RecursivePartial<U>[] : T[K] extends object ? RecursivePartial<T[K]> : T[K];
 };
 
-export type BaseObjectFactoryCollection = {
-    readonly [K in keyof BaseObjectCollection]: Factory<BaseObjectCollection[K]>;
+/** @internal */
+export type ObjectFactoryCollection = {
+    readonly [K in keyof ObjectCollection]: Factory<ObjectCollection[K]>;
 };
 
 // Geomtoy global options

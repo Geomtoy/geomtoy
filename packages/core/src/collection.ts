@@ -1,14 +1,3 @@
-/** @category Entry */
-export { default as default } from "./geomtoy";
-export * from "./types";
-
-import BaseObject from "./base/BaseObject";
-import EventTarget from "./base/EventTarget";
-import Shape from "./base/Shape";
-import EventObject from "./event/EventObject";
-/** @category Base */
-export { BaseObject, EventTarget, Shape, EventObject };
-
 import Arc from "./shapes/basic/Arc";
 import Bezier from "./shapes/basic/Bezier";
 import Circle from "./shapes/basic/Circle";
@@ -32,7 +21,35 @@ import Group from "./group";
 import Inversion from "./inversion";
 import Relationship from "./relationship";
 import Transformation from "./transformation";
-/** @category Shape */
-export { Arc, Bezier, Circle, Ellipse, Image, Line, LineSegment, Point, QuadraticBezier, Ray, Rectangle, RegularPolygon, Square, Text, Triangle, Vector, Path, Polygon };
-/** @category Tool */
-export { Group, Inversion, Relationship, Transformation };
+
+export const shapes = {
+    Arc,
+    Bezier,
+    Circle,
+    Ellipse,
+    Image,
+    Line,
+    LineSegment,
+    Point,
+    QuadraticBezier,
+    Ray,
+    Rectangle,
+    RegularPolygon,
+    Square,
+    Text,
+    Triangle,
+    Vector,
+    Path,
+    Polygon
+};
+export const nonShapes = {
+    Group,
+    Inversion,
+    Relationship,
+    Transformation
+};
+
+export const objects = {
+    ...shapes,
+    ...nonShapes
+};

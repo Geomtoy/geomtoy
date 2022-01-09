@@ -23,7 +23,9 @@
     "module": "dist/index.mjs",
     "browser": "dist/index.js",
     "types": "dist/index.d.ts",
-    "files": ["dist/*"],
+    "files": [
+        "dist/*"
+    ],
     "devDependencies": {
         "@babel/core": "^7.16.7",
         "@babel/preset-env": "^7.16.7",

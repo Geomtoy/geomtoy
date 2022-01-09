@@ -334,7 +334,7 @@ class Polygon extends Shape implements TransformableShape {
         util.range(0, l).forEach(index => {
             if (coord.isSameAs(c, cs[index], epsilon)) {
                 ret = true;
-                return true; // `point` is a vertex
+                return; // `point` is a vertex
             }
             let c1 = util.nth(cs, index - l)!,
                 c2 = util.nth(cs, index - l + 1)!;
@@ -342,7 +342,7 @@ class Polygon extends Shape implements TransformableShape {
                 let cp = vec2.cross(vec2.from(c1, c), vec2.from(c1, c2));
                 if (math.equalTo(cp, 0, epsilon)) {
                     ret = true;
-                    return true;
+                    return;
                 }
             }
         });
@@ -361,7 +361,7 @@ class Polygon extends Shape implements TransformableShape {
                 let cp = vec2.cross(vec2.from(c1, c), vec2.from(c1, c2));
                 if (math.lessThan(cp, 0, epsilon) !== coord.y(c2) < coord.y(c1)) {
                     ret = true;
-                    return true;
+                    return;
                 }
             }
         });

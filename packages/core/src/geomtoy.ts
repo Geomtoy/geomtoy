@@ -3,11 +3,11 @@ import { sealed } from "./decorator";
 import Scheduler, { schedulerOf } from "./helper/Scheduler";
 import Optioner, { optionerOf } from "./helper/Optioner";
 
-import { Options, Tail, ConstructorOverloads, ConstructorTailer, RecursivePartial, Factory, StaticMethodsMapper, OwnerCarrier, BaseObjectFactoryCollection } from "./types";
+import { Options, Tail, ConstructorOverloads, ConstructorTailer, RecursivePartial, Factory, StaticMethodsMapper, OwnerCarrier, ObjectFactoryCollection } from "./types";
 import BaseObject from "./base/BaseObject";
 import math from "./utility/math";
 import angle from "./utility/angle";
-import { objects } from ".";
+import { objects } from "./collection";
 
 function factory<T extends { new (...args: any[]): any }>(owner: Geomtoy, ctor: T): Factory<T> {
     // Use arrow function to define tailed constructor and static methods to avoid user trying to `new`(create instance of) them.
@@ -29,7 +29,7 @@ function factory<T extends { new (...args: any[]): any }>(owner: Geomtoy, ctor: 
     return Object.assign(constructorTailer, staticMethodsMapper, ownerCarrier);
 }
 
-interface Geomtoy extends BaseObjectFactoryCollection {}
+interface Geomtoy extends ObjectFactoryCollection {}
 class Geomtoy {
     private _uuid = util.uuid();
 
