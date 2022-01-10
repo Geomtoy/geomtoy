@@ -2,14 +2,15 @@
     "compilerOptions": {
         "target": "ES2015",
         "moduleResolution": "node",
-        "strict": true,  
-        "strictFunctionTypes":false,
-        "noFallthroughCasesInSwitch":true, 
-        // "noImplicitOverride": true, 
+        "strict": true,
+        "strictFunctionTypes": false,
+        "noFallthroughCasesInSwitch": true,
+        // "noImplicitOverride": true,
         // "noUnusedLocals":true,
         // "noUnusedParameters":true,
         "allowSyntheticDefaultImports": true,
-        "esModuleInterop": true, 
+        "esModuleInterop": true,
         "noEmit": true
-    }
+    },
+    "exclude": ["node_modules"]
 }
