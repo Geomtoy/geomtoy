@@ -4,5 +4,6 @@
     "trailingComma": "none",
     "printWidth": 200,
     "quoteProps": "consistent",
-    "arrowParens": "avoid"
+    "arrowParens": "avoid",
+    "endOfLine": "auto"
 }
