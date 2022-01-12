@@ -14,11 +14,5 @@
     },
     "publishConfig": {
         "access": "public"
-    },
-    "devDependencies": {
-        "katex": "^0.15.1",
-        "rimraf": "^3.0.2",
-        "typedoc": "^0.22.10",
-        "typedoc-plugin-rename-defaults": "^0.4.0"
     }
 }
