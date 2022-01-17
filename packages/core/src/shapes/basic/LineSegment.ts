@@ -270,7 +270,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      * @param {LineSegment} lineSegment
      * @returns {boolean}
      */
-    isPerpendicularWithLineSegment(lineSegment: LineSegment): boolean {
+    isPerpendicularToLineSegment(lineSegment: LineSegment): boolean {
         let { point1Coordinates: c1, point2Coordinates: c2 } = this,
             { point1Coordinates: c3, point2Coordinates: c4 } = lineSegment,
             v12 = vec2.from(c1, c2),
