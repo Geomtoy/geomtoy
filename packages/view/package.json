@@ -11,7 +11,8 @@
     "license": "GPL-3.0-or-later",
     "scripts": {
         "bundle-js": "rollup --config",
-        "emit-dts": "dts-bundle-generator --config ./dts.config.json"
+        "emit-dts": "dts-bundle-generator --config ./dts.config.json",
+        "test":"karma start"
     },
     "publishConfig": {
         "access": "public"
