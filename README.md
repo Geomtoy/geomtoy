@@ -1,12 +1,7 @@
 
 
-<p align="center" width="100%">
-    <img alt="logo" src="./logo.svg" style="max-height:200px;">
-</p>
-
-<h1 align="center"> 
-    Geomtoy
-</h1>
+<p align="center"><img alt="Geomtoy logo" src="./logo.svg" width="150"></p>
+<h1 align="center">Geomtoy</h1>
 
 > A 2D geometry responsive computing, visualizing and interacting library.
 
