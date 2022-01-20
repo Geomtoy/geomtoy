@@ -1,11 +1,16 @@
-# Geomtoy
+
 
 <p align="center" width="100%">
-    <img alt="logo" src="./logo.png" style="max-height:300px;">
+    <img alt="logo" src="./logo.svg" style="max-height:200px;">
 </p>
+
+<h1 align="center"> 
+    Geomtoy
+</h1>
 
 > A 2D geometry responsive computing, visualizing and interacting library.
 
+[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
 ## Develop
 
 ```sh

@@ -17,15 +17,13 @@ export default class ImageSourceManager {
         context.fillRect(0, 0, width, height);
 
         context.fillStyle = color;
-        const startX = (width - size) / 2;
-        const startY = (height - size) / 2;
+        context.transform(Math.SQRT1_2, Math.SQRT1_2, -Math.SQRT1_2, Math.SQRT1_2, width / 2, (height - size * Math.SQRT2) / 2);
 
-        context.fillRect(startX + boxSize, startY, boxSize * 3, boxSize);
-        context.fillRect(startX, startY + boxSize, boxSize, boxSize * 3);
-        context.fillRect(startX + boxSize, startY + boxSize * 4, boxSize * 3, boxSize);
-        context.fillRect(startX + boxSize * 4, startY + boxSize * 2, boxSize, boxSize * 2);
-        context.fillRect(startX + boxSize * 2, startY + boxSize * 2, boxSize, boxSize);
-
+        const path = new Path2D(`
+            M0,0V${boxSize * 5}H${boxSize * 5}V${boxSize * 2}H${boxSize * 4}V${boxSize * 4}H${boxSize}V${boxSize}H${boxSize * 5}V0Z
+            M${boxSize * 2},${boxSize * 2}V${boxSize * 3}H${boxSize * 3}V${boxSize * 2}Z
+        `);
+        context.fill(path);
         return this._placeholderCanvas;
     }
 
@@ -37,17 +35,12 @@ export default class ImageSourceManager {
         const size = (width < height ? width : height) / 3;
         const boxSize = size / 5;
 
-        const startX = (width - size) / 2;
-        const startY = (height - size) / 2;
-
         svg.innerHTML = `
-            <rect x="0" y="0" width="${width}" height="${height}" fill="${backgroundColor}" />
-            <rect x="${startX + boxSize}" y="${startY}" width="${boxSize * 3}" height="${boxSize}" fill="${color}"/>
-            <rect x="${startX}" y="${startY + boxSize}" width="${boxSize}" height="${boxSize * 3}" fill="${color}"/>
-            <rect x="${startX + boxSize}" y="${startY + boxSize * 4}" width="${boxSize * 3}" height="${boxSize}" fill="${color}"/>
-            <rect x="${startX + boxSize * 4}" y="${startY + boxSize * 2}" width="${boxSize}" height="${boxSize * 2}" fill="${color}"/>
-            <rect x="${startX + boxSize * 2}" y="${startY + boxSize * 2}" width="${boxSize}" height="${boxSize}" fill="${color}"/>
-            `;
+            <rect x="0" y="0" width="${width}" height="${height}" fill="${backgroundColor}"/>
+            <path transform="matrix(${Math.SQRT1_2}, ${Math.SQRT1_2}, ${-Math.SQRT1_2}, ${Math.SQRT1_2}, ${width / 2}, ${(height - size * Math.SQRT2) / 2})"
+                d="M0,0V${boxSize * 5}H${boxSize * 5}V${boxSize * 2}H${boxSize * 4}V${boxSize * 4}H${boxSize}V${boxSize}H${boxSize * 5}V0Z
+                M${boxSize * 2},${boxSize * 2}V${boxSize * 3}H${boxSize * 3}V${boxSize * 2}Z" fill="${color}"/>  
+        `;
         return svg;
     }
 
