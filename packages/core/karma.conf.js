@@ -3,7 +3,7 @@ const { nodeResolve } = require("@rollup/plugin-node-resolve");
 const commonjs = require("@rollup/plugin-commonjs");
 
 const extensions = [".js", ".ts"];
-const exclude = /node_modules/;
+const exclude = "**/node_modules/**";
 
 module.exports = function (config) {
     config.set({

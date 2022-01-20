@@ -18,7 +18,7 @@ async function main() {
     app.options.addReader(new TypeDoc.TSConfigReader());
 
     app.bootstrap({
-        // typedoc options here
+        // `TypeDoc` options here
         name: "Geomtoy",
         entryPointStrategy: "packages",
         entryPoints: [pkgConfig.src.core, pkgConfig.src.view],
@@ -35,11 +35,11 @@ async function main() {
             mangle: false,
             walkTokens(token) {
                 if (token.type === "escape" && token.text === "\\") {
-                    // unescape "\\" for latex
+                    // Unescape "\\" for latex
                     token.text = "\\\\";
                 }
                 if (token.type === "em" && token.raw.match(/^_[^_]+_$/)) {
-                    // unescape "_" for latex, so we should not use `_` to `italic` in markdown nor use `*` to `multiply` in latex
+                    // Unescape "_" for latex, so we should not use "_" to make italic in markdown nor use "*" to multiply in latex.
                     token.text = token.raw;
                     token.type = "text";
                     delete token.tokens;
@@ -51,32 +51,36 @@ async function main() {
     });
 
     const project = app.convert();
+    // Project may not have converted correctly
     if (project) {
-        // Project may not have converted correctly
-        const outputDir = pkgConfig.docsGenDir;
-        // Rendered docs
-        await app.generateDocs(project, outputDir);
+        // Render docs
+        await app.generateDocs(project, pkgConfig.docsGenDir);
 
-        // Begin mod
-        const docCssPath = outputDir + "/assets/style.css",
-            docJsPath = outputDir + "/assets/main.js",
-            docAssetDir = outputDir + "/assets/";
+        // Do some css/js modify
+        const docCssPath = path.resolve(pkgConfig.docsGenDir, "assets/style.css");
+        const docJsPath = path.resolve(pkgConfig.docsGenDir, "assets/main.js");
+        const docAssetDir = path.resolve(pkgConfig.docsGenDir, "assets/");
 
-        const katexCssPath = "./node_modules/katex/dist/katex.min.css",
-            katexJsPath = "./node_modules/katex/dist/katex.min.js",
-            katexAutoRenderPath = "./node_modules/katex/dist/contrib/auto-render.min.js",
-            katexFontDir = "./node_modules/katex/dist/fonts";
+        const katexDistPath = path.dirname(require.resolve("katex"));
+        const katexCssPath = path.resolve(katexDistPath, "katex.min.css");
+        const katexJsPath = path.resolve(katexDistPath, "katex.min.js");
+        const katexAutoRenderPath = path.resolve(katexDistPath, "contrib/auto-render.min.js");
+        const katexFontDir = path.resolve(katexDistPath, "fonts");
 
-        let docCss = await fs.readFile(docCssPath, "utf-8"),
-            docJs = await fs.readFile(docJsPath, "utf-8");
-        // Modify the bad theme classes
-        docCss = docCss.replace(/dl\.tsd-comment-tags dt {\s*(float: left;)([\s\S]+?)}/, function (m0, m1, m2) {
-            return `dl.tsd-comment-tags dt {\n  display: inline-block;${m2}}`;
-        });
-        // Add Katex css and js
-        let katexCss = await fs.readFile(katexCssPath, "utf-8"),
-            katexJs = await fs.readFile(katexJsPath, "utf-8"),
-            katexAutoRenderJs = await fs.readFile(katexAutoRenderPath, "utf-8");
+        let docCss = await fs.readFile(docCssPath, "utf-8");
+        let docJs = await fs.readFile(docJsPath, "utf-8");
+        // Modify `comment` classes
+        docCss += `
+            dl.tsd-comment-tags dt {
+                display: inline-block;
+                float: none !important;
+                margin: 0 0 10px 0 !important;
+            }
+        `;
+        // Add `katex` css and js
+        let katexCss = await fs.readFile(katexCssPath, "utf-8");
+        let katexJs = await fs.readFile(katexJsPath, "utf-8");
+        let katexAutoRenderJs = await fs.readFile(katexAutoRenderPath, "utf-8");
         docCss += katexCss;
         docJs +=
             katexJs +
@@ -88,11 +92,10 @@ async function main() {
                     {left: '$', right: '$', display: false},
                 ]
             })
-        })()`;
+            })()`;
         await fs.writeFile(docCssPath, docCss);
         await fs.writeFile(docJsPath, docJs);
-        // Copy Katex fonts
-        // await fs.cp(katexFontDir,docAssetDir + "/fonts")
+        // Copy `katex` fonts
         await fs.mkdir(path.resolve(docAssetDir, "fonts"));
         const fonts = await fs.readdir(katexFontDir);
         fonts.forEach(async fontName => {

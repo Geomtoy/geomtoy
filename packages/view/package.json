@@ -12,7 +12,8 @@
     "scripts": {
         "bundle-js": "rollup --config",
         "emit-dts": "dts-bundle-generator --config ./dts.config.json",
-        "test": "karma start"
+        "test": "karma start",
+        "test:single": "karma start --single-run"
     },
     "publishConfig": {
         "access": "public"

@@ -16,7 +16,8 @@
         "bundle-js": "rollup --config",
         "bundle-dts": "dts-bundle-generator --config ./dts.config.json",
         "check-ts": "tsc --watch",
-        "test": "karma start"
+        "test": "karma start",
+        "test:single": "karma start --single-run"
     },
     "typedocMain": "src/index.ts",
     "main": "dist/index.cjs",

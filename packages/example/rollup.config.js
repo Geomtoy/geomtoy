@@ -8,7 +8,7 @@ const fs = require("fs");
 const path = require("path");
 
 const extensions = [".js", ".ts"];
-const exclude = "./node_modules/**";
+const exclude = "./node_modules/!(@geomtoy/*)";
 
 const exampleSrcPath = "./src";
 const exampleDistPath = "./dist";
