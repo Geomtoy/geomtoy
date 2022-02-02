@@ -3,10 +3,7 @@ const fs = require("fs/promises");
 const path = require("path");
 
 const pkgConfig = {
-    src: {
-        core: "../core",
-        view: "../view"
-    },
+    entryPoints: ["../util", "../core", "../view"],
     docsGenDir: "./dist",
     docsIncludesDir: "./src/includes",
     docsMediaDir: "./src/media"
@@ -21,7 +18,7 @@ async function main() {
         // `TypeDoc` options here
         name: "Geomtoy",
         entryPointStrategy: "packages",
-        entryPoints: [pkgConfig.src.core, pkgConfig.src.view],
+        entryPoints: pkgConfig.entryPoints,
         includeVersion: false,
         excludePrivate: true,
         excludeProtected: true,

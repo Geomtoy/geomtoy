@@ -1,0 +1,30 @@
+{
+    "name": "@geomtoy/util",
+    "version": "0.0.0",
+    "description": "A 2D geometry responsive computing, visualizing and interacting library.",
+    "author": "Fish Eleven",
+    "homepage": "https://github.com/mog1347/geomtoy.git/#README",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mog1347/geomtoy.git"
+    },
+    "license": "GPL-3.0-or-later",
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "bundle-js": "rollup --config",
+        "bundle-dts": "dts-bundle-generator --config ./dts.config.json",
+        "check-ts": "tsc --watch",
+        "test": "karma start",
+        "test:single": "karma start --single-run"
+    },
+    "typedocMain": "src/index.ts",
+    "main": "dist/index.cjs",
+    "module": "dist/index.mjs",
+    "browser": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist/*"
+    ]
+}
