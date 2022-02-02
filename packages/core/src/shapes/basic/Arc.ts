@@ -1,8 +1,5 @@
+import { Assert, Vector2, Math, Type, Utility, Coordinates } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
-import assert from "../../utility/assertion";
-import util from "../../utility";
-import math from "../../utility/math";
-import coord from "../../utility/coord";
 
 import { arcEndpointToCenterParameterization } from "../../graphics/helper";
 import Shape from "../../base/Shape";
@@ -21,7 +18,7 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
     private _radiusY = NaN;
     private _startAngle = NaN;
     private _endAngle = NaN;
-    private _positive = false;
+    private _positive = true;
     private _rotation = 0;
 
     constructor(owner: Geomtoy, centerX: number, centerY: number, radiusX: number, radiusY: number, startAngle: number, endAngle: number, positive: boolean, rotation?: number);
@@ -30,10 +27,10 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any, a7?: any, a8?: any) {
         super(o);
-        if (util.isNumber(a1)) {
+        if (Type.isNumber(a1)) {
             Object.assign(this, { centerX: a1, centerY: a2, radiusX: a3, radiusY: a4, startAngle: a5, endAngle: a6, positive: a7, rotation: a8 ?? 0 });
         }
-        if (util.isArray(a1)) {
+        if (Type.isArray(a1)) {
             Object.assign(this, { centerCoordinates: a1, radiusX: a2, radiusY: a3, startAngle: a4, endAngle: a5, positive: a6, rotation: a7 ?? 0 });
         }
         if (a1 instanceof Point) {
@@ -54,35 +51,35 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
     });
 
     private _setCenterX(value: number) {
-        if (!util.isEqualTo(this._centerX, value)) this.trigger_(EventObject.simple(this, Arc.events.centerXChanged));
+        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(EventObject.simple(this, Arc.events.centerXChanged));
         this._centerX = value;
     }
     private _setCenterY(value: number) {
-        if (!util.isEqualTo(this._centerY, value)) this.trigger_(EventObject.simple(this, Arc.events.centerYChanged));
+        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(EventObject.simple(this, Arc.events.centerYChanged));
         this._centerY = value;
     }
     private _setRadiusX(value: number) {
-        if (!util.isEqualTo(this._radiusX, value)) this.trigger_(EventObject.simple(this, Arc.events.radiusXChanged));
+        if (!Utility.isEqualTo(this._radiusX, value)) this.trigger_(EventObject.simple(this, Arc.events.radiusXChanged));
         this._radiusX = value;
     }
     private _setRadiusY(value: number) {
-        if (!util.isEqualTo(this._radiusY, value)) this.trigger_(EventObject.simple(this, Arc.events.radiusYChanged));
+        if (!Utility.isEqualTo(this._radiusY, value)) this.trigger_(EventObject.simple(this, Arc.events.radiusYChanged));
         this._radiusY = value;
     }
     private _setStartAngle(value: number) {
-        if (!util.isEqualTo(this._startAngle, value)) this.trigger_(EventObject.simple(this, Arc.events.startAngleChanged));
+        if (!Utility.isEqualTo(this._startAngle, value)) this.trigger_(EventObject.simple(this, Arc.events.startAngleChanged));
         this._startAngle = value;
     }
     private _setEndAngle(value: number) {
-        if (!util.isEqualTo(this._endAngle, value)) this.trigger_(EventObject.simple(this, Arc.events.endAngleChanged));
+        if (!Utility.isEqualTo(this._endAngle, value)) this.trigger_(EventObject.simple(this, Arc.events.endAngleChanged));
         this._endAngle = value;
     }
     private _setPositive(value: boolean) {
-        if (!util.isEqualTo(this._positive, value)) this.trigger_(EventObject.simple(this, Arc.events.positiveChanged));
+        if (!Utility.isEqualTo(this._positive, value)) this.trigger_(EventObject.simple(this, Arc.events.positiveChanged));
         this._positive = value;
     }
     private _setRotation(value: number) {
-        if (!util.isEqualTo(this._rotation, value)) this.trigger_(EventObject.simple(this, Arc.events.rotationChanged));
+        if (!Utility.isEqualTo(this._rotation, value)) this.trigger_(EventObject.simple(this, Arc.events.rotationChanged));
         this._rotation = value;
     }
 
@@ -90,23 +87,23 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
         return this._centerX;
     }
     set centerX(value) {
-        assert.isRealNumber(value, "centerX");
+        Assert.isRealNumber(value, "centerX");
         this._setCenterX(value);
     }
     get centerY() {
         return this._centerY;
     }
     set centerY(value) {
-        assert.isRealNumber(value, "centerY");
+        Assert.isRealNumber(value, "centerY");
         this._setCenterY(value);
     }
     get centerCoordinates() {
         return [this._centerX, this._centerY] as [number, number];
     }
     set centerCoordinates(value) {
-        assert.isCoordinates(value, "centerCoordinates");
-        this._setCenterX(coord.x(value));
-        this._setCenterY(coord.y(value));
+        Assert.isCoordinates(value, "centerCoordinates");
+        this._setCenterX(Coordinates.x(value));
+        this._setCenterY(Coordinates.y(value));
     }
     get centerPoint() {
         return new Point(this.owner, this._centerX, this._centerY);
@@ -119,28 +116,28 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
         return this._radiusX;
     }
     set radiusX(value) {
-        assert.isPositiveNumber(value, "radiusX");
+        Assert.isPositiveNumber(value, "radiusX");
         this._setRadiusX(value);
     }
     get radiusY() {
         return this._radiusY;
     }
     set radiusY(value) {
-        assert.isPositiveNumber(value, "radiusY");
+        Assert.isPositiveNumber(value, "radiusY");
         this._setRadiusY(value);
     }
     get startAngle() {
         return this._startAngle;
     }
     set startAngle(value) {
-        assert.isRealNumber(value, "startAngle");
+        Assert.isRealNumber(value, "startAngle");
         this._setStartAngle(value);
     }
     get endAngle() {
         return this._endAngle;
     }
     set endAngle(value) {
-        assert.isRealNumber(value, "endAngle");
+        Assert.isRealNumber(value, "endAngle");
         this._setEndAngle(value);
     }
     get positive() {
@@ -153,17 +150,17 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
         return this._rotation;
     }
     set rotation(value) {
-        assert.isRealNumber(value, "rotation");
+        Assert.isRealNumber(value, "rotation");
         this._setRotation(value);
     }
 
     isValid() {
         const { centerCoordinates: cc, startAngle: sa, endAngle: ea } = this;
         const epsilon = this.options_.epsilon;
-        if (!coord.isValid(cc)) return false;
-        if (!util.isRealNumber(sa)) return false;
-        if (!util.isRealNumber(ea)) return false;
-        if (math.equalTo(sa, ea, epsilon)) return false;
+        if (!Coordinates.isValid(cc)) return false;
+        if (!Type.isRealNumber(sa)) return false;
+        if (!Type.isRealNumber(ea)) return false;
+        if (Math.equalTo(sa, ea, epsilon)) return false;
         return true;
     }
     static formingCondition = "[G]The `startAngle` and `endAngle` of an `Arc` should not be coincide, to keep an `Arc` not full `Ellipse` nor empty `Ellipse`.";
@@ -178,11 +175,11 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
         positive: boolean,
         rotation: number
     ) {
-        assert.isPositiveNumber(radiusX, "radiusX");
-        assert.isPositiveNumber(radiusY, "radiusY");
-        assert.isRealNumber(rotation, "rotation");
-        const [x1, y1] = point1 instanceof Point ? point1.coordinates : (assert.isCoordinates(point1, "point1"), point1);
-        const [x2, y2] = point2 instanceof Point ? point2.coordinates : (assert.isCoordinates(point2, "point2"), point2);
+        Assert.isPositiveNumber(radiusX, "radiusX");
+        Assert.isPositiveNumber(radiusY, "radiusY");
+        Assert.isRealNumber(rotation, "rotation");
+        const [x1, y1] = point1 instanceof Point ? point1.coordinates : (Assert.isCoordinates(point1, "point1"), point1);
+        const [x2, y2] = point2 instanceof Point ? point2.coordinates : (Assert.isCoordinates(point2, "point2"), point2);
         const {
             centerX,
             centerY,
@@ -214,7 +211,7 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
      * Move point `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.centerCoordinates = coord.move(this.centerCoordinates, deltaX, deltaY);
+        this.centerCoordinates = Vector2.add(this.centerCoordinates, [deltaX, deltaY]);
         return this;
     }
 
@@ -228,7 +225,7 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
      * Move point `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.centerCoordinates = coord.moveAlongAngle(this.centerCoordinates, angle, distance);
+        this.centerCoordinates = Vector2.add(this.centerCoordinates, Vector2.from2(angle, distance));
         return this;
     }
 

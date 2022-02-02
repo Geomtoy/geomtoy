@@ -1,8 +1,5 @@
-import util from "../utility";
-import assert from "../utility/assertion";
-
+import { Assert, Utility, Type } from "@geomtoy/util";
 import { schedulerOf } from "../helper/Scheduler";
-
 import BaseObject from "./BaseObject";
 import EventCache from "../helper/EventCache";
 import EventHandler from "../event/EventHandler";
@@ -96,7 +93,7 @@ abstract class EventTarget extends BaseObject {
             return eventPattern.split(eventPatternAnySplitter).some(n => {
                 const objects = this._eventCache.filter(n);
                 if (objects.length > 0) {
-                    origin = util.head(objects)!;
+                    origin = Utility.head(objects)!;
                     return true;
                 }
                 return false;
@@ -109,7 +106,7 @@ abstract class EventTarget extends BaseObject {
             return eventPattern.split(eventPatternAllSplitter).every(n => {
                 const objects = this._eventCache.filter(n);
                 if (objects.length > 0) {
-                    origins.push(util.head(objects)!);
+                    origins.push(Utility.head(objects)!);
                     return true;
                 }
                 return false;
@@ -157,7 +154,7 @@ abstract class EventTarget extends BaseObject {
             hasRecursiveEffect: boolean;
         }> = {}
     ) {
-        assert.isRealNumber(priority, "priority");
+        Assert.isRealNumber(priority, "priority");
 
         this._parseEvents(events).forEach(p => {
             if (this._hasHandler(p, callback, this))
@@ -286,7 +283,7 @@ abstract class EventTarget extends BaseObject {
         });
     }
 
-    protected trigger_<T extends EventTarget>(this:T,eventObject: EventObject<T>) {
+    protected trigger_<T extends EventTarget>(this: T, eventObject: EventObject<T>) {
         if (this._muted) return this;
         // Here we put the triggering event name in to the `_eventCache` instead of directly invoking the event handlers in the event.
         // Doing so to avoid repeatedly invoking the event handlers in one loop.
@@ -308,7 +305,7 @@ abstract class EventTarget extends BaseObject {
             pairs: [] as [EventTarget, string][]
         };
         pairs.forEach(pair => {
-            if (pair[0] instanceof EventTarget && util.isString(pair[1])) {
+            if (pair[0] instanceof EventTarget && Type.isString(pair[1])) {
                 ret.targets.push(pair[0]);
                 ret.pairs.push(pair);
             } else {
@@ -331,7 +328,7 @@ abstract class EventTarget extends BaseObject {
             hasRecursiveEffect: boolean;
         }> = {}
     ) {
-        assert.isRealNumber(priority, "priority");
+        Assert.isRealNumber(priority, "priority");
 
         let immediatelyCalled = false;
         const { targets, pairs } = this._parsePairs(eventTargetEventsPairs);

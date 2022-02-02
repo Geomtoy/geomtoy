@@ -1,26 +1,22 @@
-import vec2 from "../utility/vec2";
-import math from "../utility/math";
-
+import { Vector2, Math } from "@geomtoy/util";
 import { optionerOf } from "../helper/Optioner";
-
 import Circle from "../shapes/basic/Circle";
 
 import type { OwnerCarrier } from "../types";
 
-
 class Touch {
     static verb = "Touches" as const;
     static circleInTouchesCircle(this: OwnerCarrier, circle1: Circle, circle2: Circle) {
-        const sd = vec2.squaredMagnitude(vec2.from(circle1.centerCoordinates, circle2.centerCoordinates));
+        const sd = Vector2.squaredMagnitude(Vector2.from(circle1.centerCoordinates, circle2.centerCoordinates));
         const sdr = (circle1.radius - circle2.radius) ** 2;
         const epsilon = optionerOf(this.owner).options.epsilon;
-        return math.equalTo(sd, sdr, epsilon);
+        return Math.equalTo(sd, sdr, epsilon);
     }
     static circleExTouchesCircle(this: OwnerCarrier, circle1: Circle, circle2: Circle) {
-        const sd = vec2.squaredMagnitude(vec2.from(circle1.centerCoordinates, circle2.centerCoordinates));
+        const sd = Vector2.squaredMagnitude(Vector2.from(circle1.centerCoordinates, circle2.centerCoordinates));
         const ssr = (circle1.radius + circle2.radius) ** 2;
         const epsilon = optionerOf(this.owner).options.epsilon;
-        return math.equalTo(sd, ssr, epsilon);
+        return Math.equalTo(sd, ssr, epsilon);
     }
     static circleTouchesCircle(this: OwnerCarrier, circle1: Circle, circle2: Circle) {
         return Touch.circleInTouchesCircle.call(this, circle1, circle2) && Touch.circleExTouchesCircle.call(this, circle1, circle2);

@@ -1,6 +1,5 @@
+import { Utility, Type } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../decorator";
-import util from "../utility";
-
 import EventObject from "../event/EventObject";
 import EventTarget from "../base/EventTarget";
 
@@ -14,7 +13,7 @@ class Group extends EventTarget {
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any) {
         super(o);
-        if (util.isArray(a1)) {
+        if (Type.isArray(a1)) {
             Object.assign(this, { items: a1 });
         }
         return Object.seal(this);
@@ -24,7 +23,7 @@ class Group extends EventTarget {
     });
 
     private _setItems(value: Shape[]) {
-        if (!util.isEqualTo(this._items, value)) this.trigger_(EventObject.simple(this, Group.events.itemsReset));
+        if (!Utility.isEqualTo(this._items, value)) this.trigger_(EventObject.simple(this, Group.events.itemsReset));
         this._items = value;
     }
 

@@ -1,6 +1,4 @@
-import util from "../utility";
-import math from "../utility/math";
-
+import { Math } from "@geomtoy/util";
 import { optionerOf } from "../helper/Optioner";
 
 import Line from "../shapes/basic/Line";
@@ -37,14 +35,14 @@ class Cross {
         const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = lineSegment;
         const [a, b, c] = line.getGeneralEquationParameters();
         const epsilon = optionerOf(this.owner).options.epsilon;
-        const s1 = math.strictSign(a * x1 + b * y1 + c, epsilon);
-        const s2 = math.strictSign(a * x2 + b * y2 + c, epsilon);
+        const s1 = Math.sign(a * x1 + b * y1 + c, epsilon);
+        const s2 = Math.sign(a * x2 + b * y2 + c, epsilon);
         if (quick) {
             return (s1 === 0) !== (s2 === 0) || s1 * s2 === -1;
         }
 
         const w = lineSegment.getLerpingRatioByLine(line);
-        return new Point(this.owner, math.lerp(x1, x2, w), math.lerp(y1, y2, w));
+        return new Point(this.owner, Math.lerp(x1, x2, w), Math.lerp(y1, y2, w));
     }
 
     static lineCrossesRectangle(this: OwnerCarrier, line: Line, rectangle: Rectangle, quick: boolean) {

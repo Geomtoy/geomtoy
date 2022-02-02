@@ -1,7 +1,4 @@
-import util from "../../utility";
-import coord from "../../utility/coord";
-import size from "../../utility/size";
-import assert from "../../utility/assertion";
+import { Assert, Type, Utility, Coordinates, Size } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Shape from "../../base/Shape";
@@ -38,53 +35,53 @@ class Image extends Shape {
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any, a7?: any, a8?: any, a9?: any) {
         super(o);
-        if (util.isNumber(a1)) {
-            if (util.isNumber(a3)) {
-                if (util.isString(a5)) {
+        if (Type.isNumber(a1)) {
+            if (Type.isNumber(a3)) {
+                if (Type.isString(a5)) {
                     Object.assign(this, { x: a1, y: a2, width: a3, height: a4, imageSource: a5 });
                 }
-                if (util.isNumber(a5)) {
+                if (Type.isNumber(a5)) {
                     Object.assign(this, { x: a1, y: a2, width: a3, height: a4, sourceX: a5, sourceY: a6, sourceWidth: a7, sourceHeight: a8, imageSource: a9 });
                 }
             }
-            if (util.isArray(a3)) {
-                if (util.isString(a4)) {
+            if (Type.isArray(a3)) {
+                if (Type.isString(a4)) {
                     Object.assign(this, { x: a1, y: a2, size: a3, imageSource: a4 });
                 }
-                if (util.isNumber(a4)) {
+                if (Type.isNumber(a4)) {
                     Object.assign(this, { x: a1, y: a2, size: a3, sourceX: a4, sourceY: a5, sourceSize: a6, imageSource: a7 });
                 }
             }
         }
-        if (util.isArray(a1)) {
-            if (util.isNumber(a2)) {
-                if (util.isString(a4)) {
+        if (Type.isArray(a1)) {
+            if (Type.isNumber(a2)) {
+                if (Type.isString(a4)) {
                     Object.assign(this, { coordinates: a1, width: a2, height: a3, imageSource: a4 });
                 }
-                if (util.isArray(a4)) {
+                if (Type.isArray(a4)) {
                     Object.assign(this, { coordinates: a1, width: a2, height: a3, sourceCoordinates: a4, sourceWidth: a5, sourceHeight: a6, imageSource: a7 });
                 }
             }
-            if (util.isArray(a2)) {
-                if (util.isString(a3)) {
+            if (Type.isArray(a2)) {
+                if (Type.isString(a3)) {
                     Object.assign(this, { coordinates: a1, size: a2, imageSource: a3 });
                 }
-                if (util.isArray(a3)) {
+                if (Type.isArray(a3)) {
                     Object.assign(this, { coordinates: a1, size: a2, sourceCoordinates: a3, sourceSize: a4, imageSource: a5 });
                 }
             }
         }
         if (a1 instanceof Point) {
-            if (util.isNumber(a2)) {
-                if (util.isString(a4)) {
+            if (Type.isNumber(a2)) {
+                if (Type.isString(a4)) {
                     Object.assign(this, { point: a1, width: a2, height: a3, imageSource: a4 });
                 }
                 if (a4 instanceof Point) {
                     Object.assign(this, { point: a1, width: a2, height: a3, sourcePoint: a4, sourceWidth: a5, sourceHeight: a6, imageSource: a7 });
                 }
             }
-            if (util.isArray(a2)) {
-                if (util.isString(a3)) {
+            if (Type.isArray(a2)) {
+                if (Type.isString(a3)) {
                     Object.assign(this, { point: a1, size: a2, imageSource: a3 });
                 }
                 if (a3 instanceof Point) {
@@ -92,7 +89,7 @@ class Image extends Shape {
                 }
             }
         }
-        if (util.isString(a1)) {
+        if (Type.isString(a1)) {
             Object.assign(this, {
                 imageSource: a1
             });
@@ -113,39 +110,39 @@ class Image extends Shape {
     });
 
     private _setX(value: number) {
-        if (!util.isEqualTo(this._x, value)) this.trigger_(EventObject.simple(this, Image.events.xChanged));
+        if (!Utility.isEqualTo(this._x, value)) this.trigger_(EventObject.simple(this, Image.events.xChanged));
         this._x = value;
     }
     private _setY(value: number) {
-        if (!util.isEqualTo(this._y, value)) this.trigger_(EventObject.simple(this, Image.events.yChanged));
+        if (!Utility.isEqualTo(this._y, value)) this.trigger_(EventObject.simple(this, Image.events.yChanged));
         this._y = value;
     }
     private _setWidth(value: number) {
-        if (!util.isEqualTo(this._width, value)) this.trigger_(EventObject.simple(this, Image.events.widthChanged));
+        if (!Utility.isEqualTo(this._width, value)) this.trigger_(EventObject.simple(this, Image.events.widthChanged));
         this._width = value;
     }
     private _setHeight(value: number) {
-        if (!util.isEqualTo(this._height, value)) this.trigger_(EventObject.simple(this, Image.events.heightChanged));
+        if (!Utility.isEqualTo(this._height, value)) this.trigger_(EventObject.simple(this, Image.events.heightChanged));
         this._height = value;
     }
     private _setSourceX(value: number) {
-        if (!util.isEqualTo(this._sourceX, value)) this.trigger_(EventObject.simple(this, Image.events.sourceXChanged));
+        if (!Utility.isEqualTo(this._sourceX, value)) this.trigger_(EventObject.simple(this, Image.events.sourceXChanged));
         this._sourceX = value;
     }
     private _setSourceY(value: number) {
-        if (!util.isEqualTo(this._sourceY, value)) this.trigger_(EventObject.simple(this, Image.events.sourceYChanged));
+        if (!Utility.isEqualTo(this._sourceY, value)) this.trigger_(EventObject.simple(this, Image.events.sourceYChanged));
         this._sourceY = value;
     }
     private _setSourceWidth(value: number) {
-        if (!util.isEqualTo(this._sourceWidth, value)) this.trigger_(EventObject.simple(this, Image.events.sourceWidthChanged));
+        if (!Utility.isEqualTo(this._sourceWidth, value)) this.trigger_(EventObject.simple(this, Image.events.sourceWidthChanged));
         this._sourceWidth = value;
     }
     private _setSourceHeight(value: number) {
-        if (!util.isEqualTo(this._sourceHeight, value)) this.trigger_(EventObject.simple(this, Image.events.sourceHeightChanged));
+        if (!Utility.isEqualTo(this._sourceHeight, value)) this.trigger_(EventObject.simple(this, Image.events.sourceHeightChanged));
         this._sourceHeight = value;
     }
     private _setImageSource(value: string) {
-        if (!util.isEqualTo(this._imageSource, value)) this.trigger_(EventObject.simple(this, Image.events.imageSourceChanged));
+        if (!Utility.isEqualTo(this._imageSource, value)) this.trigger_(EventObject.simple(this, Image.events.imageSourceChanged));
         this._imageSource = value;
     }
 
@@ -153,23 +150,23 @@ class Image extends Shape {
         return this._x;
     }
     set x(value) {
-        assert.isRealNumber(value, "x");
+        Assert.isRealNumber(value, "x");
         this._setX(value);
     }
     get y() {
         return this._y;
     }
     set y(value) {
-        assert.isRealNumber(value, "y");
+        Assert.isRealNumber(value, "y");
         this._setY(value);
     }
     get coordinates() {
         return [this._x, this._y] as [number, number];
     }
     set coordinates(value) {
-        assert.isCoordinates(value, "coordinates");
-        this._setX(coord.x(value));
-        this._setY(coord.y(value));
+        Assert.isCoordinates(value, "coordinates");
+        this._setX(Coordinates.x(value));
+        this._setY(Coordinates.y(value));
     }
     get point() {
         return new Point(this.owner, this._x, this._y);
@@ -182,46 +179,46 @@ class Image extends Shape {
         return this._width;
     }
     set width(value) {
-        assert.isPositiveNumber(value, "width");
+        Assert.isPositiveNumber(value, "width");
         this._setWidth(value);
     }
     get height() {
         return this._height;
     }
     set height(value) {
-        assert.isPositiveNumber(value, "height");
+        Assert.isPositiveNumber(value, "height");
         this._setHeight(value);
     }
     get size() {
         return [this._width, this._height] as [number, number];
     }
     set size(value) {
-        assert.isSize(value, "size");
-        this._setWidth(size.width(value));
-        this._setHeight(size.height(value));
+        Assert.isSize(value, "size");
+        this._setWidth(Size.width(value));
+        this._setHeight(Size.height(value));
     }
 
     get sourceX() {
         return this._sourceX;
     }
     set sourceX(value) {
-        assert.isRealNumber(value, "sourceX");
+        Assert.isRealNumber(value, "sourceX");
         this._setSourceX(value);
     }
     get sourceY() {
         return this._sourceY;
     }
     set sourceY(value) {
-        assert.isRealNumber(value, "sourceY");
+        Assert.isRealNumber(value, "sourceY");
         this._setSourceY(value);
     }
     get sourceCoordinates() {
         return [this._sourceX, this._sourceY] as [number, number];
     }
     set sourceCoordinates(value) {
-        assert.isCoordinates(value, "sourceCoordinates");
-        this._setSourceX(coord.x(value));
-        this._setSourceY(coord.y(value));
+        Assert.isCoordinates(value, "sourceCoordinates");
+        this._setSourceX(Coordinates.x(value));
+        this._setSourceY(Coordinates.y(value));
     }
     get sourcePoint() {
         return new Point(this.owner, this._sourceX, this._sourceY);
@@ -234,23 +231,23 @@ class Image extends Shape {
         return this._sourceWidth;
     }
     set sourceWidth(value) {
-        assert.isPositiveNumber(value, "sourceWidth");
+        Assert.isPositiveNumber(value, "sourceWidth");
         this._setSourceWidth(value);
     }
     get sourceHeight() {
         return this._sourceHeight;
     }
     set sourceHeight(value) {
-        assert.isPositiveNumber(value, "sourceHeight");
+        Assert.isPositiveNumber(value, "sourceHeight");
         this._setSourceHeight(value);
     }
     get sourceSize() {
         return [this._sourceWidth, this._sourceHeight] as [number, number];
     }
     set sourceSize(value) {
-        assert.isSize(value, "sourceSize");
-        this._setSourceWidth(size.width(value));
-        this._setSourceHeight(size.height(value));
+        Assert.isSize(value, "sourceSize");
+        this._setSourceWidth(Size.width(value));
+        this._setSourceHeight(Size.height(value));
     }
     get imageSource() {
         return this._imageSource;
@@ -261,8 +258,8 @@ class Image extends Shape {
 
     isValid() {
         const { coordinates: c, size: s } = this;
-        if (!coord.isValid(c)) return false;
-        if (!size.isValid(s)) return false;
+        if (!Coordinates.isValid(c)) return false;
+        if (!Size.isValid(s)) return false;
         if (this._imageSource === "") return false;
         return true;
     }
@@ -273,7 +270,7 @@ class Image extends Shape {
      * Move text `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.coordinates = coord.move(this.coordinates, deltaX, deltaY);
+        this.coordinates = Coordinates.move(this.coordinates, deltaX, deltaY);
         return this;
     }
     /**
@@ -286,7 +283,7 @@ class Image extends Shape {
      * Move text `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.coordinates = coord.moveAlongAngle(this.coordinates, angle, distance);
+        this.coordinates = Coordinates.moveAlongAngle(this.coordinates, angle, distance);
         return this;
     }
 

@@ -1,9 +1,5 @@
+import { Assert, Vector2, Math, Type, Utility, Coordinates } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
-import math from "../../utility/math";
-import util from "../../utility";
-import vec2 from "../../utility/vec2";
-import assert from "../../utility/assertion";
-import coord from "../../utility/coord";
 
 import Shape from "../../base/Shape";
 import Point from "../basic/Point";
@@ -27,7 +23,7 @@ class Polygon extends Shape implements TransformableShape {
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any) {
         super(o);
-        if (util.isArray(a1)) {
+        if (Type.isArray(a1)) {
             Object.assign(this, { vertices: a1, closed: a2 ?? true });
         }
         return Object.seal(this);
@@ -41,9 +37,9 @@ class Polygon extends Shape implements TransformableShape {
     });
 
     private _setVertices(value: PolygonVertex[]) {
-        if (!util.isEqualTo(this._vertices, value)) this.trigger_(EventObject.simple(this, Polygon.events.verticesReset));
+        if (!Utility.isEqualTo(this._vertices, value)) this.trigger_(EventObject.simple(this, Polygon.events.verticesReset));
         this._vertices = value.map(vtx => {
-            return { ...vtx, uuid: util.uuid() };
+            return { ...vtx, uuid: Utility.uuid() };
         });
     }
 
@@ -54,7 +50,7 @@ class Polygon extends Shape implements TransformableShape {
         });
     }
     set vertices(value) {
-        assert.condition(util.isArray(value) && value.every(vtx => this._isPolygonVertex(vtx)), "[G]The `vertices` should be an array of `PolygonVertex`.");
+        Assert.condition(Type.isArray(value) && value.every(vtx => this._isPolygonVertex(vtx)), "[G]The `vertices` should be an array of `PolygonVertex`.");
         this._setVertices(value);
     }
 
@@ -75,7 +71,7 @@ class Polygon extends Shape implements TransformableShape {
         const uniques: [number, number][] = [[NaN, NaN]];
 
         return cs.some(c => {
-            if (uniques.every(uc => !coord.isSameAs(uc, c, epsilon))) uniques.push(c);
+            if (uniques.every(uc => !Coordinates.isEqualTo(uc, c, epsilon))) uniques.push(c);
             if (uniques.length > polygonMinVertexCount) return true;
         });
     }
@@ -98,7 +94,7 @@ class Polygon extends Shape implements TransformableShape {
     }
 
     static vertex(point: [number, number] | Point) {
-        const [x, y] = point instanceof Point ? point.coordinates : (assert.isCoordinates(point, "point"), point);
+        const [x, y] = point instanceof Point ? point.coordinates : (Assert.isCoordinates(point, "point"), point);
         const ret: PolygonVertex = { x, y };
         return ret;
     }
@@ -107,12 +103,12 @@ class Polygon extends Shape implements TransformableShape {
         return this.clone().moveSelf(deltaX, deltaY);
     }
     moveSelf(deltaX: number, deltaY: number) {
-        assert.isRealNumber(deltaX, "deltaX");
-        assert.isRealNumber(deltaY, "deltaY");
+        Assert.isRealNumber(deltaX, "deltaX");
+        Assert.isRealNumber(deltaY, "deltaY");
         if (deltaX === 0 && deltaY === 0) return this;
 
         this._vertices.forEach((vtx, i) => {
-            [vtx.x, vtx.y] = coord.move([vtx.x, vtx.y], deltaX, deltaY);
+            [vtx.x, vtx.y] = Vector2.add([vtx.x, vtx.y], [deltaX, deltaY]);
             this.trigger_(EventObject.collection(this, Polygon.events.vertexChanged, i, vtx.uuid));
         });
         return this;
@@ -121,36 +117,36 @@ class Polygon extends Shape implements TransformableShape {
         return this.clone().moveAlongAngleSelf(angle, distance);
     }
     moveAlongAngleSelf(angle: number, distance: number) {
-        assert.isRealNumber(angle, "angle");
-        assert.isRealNumber(distance, "distance");
+        Assert.isRealNumber(angle, "angle");
+        Assert.isRealNumber(distance, "distance");
         if (distance === 0) return this;
 
         const c: [number, number] = [0, 0];
-        const [dx, dy] = coord.moveAlongAngle(c, angle, distance);
+        const [dx, dy] = Vector2.add(c, Vector2.from2(angle, distance));
         return this.moveSelf(dx, dy);
     }
 
     private _isPolygonVertex(v: any): v is PolygonVertex {
-        if (!util.isPlainObject(v)) return false;
+        if (!Type.isPlainObject(v)) return false;
         if (Object.keys(v).length !== 2) return false;
-        if (!util.isRealNumber(v.x)) return false;
-        if (!util.isRealNumber(v.y)) return false;
+        if (!Type.isRealNumber(v.x)) return false;
+        if (!Type.isRealNumber(v.y)) return false;
         return true;
     }
     private _assertIsPolygonVertex(value: PolygonVertex, p: string) {
-        assert.condition(this._isPolygonVertex(value), `[G]The \`${p}\` should be a \`PolygonVertex\`.`);
+        Assert.condition(this._isPolygonVertex(value), `[G]The \`${p}\` should be a \`PolygonVertex\`.`);
     }
     private _assertIsIndexOrUuid(value: number | string, p: string) {
-        assert.condition(!util.isString(value) && !(util.isInteger(value) && value >= 0), `[G]The \`${p}\` should be a string or an integer greater than or equal to 0.`);
+        Assert.condition(!Type.isString(value) && !(Type.isInteger(value) && value >= 0), `[G]The \`${p}\` should be a string or an integer greater than or equal to 0.`);
     }
     private _parseIndexOrUuid(indexOrUuid: number | string): [number, string] | [undefined, undefined] {
-        if (util.isString(indexOrUuid)) {
+        if (Type.isString(indexOrUuid)) {
             const index = this._vertices.findIndex(vtx => vtx.uuid === indexOrUuid);
             if (index !== -1) {
                 return [index, indexOrUuid];
             }
         } else {
-            if (math.inInterval(indexOrUuid, 0, this.vertexCount - 1)) {
+            if (Math.between(indexOrUuid, 0, this.vertexCount - 1, true, true)) {
                 return [indexOrUuid, this._vertices[indexOrUuid].uuid];
             }
         }
@@ -161,8 +157,8 @@ class Polygon extends Shape implements TransformableShape {
         return this._vertices.findIndex(vtx => vtx.uuid === uuid);
     }
     getUuidOfIndex(index: number) {
-        assert.isInteger(index, "index");
-        return math.inInterval(index, 0, this.vertexCount - 1) ? this._vertices[index].uuid : "";
+        Assert.isInteger(index, "index");
+        return Math.between(index, 0, this.vertexCount - 1, true, true) ? this._vertices[index].uuid : "";
     }
 
     getLineSegment(indexOrUuid: number | string) {
@@ -171,8 +167,8 @@ class Polygon extends Shape implements TransformableShape {
         const [index] = this._parseIndexOrUuid(indexOrUuid);
         if (index === undefined) return null;
 
-        const curr = util.nth(this._vertices, index)!;
-        const prev = util.nth(this._vertices, index - 1)!;
+        const curr = Utility.nth(this._vertices, index)!;
+        const prev = Utility.nth(this._vertices, index - 1)!;
 
         return new LineSegment(this.owner, prev.x, prev.y, curr.x, curr.y);
     }
@@ -182,7 +178,7 @@ class Polygon extends Shape implements TransformableShape {
         const [index] = this._parseIndexOrUuid(indexOrUuid);
         if (index === undefined) return null;
 
-        const { uuid, ...rest } = util.cloneDeep(this._vertices[index]);
+        const { uuid, ...rest } = Utility.cloneDeep(this._vertices[index]);
         return rest;
     }
 
@@ -194,10 +190,10 @@ class Polygon extends Shape implements TransformableShape {
         if (index === undefined || uuid === undefined) return false;
 
         const oldVtx = this._vertices[index];
-        const newVtx = util.cloneDeep(oldVtx);
-        util.assignDeep(newVtx, vertex);
+        const newVtx = Utility.cloneDeep(oldVtx);
+        Utility.assignDeep(newVtx, vertex);
 
-        if (!util.isEqualTo(oldVtx, newVtx)) this.trigger_(EventObject.collection(this, Polygon.events.vertexChanged, index, uuid));
+        if (!Utility.isEqualTo(oldVtx, newVtx)) this.trigger_(EventObject.collection(this, Polygon.events.vertexChanged, index, uuid));
         this._vertices[index] = newVtx;
         return true;
     }
@@ -208,7 +204,7 @@ class Polygon extends Shape implements TransformableShape {
         const [index, uuid] = this._parseIndexOrUuid(indexOrUuid);
         if (index === undefined || uuid === undefined) return false;
 
-        const vtx = Object.assign(util.cloneDeep(vertex), { uuid: util.uuid() });
+        const vtx = Object.assign(Utility.cloneDeep(vertex), { uuid: Utility.uuid() });
 
         this.trigger_(EventObject.collection(this, Polygon.events.vertexAdded, index + 1, vtx.uuid));
         this._vertices.splice(index, 0, vtx);
@@ -228,7 +224,7 @@ class Polygon extends Shape implements TransformableShape {
     appendVertex(vertex: PolygonVertex) {
         this._assertIsPolygonVertex(vertex, "vertex");
 
-        const vtx = Object.assign(util.cloneDeep(vertex), { uuid: util.uuid() });
+        const vtx = Object.assign(Utility.cloneDeep(vertex), { uuid: Utility.uuid() });
         const index = this.vertexCount;
 
         this.trigger_(EventObject.collection(this, Polygon.events.vertexAdded, index, vtx.uuid));
@@ -238,7 +234,7 @@ class Polygon extends Shape implements TransformableShape {
     prependVertex(vertex: PolygonVertex): [number, string] {
         this._assertIsPolygonVertex(vertex, "vertex");
 
-        const vtx = Object.assign(util.cloneDeep(vertex), { uuid: util.uuid() });
+        const vtx = Object.assign(Utility.cloneDeep(vertex), { uuid: Utility.uuid() });
         const index = 0;
         this.trigger_(EventObject.collection(this, Polygon.events.vertexAdded, index, vtx.uuid));
         this._vertices.unshift(vtx);
@@ -257,10 +253,10 @@ class Polygon extends Shape implements TransformableShape {
         const cs = this._vertexCoordinatesArray;
         let p = 0;
 
-        util.range(0, l).forEach(index => {
-            const c1 = util.nth(cs, index - l)!;
-            const c2 = util.nth(cs, index - l + 1)!;
-            p += vec2.magnitude(vec2.from(c1, c2));
+        Utility.range(0, l).forEach(index => {
+            const c1 = Utility.nth(cs, index - l)!;
+            const c2 = Utility.nth(cs, index - l + 1)!;
+            p += Vector2.magnitude(Vector2.from(c1, c2));
         });
         return p;
     }
@@ -270,13 +266,13 @@ class Polygon extends Shape implements TransformableShape {
         const cs = this._vertexCoordinatesArray;
         let a = 0;
 
-        util.range(0, l).forEach(index => {
-            const c1 = util.nth(cs, index - l)!;
-            const c2 = util.nth(cs, index - l + 1)!;
-            a += vec2.cross(c1, c2);
+        Utility.range(0, l).forEach(index => {
+            const c1 = Utility.nth(cs, index - l)!;
+            const c2 = Utility.nth(cs, index - l + 1)!;
+            a += Vector2.cross(c1, c2);
         });
         a = a / 2;
-        return math.abs(a);
+        return Math.abs(a);
     }
     getCentroidPoint() {
         const l = this.vertexCount;
@@ -302,7 +298,7 @@ class Polygon extends Shape implements TransformableShape {
             const j = i === 1 - 1 ? 0 : i + 1;
             const [x1, y1] = cs[i];
             const [x2, y2] = cs[j];
-            const cp = vec2.cross([x1, y1], [x2, y2]);
+            const cp = Vector2.cross([x1, y1], [x2, y2]);
             a += cp;
             sumX += (x1 + x2) * cp;
             sumY += (y1 + y2) * cp;
@@ -311,10 +307,10 @@ class Polygon extends Shape implements TransformableShape {
     }
 
     getBoundingRectangle() {
-        let minX = math.Infinity;
-        let maxX = -math.Infinity;
-        let minY = math.Infinity;
-        let maxY = -math.Infinity;
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
         this._vertexCoordinatesArray.forEach((_, index, collection) => {
             const [x, y] = collection[index];
             if (x < minX) minX = x;
@@ -331,16 +327,16 @@ class Polygon extends Shape implements TransformableShape {
             c = point.coordinates,
             epsilon = this.options_.epsilon,
             ret = false;
-        util.range(0, l).forEach(index => {
-            if (coord.isSameAs(c, cs[index], epsilon)) {
+        Utility.range(0, l).forEach(index => {
+            if (Coordinates.isEqualTo(c, cs[index], epsilon)) {
                 ret = true;
                 return; // `point` is a vertex
             }
-            let c1 = util.nth(cs, index - l)!,
-                c2 = util.nth(cs, index - l + 1)!;
-            if (coord.y(c1) > coord.y(c) !== coord.y(c2) > coord.y(c)) {
-                let cp = vec2.cross(vec2.from(c1, c), vec2.from(c1, c2));
-                if (math.equalTo(cp, 0, epsilon)) {
+            let c1 = Utility.nth(cs, index - l)!,
+                c2 = Utility.nth(cs, index - l + 1)!;
+            if (Coordinates.y(c1) > Coordinates.y(c) !== Coordinates.y(c2) > Coordinates.y(c)) {
+                let cp = Vector2.cross(Vector2.from(c1, c), Vector2.from(c1, c2));
+                if (Math.equalTo(cp, 0, epsilon)) {
                     ret = true;
                     return;
                 }
@@ -354,12 +350,12 @@ class Polygon extends Shape implements TransformableShape {
             c = point.coordinates,
             epsilon = this.options_.epsilon,
             ret = false;
-        util.range(0, l).forEach(index => {
-            let c1 = util.nth(cs, index - l)!,
-                c2 = util.nth(cs, index - l + 1)!;
-            if (coord.y(c1) > coord.y(c) !== coord.y(c2) > coord.y(c)) {
-                let cp = vec2.cross(vec2.from(c1, c), vec2.from(c1, c2));
-                if (math.lessThan(cp, 0, epsilon) !== coord.y(c2) < coord.y(c1)) {
+        Utility.range(0, l).forEach(index => {
+            let c1 = Utility.nth(cs, index - l)!,
+                c2 = Utility.nth(cs, index - l + 1)!;
+            if (Coordinates.y(c1) > Coordinates.y(c) !== Coordinates.y(c2) > Coordinates.y(c)) {
+                let cp = Vector2.cross(Vector2.from(c1, c), Vector2.from(c1, c2));
+                if (Math.lessThan(cp, 0, epsilon) !== Coordinates.y(c2) < Coordinates.y(c1)) {
                     ret = true;
                     return;
                 }
@@ -379,8 +375,8 @@ class Polygon extends Shape implements TransformableShape {
         const g = new Graphics();
         if (!this.isValid()) return g;
         const cs = this._vertexCoordinatesArray;
-        g.moveTo(...util.head(cs)!);
-        util.tail(cs).forEach(c => {
+        g.moveTo(...Utility.head(cs)!);
+        Utility.tail(cs).forEach(c => {
             g.lineTo(...c);
         });
         if (this.closed) {

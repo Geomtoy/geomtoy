@@ -1,9 +1,5 @@
+import { Assert, Math, Vector2, Type, Coordinates } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../decorator";
-import assert from "../utility/assertion";
-import util from "../utility";
-import vec2 from "../utility/vec2";
-import math from "../utility/math";
-import coord from "../utility/coord";
 
 import BaseObject from "../base/BaseObject";
 import Point from "../shapes/basic/Point";
@@ -24,11 +20,11 @@ class Inversion extends BaseObject {
     constructor(owner: Geomtoy, centerPoint: Point, power?: number);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any) {
         super(o);
-        if (util.isNumber(a1)) {
+        if (Type.isNumber(a1)) {
             this.centerCoordinates([a1, a2]);
             this.power(a3);
         }
-        if (util.isCoordinates(a1)) {
+        if (Type.isCoordinates(a1)) {
             this.centerCoordinates(a1);
             this.power(a2);
         }
@@ -45,9 +41,9 @@ class Inversion extends BaseObject {
         if (value === undefined) {
             return [this._centerX, this._centerY] as [number, number];
         }
-        const c = value instanceof Point ? value.coordinates : (assert.isCoordinates(value, "value"), value);
-        this._centerX = coord.x(c);
-        this._centerY = coord.y(c);
+        const c = value instanceof Point ? value.coordinates : (Assert.isCoordinates(value, "value"), value);
+        this._centerX = Coordinates.x(c);
+        this._centerY = Coordinates.y(c);
     }
 
     power(): number;
@@ -56,7 +52,7 @@ class Inversion extends BaseObject {
         if (value === undefined) {
             return this._power;
         }
-        assert.isNonZeroNumber(value, "value");
+        Assert.isNonZeroNumber(value, "value");
         this._power = value;
     }
 
@@ -75,16 +71,16 @@ class Inversion extends BaseObject {
         const c0 = this.centerCoordinates();
         const power = this.power();
         const c1 = point.coordinates;
-        const v01 = vec2.from(c0, c1);
-        const d = vec2.magnitude(v01);
-        const id = math.abs(power / d);
+        const v01 = Vector2.from(c0, c1);
+        const d = Vector2.magnitude(v01);
+        const id = Math.abs(power / d);
 
         // When `power` > 0, `v01` and `v02` are in the same direction.
         // When `power` < 0, `v01` and `v02` are in the opposite direction.
-        const angle = power > 0 ? vec2.angle(v01) : vec2.angle(vec2.negative(v01));
+        const angle = power > 0 ? Vector2.angle(v01) : Vector2.angle(Vector2.negative(v01));
 
-        const v02 = vec2.from2(angle, id);
-        const c2 = vec2.add(c0, v02);
+        const v02 = Vector2.from2(angle, id);
+        const c2 = Vector2.add(c0, v02);
         return new Point(this.owner, c2);
     }
 
@@ -102,17 +98,17 @@ class Inversion extends BaseObject {
         const c0 = this.centerCoordinates();
         const power = this.power();
         const c1 = line.getPerpendicularPointFromPoint(c0).coordinates;
-        const v01 = vec2.from(c0, c1);
-        const d = vec2.magnitude(v01);
-        const id = math.abs(power / d);
+        const v01 = Vector2.from(c0, c1);
+        const d = Vector2.magnitude(v01);
+        const id = Math.abs(power / d);
         const radius = id / 2;
 
         // When `power` > 0, `v01` and `v02` are in the same direction.
         // When `power` < 0, `v01` and `v02` are in the opposite direction.
-        const angle = power > 0 ? vec2.angle(v01) : vec2.angle(vec2.negative(v01));
+        const angle = power > 0 ? Vector2.angle(v01) : Vector2.angle(Vector2.negative(v01));
 
-        const v02 = vec2.from2(angle, radius);
-        const c2 = vec2.add(c0, v02);
+        const v02 = Vector2.from2(angle, radius);
+        const c2 = Vector2.add(c0, v02);
 
         return new Circle(this.owner, c2, radius);
     }
@@ -130,35 +126,35 @@ class Inversion extends BaseObject {
         const power = this.power();
         const c1 = circle.centerCoordinates;
         const radius = circle.radius;
-        const v01 = vec2.from(c0, c1);
+        const v01 = Vector2.from(c0, c1);
 
         if (circle.isPointOn(this.centerCoordinates())) {
-            const id = math.abs((power / 2) * radius);
+            const id = Math.abs((power / 2) * radius);
             const l = Line.fromTwoPoints.call(this, c0, c1)!;
 
             // When `power` > 0, `v01` and `v02` are in the same direction.
             // When `power` < 0, `v01` and `v02` are in the opposite direction.
-            const angle = power > 0 ? vec2.angle(v01) : vec2.angle(vec2.negative(v01));
+            const angle = power > 0 ? Vector2.angle(v01) : Vector2.angle(Vector2.negative(v01));
 
-            const v02 = vec2.from2(angle, id);
-            const c2 = vec2.add(c0, v02);
+            const v02 = Vector2.from2(angle, id);
+            const c2 = Vector2.add(c0, v02);
 
             return l.getPerpendicularLineFromPoint(c2);
         } else {
-            const d = vec2.magnitude(v01);
-            const i = 1 / math.abs(d - radius);
-            const j = 1 / math.abs(d + radius);
-            const r = ((i - j) * math.abs(power)) / 2;
-            const s = ((i + j) * math.abs(power)) / 2;
+            const d = Vector2.magnitude(v01);
+            const i = 1 / Math.abs(d - radius);
+            const j = 1 / Math.abs(d + radius);
+            const r = ((i - j) * Math.abs(power)) / 2;
+            const s = ((i + j) * Math.abs(power)) / 2;
 
             // When `power` > 0 and inversion center is inside `circle`,  v01` and `v02` are in the opposite direction.
             // When `power` > 0 and inversion center is outside `circle`, `v01` and `v02` are in the same direction.
             // When `power` < 0 and inversion center is inside `circle`, `v01` and `v02` are in the same direction.
             // When `power` < 0 and inversion center is outside `circle`, `v01` and `v02` are in the opposite direction.
-            const angle = power > 0 !== circle.isPointInside(c0) ? vec2.angle(v01) : vec2.angle(vec2.negative(v01));
+            const angle = power > 0 !== circle.isPointInside(c0) ? Vector2.angle(v01) : Vector2.angle(Vector2.negative(v01));
 
-            const v02 = vec2.from2(angle, s);
-            const c2 = vec2.add(c0, v02);
+            const v02 = Vector2.from2(angle, s);
+            const c2 = Vector2.add(c0, v02);
 
             return new Circle(this.owner, c2, r);
         }

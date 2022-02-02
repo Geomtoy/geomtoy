@@ -32,7 +32,8 @@ import Group from "./group";
 import Inversion from "./inversion";
 import Relationship from "./relationship";
 import Transformation from "./transformation";
+import Matrix from "./helper/Matrix";
 /** @category Shape */
 export { Arc, Bezier, Circle, Ellipse, Image, Line, LineSegment, Point, QuadraticBezier, Ray, Rectangle, RegularPolygon, Square, Text, Triangle, Vector, Path, Polygon };
 /** @category Tool */
-export { Group, Inversion, Relationship, Transformation };
+export { Group, Inversion, Relationship, Transformation, Matrix };

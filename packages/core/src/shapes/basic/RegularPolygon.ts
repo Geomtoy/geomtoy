@@ -1,12 +1,8 @@
+import { Assert, Type, Utility, Coordinates, Math } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
-import assert from "../../utility/assertion";
-import util from "../../utility";
-import math from "../../utility/math";
-import coord from "../../utility/coord";
 
 import Shape from "../../base/Shape";
 import Point from "./Point";
-import Line from "./Line";
 import LineSegment from "./LineSegment";
 import Circle from "./Circle";
 import Graphics from "../../graphics";
@@ -31,10 +27,10 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any) {
         super(o);
-        if (util.isNumber(a1)) {
+        if (Type.isNumber(a1)) {
             Object.assign(this, { centerX: a1, centerY: a2, radius: a3, sideCount: a4, rotation: a5 ?? 0 });
         }
-        if (util.isArray(a1)) {
+        if (Type.isArray(a1)) {
             Object.assign(this, { centerCoordinates: a1, radius: a2, sideCount: a3, rotation: a4 ?? 0 });
         }
         if (a2 instanceof Point) {
@@ -52,23 +48,23 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
     });
 
     private _setCenterX(value: number) {
-        if (!util.isEqualTo(this._centerX, value)) this.trigger_(EventObject.simple(this, RegularPolygon.events.centerXChanged));
+        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(EventObject.simple(this, RegularPolygon.events.centerXChanged));
         this._centerX = value;
     }
     private _setCenterY(value: number) {
-        if (!util.isEqualTo(this._centerY, value)) this.trigger_(EventObject.simple(this, RegularPolygon.events.centerYChanged));
+        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(EventObject.simple(this, RegularPolygon.events.centerYChanged));
         this._centerY = value;
     }
     private _setRadius(value: number) {
-        if (!util.isEqualTo(this._radius, value)) this.trigger_(EventObject.simple(this, RegularPolygon.events.radiusChanged));
+        if (!Utility.isEqualTo(this._radius, value)) this.trigger_(EventObject.simple(this, RegularPolygon.events.radiusChanged));
         this._radius = value;
     }
     private _setSideCount(value: number) {
-        if (!util.isEqualTo(this._sideCount, value)) this.trigger_(EventObject.simple(this, RegularPolygon.events.sideCountChanged));
+        if (!Utility.isEqualTo(this._sideCount, value)) this.trigger_(EventObject.simple(this, RegularPolygon.events.sideCountChanged));
         this._sideCount = value;
     }
     private _setRotation(value: number) {
-        if (!util.isEqualTo(this._rotation, value)) this.trigger_(EventObject.simple(this, RegularPolygon.events.rotationChanged));
+        if (!Utility.isEqualTo(this._rotation, value)) this.trigger_(EventObject.simple(this, RegularPolygon.events.rotationChanged));
         this._rotation = value;
     }
 
@@ -76,23 +72,23 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
         return this._centerX;
     }
     set centerX(value) {
-        assert.isRealNumber(value, "centerX");
+        Assert.isRealNumber(value, "centerX");
         this._setCenterX(value);
     }
     get centerY() {
         return this._centerY;
     }
     set centerY(value) {
-        assert.isRealNumber(value, "centerY");
+        Assert.isRealNumber(value, "centerY");
         this._setCenterY(value);
     }
     get centerCoordinates() {
         return [this._centerX, this._centerY] as [number, number];
     }
     set centerCoordinates(value) {
-        assert.isCoordinates(value, "centerCoordinates");
-        this._setCenterX(coord.x(value));
-        this._setCenterY(coord.y(value));
+        Assert.isCoordinates(value, "centerCoordinates");
+        this._setCenterX(Coordinates.x(value));
+        this._setCenterY(Coordinates.y(value));
     }
     get centerPoint() {
         return new Point(this.owner, this._centerX, this._centerY);
@@ -105,30 +101,30 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
         return this._radius;
     }
     set radius(value) {
-        assert.isPositiveNumber(value, "radius");
+        Assert.isPositiveNumber(value, "radius");
         this._setRadius(value);
     }
     get sideCount() {
         return this._sideCount;
     }
     set sideCount(value) {
-        assert.isInteger(value, "sideCount");
-        assert.comparison(value, "sideCount", "ge", regularPolygonMinSideCount);
+        Assert.isInteger(value, "sideCount");
+        Assert.comparison(value, "sideCount", "ge", regularPolygonMinSideCount);
         this._setSideCount(value);
     }
     get rotation() {
         return this._rotation;
     }
     set rotation(value) {
-        assert.isRealNumber(value, "rotation");
+        Assert.isRealNumber(value, "rotation");
         this._setRotation(value);
     }
 
     get apothem() {
-        return this.radius * math.cos(Math.PI / this.sideCount);
+        return this.radius * Math.cos(Math.PI / this.sideCount);
     }
     get sideLength() {
-        return 2 * this.radius * math.sin(Math.PI / this.sideCount);
+        return 2 * this.radius * Math.sin(Math.PI / this.sideCount);
     }
     get centralAngle() {
         return (2 * Math.PI) / this.sideCount;
@@ -148,9 +144,9 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
     }
     isValid() {
         const { centerCoordinates: cc, radius: r, sideCount: n } = this;
-        if (!coord.isValid(cc)) return false;
-        if (!util.isPositiveNumber(r)) return false;
-        if (!util.isInteger(n || n < 3)) return false;
+        if (!Coordinates.isValid(cc)) return false;
+        if (!Type.isPositiveNumber(r)) return false;
+        if (!Type.isInteger(n || n < 3)) return false;
         return true;
     }
     getWindingDirection() {
@@ -181,7 +177,7 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
      * Move regular polygon `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.centerCoordinates = coord.move(this.centerCoordinates, deltaX, deltaY);
+        this.centerCoordinates = Coordinates.move(this.centerCoordinates, deltaX, deltaY);
         return this;
     }
     /**
@@ -194,28 +190,28 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
      * Move regular polygon `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.centerCoordinates = coord.moveAlongAngle(this.centerCoordinates, angle, distance);
+        this.centerCoordinates = Coordinates.moveAlongAngle(this.centerCoordinates, angle, distance);
         return this;
     }
 
     static fromApothemEtc(owner: Geomtoy, apothem: number, centerCoordinates: [number, number], sideCount: number, rotation: number = 0) {
-        let r = apothem / math.cos(Math.PI / sideCount);
+        let r = apothem / Math.cos(Math.PI / sideCount);
         return new RegularPolygon(owner, centerCoordinates, r, sideCount, rotation);
     }
     static fromSideLengthEtc(owner: Geomtoy, sideLength: number, centerCoordinates: [number, number], sideCount: number, rotation: number = 0) {
-        let r = sideLength / math.sin(Math.PI / sideCount) / 2;
+        let r = sideLength / Math.sin(Math.PI / sideCount) / 2;
         return new RegularPolygon(owner, centerCoordinates, r, sideCount, rotation);
     }
 
     getPoints() {
-        return util.range(0, this.sideCount).map(index => {
-            return new Point(this.owner, coord.moveAlongAngle(this.centerCoordinates, ((2 * Math.PI) / this.sideCount) * index + this.rotation, this.radius));
+        return Utility.range(0, this.sideCount).map(index => {
+            return new Point(this.owner, Coordinates.moveAlongAngle(this.centerCoordinates, ((2 * Math.PI) / this.sideCount) * index + this.rotation, this.radius));
         });
     }
     getSideLineSegments() {
         const ps = this.getPoints();
-        return util.range(0, this.sideCount).forEach(index => {
-            new LineSegment(this.owner, util.nth(ps, index - this.sideCount)!, util.nth(ps, index - this.sideCount + 1)!);
+        return Utility.range(0, this.sideCount).forEach(index => {
+            new LineSegment(this.owner, Utility.nth(ps, index - this.sideCount)!, Utility.nth(ps, index - this.sideCount + 1)!);
         });
     }
 
@@ -241,8 +237,8 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
         if (!this.isValid()) return g;
 
         const ps = this.getPoints();
-        g.moveTo(...util.head(ps)!.coordinates!);
-        util.range(1, this.sideCount).forEach(index => {
+        g.moveTo(...Utility.head(ps)!.coordinates!);
+        Utility.range(1, this.sideCount).forEach(index => {
             g.lineTo(...ps[index].coordinates);
         });
         g.close();

@@ -1,5 +1,4 @@
-import util from "../utility";
-import assert from "../utility/assertion";
+import { Utility } from "@geomtoy/util";
 
 import BaseObject from "../base/BaseObject";
 import Contain from "./Contain";
@@ -34,7 +33,7 @@ class Relationship extends BaseObject {
         const type2 = otherShape.type;
         const opName = rsOp.name;
         const opVerb = rsOp.verb;
-        const methodName = `${util.lowerFirstChar(type1)}${opVerb}${type2}` as RelationshipMethodName<T, U, V>;
+        const methodName = `${Utility.lowerFirstChar(type1)}${opVerb}${type2}` as RelationshipMethodName<T, U, V>;
         if (!(methodName in rsOp)) {
             throw new Error(`[G]There is no relationship of \`${opName}\` of \`${type1}\` and \`${type2}\`.`);
         } else {

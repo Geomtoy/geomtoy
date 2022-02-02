@@ -1,7 +1,5 @@
+import { Assert, Type, Utility, Coordinates, Math } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
-import assert from "../../utility/assertion";
-import util from "../../utility";
-import coord from "../../utility/coord";
 
 import Shape from "../../base/Shape";
 import Point from "./Point";
@@ -26,10 +24,10 @@ class Ellipse extends Shape implements ClosedShape, TransformableShape, Rotation
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any) {
         super(o);
-        if (util.isNumber(a1)) {
+        if (Type.isNumber(a1)) {
             Object.assign(this, { centerX: a1, centerY: a2, radiusX: a3, radiusY: a4, rotation: a5 ?? 0 });
         }
-        if (util.isArray(a1)) {
+        if (Type.isArray(a1)) {
             Object.assign(this, { centerCoordinates: a1, radiusX: a2, radiusY: a3, rotation: a4 ?? 0 });
         }
         if (a1 instanceof Point) {
@@ -47,23 +45,23 @@ class Ellipse extends Shape implements ClosedShape, TransformableShape, Rotation
     });
 
     private _setCenterX(value: number) {
-        if (!util.isEqualTo(this._centerX, value)) this.trigger_(EventObject.simple(this, Ellipse.events.centerXChanged));
+        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(EventObject.simple(this, Ellipse.events.centerXChanged));
         this._centerX = value;
     }
     private _setCenterY(value: number) {
-        if (!util.isEqualTo(this._centerY, value)) this.trigger_(EventObject.simple(this, Ellipse.events.centerYChanged));
+        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(EventObject.simple(this, Ellipse.events.centerYChanged));
         this._centerY = value;
     }
     private _setRadiusX(value: number) {
-        if (!util.isEqualTo(this._radiusX, value)) this.trigger_(EventObject.simple(this, Ellipse.events.radiusXChanged));
+        if (!Utility.isEqualTo(this._radiusX, value)) this.trigger_(EventObject.simple(this, Ellipse.events.radiusXChanged));
         this._radiusX = value;
     }
     private _setRadiusY(value: number) {
-        if (!util.isEqualTo(this._radiusY, value)) this.trigger_(EventObject.simple(this, Ellipse.events.radiusYChanged));
+        if (!Utility.isEqualTo(this._radiusY, value)) this.trigger_(EventObject.simple(this, Ellipse.events.radiusYChanged));
         this._radiusY = value;
     }
     private _setRotation(value: number) {
-        if (!util.isEqualTo(this._rotation, value)) this.trigger_(EventObject.simple(this, Ellipse.events.rotationChanged));
+        if (!Utility.isEqualTo(this._rotation, value)) this.trigger_(EventObject.simple(this, Ellipse.events.rotationChanged));
         this._rotation = value;
     }
 
@@ -71,23 +69,23 @@ class Ellipse extends Shape implements ClosedShape, TransformableShape, Rotation
         return this._centerX;
     }
     set centerX(value) {
-        assert.isRealNumber(value, "centerX");
+        Assert.isRealNumber(value, "centerX");
         this._setCenterX(value);
     }
     get centerY() {
         return this._centerY;
     }
     set centerY(value) {
-        assert.isRealNumber(value, "centerY");
+        Assert.isRealNumber(value, "centerY");
         this._setCenterY(value);
     }
     get centerCoordinates() {
         return [this._centerX, this._centerY] as [number, number];
     }
     set centerCoordinates(value) {
-        assert.isCoordinates(value, "centerCoordinates");
-        this._setCenterX(coord.x(value));
-        this._setCenterY(coord.y(value));
+        Assert.isCoordinates(value, "centerCoordinates");
+        this._setCenterX(Coordinates.x(value));
+        this._setCenterY(Coordinates.y(value));
     }
     get centerPoint() {
         return new Point(this.owner, this._centerX, this._centerY);
@@ -100,29 +98,29 @@ class Ellipse extends Shape implements ClosedShape, TransformableShape, Rotation
         return this._radiusX;
     }
     set radiusX(value) {
-        assert.isPositiveNumber(value, "radiusX");
+        Assert.isPositiveNumber(value, "radiusX");
         this._setRadiusX(value);
     }
     get radiusY() {
         return this._radiusY;
     }
     set radiusY(value) {
-        assert.isPositiveNumber(value, "radiusY");
+        Assert.isPositiveNumber(value, "radiusY");
         this._setRadiusY(value);
     }
     get rotation() {
         return this._rotation;
     }
     set rotation(value) {
-        assert.isRealNumber(value, "rotation");
+        Assert.isRealNumber(value, "rotation");
         this._setRotation(value);
     }
 
     isValid() {
         const { centerCoordinates: cc, radiusX: rx, radiusY: ry } = this;
-        if (!coord.isValid(cc)) return false;
-        if (!util.isPositiveNumber(rx)) return false;
-        if (!util.isPositiveNumber(ry)) return false;
+        if (!Coordinates.isValid(cc)) return false;
+        if (!Type.isPositiveNumber(rx)) return false;
+        if (!Type.isPositiveNumber(ry)) return false;
         return true;
     }
     getLength(): number {
@@ -147,7 +145,7 @@ class Ellipse extends Shape implements ClosedShape, TransformableShape, Rotation
      * Move ellipse `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.centerCoordinates = coord.move(this.centerCoordinates, deltaX, deltaY);
+        this.centerCoordinates = Coordinates.move(this.centerCoordinates, deltaX, deltaY);
         return this;
     }
     /**
@@ -160,7 +158,7 @@ class Ellipse extends Shape implements ClosedShape, TransformableShape, Rotation
      * Move ellipse `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.centerCoordinates = coord.moveAlongAngle(this.centerCoordinates, angle, distance);
+        this.centerCoordinates = Coordinates.moveAlongAngle(this.centerCoordinates, angle, distance);
         return this;
     }
 

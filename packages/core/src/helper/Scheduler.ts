@@ -1,5 +1,5 @@
+import { Utility } from "@geomtoy/util";
 import EventTarget from "../base/EventTarget";
-import util from "../utility";
 
 import type Geomtoy from "../geomtoy";
 
@@ -35,10 +35,10 @@ class Scheduler {
         this.flushed = true;
         // Use a resolved `Promise` to do the microtask. Try queueMicrotask() ?
         Promise.resolve().then(() => {
-            const timeOrigin = util.now();
+            const timeOrigin = Utility.now();
             while (this.internalQueue.length !== 0) {
                 this.internalQueue.shift()!();
-                if (util.now() - timeOrigin > flushTimeout) {
+                if (Utility.now() - timeOrigin > flushTimeout) {
                     console.error(
                         "[G]Geomtoy stopped the event handling for there could be some mistakes in your code like circular event triggering causing an infinite recursion. Please check your code."
                     );

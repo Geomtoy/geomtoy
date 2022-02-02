@@ -1,7 +1,5 @@
+import { Assert, Type, Utility, Coordinates } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
-import util from "../../utility";
-import coord from "../../utility/coord";
-import assert from "../../utility/assertion";
 
 import Shape from "../../base/Shape";
 import Point from "./Point";
@@ -22,7 +20,7 @@ class Text extends Shape {
     private _x = NaN;
     private _y = NaN;
     private _text = "";
-    private _font: FontConfig = util.cloneDeep(defaultFontConfig);
+    private _font: FontConfig = Utility.cloneDeep(defaultFontConfig);
 
     constructor(owner: Geomtoy, x: number, y: number, text: string, font?: FontConfig);
     constructor(owner: Geomtoy, coordinates: [number, number], text: string, font?: FontConfig);
@@ -31,17 +29,17 @@ class Text extends Shape {
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any) {
         super(o);
-        if (util.isNumber(a1)) {
-            Object.assign(this, { x: a1, y: a2, text: a3, font: a4 ?? util.cloneDeep(defaultFontConfig) });
+        if (Type.isNumber(a1)) {
+            Object.assign(this, { x: a1, y: a2, text: a3, font: a4 ?? Utility.cloneDeep(defaultFontConfig) });
         }
-        if (util.isArray(a1)) {
-            Object.assign(this, { coordinates: a1, text: a2, font: a3 ?? util.cloneDeep(defaultFontConfig) });
+        if (Type.isArray(a1)) {
+            Object.assign(this, { coordinates: a1, text: a2, font: a3 ?? Utility.cloneDeep(defaultFontConfig) });
         }
         if (a1 instanceof Point) {
-            Object.assign(this, { point: a1, text: a2, font: a3 ?? util.cloneDeep(defaultFontConfig) });
+            Object.assign(this, { point: a1, text: a2, font: a3 ?? Utility.cloneDeep(defaultFontConfig) });
         }
-        if (util.isString(a1)) {
-            Object.assign(this, { text: a1, font: a2 ?? util.cloneDeep(defaultFontConfig) });
+        if (Type.isString(a1)) {
+            Object.assign(this, { text: a1, font: a2 ?? Utility.cloneDeep(defaultFontConfig) });
         }
         return Object.seal(this);
     }
@@ -53,15 +51,15 @@ class Text extends Shape {
     });
 
     private _setX(value: number) {
-        if (!util.isEqualTo(this._x, value)) this.trigger_(EventObject.simple(this, Text.events.xChanged));
+        if (!Utility.isEqualTo(this._x, value)) this.trigger_(EventObject.simple(this, Text.events.xChanged));
         this._x = value;
     }
     private _setY(value: number) {
-        if (!util.isEqualTo(this._y, value)) this.trigger_(EventObject.simple(this, Text.events.yChanged));
+        if (!Utility.isEqualTo(this._y, value)) this.trigger_(EventObject.simple(this, Text.events.yChanged));
         this._y = value;
     }
     private _setText(value: string) {
-        if (!util.isEqualTo(this._text, value)) this.trigger_(EventObject.simple(this, Text.events.textChanged));
+        if (!Utility.isEqualTo(this._text, value)) this.trigger_(EventObject.simple(this, Text.events.textChanged));
         this._text = value;
     }
 
@@ -69,23 +67,23 @@ class Text extends Shape {
         return this._x;
     }
     set x(value) {
-        assert.isRealNumber(value, "x");
+        Assert.isRealNumber(value, "x");
         this._setX(value);
     }
     get y() {
         return this._y;
     }
     set y(value) {
-        assert.isRealNumber(value, "y");
+        Assert.isRealNumber(value, "y");
         this._setY(value);
     }
     get coordinates() {
         return [this._x, this._y] as [number, number];
     }
     set coordinates(value) {
-        assert.isCoordinates(value, "coordinates");
-        this._setX(coord.x(value));
-        this._setY(coord.y(value));
+        Assert.isCoordinates(value, "coordinates");
+        this._setX(Coordinates.x(value));
+        this._setY(Coordinates.y(value));
     }
     get point() {
         return new Point(this.owner, this._x, this._y);
@@ -101,14 +99,14 @@ class Text extends Shape {
         this._setText(value);
     }
     get font(): FontConfig {
-        return util.cloneDeep(this._font);
+        return Utility.cloneDeep(this._font);
     }
     set font(value: Partial<FontConfig>) {
-        util.assignDeep(this._font, value);
+        Utility.assignDeep(this._font, value);
     }
 
     isValid() {
-        if (!coord.isValid(this.coordinates)) return false;
+        if (!Coordinates.isValid(this.coordinates)) return false;
         if (this.text === "") return false;
         return true;
     }
@@ -117,14 +115,14 @@ class Text extends Shape {
         return this.clone().moveSelf(deltaX, deltaY);
     }
     moveSelf(deltaX: number, deltaY: number) {
-        this.coordinates = coord.move(this.coordinates, deltaX, deltaY);
+        this.coordinates = Coordinates.move(this.coordinates, deltaX, deltaY);
         return this;
     }
     moveAlongAngle(angle: number, distance: number) {
         return this.clone().moveAlongAngleSelf(angle, distance);
     }
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.coordinates = coord.moveAlongAngle(this.coordinates, angle, distance);
+        this.coordinates = Coordinates.moveAlongAngle(this.coordinates, angle, distance);
         return this;
     }
 

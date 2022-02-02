@@ -1,7 +1,7 @@
-import util from "../utility"
+import { Utility } from "@geomtoy/util";
 
-import type Geomtoy from "../geomtoy"
-import type { Options, RecursivePartial } from "../types"
+import type Geomtoy from "../geomtoy";
+import type { Options, RecursivePartial } from "../types";
 
 export const defaultOptions: Options = {
     epsilon: 2 ** -32,
@@ -18,31 +18,31 @@ export const defaultOptions: Options = {
         }
     },
     pathSampleRatio: 100
-}
-const optionerMap: WeakMap<Geomtoy, Optioner> = new WeakMap()
+};
+const optionerMap: WeakMap<Geomtoy, Optioner> = new WeakMap();
 
 function applyOptionsRules(target: Options) {
-    if (target.epsilon > 2 ** -16) target.epsilon = 2 ** -16
-    if (target.epsilon < 2 ** -52) target.epsilon = 2 ** -52
+    if (target.epsilon > 2 ** -16) target.epsilon = 2 ** -16;
+    if (target.epsilon < 2 ** -52) target.epsilon = 2 ** -52;
 }
 
 class Optioner {
-    options: Options
+    options: Options;
     constructor() {
-        this.options = util.cloneDeep(defaultOptions)
+        this.options = Utility.cloneDeep(defaultOptions);
     }
     getOptions() {
-        return util.cloneDeep(this.options)
+        return Utility.cloneDeep(this.options);
     }
     setOptions(options: RecursivePartial<Options>) {
-        util.assignDeep(this.options, options)
-        applyOptionsRules(this.options)
+        Utility.assignDeep(this.options, options);
+        applyOptionsRules(this.options);
     }
 }
 
 export function optionerOf(g: Geomtoy) {
-    if (!optionerMap.has(g)) optionerMap.set(g, new Optioner())
-    return optionerMap.get(g)!
+    if (!optionerMap.has(g)) optionerMap.set(g, new Optioner());
+    return optionerMap.get(g)!;
 }
 
-export default Optioner
+export default Optioner;

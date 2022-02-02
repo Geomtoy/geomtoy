@@ -1,13 +1,12 @@
-import util from "../utility";
-
+import { Utility } from "@geomtoy/util";
 import { optionerOf } from "../helper/Optioner";
-
 import Geomtoy from "../geomtoy";
+
 import type { Options } from "../types";
 
 export default abstract class BaseObject {
     private _owner = null as unknown as Geomtoy;
-    private _uuid = util.uuid();
+    private _uuid = Utility.uuid();
     protected options_: Options;
     //user-defined data
     private _data: { [key: string]: any } = {};

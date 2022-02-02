@@ -1,7 +1,5 @@
-import util from "../../utility";
-import coord from "../../utility/coord";
-import assert from "../../utility/assertion";
-
+import { Assert, Type, Utility, Coordinates } from "@geomtoy/util";
+import { validAndWithSameOwner } from "../../decorator";
 import Shape from "../../base/Shape";
 import Point from "./Point";
 import Graphics from "../../graphics";
@@ -23,10 +21,10 @@ class Square extends Shape implements ClosedShape, TransformableShape, RotationF
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any) {
         super(o);
-        if (util.isNumber(a1)) {
+        if (Type.isNumber(a1)) {
             Object.assign(this, { originX: a1, originY: a2, sideLength: a3, rotation: a4 ?? 0 });
         }
-        if (util.isArray(a1)) {
+        if (Type.isArray(a1)) {
             Object.assign(this, { originCoordinates: a1, sideLength: a2, rotation: a3 ?? 0 });
         }
         if (a1 instanceof Point) {
@@ -43,19 +41,19 @@ class Square extends Shape implements ClosedShape, TransformableShape, RotationF
     });
 
     private _setOriginX(value: number) {
-        if (util.isEqualTo(this._originX, value)) this.trigger_(EventObject.simple(this, Square.events.originXChanged));
+        if (Utility.isEqualTo(this._originX, value)) this.trigger_(EventObject.simple(this, Square.events.originXChanged));
         this._originX = value;
     }
     private _setOriginY(value: number) {
-        if (util.isEqualTo(this._originY, value)) this.trigger_(EventObject.simple(this, Square.events.originYChanged));
+        if (Utility.isEqualTo(this._originY, value)) this.trigger_(EventObject.simple(this, Square.events.originYChanged));
         this._originY = value;
     }
     private _setSideLength(value: number) {
-        if (util.isEqualTo(this._sideLength, value)) this.trigger_(EventObject.simple(this, Square.events.sideLengthChanged));
+        if (Utility.isEqualTo(this._sideLength, value)) this.trigger_(EventObject.simple(this, Square.events.sideLengthChanged));
         this._sideLength = value;
     }
     private _setRotation(value: number) {
-        if (util.isEqualTo(this._rotation, value)) this.trigger_(EventObject.simple(this, Square.events.rotation));
+        if (Utility.isEqualTo(this._rotation, value)) this.trigger_(EventObject.simple(this, Square.events.rotation));
         this._rotation = value;
     }
 
@@ -63,23 +61,23 @@ class Square extends Shape implements ClosedShape, TransformableShape, RotationF
         return this._originX;
     }
     set originX(value) {
-        assert.isRealNumber(value, "originX");
+        Assert.isRealNumber(value, "originX");
         this._setOriginX(value);
     }
     get originY() {
         return this._originY;
     }
     set originY(value) {
-        assert.isRealNumber(value, "originY");
+        Assert.isRealNumber(value, "originY");
         this._setOriginY(value);
     }
     get originCoordinates() {
         return [this._originX, this._originY] as [number, number];
     }
     set originCoordinates(value) {
-        assert.isCoordinates(value, "originCoordinates");
-        this._setOriginX(coord.x(value));
-        this._setOriginY(coord.y(value));
+        Assert.isCoordinates(value, "originCoordinates");
+        this._setOriginX(Coordinates.x(value));
+        this._setOriginY(Coordinates.y(value));
     }
     get originPoint() {
         return new Point(this.owner, this._originX, this._originY);
@@ -92,14 +90,14 @@ class Square extends Shape implements ClosedShape, TransformableShape, RotationF
         return this._sideLength;
     }
     set sideLength(value) {
-        assert.isPositiveNumber(value, "sideLength");
+        Assert.isPositiveNumber(value, "sideLength");
         this._setSideLength(value);
     }
     get rotation() {
         return this._rotation;
     }
     set rotation(value) {
-        assert.isRealNumber(value, "rotation");
+        Assert.isRealNumber(value, "rotation");
         this._setRotation(value);
     }
 
@@ -179,5 +177,7 @@ class Square extends Shape implements ClosedShape, TransformableShape, RotationF
         };
     }
 }
+
+validAndWithSameOwner(Square);
 
 export default Square;

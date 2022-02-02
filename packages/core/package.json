@@ -26,5 +26,8 @@
     "types": "dist/index.d.ts",
     "files": [
         "dist/*"
-    ]
+    ],
+    "dependencies": {
+        "@geomtoy/util": "^0.0.0"
+    }
 }

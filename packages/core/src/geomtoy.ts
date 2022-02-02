@@ -1,12 +1,10 @@
-import util from "./utility";
+import { Utility, Type } from "@geomtoy/util";
 import { sealed } from "./decorator";
 import Scheduler, { schedulerOf } from "./helper/Scheduler";
 import Optioner, { optionerOf } from "./helper/Optioner";
 
 import { Options, Tail, ConstructorOverloads, ConstructorTailer, RecursivePartial, Factory, StaticMethodsMapper, OwnerCarrier, ObjectFactoryCollection } from "./types";
 import BaseObject from "./base/BaseObject";
-import math from "./utility/math";
-import angle from "./utility/angle";
 import { objects } from "./collection";
 
 function factory<T extends { new (...args: any[]): any }>(owner: Geomtoy, ctor: T): Factory<T> {
@@ -21,7 +19,7 @@ function factory<T extends { new (...args: any[]): any }>(owner: Geomtoy, ctor: 
     // and static methods defined as variable like `static method = function(){} or () => {}` is enumerable according to ES6 standard.
     Object.getOwnPropertyNames(ctor).forEach(name => {
         let member = ctor[name as Extract<keyof T, string>];
-        if (util.isFunction(member)) {
+        if (Type.isFunction(member)) {
             staticMethodsMapper[name as keyof StaticMethodsMapper<T>] = member as unknown as StaticMethodsMapper<T>[keyof StaticMethodsMapper<T>];
         }
     });
@@ -31,7 +29,7 @@ function factory<T extends { new (...args: any[]): any }>(owner: Geomtoy, ctor: 
 
 interface Geomtoy extends ObjectFactoryCollection {}
 class Geomtoy {
-    private _uuid = util.uuid();
+    private _uuid = Utility.uuid();
 
     private _scheduler: Scheduler;
     private _optioner: Optioner;
@@ -57,24 +55,6 @@ class Geomtoy {
     }
     get uuid() {
         return this._uuid;
-    }
-
-    get utils() {
-        const options = this._optioner.options;
-        return {
-            approximatelyEqualTo(n1: number, n2: number) {
-                return math.equalTo(n1, n2, options.epsilon);
-            },
-            definitelyGreaterThan(n1: number, n2: number) {
-                return math.greaterThan(n1, n2, options.epsilon);
-            },
-            definitelyLessThan(n1: number, n2: number) {
-                return math.lessThan(n1, n2, options.epsilon);
-            },
-            uuid: util.uuid,
-            degreeToRadian: angle.degreeToRadian,
-            radianToDegree: angle.radianToDegree
-        };
     }
 
     options(): Options;

@@ -1,4 +1,4 @@
-import mat3 from "../utility/mat3";
+import { Matrix3 } from "@geomtoy/util";
 export default class Matrix {
     //
     // a c e
@@ -34,7 +34,7 @@ export default class Matrix {
     static multiply(matrix1: Matrix, matrix2: Matrix): { a: number; b: number; c: number; d: number; e: number; f: number } {
         const { a: a1, b: b1, c: c1, d: d1, e: e1, f: f1 } = matrix1;
         const { a: a2, b: b2, c: c2, d: d2, e: e2, f: f2 } = matrix2;
-        const [a, c, e, b, d, f] = mat3.dotMat3([a1, c1, e1, b1, d1, f1, 0, 0, 1], [a2, c2, e2, b2, d2, f2, 0, 0, 1]);
+        const [a, c, e, b, d, f] = Matrix3.dotMatrix3([a1, c1, e1, b1, d1, f1, 0, 0, 1], [a2, c2, e2, b2, d2, f2, 0, 0, 1]);
         return { a, b, c, d, e, f };
     }
     invert() {
@@ -42,7 +42,7 @@ export default class Matrix {
     }
     invertSelf() {
         let { a, b, c, d, e, f } = this;
-        const inverse = mat3.invert([a, c, e, b, d, f, 0, 0, 1]);
+        const inverse = Matrix3.invert([a, c, e, b, d, f, 0, 0, 1]);
         if (inverse === undefined) throw new Error(`[G]\`Matrix:(a: ${a}, b: ${b}, c: ${c}, d: ${d}, e: ${e}, f: ${f}) is NOT invertible.`);
         [a, c, e, b, d, f] = inverse;
         Object.assign(this, { a, b, c, d, e, f });
@@ -51,7 +51,7 @@ export default class Matrix {
     transformCoordinates(coordinates: [number, number]) {
         const { a, b, c, d, e, f } = this;
         const [x, y] = coordinates;
-        const [xp, yp] = mat3.dotVec3([a, c, e, b, d, f, 0, 0, 1], [x, y, 1]);
+        const [xp, yp] = Matrix3.dotVector3([a, c, e, b, d, f, 0, 0, 1], [x, y, 1]);
         return [xp, yp] as [number, number];
     }
     antitransformCoordinates(coordinates: [number, number]) {

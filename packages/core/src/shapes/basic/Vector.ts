@@ -1,9 +1,5 @@
+import { Angle, Assert, Type, Vector2, Utility, Coordinates } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
-import assert from "../../utility/assertion";
-import util from "../../utility";
-import coord from "../../utility/coord";
-import vec2 from "../../utility/vec2";
-import angle from "../../utility/angle";
 
 import Arrow from "../../helper/Arrow";
 
@@ -34,15 +30,15 @@ class Vector extends Shape implements TransformableShape {
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any, a4?: any) {
         super(o);
-        if (util.isNumber(a1)) {
-            if (util.isNumber(a3)) {
+        if (Type.isNumber(a1)) {
+            if (Type.isNumber(a3)) {
                 Object.assign(this, { point1X: a1, point1Y: a2, point2X: a3, point2Y: a4 });
             } else {
                 Object.assign(this, { x: a1, y: a2 });
             }
         }
-        if (util.isArray(a1)) {
-            if (util.isArray(a2)) {
+        if (Type.isArray(a1)) {
+            if (Type.isArray(a2)) {
                 Object.assign(this, { point1Coordinates: a1, point2Coordinates: a2 });
             } else {
                 Object.assign(this, { coordinates: a1 });
@@ -68,25 +64,25 @@ class Vector extends Shape implements TransformableShape {
     });
 
     private _setX(value: number) {
-        if (!util.isEqualTo(this._x, value)) {
+        if (!Utility.isEqualTo(this._x, value)) {
             this.trigger_(EventObject.simple(this, Vector.events.xChanged));
             this.trigger_(EventObject.simple(this, Vector.events.point2XChanged));
         }
         this._x = value;
     }
     private _setY(value: number) {
-        if (!util.isEqualTo(this._y, value)) {
+        if (!Utility.isEqualTo(this._y, value)) {
             this.trigger_(EventObject.simple(this, Vector.events.yChanged));
             this.trigger_(EventObject.simple(this, Vector.events.point2YChanged));
         }
         this._y = value;
     }
     private _setPoint1X(value: number) {
-        if (!util.isEqualTo(this._point1X, value)) this.trigger_(EventObject.simple(this, Vector.events.point1XChanged));
+        if (!Utility.isEqualTo(this._point1X, value)) this.trigger_(EventObject.simple(this, Vector.events.point1XChanged));
         this._point1X = value;
     }
     private _setPoint1Y(value: number) {
-        if (!util.isEqualTo(this._point1Y, value)) this.trigger_(EventObject.simple(this, Vector.events.point1YChanged));
+        if (!Utility.isEqualTo(this._point1Y, value)) this.trigger_(EventObject.simple(this, Vector.events.point1YChanged));
         this._point1Y = value;
     }
 
@@ -94,23 +90,23 @@ class Vector extends Shape implements TransformableShape {
         return this._x;
     }
     set x(value) {
-        assert.isRealNumber(value, "x");
+        Assert.isRealNumber(value, "x");
         this._setX(value);
     }
     get y() {
         return this._y;
     }
     set y(value) {
-        assert.isRealNumber(value, "y");
+        Assert.isRealNumber(value, "y");
         this._setY(value);
     }
     get coordinates() {
         return [this._x, this._y] as [number, number];
     }
     set coordinates(value) {
-        assert.isCoordinates(value, "coordinates");
-        this._setX(coord.x(value));
-        this._setY(coord.y(value));
+        Assert.isCoordinates(value, "coordinates");
+        this._setX(Coordinates.x(value));
+        this._setY(Coordinates.y(value));
     }
     get point() {
         return new Point(this.owner, this._x, this._y);
@@ -123,23 +119,23 @@ class Vector extends Shape implements TransformableShape {
         return this._point1X;
     }
     set point1X(value) {
-        assert.isRealNumber(value, "point1X");
+        Assert.isRealNumber(value, "point1X");
         this._setPoint1X(value);
     }
     get point1Y() {
         return this._point1Y;
     }
     set point1Y(value) {
-        assert.isRealNumber(value, "point1Y");
+        Assert.isRealNumber(value, "point1Y");
         this._setPoint1Y(value);
     }
     get point1Coordinates() {
         return [this._point1X, this._point1Y] as [number, number];
     }
     set point1Coordinates(value) {
-        assert.isCoordinates(value, "point1Coordinates");
-        this._setPoint1X(coord.x(value));
-        this._setPoint1Y(coord.y(value));
+        Assert.isCoordinates(value, "point1Coordinates");
+        this._setPoint1X(Coordinates.x(value));
+        this._setPoint1Y(Coordinates.y(value));
     }
     get point1() {
         return new Point(this.owner, this._point1X, this._point1Y);
@@ -149,53 +145,53 @@ class Vector extends Shape implements TransformableShape {
         this._setPoint1Y(value.y);
     }
     get point2X() {
-        return coord.x(this.point1Coordinates) + coord.x(this.coordinates);
+        return Coordinates.x(this.point1Coordinates) + Coordinates.x(this.coordinates);
     }
     set point2X(value) {
-        assert.isRealNumber(value, "point2X");
-        this._setX(value - coord.x(this.point1Coordinates));
+        Assert.isRealNumber(value, "point2X");
+        this._setX(value - Coordinates.x(this.point1Coordinates));
     }
     get point2Y() {
-        return coord.y(this.point1Coordinates) + coord.y(this.coordinates);
+        return Coordinates.y(this.point1Coordinates) + Coordinates.y(this.coordinates);
     }
     set point2Y(value) {
-        assert.isRealNumber(value, "point2Y");
-        this._setX(value - coord.y(this.point1Coordinates));
+        Assert.isRealNumber(value, "point2Y");
+        this._setX(value - Coordinates.y(this.point1Coordinates));
     }
     get point2Coordinates() {
-        return vec2.add(this.point1Coordinates, this.coordinates);
+        return Vector2.add(this.point1Coordinates, this.coordinates);
     }
     set point2Coordinates(value) {
-        assert.isCoordinates(value, "point2Coordinates");
-        const c = vec2.from(this.point1Coordinates, value);
-        this._setX(coord.x(c));
-        this._setY(coord.y(c));
+        Assert.isCoordinates(value, "point2Coordinates");
+        const c = Vector2.from(this.point1Coordinates, value);
+        this._setX(Coordinates.x(c));
+        this._setY(Coordinates.y(c));
     }
     get point2() {
-        return new Point(this.owner, vec2.add(this.point1Coordinates, this.coordinates));
+        return new Point(this.owner, Vector2.add(this.point1Coordinates, this.coordinates));
     }
     set point2(value) {
-        const c = vec2.from(this.point1Coordinates, value.coordinates);
-        this._setX(coord.x(c));
-        this._setY(coord.y(c));
+        const c = Vector2.from(this.point1Coordinates, value.coordinates);
+        this._setX(Coordinates.x(c));
+        this._setY(Coordinates.y(c));
     }
 
     /**
      * Get the angle of vector `this`, the result is in the interval `(-math.PI, math.PI]`.
      */
     get angle() {
-        return angle.simplify2(vec2.angle(this.coordinates));
+        return Angle.simplify2(Vector2.angle(this.coordinates));
     }
     /**
      * Get the magnitude of vector `this`.
      */
     get magnitude(): number {
-        return vec2.magnitude(this.coordinates);
+        return Vector2.magnitude(this.coordinates);
     }
 
     isValid() {
-        if (!coord.isValid(this.coordinates)) return false;
-        if (!coord.isValid(this.point1Coordinates)) return false;
+        if (!Coordinates.isValid(this.coordinates)) return false;
+        if (!Coordinates.isValid(this.point1Coordinates)) return false;
         return true;
     }
 
@@ -204,7 +200,7 @@ class Vector extends Shape implements TransformableShape {
     }
 
     static fromAngleAndMagnitude(owner: Geomtoy, angle: number, magnitude: number): Vector {
-        const [x, y] = coord.moveAlongAngle([0, 0], angle, magnitude);
+        const [x, y] = Coordinates.moveAlongAngle([0, 0], angle, magnitude);
         return new Vector(owner, x, y);
     }
     static fromLineSegment(owner: Geomtoy, lineSegment: LineSegment, reverse = false) {
@@ -218,7 +214,7 @@ class Vector extends Shape implements TransformableShape {
      */
     isSameAs(vector: Vector): boolean {
         if (this === vector) return true;
-        return coord.isSameAs(this.coordinates, vector.coordinates, this.options_.epsilon);
+        return Coordinates.isEqualTo(this.coordinates, vector.coordinates, this.options_.epsilon);
     }
     /**
      * Whether vector `this` is the same as vector `vector`, including the initial point
@@ -228,7 +224,7 @@ class Vector extends Shape implements TransformableShape {
     isSameAs2(vector: Vector): boolean {
         if (this === vector) return true;
         const epsilon = this.options_.epsilon;
-        return coord.isSameAs(this.point1Coordinates, vector.point1Coordinates, epsilon) && this.isSameAs(vector);
+        return Coordinates.isEqualTo(this.point1Coordinates, vector.point1Coordinates, epsilon) && this.isSameAs(vector);
     }
     /**
      * Move vector `this` by `deltaX` and `deltaY` to get new vector.
@@ -240,7 +236,7 @@ class Vector extends Shape implements TransformableShape {
      * Move vector `this` itself by `deltaX` and `deltaY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.point1Coordinates = coord.move(this.point1Coordinates, deltaX, deltaY);
+        this.point1Coordinates = Coordinates.move(this.point1Coordinates, deltaX, deltaY);
         return this;
     }
     /**
@@ -253,7 +249,7 @@ class Vector extends Shape implements TransformableShape {
      * Move vector `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.point1Coordinates = coord.moveAlongAngle(this.point1Coordinates, angle, distance);
+        this.point1Coordinates = Coordinates.moveAlongAngle(this.point1Coordinates, angle, distance);
         return this;
     }
 
@@ -263,7 +259,7 @@ class Vector extends Shape implements TransformableShape {
      * @returns {number}
      */
     getAngleToVector(vector: Vector): number {
-        return angle.simplify2(this.angle - vector.angle);
+        return Angle.simplify2(this.angle - vector.angle);
     }
 
     standardize() {
@@ -286,28 +282,28 @@ class Vector extends Shape implements TransformableShape {
     }
 
     dotProduct(vector: Vector): number {
-        return vec2.dot(this.coordinates, vector.coordinates);
+        return Vector2.dot(this.coordinates, vector.coordinates);
     }
     crossProduct(vector: Vector): number {
-        return vec2.cross(this.coordinates, vector.coordinates);
+        return Vector2.cross(this.coordinates, vector.coordinates);
     }
     normalize(): Vector {
-        return new Vector(this.owner, vec2.normalize(this.coordinates));
+        return new Vector(this.owner, Vector2.normalize(this.coordinates));
     }
     add(vector: Vector): Vector {
-        return new Vector(this.owner, vec2.add(this.coordinates, vector.coordinates));
+        return new Vector(this.owner, Vector2.add(this.coordinates, vector.coordinates));
     }
     subtract(vector: Vector): Vector {
-        return new Vector(this.owner, vec2.subtract(this.coordinates, vector.coordinates));
+        return new Vector(this.owner, Vector2.subtract(this.coordinates, vector.coordinates));
     }
     scalarMultiply(scalar: number): Vector {
-        return new Vector(this.owner, vec2.scalarMultiply(this.coordinates, scalar));
+        return new Vector(this.owner, Vector2.scalarMultiply(this.coordinates, scalar));
     }
     negative() {
-        return new Vector(this.owner, vec2.negative(this.coordinates));
+        return new Vector(this.owner, Vector2.negative(this.coordinates));
     }
     rotate(angle: number): Vector {
-        return new Vector(this.owner, vec2.rotate(this.coordinates, angle));
+        return new Vector(this.owner, Vector2.rotate(this.coordinates, angle));
     }
 
     apply(transformation: Transformation) {

@@ -1,10 +1,5 @@
+import { Angle, Assert, Type, Utility, Coordinates, Vector2, Math } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
-import assert from "../../utility/assertion";
-import util from "../../utility";
-import coord from "../../utility/coord";
-import math from "../../utility/math";
-import vec2 from "../../utility/vec2";
-import angle from "../../utility/angle";
 
 import Shape from "../../base/Shape";
 import Point from "./Point";
@@ -26,10 +21,10 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
     constructor(owner: Geomtoy);
     constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any) {
         super(o);
-        if (util.isNumber(a1)) {
+        if (Type.isNumber(a1)) {
             Object.assign(this, { x: a1, y: a2, angle: a3 });
         }
-        if (util.isArray(a1)) {
+        if (Type.isArray(a1)) {
             Object.assign(this, { coordinates: a1, angle: a2 });
         }
         if (a1 instanceof Point) {
@@ -45,15 +40,15 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
     });
 
     private _setX(value: number) {
-        if (!util.isEqualTo(this._x, value)) this.trigger_(EventObject.simple(this, Ray.events.xChanged));
+        if (!Utility.isEqualTo(this._x, value)) this.trigger_(EventObject.simple(this, Ray.events.xChanged));
         this._x = value;
     }
     private _setY(value: number) {
-        if (!util.isEqualTo(this._y, value)) this.trigger_(EventObject.simple(this, Ray.events.yChanged));
+        if (!Utility.isEqualTo(this._y, value)) this.trigger_(EventObject.simple(this, Ray.events.yChanged));
         this._y = value;
     }
     private _setAngle(value: number) {
-        if (!util.isEqualTo(this._angle, value)) this.trigger_(EventObject.simple(this, Ray.events.angleChanged));
+        if (!Utility.isEqualTo(this._angle, value)) this.trigger_(EventObject.simple(this, Ray.events.angleChanged));
         this._angle = value;
     }
 
@@ -61,23 +56,23 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
         return this._x;
     }
     set x(value) {
-        assert.isRealNumber(value, "x");
+        Assert.isRealNumber(value, "x");
         this._setX(value);
     }
     get y() {
         return this._y;
     }
     set y(value) {
-        assert.isRealNumber(value, "y");
+        Assert.isRealNumber(value, "y");
         this._setY(value);
     }
     get coordinates() {
         return [this._x, this._y] as [number, number];
     }
     set coordinates(value) {
-        assert.isCoordinates(value, "coordinates");
-        this._setX(coord.x(value));
-        this._setY(coord.y(value));
+        Assert.isCoordinates(value, "coordinates");
+        this._setX(Coordinates.x(value));
+        this._setY(Coordinates.y(value));
     }
     get point() {
         return new Point(this.owner, this._x, this._y);
@@ -90,22 +85,22 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
         return this._angle;
     }
     set angle(value) {
-        assert.isRealNumber(value, "angle");
+        Assert.isRealNumber(value, "angle");
         this._setAngle(value);
     }
 
     isValid(): boolean {
         const { coordinates: c, angle: a } = this;
-        if (!coord.isValid(c)) return false;
-        if (!util.isRealNumber(a)) return false;
+        if (!Coordinates.isValid(c)) return false;
+        if (!Type.isRealNumber(a)) return false;
         return true;
     }
     isPointOn(point: [number, number] | Point) {
         const epsilon = this.options_.epsilon;
         const c0 = this.coordinates;
         const c1 = point instanceof Point ? point.coordinates : point;
-        if (coord.isSameAs(c0, c1, epsilon)) return true;
-        return math.equalTo(vec2.angle(vec2.from(c0, c1)), this.angle, epsilon);
+        if (Coordinates.isEqualTo(c0, c1, epsilon)) return true;
+        return Math.equalTo(Vector2.angle(Vector2.from(c0, c1)), this.angle, epsilon);
     }
     /**
      * Get the `n` section(equal) rays of the angle which is formed by rays `ray1` and `ray2`.
@@ -117,14 +112,14 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
      * @param ray2
      */
     static getAngleNSectionRaysFromTwoRays(owner: Geomtoy, n: number, ray1: Ray, ray2: Ray): Ray[] | null {
-        if (!util.isInteger(n) || n < 2) return null;
+        if (!Type.isInteger(n) || n < 2) return null;
         if (!ray1.isEndpointSameAs(ray2)) return null;
         let a1 = ray1.angle,
             a2 = ray2.angle,
             c = ray1.coordinates,
             d = (a2 - a1) / n,
             ret: Ray[] = [];
-        util.range(1, n).forEach(index => {
+        Utility.range(1, n).forEach(index => {
             ret.push(new Ray(owner, c, a1 + d * index));
         });
         return ret;
@@ -132,11 +127,11 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
 
     isSameAs(ray: Ray) {
         const epsilon = this.options_.epsilon;
-        return coord.isSameAs(this.coordinates, ray.coordinates, epsilon) && math.equalTo(this.angle, ray.angle, epsilon), epsilon;
+        return Coordinates.isEqualTo(this.coordinates, ray.coordinates, epsilon) && Math.equalTo(this.angle, ray.angle, epsilon), epsilon;
     }
     isEndpointSameAs(ray: Ray) {
         const epsilon = this.options_.epsilon;
-        return coord.isSameAs(this.coordinates, ray.coordinates, epsilon);
+        return Coordinates.isEqualTo(this.coordinates, ray.coordinates, epsilon);
     }
 
     /**
@@ -149,7 +144,7 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
      * Move ray `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.coordinates = coord.move(this.coordinates, deltaX, deltaY);
+        this.coordinates = Coordinates.move(this.coordinates, deltaX, deltaY);
         return this;
     }
     /**
@@ -162,12 +157,12 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
      * Move ray `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.coordinates = coord.moveAlongAngle(this.coordinates, angle, distance);
+        this.coordinates = Coordinates.moveAlongAngle(this.coordinates, angle, distance);
         return this;
     }
 
     getAngleToRay(ray: Ray) {
-        return angle.simplify2(this.angle - ray.angle);
+        return Angle.simplify2(this.angle - ray.angle);
     }
 
     getUnderlyingLine() {

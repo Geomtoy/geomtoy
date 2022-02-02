@@ -1,4 +1,4 @@
-import util from "../utility";
+import { Utility, Type } from "@geomtoy/util";
 import BaseObject from "../base/BaseObject";
 import Shape from "../base/Shape";
 
@@ -7,7 +7,7 @@ import type { OwnerCarrier } from "../types";
 
 function article(name: string, adj?: string) {
     const vowels = ["A", "E", "I", "O", "U"];
-    const a = adj !== undefined ? (vowels.includes(util.head(adj)!.toUpperCase()) ? `an ${adj}` : `a ${adj}`) : vowels.includes(util.head(name)!.toUpperCase()) ? "an" : "a";
+    const a = adj !== undefined ? (vowels.includes(Utility.head(adj)!.toUpperCase()) ? `an ${adj}` : `a ${adj}`) : vowels.includes(Utility.head(name)!.toUpperCase()) ? "an" : "a";
 
     return `${a} \`${name}\``;
 }
@@ -42,7 +42,7 @@ export function validAndWithSameOwner(constructor: new (...args: any[]) => any) 
         let name = constructor.name,
             descriptor = Object.getOwnPropertyDescriptor(constructor, memberName)!;
 
-        if (util.isFunction(descriptor.value)) {
+        if (Type.isFunction(descriptor.value)) {
             let method = descriptor.value;
             descriptor.value = function (this: OwnerCarrier) {
                 let staticOwner: Geomtoy = this.owner;
@@ -80,7 +80,7 @@ export function validAndWithSameOwner(constructor: new (...args: any[]) => any) 
         // properties or methods
         if (descriptor.value !== undefined && memberName !== "constructor" /* excluding `constructor` */) {
             if (
-                util.isFunction(descriptor.value) &&
+                Type.isFunction(descriptor.value) &&
                 !alwaysAvailablePublicInstanceMethods.includes(memberName) /* excluding the always-available methods when invalid*/ &&
                 !memberName.startsWith("_set") /* excluding the private `_set*` method */
             ) {
