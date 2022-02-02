@@ -1,7 +1,7 @@
 import Math from "./Math";
 import Matrix2 from "./Matrix2";
 
-import type { StaticClass } from "../types";
+import type { StaticClass } from "./types";
 
 interface Vector2 extends StaticClass {}
 class Vector2 {
@@ -114,6 +114,27 @@ class Vector2 {
         const [vx, vy] = v;
         if (vx === 0 && vy === 0) return [NaN, NaN] as [number, number];
         return Vector2.scalarMultiply([vx, vy], Vector2.dot([ux, uy], [vx, vy]) / Vector2.dot([vx, vy], [vx, vy]));
+    }
+    /**
+     * Returns a new vector2 of the linear interpolation between vector2 `u` and vector2 `v`.
+     * @param u
+     * @param v
+     * @param t
+     */
+    static lerp(u: [number, number], v: [number, number], t: number) {
+        return Vector2.add(Vector2.scalarMultiply(u, 1 - t), Vector2.scalarMultiply(v, t));
+    }
+    /**
+     * Returns a new vector2 of the spherical linear interpolation between vector2 `u` and vector2 `v`.
+     * @param u
+     * @param v
+     * @param t
+     */
+    static slerp(u: [number, number], v: [number, number], t: number) {
+        const theta = Math.abs(Vector2.angleTo(u, v)); // the included angle, not rotation angle with sign
+        const sinTheta = Math.sin(theta);
+        const [t1, t2] = [Math.sin((1 - t) * theta) / sinTheta, Math.sin(t * theta) / sinTheta];
+        return Vector2.add(Vector2.scalarMultiply(u, t1), Vector2.scalarMultiply(v, t2));
     }
     /**
      * Returns the unit vector2 in the direction of vector2 `v`.

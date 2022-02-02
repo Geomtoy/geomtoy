@@ -1,6 +1,6 @@
 import Type from "./Type";
 
-import type { StaticClass } from "../types";
+import type { StaticClass } from "./types";
 
 interface Assert extends StaticClass {}
 class Assert {

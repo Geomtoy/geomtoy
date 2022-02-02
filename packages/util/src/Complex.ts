@@ -1,7 +1,7 @@
 import Vector2 from "./Vector2";
 import Math from "./Math";
 
-import type { StaticClass } from "../types";
+import type { StaticClass } from "./types";
 
 interface Complex extends StaticClass {}
 class Complex {

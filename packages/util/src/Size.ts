@@ -1,7 +1,7 @@
 import Type from "./Type";
 import Math from "./Math";
 
-import type { StaticClass } from "../types";
+import type { StaticClass } from "./types";
 
 interface Size extends StaticClass {}
 class Size {

@@ -1,6 +1,6 @@
 import Math from "./Math";
 
-import type { StaticClass } from "../types";
+import type { StaticClass } from "./types";
 
 interface Angle extends StaticClass {}
 class Angle {

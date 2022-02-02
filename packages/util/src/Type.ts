@@ -2,7 +2,7 @@ import Coordinates from "./Coordinates";
 import Size from "./Size";
 import Box from "./Box";
 
-import type { StaticClass } from "../types";
+import type { StaticClass } from "./types";
 
 interface Type extends StaticClass {}
 class Type {

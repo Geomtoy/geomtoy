@@ -1,4 +1,4 @@
-import type { StaticClass } from "../types";
+import type { StaticClass } from "./types";
 
 interface Polynomial extends StaticClass {}
 class Polynomial {

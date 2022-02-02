@@ -1,4 +1,4 @@
-import type { StaticClass } from "../types";
+import type { StaticClass } from "./types";
 
 interface Matrix3 extends StaticClass {}
 class Matrix3 {
@@ -71,7 +71,7 @@ class Matrix3 {
         ] as [number, number, number, number, number, number, number, number, number];
     }
     /**
-     * Returns the adjoint of matrix3`m`.
+     * Returns the adjoint of matrix3 `m`.
      * @param m
      */
     static adjoint(m: [number, number, number, number, number, number, number, number, number]) {
