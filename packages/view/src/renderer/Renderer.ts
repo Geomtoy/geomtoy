@@ -1,5 +1,4 @@
-import util from "../../../core/src/utility";
-import assert from "../../../core/src/utility/assertion";
+import { Assert, Type } from "@geomtoy/util";
 
 import ImageSourceManager from "../helper/ImageSourceManager";
 import TextMeasurer from "../helper/TextMeasurer";
@@ -63,20 +62,20 @@ export default abstract class Renderer {
         this.style_.stroke = stroke;
     }
     strokeWidth(strokeWidth: number) {
-        assert.isPositiveNumber(strokeWidth, "strokeWidth");
+        Assert.isPositiveNumber(strokeWidth, "strokeWidth");
         const scale = this.display.density * this.display.zoom;
         this.style_.strokeWidth = strokeWidth / scale;
     }
     strokeDash(strokeDash: number[]) {
-        assert.condition(
-            strokeDash.every(n => util.isRealNumber(n)),
+        Assert.condition(
+            strokeDash.every(n => Type.isRealNumber(n)),
             "[G]The `strokeDash` should be an array of real numbers."
         );
         const scale = this.display.density * this.display.zoom;
         this.style_.strokeDash = strokeDash.map(n => n / scale);
     }
     strokeDashOffset(strokeDashOffset: number) {
-        assert.isRealNumber(strokeDashOffset, "strokeDashOffset");
+        Assert.isRealNumber(strokeDashOffset, "strokeDashOffset");
         const scale = this.display.density * this.display.zoom;
         this.style_.strokeDashOffset = strokeDashOffset / scale;
     }

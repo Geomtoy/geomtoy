@@ -1,5 +1,4 @@
-import box from "../../../core/src/utility/box";
-
+import { Box } from "@geomtoy/util";
 import Renderer from "./Renderer";
 import SvgInterface from "./SvgInterface";
 
@@ -96,7 +95,7 @@ export default class SvgRenderer extends Renderer {
         imageWrapper.setAttribute("transform", `matrix(${this.display.globalTransformation.invert().toArray().join(" ")})`);
 
         const b: [number, number, number, number] = [x, y, atImageWidth, atImageHeight];
-        path.setAttribute("d", `M${box.nn(b).join(",")}L${box.mn(b).join(",")}L${box.mm(b).join(",")}L${box.nm(b).join(",")}Z`);
+        path.setAttribute("d", `M${Box.nn(b).join(",")}L${Box.mn(b).join(",")}L${Box.mm(b).join(",")}L${Box.nm(b).join(",")}Z`);
         this._setStyle(path, [, true]);
 
         if (obtained && !isNaN(sourceX) && !isNaN(sourceY) && !isNaN(sourceWidth) && !isNaN(sourceHeight)) {
@@ -150,7 +149,7 @@ export default class SvgRenderer extends Renderer {
 
         // implicit bounding box
         const b: [number, number, number, number] = [x, y, atTextWidth, atTextHeight];
-        path.setAttribute("d", `M${box.nn(b).join(",")}L${box.mn(b).join(",")}L${box.mm(b).join(",")}L${box.nm(b).join(",")}Z`);
+        path.setAttribute("d", `M${Box.nn(b).join(",")}L${Box.mn(b).join(",")}L${Box.mm(b).join(",")}L${Box.nm(b).join(",")}Z`);
     }
     private _drawGeometry(cmds: GraphicsGeometryCommand[], path: SVGPathElement, onTop: boolean) {
         let d = "";

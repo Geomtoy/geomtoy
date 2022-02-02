@@ -1,5 +1,5 @@
-const babel = require("@rollup/plugin-babel").default;
-const nodeResolve = require("@rollup/plugin-node-resolve").default;
+const { babel } = require("@rollup/plugin-babel");
+const { nodeResolve } = require("@rollup/plugin-node-resolve");
 const { terser } = require("rollup-plugin-terser");
 
 const path = require("path");

@@ -1,5 +1,4 @@
-import box from "../../../core/src/utility/box";
-
+import { Box } from "@geomtoy/util";
 import Renderer from "./Renderer";
 import CanvasInterface from "./CanvasInterface";
 
@@ -78,10 +77,10 @@ export default class CanvasRenderer extends Renderer {
         const image = obtained ? this.imageSourceManager.take(imageSource)! : this.imageSourceManager.placeholderForCanvas(imageWidth, imageHeight);
 
         const b: [number, number, number, number] = [x, y, atImageWidth, atImageHeight];
-        path.moveTo(...box.nn(b));
-        path.lineTo(...box.mn(b));
-        path.lineTo(...box.mm(b));
-        path.lineTo(...box.nm(b));
+        path.moveTo(...Box.nn(b));
+        path.lineTo(...Box.mn(b));
+        path.lineTo(...Box.mm(b));
+        path.lineTo(...Box.nm(b));
         path.closePath();
 
         this._buffer.save();
@@ -135,10 +134,10 @@ export default class CanvasRenderer extends Renderer {
 
         // implicit bounding box
         const b: [number, number, number, number] = [x, y, atTextWidth, atTextHeight];
-        path.moveTo(...box.nn(b));
-        path.lineTo(...box.mn(b));
-        path.lineTo(...box.mm(b));
-        path.lineTo(...box.nm(b));
+        path.moveTo(...Box.nn(b));
+        path.lineTo(...Box.mn(b));
+        path.lineTo(...Box.mm(b));
+        path.lineTo(...Box.nm(b));
         path.closePath();
     }
     private _drawGeometry(cmds: GraphicsGeometryCommand[], path: Path2D, onTop: boolean) {

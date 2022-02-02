@@ -11,7 +11,7 @@
     "license": "GPL-3.0-or-later",
     "scripts": {
         "bundle-js": "rollup --config",
-        "emit-dts": "dts-bundle-generator --config ./dts.config.json",
+        "bundle-dts": "dts-bundle-generator --config ./dts.config.json",
         "test": "karma start",
         "test:single": "karma start --single-run"
     },
@@ -24,6 +24,7 @@
     "browser": "dist/index.js",
     "types": "dist/index.d.ts",
     "dependencies": {
-        "@geomtoy/core": "^0.0.0"
+        "@geomtoy/core": "^0.0.0",
+        "@geomtoy/util": "^0.0.0"
     }
 }

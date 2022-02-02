@@ -1,3 +1,4 @@
+import { Math } from "@geomtoy/util";
 import { ImageSourceStatus } from "../types";
 
 export default class ImageSourceManager {

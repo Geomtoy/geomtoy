@@ -1,7 +1,4 @@
-import util from "../../../core/src/utility";
-import math from "../../../core/src/utility/math";
-import assert from "../../../core/src/utility/assertion";
-
+import { Math, Assert, Type, Utility } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import ViewElement from "./ViewElement";
 
@@ -38,7 +35,7 @@ export default class View {
     private _minZoom = defaultMinZoom;
     private _maxZoom = defaultMaxZoom;
     private _wheelZoomDeltaRate: number = defaultWheelZoomDeltaRate;
-    private _defaultStyle: Style = util.cloneDeep(defaultDefaultStyle);
+    private _defaultStyle: Style = Utility.cloneDeep(defaultDefaultStyle);
 
     private _geomtoy: Geomtoy;
     private _renderer: Renderer = null as unknown as Renderer;
@@ -109,43 +106,43 @@ export default class View {
         return this._minZoom;
     }
     set minZoom(value) {
-        assert.isPositiveNumber(value, "minZoom");
+        Assert.isPositiveNumber(value, "minZoom");
         this._minZoom = value;
     }
     get maxZoom() {
         return this._maxZoom;
     }
     set maxZoom(value) {
-        assert.isPositiveNumber(value, "maxZoom");
+        Assert.isPositiveNumber(value, "maxZoom");
         this._maxZoom = value;
     }
     get dragThrottleDistance() {
         return this._dragThrottleDistance;
     }
     set dragThrottleDistance(value) {
-        assert.isPositiveNumber(value, "dragThrottleDistance");
+        Assert.isPositiveNumber(value, "dragThrottleDistance");
         this._dragThrottleDistance = value;
     }
     get wheelZoomDeltaRate() {
         return this._wheelZoomDeltaRate;
     }
     set wheelZoomDeltaRate(value) {
-        assert.isRealNumber(value, "wheelZoomDeltaRate");
-        assert.condition(value !== 1, "[G]The `wheelZoomDeltaRate` can not be 1.");
+        Assert.isRealNumber(value, "wheelZoomDeltaRate");
+        Assert.condition(value !== 1, "[G]The `wheelZoomDeltaRate` can not be 1.");
         this._wheelZoomDeltaRate = value;
     }
     get defaultStyle(): Style {
-        return util.cloneDeep(this._defaultStyle);
+        return Utility.cloneDeep(this._defaultStyle);
     }
     set defaultStyle(value: Partial<Style>) {
-        util.assignDeep(this._defaultStyle, value);
+        Utility.assignDeep(this._defaultStyle, value);
     }
     get renderer() {
-        assert.condition(this._renderer !== null, "[G]You should set the `renderer` property of the `View` first.");
+        Assert.condition(this._renderer !== null, "[G]You should set the `renderer` property of the `View` first.");
         return this._renderer;
     }
     set renderer(value) {
-        assert.condition(this.geomtoy === value.geomtoy, "[G]A `View` can only be present by a `Renderer` with the same `geomtoy`.");
+        Assert.condition(this.geomtoy === value.geomtoy, "[G]A `View` can only be present by a `Renderer` with the same `geomtoy`.");
         this._renderer = value;
     }
 
@@ -183,7 +180,7 @@ export default class View {
         let strokeWidth = element.style().strokeWidth || this._defaultStyle.strokeWidth;
         strokeWidth = this._hasTouchDevice ? strokeWidth + extraStrokeWidthForTouch : strokeWidth;
         //prettier-ignore
-        return util.isArray(path) 
+        return Type.isArray(path) 
             ? path.some(p => this._pointChecker.isPointIn(x, y, p, strokeWidth, true))
             : this._pointChecker.isPointIn(x, y, path, strokeWidth, true);
     }
@@ -263,7 +260,7 @@ export default class View {
                 this.cursor("default");
 
                 const [offset1, offset2] = [this._touchPointers[0].offset, this._touchPointers[1].offset];
-                const distance = math.hypot(offset2[0] - offset1[0], offset2[1] - offset1[1]);
+                const distance = Math.hypot(offset2[0] - offset1[0], offset2[1] - offset1[1]);
                 const centerOffset = [(offset2[0] + offset1[0]) / 2, (offset2[1] + offset1[1]) / 2] as [number, number];
 
                 this._zoomingDistance = distance;
@@ -345,7 +342,7 @@ export default class View {
                 const atOffset = this.renderer.display.globalTransformation.antitransformCoordinates(pointerOffset);
                 if (this._preparingDragging) {
                     const scale = this.renderer.display.density * this.renderer.display.zoom;
-                    const dragDistance = math.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
+                    const dragDistance = Math.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
                     if (dragDistance < this.dragThrottleDistance) return;
                 }
 
@@ -387,7 +384,7 @@ export default class View {
                 const atOffset = this.renderer.display.globalTransformation.antitransformCoordinates(pointerOffset);
                 if (this._preparingDragging) {
                     const scale = this.renderer.display.density * this.renderer.display.zoom;
-                    const dragDistance = math.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
+                    const dragDistance = Math.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
                     if (dragDistance < this.dragThrottleDistance) return;
                 }
 
@@ -408,7 +405,7 @@ export default class View {
                     this._isPanning = true;
 
                     const [offset1, offset2] = [this._touchPointers[0].offset, this._touchPointers[1].offset];
-                    const distance = math.hypot(offset2[0] - offset1[0], offset2[1] - offset1[1]);
+                    const distance = Math.hypot(offset2[0] - offset1[0], offset2[1] - offset1[1]);
                     const centerOffset = [(offset2[0] + offset1[0]) / 2, (offset2[1] + offset1[1]) / 2] as [number, number];
 
                     const deltaZoom = distance / this._zoomingDistance;

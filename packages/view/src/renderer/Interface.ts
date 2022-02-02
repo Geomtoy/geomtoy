@@ -1,5 +1,4 @@
-import util from "../../../core/src/utility";
-
+import { Utility } from "@geomtoy/util";
 import type Renderer from "./Renderer";
 import type { InterfaceOptions } from "../types";
 
@@ -46,7 +45,7 @@ export default abstract class Interface {
      */
     private _svgImageElementDecodeSupported = true;
 
-    protected options_ = util.cloneDeep(defaultInterfaceOptions);
+    protected options_ = Utility.cloneDeep(defaultInterfaceOptions);
 
     constructor(renderer: Renderer) {
         this._renderer = renderer;
@@ -73,9 +72,9 @@ export default abstract class Interface {
     options(value?: Partial<InterfaceOptions>): void;
     options(value?: Partial<InterfaceOptions>) {
         if (value === undefined) {
-            return util.cloneDeep(this.options_);
+            return Utility.cloneDeep(this.options_);
         }
-        util.assignDeep(this.options_, value);
+        Utility.assignDeep(this.options_, value);
     }
 
     abstract create(): Promise<DocumentFragment | HTMLCanvasElement>;

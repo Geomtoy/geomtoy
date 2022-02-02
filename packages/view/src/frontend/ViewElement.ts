@@ -1,5 +1,4 @@
-import util from "../../../core/src/utility";
-
+import { Utility } from "@geomtoy/util";
 import type { Style, InteractiveStyle, PathLike } from "../types";
 import type View from "./View";
 
@@ -69,9 +68,9 @@ export default class ViewElement {
     style(value: Partial<Style>): void;
     style(value?: Partial<Style>) {
         if (value === undefined) {
-            return util.cloneDeep(this._style);
+            return Utility.cloneDeep(this._style);
         }
-        util.assignDeep(this._style, value);
+        Utility.assignDeep(this._style, value);
     }
 
     hoverStyle(): Partial<InteractiveStyle>;
