@@ -1,55 +1,50 @@
 const babel = require("@rollup/plugin-babel").default;
 const nodeResolve = require("@rollup/plugin-node-resolve").default;
 const { terser } = require("rollup-plugin-terser");
+const { config } = require("../../package.json");
 
-const path = require("path");
 const extensions = [".js", ".ts"];
 const exclude = "./node_modules/**";
 
-const pkgConfig = {
-    src: "./src/index.ts",
-    kabobName: "geomtoy",
-    scopedName: "@geomtoy/core",
-    pascalName: "Geomtoy",
-    distDir: "./dist"
-};
+const pkgCore = config.packages.core;
+const pkgUtil = config.packages.util;
 
 export default {
-    input: pkgConfig.src,
+    input: "./src/index.ts",
     output: [
         {
-            file: path.resolve(pkgConfig.distDir, "index.mjs"),
+            file: "./dist/index.mjs",
             sourcemap: true,
             format: "esm"
         },
         {
-            file: path.resolve(pkgConfig.distDir, "index.cjs"),
+            file: "./dist/index.cjs",
             sourcemap: true,
             format: "cjs"
         },
         {
-            file: path.resolve(pkgConfig.distDir, "index.js"),
+            file: "./dist/index.js",
             format: "umd",
-            name: pkgConfig.pascalName,
-            amd: { id: pkgConfig.scopedName },
+            name: pkgCore.pascalName,
+            amd: { id: pkgCore.scopedName },
             globals: {
-                "@geomtoy/util": "GeomtoyUtil"
+                [pkgUtil.scopedName]: pkgUtil.pascalName
             },
             sourcemap: true
         },
         {
-            file: path.resolve(pkgConfig.distDir, "index.min.js"),
+            file: "./dist/index.min.js",
             format: "umd",
-            name: pkgConfig.pascalName,
-            amd: { id: pkgConfig.scopedName },
+            name: pkgCore.pascalName,
+            amd: { id: pkgCore.scopedName },
             globals: {
-                "@geomtoy/util": "GeomtoyUtil"
+                [pkgUtil.scopedName]: pkgUtil.pascalName
             },
             plugins: [terser()]
         }
     ],
     external(id) {
-        return id.indexOf("@geomtoy") >= 0;
+        return id.indexOf(config.scope) >= 0;
     },
     plugins: [nodeResolve({ extensions }), babel({ babelHelpers: "bundled", extensions, exclude })]
 };

@@ -6,6 +6,29 @@
         "commit": "git-cz",
         "prepare": "husky install"
     },
+    "config": {
+        "scope": "@geomtoy",
+        "packages": {
+            "core": {
+                "scopedName": "@geomtoy/core",
+                "pascalName": "Geomtoy"
+            },
+            "util": {
+                "scopedName": "@geomtoy/util",
+                "pascalName": "GeomtoyUtil"
+            },
+            "view": {
+                "scopedName": "@geomtoy/view",
+                "pascalName": "GeomtoyView"
+            },
+            "doc": {
+                "scopedName": "@geomtoy/doc"
+            },
+            "example": {
+                "scopedName": "@geomtoy/example"
+            }
+        }
+    },
     "devDependencies": {
         "@babel/core": "^7.16.7",
         "@babel/preset-env": "^7.16.7",
