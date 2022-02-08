@@ -122,7 +122,7 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
      * Move circle `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.centerCoordinates = Coordinates.move(this.centerCoordinates, deltaX, deltaY);
+        this.centerCoordinates = Vector2.add(this.centerCoordinates, [deltaX, deltaY]);
         return this;
     }
     /**
@@ -135,7 +135,7 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
      * Move circle `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.centerCoordinates = Coordinates.moveAlongAngle(this.centerCoordinates, angle, distance);
+        this.centerCoordinates = Vector2.add(this.centerCoordinates, Vector2.from2(angle, distance));
         return this;
     }
 

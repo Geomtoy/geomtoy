@@ -1,4 +1,4 @@
-import { Assert, Type, Utility, Coordinates, Math } from "@geomtoy/util";
+import { Assert, Type, Utility, Coordinates, Math, Vector2 } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Shape from "../../base/Shape";
@@ -145,7 +145,7 @@ class Ellipse extends Shape implements ClosedShape, TransformableShape, Rotation
      * Move ellipse `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.centerCoordinates = Coordinates.move(this.centerCoordinates, deltaX, deltaY);
+        this.centerCoordinates = Vector2.add(this.centerCoordinates, [deltaX, deltaY]);
         return this;
     }
     /**
@@ -158,7 +158,7 @@ class Ellipse extends Shape implements ClosedShape, TransformableShape, Rotation
      * Move ellipse `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.centerCoordinates = Coordinates.moveAlongAngle(this.centerCoordinates, angle, distance);
+        this.centerCoordinates = Vector2.add(this.centerCoordinates, Vector2.from2(angle, distance));
         return this;
     }
 

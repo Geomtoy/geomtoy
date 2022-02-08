@@ -1,4 +1,4 @@
-import { Assert, Type, Utility, Coordinates } from "@geomtoy/util";
+import { Assert, Type, Utility, Coordinates, Vector2 } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Shape from "../../base/Shape";
@@ -233,20 +233,20 @@ class Bezier extends Shape implements FiniteOpenShape, TransformableShape {
         return this.clone().moveSelf(deltaX, deltaY);
     }
     moveSelf(deltaX: number, deltaY: number) {
-        this.point1Coordinates = Coordinates.move(this.point1Coordinates, deltaX, deltaY);
-        this.point2Coordinates = Coordinates.move(this.point2Coordinates, deltaX, deltaY);
-        this.controlPoint1Coordinates = Coordinates.move(this.controlPoint1Coordinates, deltaX, deltaY);
-        this.controlPoint2Coordinates = Coordinates.move(this.controlPoint2Coordinates, deltaX, deltaY);
+        this.point1Coordinates = Vector2.add(this.point1Coordinates, [deltaX, deltaY]);
+        this.point2Coordinates = Vector2.add(this.point2Coordinates, [deltaX, deltaY]);
+        this.controlPoint1Coordinates = Vector2.add(this.controlPoint1Coordinates, [deltaX, deltaY]);
+        this.controlPoint2Coordinates = Vector2.add(this.controlPoint2Coordinates, [deltaX, deltaY]);
         return this;
     }
     moveAlongAngle(angle: number, distance: number) {
         return this.clone().moveAlongAngleSelf(angle, distance);
     }
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.point1Coordinates = Coordinates.moveAlongAngle(this.point1Coordinates, angle, distance);
-        this.point2Coordinates = Coordinates.moveAlongAngle(this.point2Coordinates, angle, distance);
-        this.controlPoint1Coordinates = Coordinates.moveAlongAngle(this.controlPoint1Coordinates, angle, distance);
-        this.controlPoint2Coordinates = Coordinates.moveAlongAngle(this.controlPoint2Coordinates, angle, distance);
+        this.point1Coordinates = Vector2.add(this.point1Coordinates, Vector2.from2(angle, distance));
+        this.point2Coordinates = Vector2.add(this.point2Coordinates, Vector2.from2(angle, distance));
+        this.controlPoint1Coordinates = Vector2.add(this.controlPoint1Coordinates, Vector2.from2(angle, distance));
+        this.controlPoint2Coordinates = Vector2.add(this.controlPoint2Coordinates, Vector2.from2(angle, distance));
         return this;
     }
 

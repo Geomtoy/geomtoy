@@ -199,9 +199,8 @@ class Vector extends Shape implements TransformableShape {
         return new Vector(owner, 0, 0);
     }
 
-    static fromAngleAndMagnitude(owner: Geomtoy, angle: number, magnitude: number): Vector {
-        const [x, y] = Coordinates.moveAlongAngle([0, 0], angle, magnitude);
-        return new Vector(owner, x, y);
+    static fromAngleAndMagnitude(owner: Geomtoy, angle: number, magnitude: number) {
+        return new Vector(owner, Vector2.from2(angle, magnitude));
     }
     static fromLineSegment(owner: Geomtoy, lineSegment: LineSegment, reverse = false) {
         return reverse ? new Vector(owner, lineSegment.point2Coordinates, lineSegment.point1Coordinates) : new Vector(owner, lineSegment.point1Coordinates, lineSegment.point2Coordinates);
@@ -236,7 +235,7 @@ class Vector extends Shape implements TransformableShape {
      * Move vector `this` itself by `deltaX` and `deltaY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.point1Coordinates = Coordinates.move(this.point1Coordinates, deltaX, deltaY);
+        this.point1Coordinates = Vector2.add(this.point1Coordinates, [deltaX, deltaY]);
         return this;
     }
     /**
@@ -249,7 +248,7 @@ class Vector extends Shape implements TransformableShape {
      * Move vector `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.point1Coordinates = Coordinates.moveAlongAngle(this.point1Coordinates, angle, distance);
+        this.point1Coordinates = Vector2.add(this.point1Coordinates, Vector2.from2(angle, distance));
         return this;
     }
 

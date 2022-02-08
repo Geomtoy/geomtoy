@@ -274,9 +274,9 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * Move triangle `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.point1Coordinates = Coordinates.move(this.point1Coordinates, deltaX, deltaY);
-        this.point2Coordinates = Coordinates.move(this.point2Coordinates, deltaX, deltaY);
-        this.point3Coordinates = Coordinates.move(this.point3Coordinates, deltaX, deltaY);
+        this.point1Coordinates = Vector2.add(this.point1Coordinates, [deltaX, deltaY]);
+        this.point2Coordinates = Vector2.add(this.point2Coordinates, [deltaX, deltaY]);
+        this.point3Coordinates = Vector2.add(this.point3Coordinates, [deltaX, deltaY]);
         return this;
     }
     /**
@@ -289,9 +289,9 @@ class Triangle extends Shape implements ClosedShape, TransformableShape {
      * Move triangle `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.point1Coordinates = Coordinates.moveAlongAngle(this.point1Coordinates, angle, distance);
-        this.point2Coordinates = Coordinates.moveAlongAngle(this.point2Coordinates, angle, distance);
-        this.point3Coordinates = Coordinates.moveAlongAngle(this.point3Coordinates, angle, distance);
+        this.point1Coordinates = Vector2.add(this.point1Coordinates, Vector2.from2(angle, distance));
+        this.point2Coordinates = Vector2.add(this.point2Coordinates, Vector2.from2(angle, distance));
+        this.point3Coordinates = Vector2.add(this.point3Coordinates, Vector2.from2(angle, distance));
         return this;
     }
     /**

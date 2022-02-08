@@ -1,4 +1,4 @@
-import { Assert, Type, Utility, Coordinates } from "@geomtoy/util";
+import { Assert, Type, Utility, Coordinates, Vector2 } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Shape from "../../base/Shape";
@@ -197,9 +197,9 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
      * Move triangle `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.point1Coordinates = Coordinates.move(this.point1Coordinates, deltaX, deltaY);
-        this.point2Coordinates = Coordinates.move(this.point2Coordinates, deltaX, deltaY);
-        this.controlPointCoordinates = Coordinates.move(this.controlPointCoordinates, deltaX, deltaY);
+        this.point1Coordinates = Vector2.add(this.point1Coordinates, [deltaX, deltaY]);
+        this.point2Coordinates = Vector2.add(this.point2Coordinates, [deltaX, deltaY]);
+        this.controlPointCoordinates = Vector2.add(this.controlPointCoordinates, [deltaX, deltaY]);
         return this;
     }
     /**
@@ -212,9 +212,9 @@ class QuadraticBezier extends Shape implements FiniteOpenShape, TransformableSha
      * Move triangle `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.point1Coordinates = Coordinates.moveAlongAngle(this.point1Coordinates, angle, distance);
-        this.point2Coordinates = Coordinates.moveAlongAngle(this.point2Coordinates, angle, distance);
-        this.controlPointCoordinates = Coordinates.moveAlongAngle(this.controlPointCoordinates, angle, distance);
+        this.point1Coordinates = Vector2.add(this.point1Coordinates, Vector2.from2(angle, distance));
+        this.point2Coordinates = Vector2.add(this.point2Coordinates, Vector2.from2(angle, distance));
+        this.controlPointCoordinates = Vector2.add(this.controlPointCoordinates, Vector2.from2(angle, distance));
         return this;
     }
 

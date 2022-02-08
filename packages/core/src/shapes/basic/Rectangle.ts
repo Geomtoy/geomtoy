@@ -236,7 +236,7 @@ class Rectangle extends Shape implements ClosedShape, TransformableShape, Rotati
      * Move rectangle `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.originCoordinates = Coordinates.move(this.originCoordinates, deltaX, deltaY);
+        this.originCoordinates = Vector2.add(this.originCoordinates, [deltaX, deltaY]);
         return this;
     }
     /**
@@ -249,7 +249,7 @@ class Rectangle extends Shape implements ClosedShape, TransformableShape, Rotati
      * Move rectangle `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.originCoordinates = Coordinates.moveAlongAngle(this.originCoordinates, angle, distance);
+        this.originCoordinates = Vector2.add(this.originCoordinates, Vector2.from2(angle, distance));
         return this;
     }
 

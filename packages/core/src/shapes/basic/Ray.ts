@@ -144,7 +144,7 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
      * Move ray `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.coordinates = Coordinates.move(this.coordinates, deltaX, deltaY);
+        this.coordinates = Vector2.add(this.coordinates, [deltaX, deltaY]);
         return this;
     }
     /**
@@ -157,7 +157,7 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
      * Move ray `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.coordinates = Coordinates.moveAlongAngle(this.coordinates, angle, distance);
+        this.coordinates = Vector2.add(this.coordinates, Vector2.from2(angle, distance));
         return this;
     }
 

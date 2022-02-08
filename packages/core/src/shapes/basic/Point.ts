@@ -150,7 +150,7 @@ class Point extends Shape {
      * Move point `this` itself by `deltaX` and `deltaY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.coordinates = Coordinates.move(this.coordinates, deltaX, deltaY);
+        this.coordinates = Vector2.add(this.coordinates, [deltaX, deltaY]);
         return this;
     }
     /**
@@ -163,7 +163,7 @@ class Point extends Shape {
      * Move point `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.coordinates = Coordinates.moveAlongAngle(this.coordinates, angle, distance);
+        this.coordinates = Vector2.add(this.coordinates, Vector2.from2(angle, distance));
         return this;
     }
     /**

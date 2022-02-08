@@ -1,4 +1,4 @@
-import { Assert, Type, Utility, Coordinates } from "@geomtoy/util";
+import { Assert, Type, Utility, Coordinates, Vector2 } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Shape from "../../base/Shape";
@@ -115,14 +115,14 @@ class Text extends Shape {
         return this.clone().moveSelf(deltaX, deltaY);
     }
     moveSelf(deltaX: number, deltaY: number) {
-        this.coordinates = Coordinates.move(this.coordinates, deltaX, deltaY);
+        this.coordinates = Vector2.add(this.coordinates, [deltaX, deltaY]);
         return this;
     }
     moveAlongAngle(angle: number, distance: number) {
         return this.clone().moveAlongAngleSelf(angle, distance);
     }
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.coordinates = Coordinates.moveAlongAngle(this.coordinates, angle, distance);
+        this.coordinates = Vector2.add(this.coordinates, Vector2.from2(angle, distance));
         return this;
     }
 

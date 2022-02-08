@@ -1,4 +1,4 @@
-import { Assert, Type, Utility, Coordinates, Size } from "@geomtoy/util";
+import { Assert, Type, Utility, Coordinates, Size, Vector2 } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Shape from "../../base/Shape";
@@ -270,7 +270,7 @@ class Image extends Shape {
      * Move text `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.coordinates = Coordinates.move(this.coordinates, deltaX, deltaY);
+        this.coordinates = Vector2.add(this.coordinates, [deltaX, deltaY]);
         return this;
     }
     /**
@@ -283,7 +283,7 @@ class Image extends Shape {
      * Move text `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.coordinates = Coordinates.moveAlongAngle(this.coordinates, angle, distance);
+        this.coordinates = Vector2.add(this.coordinates, Vector2.from2(angle, distance));
         return this;
     }
 

@@ -155,7 +155,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
 
     static fromPointAndAngleAndLength(owner: Geomtoy, point: [number, number] | Point, angle: number, length: number) {
         const c1 = point instanceof Point ? point.coordinates : point;
-        const c2 = Coordinates.moveAlongAngle(c1, angle, length);
+        const c2 = Vector2.add(c1, Vector2.from2(angle, length));
         return new LineSegment(owner, c1, c2);
     }
     /**
@@ -212,8 +212,8 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      * Move line segment `this` itself by `offsetX` and `offsetY`.
      */
     moveSelf(deltaX: number, deltaY: number) {
-        this.point1Coordinates = Coordinates.move(this.point1Coordinates, deltaX, deltaY);
-        this.point2Coordinates = Coordinates.move(this.point2Coordinates, deltaX, deltaY);
+        this.point1Coordinates = Vector2.add(this.point1Coordinates, [deltaX, deltaY]);
+        this.point2Coordinates = Vector2.add(this.point2Coordinates, [deltaX, deltaY]);
         return this;
     }
     /**
@@ -226,8 +226,8 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      * Move line segment `this` itself with `distance` along `angle`.
      */
     moveAlongAngleSelf(angle: number, distance: number) {
-        this.point1Coordinates = Coordinates.moveAlongAngle(this.point1Coordinates, angle, distance);
-        this.point2Coordinates = Coordinates.moveAlongAngle(this.point2Coordinates, angle, distance);
+        this.point1Coordinates = Vector2.add(this.point1Coordinates, Vector2.from2(angle, distance));
+        this.point2Coordinates = Vector2.add(this.point2Coordinates, Vector2.from2(angle, distance));
         return this;
     }
     /**
