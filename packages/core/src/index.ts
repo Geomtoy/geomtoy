@@ -1,5 +1,6 @@
 /** @category Entry */
 export { default as default } from "./geomtoy";
+export { default as Geomtoy } from "./geomtoy";
 export * from "./types";
 
 import BaseObject from "./base/BaseObject";

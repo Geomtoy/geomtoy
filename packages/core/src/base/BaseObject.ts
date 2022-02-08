@@ -16,6 +16,9 @@ export default abstract class BaseObject {
         this.options_ = optionerOf(this.owner).options;
     }
 
+    /**
+     * Get and set the `owner`(a `Geomtoy` instance) of this.
+     */
     get owner() {
         return this._owner;
     }
@@ -23,9 +26,15 @@ export default abstract class BaseObject {
         if (!(value instanceof Geomtoy)) throw new Error("[G]The `owner` of a `BaseObject` should be a `Geomtoy`.");
         this._owner = value;
     }
+    /**
+     * Get the class constructor `name` of this.
+     */
     get name() {
         return this.constructor.name;
     }
+    /**
+     * Get the `uuid` of this.
+     */
     get uuid() {
         return this._uuid;
     }
