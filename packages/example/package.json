@@ -22,6 +22,7 @@
     "types": "dist/index.d.ts",
     "dependencies": {
         "@geomtoy/core": "^0.0.0",
+        "@geomtoy/util": "^0.0.0",
         "@geomtoy/view": "^0.0.0"
     }
 }

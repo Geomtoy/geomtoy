@@ -9,6 +9,7 @@ const exclude = "./node_modules/**";
 const pkgConfig = {
     src: "./src/index.ts",
     kabobName: "geomtoy",
+    scopedName: "@geomtoy/core",
     pascalName: "Geomtoy",
     distDir: "./dist"
 };
@@ -30,16 +31,25 @@ export default {
             file: path.resolve(pkgConfig.distDir, "index.js"),
             format: "umd",
             name: pkgConfig.pascalName,
-            amd: { id: pkgConfig.kabobName },
+            amd: { id: pkgConfig.scopedName },
+            globals: {
+                "@geomtoy/util": "GeomtoyUtil"
+            },
             sourcemap: true
         },
         {
             file: path.resolve(pkgConfig.distDir, "index.min.js"),
             format: "umd",
             name: pkgConfig.pascalName,
-            amd: { id: pkgConfig.kabobName },
+            amd: { id: pkgConfig.scopedName },
+            globals: {
+                "@geomtoy/util": "GeomtoyUtil"
+            },
             plugins: [terser()]
         }
     ],
+    external(id) {
+        return id.indexOf("@geomtoy") >= 0;
+    },
     plugins: [nodeResolve({ extensions }), babel({ babelHelpers: "bundled", extensions, exclude })]
 };

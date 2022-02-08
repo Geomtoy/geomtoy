@@ -9,6 +9,7 @@ const exclude = "./node_modules/**";
 const pkgConfig = {
     src: "./src/index.ts",
     kabobName: "geomtoy-util",
+    scopedName: "@geomtoy/util",
     pascalName: "GeomtoyUtil",
     distDir: "./dist"
 };
@@ -30,14 +31,14 @@ export default {
             file: path.resolve(pkgConfig.distDir, "index.js"),
             format: "umd",
             name: pkgConfig.pascalName,
-            amd: { id: pkgConfig.kabobName },
+            amd: { id: pkgConfig.scopedName },
             sourcemap: true
         },
         {
             file: path.resolve(pkgConfig.distDir, "index.min.js"),
             format: "umd",
             name: pkgConfig.pascalName,
-            amd: { id: pkgConfig.kabobName },
+            amd: { id: pkgConfig.scopedName },
             plugins: [terser()]
         }
     ],
