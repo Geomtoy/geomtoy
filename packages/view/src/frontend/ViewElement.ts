@@ -1,9 +1,8 @@
 import { Utility } from "@geomtoy/util";
+import { Shape, Group } from "@geomtoy/core";
+
 import type { Style, InteractiveStyle, PathLike } from "../types";
 import type View from "./View";
-
-import type { Shape } from "@geomtoy/core";
-import type { Group } from "@geomtoy/core";
 
 export default class ViewElement {
     private _object: Shape | Group;
@@ -58,10 +57,10 @@ export default class ViewElement {
     }
 
     isObjectGroup(): this is { object: Group } {
-        return this._object.prototypeNameChain().includes("Group");
+        return this._object instanceof Group;
     }
     isObjectShape(): this is { object: Shape } {
-        return this._object.prototypeNameChain().includes("Shape");
+        return this._object instanceof Shape;
     }
 
     style(): Partial<Style>;

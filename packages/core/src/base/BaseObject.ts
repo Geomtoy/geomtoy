@@ -39,15 +39,6 @@ export default abstract class BaseObject {
         return this._uuid;
     }
 
-    prototypeNameChain() {
-        let cs: string[] = [];
-        let pt = this;
-        do {
-            if ((pt = Object.getPrototypeOf(pt))) cs.push(pt.constructor.name);
-        } while (pt != null);
-        return cs;
-    }
-
     data(key: string, value: any): this;
     data(key: string): any;
     data(key: string, value?: any) {

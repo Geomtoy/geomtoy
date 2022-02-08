@@ -1,12 +1,11 @@
 import { Math, Assert, Type, Utility } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import ViewElement from "./ViewElement";
+import { Image } from "@geomtoy/core";
 
 import type Renderer from "../renderer/Renderer";
 import type { Style } from "../types";
-
 import type Geomtoy from "@geomtoy/core";
-import type { Image } from "@geomtoy/core";
 
 const defaultDefaultStyle: Style = {
     fill: "transparent",
@@ -615,7 +614,7 @@ export default class View {
         this.geomtoy.nextTick(() => {
             const renderer = this.renderer;
             this._elements.forEach(el => {
-                if (el.object.prototypeNameChain().includes("Image")) {
+                if (el.object instanceof Image) {
                     const imageSource = (el.object as Image).imageSource;
                     renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.render.bind(this)).catch(console.error);
                 }
