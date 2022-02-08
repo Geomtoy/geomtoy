@@ -1,5 +1,6 @@
 import Geomtoy from "@geomtoy/core";
 import { colors, mathFont } from "./assets/assets";
+import { Math } from "@geomtoy/util";
 import { View, ViewElement, CanvasRenderer, SvgRenderer } from "@geomtoy/view";
 
 import type { EventObject, Text, Point } from "@geomtoy/core";
@@ -23,8 +24,10 @@ setDescription(`
     </ol>
 `);
 
+const epsilon = 2 ** -32;
+
 const G = new Geomtoy({
-    epsilon: 2 ** -32,
+    epsilon: epsilon,
     graphics: {
         pointSize: 6,
         arrow: {
@@ -60,7 +63,6 @@ const main = () => {
     const offsetLabel = function (this: Text, [e]: [EventObject<Point>]) {
         this.coordinates = e.target.move(1, 1).coordinates;
     };
-    
 
     const lineAB = G.Line()
         .bind(
@@ -110,7 +112,7 @@ const main = () => {
         }
         const d1 = G.Vector(pointA, this).angle;
         const d2 = G.Vector(pointA, pointB).angle;
-        this.data("distToPointA", (G.utils.approximatelyEqualTo(d1, d2) ? 1 : -1) * this.getDistanceBetweenPoint(pointA));
+        this.data("distToPointA", (Math.equalTo(d1, d2, epsilon) ? 1 : -1) * this.getDistanceBetweenPoint(pointA));
     });
 
     const [pointInt1, pointInt2] = [G.Point.zero(), G.Point.zero()];
