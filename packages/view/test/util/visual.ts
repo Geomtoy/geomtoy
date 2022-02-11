@@ -26,9 +26,11 @@ function loadImagePixelData(imageUrl: string) {
     });
 }
 
-export async function diffPixelData(originImageUrl: string, currentSvgOrCanvas: SVGSVGElement | HTMLCanvasElement, [width, height]: [number, number]) {
-    await Promise.all([loadImagePixelData(originImageUrl), toPixelData(currentSvgOrCanvas as unknown as HTMLElement)]).then(([origin, current]) => {
-        const diffPixelCount = pixelMatch(origin, current, null, width, height);
+export async function diffPixelData(sourceA: string | SVGSVGElement | HTMLCanvasElement, sourceB: string | SVGSVGElement | HTMLCanvasElement, [width, height]: [number, number]) {
+    const pA = sourceA instanceof SVGSVGElement || sourceA instanceof HTMLCanvasElement ? toPixelData(sourceA as unknown as HTMLElement) : loadImagePixelData(sourceA);
+    const pB = sourceB instanceof SVGSVGElement || sourceB instanceof HTMLCanvasElement ? toPixelData(sourceB as unknown as HTMLElement) : loadImagePixelData(sourceB);
+    await Promise.all([pA, pB]).then(([a, b]) => {
+        const diffPixelCount = pixelMatch(a, b, null, width, height);
         expect(diffPixelCount).to.be.equal(0);
     });
 }

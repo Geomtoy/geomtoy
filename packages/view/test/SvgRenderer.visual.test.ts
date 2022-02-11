@@ -18,17 +18,6 @@ describe("SvgRenderer", () => {
         svgTeardown();
     });
 
-    it("constructor", () => {
-        expect(sr).to.be.an.instanceOf(SvgRenderer);
-        expect(sr.container).to.be.equal(svgElement);
-    });
-    it("display", () => {
-        sr.display.width = visualTestSize.width;
-        sr.display.height = visualTestSize.height;
-        expect(svgElement.getAttribute("width")).to.be.equal(`${visualTestSize.width}`);
-        expect(svgElement.getAttribute("height")).to.be.equal(`${visualTestSize.height}`);
-    });
-
     it("visual-1", async () => {
         const visual1Url = "http://localhost:9876/base/test/visual/visual-1.png";
         const circle = g.Circle(visualTestSize.width / 2, visualTestSize.height / 2, 10);
