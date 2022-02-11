@@ -1,4 +1,4 @@
-import { Math, Assert, Type, Utility } from "@geomtoy/util";
+import { Maths, Assert, Type, Utility } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import ViewElement from "./ViewElement";
 import { Image } from "@geomtoy/core";
@@ -259,7 +259,7 @@ export default class View {
                 this.cursor("default");
 
                 const [offset1, offset2] = [this._touchPointers[0].offset, this._touchPointers[1].offset];
-                const distance = Math.hypot(offset2[0] - offset1[0], offset2[1] - offset1[1]);
+                const distance = Maths.hypot(offset2[0] - offset1[0], offset2[1] - offset1[1]);
                 const centerOffset = [(offset2[0] + offset1[0]) / 2, (offset2[1] + offset1[1]) / 2] as [number, number];
 
                 this._zoomingDistance = distance;
@@ -341,7 +341,7 @@ export default class View {
                 const atOffset = this.renderer.display.globalTransformation.antitransformCoordinates(pointerOffset);
                 if (this._preparingDragging) {
                     const scale = this.renderer.display.density * this.renderer.display.zoom;
-                    const dragDistance = Math.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
+                    const dragDistance = Maths.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
                     if (dragDistance < this.dragThrottleDistance) return;
                 }
 
@@ -383,7 +383,7 @@ export default class View {
                 const atOffset = this.renderer.display.globalTransformation.antitransformCoordinates(pointerOffset);
                 if (this._preparingDragging) {
                     const scale = this.renderer.display.density * this.renderer.display.zoom;
-                    const dragDistance = Math.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
+                    const dragDistance = Maths.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
                     if (dragDistance < this.dragThrottleDistance) return;
                 }
 
@@ -404,7 +404,7 @@ export default class View {
                     this._isPanning = true;
 
                     const [offset1, offset2] = [this._touchPointers[0].offset, this._touchPointers[1].offset];
-                    const distance = Math.hypot(offset2[0] - offset1[0], offset2[1] - offset1[1]);
+                    const distance = Maths.hypot(offset2[0] - offset1[0], offset2[1] - offset1[1]);
                     const centerOffset = [(offset2[0] + offset1[0]) / 2, (offset2[1] + offset1[1]) / 2] as [number, number];
 
                     const deltaZoom = distance / this._zoomingDistance;

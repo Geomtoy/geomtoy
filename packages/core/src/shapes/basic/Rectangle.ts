@@ -1,4 +1,4 @@
-import { Box, Assert, Type, Utility, Coordinates, Vector2, Math, Size } from "@geomtoy/util";
+import { Box, Assert, Type, Utility, Coordinates, Vector2, Maths, Size } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Shape from "../../base/Shape";
@@ -151,10 +151,10 @@ class Rectangle extends Shape implements ClosedShape, TransformableShape, Rotati
         }
         let { x: x1, y: y1 } = point1,
             { x: x2, y: y2 } = point2,
-            minX = Math.min(...[x1, x2])!,
-            minY = Math.min(...[y1, y2])!,
-            dx = Math.abs(x1 - x2),
-            dy = Math.abs(y1 - y2);
+            minX = Maths.min(...[x1, x2])!,
+            minY = Maths.min(...[y1, y2])!,
+            dx = Maths.abs(x1 - x2),
+            dy = Maths.abs(y1 - y2);
         return new Rectangle(owner, [minX, minY], dx, dy);
     }
 
@@ -196,7 +196,7 @@ class Rectangle extends Shape implements ClosedShape, TransformableShape, Rotati
     }
 
     normalize() {
-        //todo Normalize rectangle with rotation of `n * Math.PI / 2` to regular non-rotational rectangle
+        //todo Normalize rectangle with rotation of `n * Maths.PI / 2` to regular non-rotational rectangle
     }
 
     getBoundingBox(): [number, number, number, number] {

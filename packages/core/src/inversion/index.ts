@@ -1,4 +1,4 @@
-import { Assert, Math, Vector2, Type, Coordinates } from "@geomtoy/util";
+import { Assert, Maths, Vector2, Type, Coordinates } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../decorator";
 
 import BaseObject from "../base/BaseObject";
@@ -73,7 +73,7 @@ class Inversion extends BaseObject {
         const c1 = point.coordinates;
         const v01 = Vector2.from(c0, c1);
         const d = Vector2.magnitude(v01);
-        const id = Math.abs(power / d);
+        const id = Maths.abs(power / d);
 
         // When `power` > 0, `v01` and `v02` are in the same direction.
         // When `power` < 0, `v01` and `v02` are in the opposite direction.
@@ -100,7 +100,7 @@ class Inversion extends BaseObject {
         const c1 = line.getPerpendicularPointFromPoint(c0).coordinates;
         const v01 = Vector2.from(c0, c1);
         const d = Vector2.magnitude(v01);
-        const id = Math.abs(power / d);
+        const id = Maths.abs(power / d);
         const radius = id / 2;
 
         // When `power` > 0, `v01` and `v02` are in the same direction.
@@ -129,7 +129,7 @@ class Inversion extends BaseObject {
         const v01 = Vector2.from(c0, c1);
 
         if (circle.isPointOn(this.centerCoordinates())) {
-            const id = Math.abs((power / 2) * radius);
+            const id = Maths.abs((power / 2) * radius);
             const l = Line.fromTwoPoints.call(this, c0, c1)!;
 
             // When `power` > 0, `v01` and `v02` are in the same direction.
@@ -142,10 +142,10 @@ class Inversion extends BaseObject {
             return l.getPerpendicularLineFromPoint(c2);
         } else {
             const d = Vector2.magnitude(v01);
-            const i = 1 / Math.abs(d - radius);
-            const j = 1 / Math.abs(d + radius);
-            const r = ((i - j) * Math.abs(power)) / 2;
-            const s = ((i + j) * Math.abs(power)) / 2;
+            const i = 1 / Maths.abs(d - radius);
+            const j = 1 / Maths.abs(d + radius);
+            const r = ((i - j) * Maths.abs(power)) / 2;
+            const s = ((i + j) * Maths.abs(power)) / 2;
 
             // When `power` > 0 and inversion center is inside `circle`,  v01` and `v02` are in the opposite direction.
             // When `power` > 0 and inversion center is outside `circle`, `v01` and `v02` are in the same direction.

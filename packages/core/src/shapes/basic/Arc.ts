@@ -1,4 +1,4 @@
-import { Assert, Vector2, Math, Type, Utility, Coordinates } from "@geomtoy/util";
+import { Assert, Vector2, Maths, Type, Utility, Coordinates } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import { arcEndpointToCenterParameterization } from "../../graphics/helper";
@@ -160,7 +160,7 @@ class Arc extends Shape implements FiniteOpenShape, TransformableShape {
         if (!Coordinates.isValid(cc)) return false;
         if (!Type.isRealNumber(sa)) return false;
         if (!Type.isRealNumber(ea)) return false;
-        if (Math.equalTo(sa, ea, epsilon)) return false;
+        if (Maths.equalTo(sa, ea, epsilon)) return false;
         return true;
     }
     static formingCondition = "[G]The `startAngle` and `endAngle` of an `Arc` should not be coincide, to keep an `Arc` not full `Ellipse` nor empty `Ellipse`.";

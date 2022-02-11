@@ -1,4 +1,4 @@
-import Math from "./Math";
+import Maths from "./Maths";
 
 import type { StaticClass } from "./types";
 
@@ -10,26 +10,26 @@ class Angle {
     /**
      * Degree to radian factor.
      */
-    static DEG2RAD = Math.PI / 180;
+    static DEG2RAD = Maths.PI / 180;
     /**
      * Radian to degree factor.
      */
-    static RAD2DEG = 180 / Math.PI;
+    static RAD2DEG = 180 / Maths.PI;
     /**
      * Simplify angle `a` into $[0,2\pi)$.
      * @param a
      */
     static simplify(a: number) {
-        const t = a % (2 * Math.PI);
-        return t < 0 ? t + 2 * Math.PI : t;
+        const t = a % (2 * Maths.PI);
+        return t < 0 ? t + 2 * Maths.PI : t;
     }
     /**
      * Simplify angle `a` into $(-\pi,\pi]$.
      * @param a
      */
     static simplify2(a: number) {
-        const t = a % (2 * Math.PI);
-        return t > Math.PI ? t - 2 * Math.PI : t <= -Math.PI ? t + 2 * Math.PI : t;
+        const t = a % (2 * Maths.PI);
+        return t > Maths.PI ? t - 2 * Maths.PI : t <= -Maths.PI ? t + 2 * Maths.PI : t;
     }
     /**
      * Convert(with loss) angle `a` into $[0,\pi]$(the principal value range of the cosine).
@@ -37,7 +37,7 @@ class Angle {
      */
     static convert(a: number) {
         const t = Angle.simplify(a);
-        return t > Math.PI ? t - Math.PI : t;
+        return t > Maths.PI ? t - Maths.PI : t;
     }
     /**
      * Convert(with loss) angle `a` into $[-\frac{\pi}{2},\frac{\pi}{2}]$(the principal value range of the sine).
@@ -45,7 +45,7 @@ class Angle {
      */
     static convert2(a: number) {
         const t = Angle.simplify2(a);
-        return t > Math.PI / 2 ? t - Math.PI : t < -Math.PI / 2 ? t + Math.PI : t;
+        return t > Maths.PI / 2 ? t - Maths.PI : t < -Maths.PI / 2 ? t + Maths.PI : t;
     }
     /**
      * Convert the unit of angle `a` from degree to radian.

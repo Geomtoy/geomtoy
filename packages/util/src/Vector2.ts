@@ -1,4 +1,4 @@
-import Math from "./Math";
+import Maths from "./Maths";
 import Matrix2 from "./Matrix2";
 
 import type { StaticClass } from "./types";
@@ -25,14 +25,14 @@ class Vector2 {
      * @param m
      */
     static from2(a: number, m: number) {
-        return [m * Math.cos(a), m * Math.sin(a)] as [number, number];
+        return [m * Maths.cos(a), m * Maths.sin(a)] as [number, number];
     }
     /**
      * Returns the angle of vector2 `v`.
      * @param v
      */
     static angle(v: [number, number]) {
-        return Math.atan2(v[1], v[0]);
+        return Maths.atan2(v[1], v[0]);
     }
     /**
      * Returns the angle from `u` to `v`.
@@ -40,14 +40,14 @@ class Vector2 {
      * @param v
      */
     static angleTo(u: [number, number], v: [number, number]) {
-        return (Vector2.cross(u, v) >= 0 ? 1 : -1) * Math.acos(Vector2.dot(u, v) / (Vector2.magnitude(u) * Vector2.magnitude(v)));
+        return (Vector2.cross(u, v) >= 0 ? 1 : -1) * Maths.acos(Vector2.dot(u, v) / (Vector2.magnitude(u) * Vector2.magnitude(v)));
     }
     /**
      * Returns the magnitude of vector2 `v`.
      * @param v
      */
     static magnitude(v: [number, number]) {
-        return Math.hypot(v[0], v[1]);
+        return Maths.hypot(v[0], v[1]);
     }
     /**
      * Returns the squared magnitude of vector2 `v`.
@@ -131,9 +131,9 @@ class Vector2 {
      * @param t
      */
     static slerp(u: [number, number], v: [number, number], t: number) {
-        const theta = Math.abs(Vector2.angleTo(u, v)); // the included angle, not rotation angle with sign
-        const sinTheta = Math.sin(theta);
-        const [t1, t2] = [Math.sin((1 - t) * theta) / sinTheta, Math.sin(t * theta) / sinTheta];
+        const theta = Maths.abs(Vector2.angleTo(u, v)); // the included angle, not rotation angle with sign
+        const sinTheta = Maths.sin(theta);
+        const [t1, t2] = [Maths.sin((1 - t) * theta) / sinTheta, Maths.sin(t * theta) / sinTheta];
         return Vector2.add(Vector2.scalarMultiply(u, t1), Vector2.scalarMultiply(v, t2));
     }
     /**
@@ -158,7 +158,7 @@ class Vector2 {
      * @param a
      */
     static rotate(v: [number, number], a: number) {
-        const m = [Math.cos(a), -Math.sin(a), Math.sin(a), Math.cos(a)] as [number, number, number, number];
+        const m = [Maths.cos(a), -Maths.sin(a), Maths.sin(a), Maths.cos(a)] as [number, number, number, number];
         return Matrix2.dotVector2(m, v);
     }
     /**
@@ -168,7 +168,7 @@ class Vector2 {
      * @param ay
      */
     static skew(v: [number, number], ax: number, ay: number) {
-        const m = [1, Math.tan(ax), Math.tan(ay), 1] as [number, number, number, number];
+        const m = [1, Maths.tan(ax), Maths.tan(ay), 1] as [number, number, number, number];
         return Matrix2.dotVector2(m, v);
     }
     /**

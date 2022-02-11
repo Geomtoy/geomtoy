@@ -1,4 +1,4 @@
-import { Complex } from "../src";
+import { Complex, Maths } from "../src";
 
 const expect = chai.expect;
 
@@ -29,7 +29,7 @@ describe("Complex", () => {
     });
 
     it("from", () => {
-        expect(Complex.from(Math.PI / 4, 1)).to.deep.equal([0.7071067811865476, 0.7071067811865475]);
+        expect(Complex.from(Maths.PI / 4, 1)).to.deep.equal([0.7071067811865476, 0.7071067811865475]);
     });
 
     it("add, subtract, multiply and divide", () => {

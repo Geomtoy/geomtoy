@@ -1,5 +1,5 @@
 import Type from "./Type";
-import Math from "./Math";
+import Maths from "./Maths";
 
 import type { StaticClass } from "./types";
 
@@ -41,7 +41,7 @@ class Coordinates {
      */
     static isEqualTo(c1: [number, number], c2: [number, number], epsilon?: number) {
         if (epsilon === undefined) return c1[0] === c2[0] && c1[1] === c2[1];
-        return Math.equalTo(c1[0], c2[0], epsilon) && Math.equalTo(c1[1], c2[1], epsilon);
+        return Maths.equalTo(c1[0], c2[0], epsilon) && Maths.equalTo(c1[1], c2[1], epsilon);
     }
 }
 export default Coordinates;

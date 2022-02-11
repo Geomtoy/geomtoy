@@ -1,4 +1,4 @@
-import { Math, Coordinates, Angle } from "@geomtoy/util";
+import { Maths, Coordinates, Angle } from "@geomtoy/util";
 import { optionerOf } from "../helper/Optioner";
 
 import Arc from "../shapes/basic/Arc";
@@ -15,8 +15,8 @@ class Contain {
     static circleContainsArc(this: OwnerCarrier, circle: Circle, arc: Arc) {
         const epsilon = optionerOf(this.owner).options.epsilon;
         if (!Coordinates.isEqualTo(circle.centerCoordinates, arc.centerCoordinates, epsilon)) return false;
-        if (!Math.equalTo(arc.radiusX, arc.radiusY, epsilon)) return false;
-        if (!Math.equalTo(circle.radius, arc.radiusX, epsilon)) return false;
+        if (!Maths.equalTo(arc.radiusX, arc.radiusY, epsilon)) return false;
+        if (!Maths.equalTo(circle.radius, arc.radiusX, epsilon)) return false;
         return true;
     }
     //#endregion
@@ -29,7 +29,7 @@ class Contain {
     static lineContainsRay(this: OwnerCarrier, line: Line, ray: Ray) {
         const epsilon = optionerOf(this.owner).options.epsilon;
         if (!line.isPointOn(ray.coordinates)) return false;
-        if (!Math.equalTo(line.angle, Angle.convert2(ray.angle), epsilon)) return false;
+        if (!Maths.equalTo(line.angle, Angle.convert2(ray.angle), epsilon)) return false;
         return true;
     }
     //#endregion

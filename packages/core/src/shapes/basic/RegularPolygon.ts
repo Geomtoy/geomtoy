@@ -1,4 +1,4 @@
-import { Assert, Type, Utility, Coordinates, Math, Vector2 } from "@geomtoy/util";
+import { Assert, Type, Utility, Coordinates, Maths, Vector2 } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Shape from "../../base/Shape";
@@ -121,22 +121,22 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
     }
 
     get apothem() {
-        return this.radius * Math.cos(Math.PI / this.sideCount);
+        return this.radius * Maths.cos(Maths.PI / this.sideCount);
     }
     get sideLength() {
-        return 2 * this.radius * Math.sin(Math.PI / this.sideCount);
+        return 2 * this.radius * Maths.sin(Maths.PI / this.sideCount);
     }
     get centralAngle() {
-        return (2 * Math.PI) / this.sideCount;
+        return (2 * Maths.PI) / this.sideCount;
     }
     get interiorAngle() {
-        return Math.PI - (2 * Math.PI) / this.sideCount;
+        return Maths.PI - (2 * Maths.PI) / this.sideCount;
     }
     get sumOfInteriorAngle() {
-        return Math.PI * (this.sideCount - 2);
+        return Maths.PI * (this.sideCount - 2);
     }
     get exteriorAngle() {
-        return (2 * Math.PI) / this.sideCount;
+        return (2 * Maths.PI) / this.sideCount;
     }
     get diagonalCount() {
         let n = this.sideCount;
@@ -195,17 +195,17 @@ class RegularPolygon extends Shape implements ClosedShape, TransformableShape {
     }
 
     static fromApothemEtc(owner: Geomtoy, apothem: number, centerCoordinates: [number, number], sideCount: number, rotation: number = 0) {
-        let r = apothem / Math.cos(Math.PI / sideCount);
+        let r = apothem / Maths.cos(Maths.PI / sideCount);
         return new RegularPolygon(owner, centerCoordinates, r, sideCount, rotation);
     }
     static fromSideLengthEtc(owner: Geomtoy, sideLength: number, centerCoordinates: [number, number], sideCount: number, rotation: number = 0) {
-        let r = sideLength / Math.sin(Math.PI / sideCount) / 2;
+        let r = sideLength / Maths.sin(Maths.PI / sideCount) / 2;
         return new RegularPolygon(owner, centerCoordinates, r, sideCount, rotation);
     }
 
     getPoints() {
         return Utility.range(0, this.sideCount).map(index => {
-            return new Point(this.owner, Vector2.add(this.centerCoordinates, Vector2.from2(((2 * Math.PI) / this.sideCount) * index + this.rotation, this.radius)));
+            return new Point(this.owner, Vector2.add(this.centerCoordinates, Vector2.from2(((2 * Maths.PI) / this.sideCount) * index + this.rotation, this.radius)));
         });
     }
     getSideLineSegments() {

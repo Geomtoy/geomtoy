@@ -1,4 +1,4 @@
-import { Assert, Vector2, Math, Type, Utility } from "@geomtoy/util";
+import { Assert, Vector2, Maths, Type, Utility } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 import Shape from "../../base/Shape";
 import Arc from "../basic/Arc";
@@ -255,7 +255,7 @@ class Path extends Shape {
                 return [index, indexOrUuid];
             }
         } else {
-            if (Math.between(indexOrUuid, 0, this.commandCount - 1, true, true)) {
+            if (Maths.between(indexOrUuid, 0, this.commandCount - 1, true, true)) {
                 return [indexOrUuid, this._commands[indexOrUuid].uuid];
             }
         }
@@ -267,7 +267,7 @@ class Path extends Shape {
     }
     getUuidOfIndex(index: number) {
         Assert.isInteger(index, "index");
-        return Math.between(index, 0, this.commandCount - 1, true, true) ? this._commands[index].uuid : "";
+        return Maths.between(index, 0, this.commandCount - 1, true, true) ? this._commands[index].uuid : "";
     }
 
     getPathSegment(indexOrUuid: number | string) {

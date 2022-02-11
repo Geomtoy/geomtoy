@@ -1,4 +1,4 @@
-import { Assert, Type, Utility, Coordinates, Vector2, Math } from "@geomtoy/util";
+import { Assert, Type, Utility, Coordinates, Vector2, Maths } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import { optionerOf } from "../../helper/Optioner";
@@ -91,7 +91,7 @@ class Point extends Shape {
         const [x3, y3] = point3.coordinates;
         const d = x1 * y2 + x2 * y3 + x3 * y1 - (x2 * y1 + x3 * y2 + x1 * y3); //cross product shorthand
         const epsilon = optionerOf(owner).options.epsilon;
-        return Math.equalTo(d, 0, epsilon);
+        return Maths.equalTo(d, 0, epsilon);
     }
     /**
      * Get the `n` equally dividing rays of the angle which is formed by points `vertex`, `leg1` and `leg2`.
@@ -184,7 +184,7 @@ class Point extends Shape {
      * @returns {number}
      */
     getDistanceBetweenLine(line: Line): number {
-        return Math.abs(this.getSignedDistanceBetweenLine(line));
+        return Maths.abs(this.getSignedDistanceBetweenLine(line));
     }
     /**
      * Get the signed distance between point `this` and line `line`.
@@ -194,7 +194,7 @@ class Point extends Shape {
     getSignedDistanceBetweenLine(line: Line): number {
         const [a, b, c] = line.getGeneralEquationParameters();
         const { x, y } = this;
-        return (a * x + b * y + c) / Math.hypot(a, b);
+        return (a * x + b * y + c) / Maths.hypot(a, b);
     }
     /**
      * Get the distance square between point `this` and line `line`.
@@ -212,7 +212,7 @@ class Point extends Shape {
      * @returns {number}
      */
     getDistanceBetweenLineSegment(lineSegment: LineSegment): number {
-        return Math.abs(this.getSignedDistanceBetweenLineSegment(lineSegment));
+        return Maths.abs(this.getSignedDistanceBetweenLineSegment(lineSegment));
     }
     /**
      * Get the signed distance between point `this` and line segment `lineSegment`.
@@ -260,16 +260,16 @@ class Point extends Shape {
             epsilon = this.options_.epsilon;
 
         if (allowEqual) {
-            return Math.equalTo(cp, 0, epsilon) && !Math.lessThan(dp, 0, epsilon) && !Math.greaterThan(dp, sm, epsilon);
+            return Maths.equalTo(cp, 0, epsilon) && !Maths.lessThan(dp, 0, epsilon) && !Maths.greaterThan(dp, sm, epsilon);
         }
-        return Math.equalTo(cp, 0, epsilon) && Math.greaterThan(dp, 0, epsilon) && Math.lessThan(dp, sm, epsilon);
+        return Maths.equalTo(cp, 0, epsilon) && Maths.greaterThan(dp, 0, epsilon) && Maths.lessThan(dp, sm, epsilon);
     }
     isOnLineSegmentLyingLine(lineSegment: LineSegment): boolean {
         let v1 = Vector2.from(lineSegment.point1Coordinates, lineSegment.point2Coordinates),
             v2 = Vector2.from(lineSegment.point1Coordinates, this.coordinates),
             epsilon = this.options_.epsilon,
             dp = Vector2.dot(v1, v2);
-        return Math.equalTo(dp, 0, epsilon);
+        return Maths.equalTo(dp, 0, epsilon);
     }
 
     isOnLineSegment(lineSegment: LineSegment): boolean {
@@ -282,7 +282,7 @@ class Point extends Shape {
         const scale = viewport.density * viewport.zoom;
         const pointSize = this.options_.graphics.pointSize / scale;
 
-        g.centerArcTo(...this.coordinates, pointSize, pointSize, 0, 0, 2 * Math.PI);
+        g.centerArcTo(...this.coordinates, pointSize, pointSize, 0, 0, 2 * Maths.PI);
         g.close();
         return g;
     }

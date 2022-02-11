@@ -1,4 +1,4 @@
-import { Math } from "@geomtoy/util";
+import { Maths } from "@geomtoy/util";
 import { ImageSourceStatus } from "../types";
 
 export default class ImageSourceManager {
@@ -18,7 +18,7 @@ export default class ImageSourceManager {
         context.fillRect(0, 0, width, height);
 
         context.fillStyle = color;
-        context.transform(Math.SQRT1_2, Math.SQRT1_2, -Math.SQRT1_2, Math.SQRT1_2, width / 2, (height - size * Math.SQRT2) / 2);
+        context.transform(Maths.SQRT1_2, Maths.SQRT1_2, -Maths.SQRT1_2, Maths.SQRT1_2, width / 2, (height - size * Maths.SQRT2) / 2);
 
         const path = new Path2D(`
             M0,0V${boxSize * 5}H${boxSize * 5}V${boxSize * 2}H${boxSize * 4}V${boxSize * 4}H${boxSize}V${boxSize}H${boxSize * 5}V0Z
@@ -38,7 +38,7 @@ export default class ImageSourceManager {
 
         svg.innerHTML = `
             <rect x="0" y="0" width="${width}" height="${height}" fill="${backgroundColor}"/>
-            <path transform="matrix(${Math.SQRT1_2}, ${Math.SQRT1_2}, ${-Math.SQRT1_2}, ${Math.SQRT1_2}, ${width / 2}, ${(height - size * Math.SQRT2) / 2})"
+            <path transform="matrix(${Maths.SQRT1_2}, ${Maths.SQRT1_2}, ${-Maths.SQRT1_2}, ${Maths.SQRT1_2}, ${width / 2}, ${(height - size * Maths.SQRT2) / 2})"
                 d="M0,0V${boxSize * 5}H${boxSize * 5}V${boxSize * 2}H${boxSize * 4}V${boxSize * 4}H${boxSize}V${boxSize}H${boxSize * 5}V0Z
                 M${boxSize * 2},${boxSize * 2}V${boxSize * 3}H${boxSize * 3}V${boxSize * 2}Z" fill="${color}"/>  
         `;

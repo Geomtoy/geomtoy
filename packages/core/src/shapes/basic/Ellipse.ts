@@ -1,4 +1,4 @@
-import { Assert, Type, Utility, Coordinates, Math, Vector2 } from "@geomtoy/util";
+import { Assert, Type, Utility, Coordinates, Maths, Vector2 } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Shape from "../../base/Shape";
@@ -190,7 +190,7 @@ class Ellipse extends Shape implements ClosedShape, TransformableShape, Rotation
         if (!this.isValid()) return g;
 
         const { centerX, centerY, radiusX, radiusY, rotation } = this;
-        g.centerArcTo(centerX, centerY, radiusX, radiusY, rotation, 0, 2 * Math.PI);
+        g.centerArcTo(centerX, centerY, radiusX, radiusY, rotation, 0, 2 * Maths.PI);
         return g;
     }
     clone() {

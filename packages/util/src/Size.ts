@@ -1,5 +1,5 @@
 import Type from "./Type";
-import Math from "./Math";
+import Maths from "./Maths";
 
 import type { StaticClass } from "./types";
 
@@ -41,7 +41,7 @@ class Size {
      */
     static isEqualTo(s1: [number, number], s2: [number, number], epsilon?: number) {
         if (epsilon === undefined) return s1[0] === s2[0] && s1[1] === s2[1];
-        return Math.equalTo(s1[0], s2[0], epsilon) && Math.equalTo(s1[1], s2[1], epsilon);
+        return Maths.equalTo(s1[0], s2[0], epsilon) && Maths.equalTo(s1[1], s2[1], epsilon);
     }
 }
 export default Size;

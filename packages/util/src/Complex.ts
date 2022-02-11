@@ -1,5 +1,5 @@
 import Vector2 from "./Vector2";
-import Math from "./Math";
+import Maths from "./Maths";
 
 import type { StaticClass } from "./types";
 
@@ -28,6 +28,20 @@ class Complex {
     static imag(c: [number, number], imag?: number) {
         if (imag !== undefined) c[1] = imag;
         return c[1];
+    }
+    /**
+     * Whether complex number `c` is purely real number.
+     * @param c
+     */
+    static isPurelyReal(c: [number, number]) {
+        return c[1] === 0;
+    }
+    /**
+     * Whether complex number `c` is purely imaginary number.
+     * @param c
+     */
+    static isPurelyImag(c: [number, number]) {
+        return c[0] === 0;
     }
     /**
      * The modulus of complex number `c`.
@@ -129,7 +143,7 @@ class Complex {
      */
     static exp(c: [number, number]) {
         const [re, im] = c;
-        return [Math.exp(re) * Math.cos(im), Math.exp(re) * Math.sin(im)] as [number, number];
+        return [Maths.exp(re) * Maths.cos(im), Maths.exp(re) * Maths.sin(im)] as [number, number];
     }
     /**
      * Return the sine of complex number `c`.
@@ -137,7 +151,7 @@ class Complex {
      */
     static sin(c: [number, number]) {
         const [re, im] = c;
-        return [Math.sin(re) * Math.cosh(im), Math.cos(re) * Math.sinh(im)] as [number, number];
+        return [Maths.sin(re) * Maths.cosh(im), Maths.cos(re) * Maths.sinh(im)] as [number, number];
     }
     /**
      * Return the cosine of complex number `c`.
@@ -145,7 +159,7 @@ class Complex {
      */
     static cos(c: [number, number]) {
         const [re, im] = c;
-        return [Math.cos(re) * Math.cosh(im), -Math.sin(re) * Math.sinh(im)] as [number, number];
+        return [Maths.cos(re) * Maths.cosh(im), -Maths.sin(re) * Maths.sinh(im)] as [number, number];
     }
     /**
      * Return the secant of complex number `c`.

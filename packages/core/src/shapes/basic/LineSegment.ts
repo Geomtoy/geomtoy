@@ -1,4 +1,4 @@
-import { Assert, Vector2, Math, Type, Utility, Coordinates } from "@geomtoy/util";
+import { Assert, Vector2, Maths, Type, Utility, Coordinates } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Shape from "../../base/Shape";
@@ -273,7 +273,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
             v34 = Vector2.from(c3, c4),
             dp = Vector2.dot(v12, v34),
             epsilon = this.options_.epsilon;
-        return Math.equalTo(dp, 0, epsilon);
+        return Maths.equalTo(dp, 0, epsilon);
     }
     /**
      * Whether line segment `this` is parallel to line segment `lineSegment`, regardless of whether they are collinear or even the same.
@@ -287,7 +287,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
             v34 = Vector2.from(c3, c4),
             cp = Vector2.cross(v12, v34),
             epsilon = this.options_.epsilon;
-        return Math.equalTo(cp, 0, epsilon);
+        return Maths.equalTo(cp, 0, epsilon);
     }
 
     /**
@@ -304,7 +304,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
             cp1 = Vector2.cross(v12, v34),
             cp2 = Vector2.cross(v32, v34),
             epsilon = this.options_.epsilon;
-        return Math.equalTo(cp1, 0, epsilon) && Math.equalTo(cp2, 0, epsilon);
+        return Maths.equalTo(cp1, 0, epsilon) && Maths.equalTo(cp2, 0, epsilon);
     }
     /**
      * `线段this`与`线段s`是否相接，即有且只有一个端点被共用(若两个共用则相同)，无论夹角为多少
@@ -337,7 +337,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
         const { point1Coordinates: c1, point2Coordinates: c2 } = lineSegment;
         const lerp1 = this.getLerpingRatioByPoint(c1);
         const lerp2 = this.getLerpingRatioByPoint(c2);
-        return Math.between(lerp1, 0, 1) && Math.between(lerp2, 0, 1);
+        return Maths.between(lerp1, 0, 1) && Maths.between(lerp2, 0, 1);
     }
 
     getLength() {
@@ -352,7 +352,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
         const v13 = Vector2.from(c1, c3);
         const v23 = Vector2.from(c2, c3);
         const dp = Vector2.dot(v13, v23);
-        return Math.equalTo(dp, 0, epsilon) && !Math.equalTo(Vector2.angle(v13), Vector2.angle(v23), epsilon);
+        return Maths.equalTo(dp, 0, epsilon) && !Maths.equalTo(Vector2.angle(v13), Vector2.angle(v23), epsilon);
     }
 
     /**
@@ -365,7 +365,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
         const { point1Coordinates: c1, point2Coordinates: c2 } = lineSegment;
         const lerp1 = this.getLerpingRatioByPoint(c1);
         const lerp2 = this.getLerpingRatioByPoint(c2);
-        return Math.between(lerp1, 0, 1) !== Math.between(lerp2, 0, 1);
+        return Maths.between(lerp1, 0, 1) !== Maths.between(lerp2, 0, 1);
     }
     getOverlapLineSegmentWithLineSegment(lineSegment: LineSegment): LineSegment | null {
         if (!this.isOverlappedWithLineSegment(lineSegment)) return null;
@@ -374,7 +374,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
         return new LineSegment(this.owner, Utility.nth(cs, 1)!, Utility.nth(cs, 2)!);
     }
     /**
-     * `线段this`与`线段s`是否相交，相交不仅要求有且仅有一个点重合，且要求夹角不等于0或者Math.PI
+     * `线段this`与`线段s`是否相交，相交不仅要求有且仅有一个点重合，且要求夹角不等于0或者Maths.PI
      * 包含了不共线的相接和线段的端点在另一个线段上的特殊情况
      * @param {LineSegment} lineSegment
      * @returns {boolean | Point} 交点
@@ -390,7 +390,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
             cp3 = v3.crossProduct(v1),
             epsilon = this.options_.epsilon;
 
-        if (Math.equalTo(cp1, 0, epsilon)) return false;
+        if (Maths.equalTo(cp1, 0, epsilon)) return false;
         let t1 = cp3 / cp1,
             t2 = cp2 / cp1;
         if (0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1) {
@@ -415,7 +415,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      *      - If "weight=0", return `point1`.
      *      - If "weight=1", return `point2`.
      *      - If "0<weight<1", return a point between `point1` and `point2`.
-     * - When the `weight` is in the interval `(-Math.Infinity, 0)` and `(1, Math.Infinity)`, it is extrapolation:
+     * - When the `weight` is in the interval $(-\infty,0)$ and $(1,\infty)$, it is extrapolation:
      *      - If "weight<0", return a point exterior of `point1`.
      *      - If "weight>1", return a point exterior of `point2`.
      * @param {number} weight
@@ -426,8 +426,8 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
                 point1: { x: x1, y: y1 },
                 point2: { x: x2, y: y2 }
             } = this,
-            x = Math.lerp(x1, x2, weight),
-            y = Math.lerp(y1, y2, weight);
+            x = Maths.lerp(x1, x2, weight),
+            y = Maths.lerp(y1, y2, weight);
         return new Point(this.owner, x, y);
     }
     getLerpingRatioByPoint(point: Point | [number, number]): number {
@@ -446,7 +446,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      * - When `line` is intersected with `this`, return a number in the interval `[0, 1]`:
      *      - If `line` passes through `point1`, return 0.
      *      - If `line` passes through `point2`, return 1.
-     * - When `line` is not parallel to and not intersected with `this`, return a number in the interval `(-Math.Infinity, 0)` and `(1, Math.Infinity)`.
+     * - When `line` is not parallel to and not intersected with `this`, return a number in the interval $(-\infty,0)$ and $(1,\infty)$.
      * @param {Line} line
      * @returns {number}
      */
@@ -456,17 +456,17 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
         const [a, b, c] = line.getGeneralEquationParameters(),
             d1 = a * x1 + b * y1 + c,
             d2 = a * x2 + b * y2 + c;
-        if (Math.equalTo(d1, d2, epsilon)) return NaN;
+        if (Maths.equalTo(d1, d2, epsilon)) return NaN;
         return d1 / (d1 - d2);
     }
     /**
      * Get the division point of line segment `this`.
      * @description
      * - When `lambda` is equal to -1, return `null`.
-     * - When `lambda` is in the interval `[0, Math.Infinity]`, return a internal division point, a point between `point1` and `point2`:
+     * - When `lambda` is in the interval $[0,\infty]$, return a internal division point, a point between `point1` and `point2`:
      *      - If "lambda=0", return `point1`.
-     *      - If "lambda=Math.Infinity", return `point2`.
-     * - When `lambda` is in the interval `(-Math.Infinity, -1)` and `(-1, 0)`, return a external division point:
+     *      - If "lambda=$\infty$", return `point2`.
+     * - When `lambda` is in the interval $(-\infty, -1)$ and $(-1, 0)$, return a external division point:
      *      - If "-1<lambda<0", return a point exterior of `point1`.
      *      - If "lambda<-1", return a point exterior of `point2`.
      *
@@ -475,7 +475,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      */
     getDivisionPoint(lambda: number): Point | null {
         if (lambda === -1) return null;
-        if (Math.abs(lambda) === Infinity) return this.point2.clone();
+        if (Maths.abs(lambda) === Infinity) return this.point2.clone();
         let {
                 point1: { x: x1, y: y1 },
                 point2: { x: x2, y: y2 }
@@ -491,7 +491,7 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      * - When `line` is intersected with `this`, return a number in the interval `[0, Infinity]`:
      *      - If `line` passes through `point1`, return 0.
      *      - If `line` passes through `point2`, return `Infinity`.
-     * - When `line` is not parallel to and not intersected with `this`, return a number in the interval `(-Math.Infinity, -1)` and `(-1, 0)`.
+     * - When `line` is not parallel to and not intersected with `this`, return a number in the interval $(-\infty,-1)$ and $(-1,0)$.
      * @param {Line} line
      * @returns {number}
      */

@@ -89,11 +89,6 @@ export default class Graphics {
         this.currentXY = [point2X, point2Y];
         return this;
     }
-    /**
-     * Use endpoint parameterization to draw an arc, like SVG does.
-     * Endpoint parameterization can NOT directly draw a full circle/ellipse,
-     * we use an approximation of `Math.PI / 1800` when converting the center parameterization to the endpoint parameterization.
-     */
     endpointArcTo(radiusX: number, radiusY: number, xAxisRotation: number, largeArc: boolean, positive: boolean, x: number, y: number) {
         const [point1X, point1Y] = this.currentXY;
         const [point2X, point2Y] = [x, y];

@@ -1,5 +1,5 @@
 import Type from "./Type";
-import Math from "./Math";
+import Maths from "./Maths";
 import Coordinates from "./Coordinates";
 
 import type { StaticClass } from "./types";
@@ -94,7 +94,7 @@ class Box {
      */
     static isEqualTo(b1: [number, number, number, number], b2: [number, number, number, number], epsilon?: number) {
         if (epsilon === undefined) return b1[0] === b2[0] && b1[1] === b2[1] && b1[2] === b2[2] && b1[3] === b2[3];
-        return Math.equalTo(b1[0], b2[0], epsilon) && Math.equalTo(b1[1], b2[1], epsilon) && Math.equalTo(b1[2], b2[2], epsilon) && Math.equalTo(b1[3], b2[3], epsilon);
+        return Maths.equalTo(b1[0], b2[0], epsilon) && Maths.equalTo(b1[1], b2[1], epsilon) && Maths.equalTo(b1[2], b2[2], epsilon) && Maths.equalTo(b1[3], b2[3], epsilon);
     }
     /**
      * Returns a new box defined from coordinates `c1` to coordinates `c2`.
@@ -102,10 +102,10 @@ class Box {
      * @param c2
      */
     static from(c1: [number, number], c2: [number, number]) {
-        const minX = Math.min(Coordinates.x(c1), Coordinates.x(c2));
-        const minY = Math.min(Coordinates.y(c1), Coordinates.y(c2));
-        const width = Math.abs(Coordinates.x(c1) - Coordinates.x(c2));
-        const height = Math.abs(Coordinates.y(c1) - Coordinates.y(c2));
+        const minX = Maths.min(Coordinates.x(c1), Coordinates.x(c2));
+        const minY = Maths.min(Coordinates.y(c1), Coordinates.y(c2));
+        const width = Maths.abs(Coordinates.x(c1) - Coordinates.x(c2));
+        const height = Maths.abs(Coordinates.y(c1) - Coordinates.y(c2));
         return [minX, minY, width, height] as [number, number, number, number];
     }
     /**

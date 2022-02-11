@@ -1,4 +1,4 @@
-import { Angle, Assert, Type, Utility, Coordinates, Vector2, Math } from "@geomtoy/util";
+import { Angle, Assert, Type, Utility, Coordinates, Vector2, Maths } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Shape from "../../base/Shape";
@@ -100,7 +100,7 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
         const c0 = this.coordinates;
         const c1 = point instanceof Point ? point.coordinates : point;
         if (Coordinates.isEqualTo(c0, c1, epsilon)) return true;
-        return Math.equalTo(Vector2.angle(Vector2.from(c0, c1)), this.angle, epsilon);
+        return Maths.equalTo(Vector2.angle(Vector2.from(c0, c1)), this.angle, epsilon);
     }
     /**
      * Get the `n` section(equal) rays of the angle which is formed by rays `ray1` and `ray2`.
@@ -127,7 +127,7 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
 
     isSameAs(ray: Ray) {
         const epsilon = this.options_.epsilon;
-        return Coordinates.isEqualTo(this.coordinates, ray.coordinates, epsilon) && Math.equalTo(this.angle, ray.angle, epsilon), epsilon;
+        return Coordinates.isEqualTo(this.coordinates, ray.coordinates, epsilon) && Maths.equalTo(this.angle, ray.angle, epsilon), epsilon;
     }
     isEndpointSameAs(ray: Ray) {
         const epsilon = this.options_.epsilon;

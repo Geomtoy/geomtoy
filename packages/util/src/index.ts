@@ -4,7 +4,7 @@ export { default as Box } from "./Box";
 export { default as Utility } from "./Utility";
 export { default as Complex } from "./Complex";
 export { default as Coordinates } from "./Coordinates";
-export { default as Math } from "./Math";
+export { default as Maths } from "./Maths";
 export { default as Matrix2 } from "./Matrix2";
 export { default as Matrix3 } from "./Matrix3";
 export { default as Polynomial } from "./Polynomial";

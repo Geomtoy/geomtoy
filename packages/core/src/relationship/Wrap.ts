@@ -1,4 +1,4 @@
-import { Vector2, Math } from "@geomtoy/util";
+import { Vector2, Maths } from "@geomtoy/util";
 import { optionerOf } from "../helper/Optioner";
 
 import Arc from "../shapes/basic/Arc";
@@ -16,7 +16,7 @@ class Wrap {
         const sd = Vector2.squaredMagnitude(Vector2.from(circle.centerCoordinates, otherCircle.centerCoordinates));
         const sdr = (circle.radius - otherCircle.radius) ** 2;
         const epsilon = optionerOf(this.owner).options.epsilon;
-        return Math.greaterThan(circle.radius, otherCircle.radius, epsilon) && Math.lessThan(sd, sdr, epsilon);
+        return Maths.greaterThan(circle.radius, otherCircle.radius, epsilon) && Maths.lessThan(sd, sdr, epsilon);
     }
     static circleWrapsLineSegment(this: OwnerCarrier, circle: Circle, lineSegment: LineSegment) {
         return circle.isPointInside(lineSegment.point1Coordinates) && circle.isPointInside(lineSegment.point2Coordinates);

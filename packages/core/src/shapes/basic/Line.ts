@@ -1,4 +1,4 @@
-import { Angle, Assert, Vector2, Math, Type, Utility, Coordinates, Box } from "@geomtoy/util";
+import { Angle, Assert, Vector2, Maths, Type, Utility, Coordinates, Box } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Arrow from "../../helper/Arrow";
@@ -95,60 +95,47 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
     /**
      * The slope of line `this`, the result is in $(-\infty,\infty]$.
      * @description
-     * Due to the accuracy of computer calculations, such as $\pi$ is not accurate,
-     * the range of slope is internally reduced to `(Math.tan(-Math.PI / 2), Math.tan(Math.PI / 2)]` which should be `(-16331239353195370, 16331239353195370]`
-     * but we use `(-Infinity, Infinity]` to represent. So we actually cut off the numbers of these two intervals:
-     * `[-Infinity, Math.tan(-Math.PI / 2)]`, `(Math.tan(Math.PI / 2), Infinity)`
-     * (The results returned by `Math.atan` on these numbers are all -Math.PI / 2 or Math.PI / 2)
-     * Any number greater than or equal to the maximum/less than or equal to the minimum will be clamped to `Infinity`.
+     * Due to lack of precision in floating point calculations, such as $\pi$ is not accurate,
+     * the range of slope is internally reduced to $\left(\tan\left(-\frac{\pi}{2}\right),\tan\left(\frac{\pi}{2}\right)\right]$ which should be $(-16331239353195370, 16331239353195370]$
+     * but we use $(-\infty,\infty]$ to represent. So we actually cut off the numbers of these two intervals:
+     * $\left[-\infty,\tan\left(-\frac{\pi}{2}\right)\right]$, $\left(\tan\left(\frac{\pi}{2}\right), \infty\right]$.
+     * Any number will be treated as $\infty$ if its absolute value is greater than $\tan\left(\frac{\pi}{2}\right)$.
      */
     get slope(): number {
         return this._slope;
     }
     set slope(value) {
         Assert.isExtendedRealNumber(value, "slope");
-        //prettier-ignore
-        const s = value >= Math.TAN90 
-            ? Infinity 
-            : value <= -Math.TAN90
-            ? -Infinity
-            : value
+        const s = Maths.abs(value) >= Maths.TAN90 ? Infinity : value;
         this._setSlope(s);
     }
     /**
-     * The angle between line `this` and the positive x-axis, the result is in the interval `(-Math.PI / 2, Math.PI / 2]`.
+     * The angle between line `this` and the positive x-axis, the result is in the interval $\left(-\frac{\pi}{2},\frac{\pi}{2}\right]$.
      */
     get angle(): number {
-        return Math.atan(this.slope);
+        return Maths.atan(this.slope);
     }
     set angle(value) {
         Assert.isRealNumber(value, "angle");
         const a = Angle.convert2(value);
-        //prettier-ignore
-        const s = a === Math.PI / 2
-            ? Infinity
-            : a === - Math.PI / 2
-            ? -Infinity
-            : Math.tan(value)
+        const s = Maths.abs(a) === Maths.PI / 2 ? Infinity : Maths.tan(value);
         this._setSlope(s);
     }
     /**
-     * The y-intercept of line `this`, the result is in the interval `(-Infinity, Infinity]`.
-     * If line `this` is perpendicular to the x-axis, the y-intercept is `Infinity`.
+     * The y-intercept of line `this`, the result is in the interval $(-\infty,\infty]$.
+     * If line `this` is perpendicular to the x-axis, the y-intercept is $\infty$.
      */
     get yIntercept(): number {
         const { x, y, slope } = this;
-        if (slope === Infinity) return Infinity;
-        return -x * slope + y;
+        return slope === Infinity ? Infinity : -x * slope + y;
     }
     /**
-     * The x-intercept of line `this`, the result is in the interval `(-Infinity, Infinity]`.
-     * If line `this` is perpendicular to the y-axis, the x-intercept is `Infinity`.
+     * The x-intercept of line `this`, the result is in the interval $(-\infty,\infty]$.
+     * If line `this` is perpendicular to the y-axis, the x-intercept is $\infty$.
      */
     get xIntercept(): number {
         const { x, y, slope } = this;
-        if (slope === 0) return Infinity;
-        return -y / slope + x;
+        return slope === 0 ? Infinity : -y / slope + x;
     }
 
     isValid() {
@@ -197,8 +184,8 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
             console.warn("[G]The points `point1` and `point2` are the same, they can NOT determine a `Line`.");
             return null;
         }
-        if (Math.equalTo(x1, x2, epsilon)) return usePoint1 ? new Line(this.owner, x1, y1, Infinity) : new Line(this.owner, x2, y2, Infinity);
-        if (Math.equalTo(y1, y2, epsilon)) return usePoint1 ? new Line(this.owner, x1, y1, 0) : new Line(this.owner, x2, y2, 0);
+        if (Maths.equalTo(x1, x2, epsilon)) return usePoint1 ? new Line(this.owner, x1, y1, Infinity) : new Line(this.owner, x2, y2, Infinity);
+        if (Maths.equalTo(y1, y2, epsilon)) return usePoint1 ? new Line(this.owner, x1, y1, 0) : new Line(this.owner, x2, y2, 0);
         const slope = (y2 - y1) / (x2 - x1);
         return usePoint1 ? new Line(this.owner, x1, y1, slope) : new Line(this.owner, x2, y2, slope);
     }
@@ -223,8 +210,8 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
      * @returns
      */
     static fromIntercepts(this: OwnerCarrier, yIntercept: number, xIntercept: number, useYInterceptionPoint = true) {
-        const xInt = Math.abs(xIntercept);
-        const yInt = Math.abs(yIntercept);
+        const xInt = Maths.abs(xIntercept);
+        const yInt = Maths.abs(yIntercept);
 
         if (xInt === Infinity && yInt === Infinity) {
             console.warn("[G]When the `xIntercept` and `yIntercept` are both `Infinity`, a `Line` can NOT be determined.");
@@ -243,7 +230,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
     isSameAs(line: Line): boolean {
         if (this === line) return true;
         const epsilon = this.options_.epsilon;
-        return Math.equalTo(this.slope, line.slope, epsilon) && Math.equalTo(this.yIntercept, line.yIntercept, epsilon);
+        return Maths.equalTo(this.slope, line.slope, epsilon) && Maths.equalTo(this.yIntercept, line.yIntercept, epsilon);
     }
     /**
      * Move line `this` by `offsetX` and `offsetY` to get new line.
@@ -284,7 +271,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         const [x, y] = point instanceof Point ? point.coordinates : (Assert.isCoordinates(point, "point"), point);
         const [a, b, c] = this.getGeneralEquationParameters();
         const epsilon = this.options_.epsilon;
-        return Math.equalTo(a * x + b * y + c, 0, epsilon);
+        return Maths.equalTo(a * x + b * y + c, 0, epsilon);
     }
     isParallelToXAxis() {
         return this.slope === Infinity;
@@ -332,7 +319,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         if (this === line) return true;
         if (this.slope === line.slope) return true;
         const epsilon = this.options_.epsilon;
-        return Math.equalTo(this.slope, line.slope, epsilon);
+        return Maths.equalTo(this.slope, line.slope, epsilon);
     }
     /**
      * Whether line `this` is perpendicular to line `line`.
@@ -340,10 +327,10 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
      */
     isPerpendicularToLine(line: Line): boolean {
         const epsilon = this.options_.epsilon;
-        if (this.slope === Infinity || Math.equalTo(line.slope, 0, epsilon)) return true;
-        if (line.slope === Infinity || Math.equalTo(this.slope, 0, epsilon)) return true;
+        if (this.slope === Infinity || Maths.equalTo(line.slope, 0, epsilon)) return true;
+        if (line.slope === Infinity || Maths.equalTo(this.slope, 0, epsilon)) return true;
 
-        return Math.equalTo(this.slope * line.slope, -1, epsilon);
+        return Maths.equalTo(this.slope * line.slope, -1, epsilon);
     }
     /**
      * Whether line `this` is intersected with line `line`.
@@ -378,7 +365,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
      */
     isIntersectedWithCircle(circle: Circle): boolean {
         let epsilon = this.options_.epsilon;
-        return Math.lessThan(circle.centerPoint.getSquaredDistanceBetweenLine(this), circle.radius ** 2, epsilon);
+        return Maths.lessThan(circle.centerPoint.getSquaredDistanceBetweenLine(this), circle.radius ** 2, epsilon);
     }
     /**
      * Get the intersection points of line `this` and circle `circle`.
@@ -390,10 +377,10 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
             r = circle.radius,
             p1 = this.getPerpendicularPointFromPoint(p0),
             sd = p0.getSquaredDistanceBetweenPoint(p1),
-            d1i = Math.sqrt(r ** 2 - sd),
+            d1i = Maths.sqrt(r ** 2 - sd),
             a = this.angle,
             ip1 = p1.moveAlongAngle(a, d1i),
-            ip2 = p1.moveAlongAngle(a + Math.PI, d1i);
+            ip2 = p1.moveAlongAngle(a + Maths.PI, d1i);
         return [ip1, ip2];
     }
     /**
@@ -402,7 +389,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
      */
     isTangentToCircle(circle: Circle): boolean {
         let epsilon = this.options_.epsilon;
-        return Math.equalTo(circle.centerPoint.getSquaredDistanceBetweenLine(this), circle.radius ** 2, epsilon);
+        return Maths.equalTo(circle.centerPoint.getSquaredDistanceBetweenLine(this), circle.radius ** 2, epsilon);
     }
     /**
      * Get the tangency point of line `this` and circle `circle`.
@@ -418,7 +405,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
      */
     isSeparatedFromCircle(circle: Circle): boolean {
         let epsilon = this.options_.epsilon;
-        return Math.greaterThan(circle.centerPoint.getSquaredDistanceBetweenLine(this), circle.radius ** 2, epsilon);
+        return Maths.greaterThan(circle.centerPoint.getSquaredDistanceBetweenLine(this), circle.radius ** 2, epsilon);
     }
     // #endregion
 
@@ -440,7 +427,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = lineSegment;
         const [a, b] = this.getGeneralEquationParameters();
         const epsilon = this.options_.epsilon;
-        return Math.equalTo(a * x1 + b * y1, a * x2 + b * y2, epsilon);
+        return Maths.equalTo(a * x1 + b * y1, a * x2 + b * y2, epsilon);
     }
     /**
      * Whether line `this` is perpendicular to line segment `lineSegment`.
@@ -454,7 +441,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = lineSegment;
         const [a, b] = this.getGeneralEquationParameters();
         const epsilon = this.options_.epsilon;
-        return Math.equalTo(b * x1 - a * y1, b * x2 - a * y2, epsilon);
+        return Maths.equalTo(b * x1 - a * y1, b * x2 - a * y2, epsilon);
     }
     /**
      * Whether line `this` is collinear with line segment `lineSegment`.
@@ -464,8 +451,8 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = lineSegment;
         const [a, b, c] = this.getGeneralEquationParameters();
         const epsilon = this.options_.epsilon;
-        const s1 = Math.sign(a * x1 + b * y1 + c, epsilon);
-        const s2 = Math.sign(a * x2 + b * y2 + c, epsilon);
+        const s1 = Maths.sign(a * x1 + b * y1 + c, epsilon);
+        const s2 = Maths.sign(a * x2 + b * y2 + c, epsilon);
         return s1 === 0 && s2 === 0;
     }
     /**
@@ -476,8 +463,8 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = lineSegment;
         const [a, b, c] = this.getGeneralEquationParameters();
         const epsilon = this.options_.epsilon;
-        const s1 = Math.sign(a * x1 + b * y1 + c, epsilon);
-        const s2 = Math.sign(a * x2 + b * y2 + c, epsilon);
+        const s1 = Maths.sign(a * x1 + b * y1 + c, epsilon);
+        const s2 = Maths.sign(a * x2 + b * y2 + c, epsilon);
         return s1 * s2 === 1;
     }
     /**
@@ -489,8 +476,8 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = lineSegment;
         const [a, b, c] = this.getGeneralEquationParameters();
         const epsilon = this.options_.epsilon;
-        const s1 = Math.sign(a * x1 + b * y1 + c, epsilon);
-        const s2 = Math.sign(a * x2 + b * y2 + c, epsilon);
+        const s1 = Maths.sign(a * x1 + b * y1 + c, epsilon);
+        const s2 = Maths.sign(a * x2 + b * y2 + c, epsilon);
         return (s1 === 0) !== (s2 === 0) || s1 * s2 === -1;
     }
     /**
@@ -501,7 +488,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         if (!this.isIntersectedWithLineSegment(lineSegment)) return null;
         const w = lineSegment.getLerpingRatioByLine(this);
         const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = lineSegment;
-        return new Point(this.owner, Math.lerp(x1, x2, w), Math.lerp(y1, y2, w));
+        return new Point(this.owner, Maths.lerp(x1, x2, w), Maths.lerp(y1, y2, w));
     }
 
     /**
@@ -536,7 +523,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         if (!this.isParallelToLine(line)) return NaN;
         const [a1, b1, c1] = this.getGeneralEquationParameters();
         const [a2, b2, c2] = line.getGeneralEquationParameters();
-        return Math.abs(c1 - c2) / Math.hypot(a1, b1);
+        return Maths.abs(c1 - c2) / Maths.hypot(a1, b1);
     }
 
     getIntersectionPointsWithRectangle(rectangle: Rectangle): Point[] {
@@ -572,10 +559,10 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         const lerp3 = d3 / (d3 - d4);
         const lerp4 = d4 / (d4 - d1);
 
-        if (Math.between(lerp1, 0, 1, false, true)) cs.push([Math.lerp(minX, maxX, lerp1), minY]);
-        if (Math.between(lerp2, 0, 1, false, true)) cs.push([maxX, Math.lerp(minY, maxY, lerp2)]);
-        if (Math.between(lerp3, 0, 1, false, true)) cs.push([Math.lerp(maxX, minX, lerp3), maxY]);
-        if (Math.between(lerp4, 0, 1, false, true)) cs.push([minX, Math.lerp(maxY, minY, lerp4)]);
+        if (Maths.between(lerp1, 0, 1, false, true)) cs.push([Maths.lerp(minX, maxX, lerp1), minY]);
+        if (Maths.between(lerp2, 0, 1, false, true)) cs.push([maxX, Maths.lerp(minY, maxY, lerp2)]);
+        if (Maths.between(lerp3, 0, 1, false, true)) cs.push([Maths.lerp(maxX, minX, lerp3), maxY]);
+        if (Maths.between(lerp4, 0, 1, false, true)) cs.push([minX, Maths.lerp(maxY, minY, lerp4)]);
         // When `cs.length === 0`, there is no intersection between line `this` and the box.
         // When `cs.length === 1`, line `this` only passes through one vertex of the box.
         // When `cs.length === 2`, line `this` intersects the box or one of the lines of box.
@@ -586,7 +573,7 @@ class Line extends Shape implements InfiniteOpenShape, TransformableShape {
         g.lineTo(...c2);
 
         if (this.options_.graphics.lineArrow) {
-            const arrowGraphics1 = new Arrow(this.owner, c1, this.angle - Math.PI).getGraphics(viewport);
+            const arrowGraphics1 = new Arrow(this.owner, c1, this.angle - Maths.PI).getGraphics(viewport);
             const arrowGraphics2 = new Arrow(this.owner, c2, this.angle).getGraphics(viewport);
             g.append(arrowGraphics1);
             g.append(arrowGraphics2);

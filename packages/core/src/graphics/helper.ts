@@ -4,7 +4,7 @@
  * @see https://observablehq.com/@awhitty/svg-2-elliptical-arc-to-canvas-path2d
  * @see https://html.spec.whatwg.org/multipage/canvas.html#dom-context-2d-arc
  */
-import { Math, Vector2, Matrix2, Angle } from "@geomtoy/util";
+import { Maths, Vector2, Matrix2, Angle } from "@geomtoy/util";
 
 type ArcEndpointParameterization = {
     point1X: number;
@@ -38,33 +38,38 @@ function arcCenterToEndpointParameterization({
     endAngle: ea,
     anticlockwise: anti
 }: ArcCenterParameterization): ArcEndpointParameterization {
-    const cosPhi = Math.cos(phi);
-    const sinPhi = Math.sin(phi);
-    const [rx, ry] = [Math.abs(srcRx), Math.abs(srcRy)];
+    const cosPhi = Maths.cos(phi);
+    const sinPhi = Maths.sin(phi);
+    const [rx, ry] = [Maths.abs(srcRx), Maths.abs(srcRy)];
     //prettier-ignore
     const [x1,y1] = Vector2.add(
         Matrix2.dotVector2(
             [cosPhi, -sinPhi, sinPhi, cosPhi],
-            [rx * Math.cos(sa), ry * Math.sin(sa)]
+            [rx * Maths.cos(sa), ry * Maths.sin(sa)]
         ),
         [cx, cy]
     )
-    if ((!anti && ea - sa >= 2 * Math.PI) || (anti && sa - ea >= 2 * Math.PI)) {
-        // full arc, then adjust point2 close to point1 to simulate
-        const approx = Math.PI / 1800;
+    if (Maths.abs(ea - sa) >= 2 * Maths.PI) {
+        /**
+         * Full arc situation:
+         * When converting the center parameterization to the endpoint parameterization,
+         * the endpoint parameterization can NOT directly draw a full circle/ellipse like the center parameterization does,
+         * we use an approximation of $\frac{\pi}{1800}$ to adjust the terminal endpoint every close to initial endpoint to simulate.
+         */
+        const approx = Maths.PI / 1800;
         ea = !anti ? ea - approx : ea + approx;
     }
     //prettier-ignore
     const [x2, y2] = Vector2.add(
         Matrix2.dotVector2(
             [cosPhi, -sinPhi, sinPhi, cosPhi], 
-            [rx * Math.cos(ea), ry * Math.sin(ea)]
+            [rx * Maths.cos(ea), ry * Maths.sin(ea)]
         ),
         [cx, cy]
     )
 
     const deltaA = Angle.simplify(ea) - Angle.simplify(sa);
-    const laf = Math.abs(deltaA) > Math.PI ? true : false;
+    const laf = Maths.abs(deltaA) > Maths.PI ? true : false;
     const sf = deltaA > 0 ? true : false;
 
     return { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2, radiusX: rx, radiusY: ry, largeArcFlag: laf, sweepFlag: sf, xAxisRotation: phi };
@@ -81,8 +86,8 @@ function arcEndpointToCenterParameterization({
     sweepFlag: sf,
     xAxisRotation: phi
 }: ArcEndpointParameterization): ArcCenterParameterization {
-    const cosPhi = Math.cos(phi);
-    const sinPhi = Math.sin(phi);
+    const cosPhi = Maths.cos(phi);
+    const sinPhi = Maths.sin(phi);
     //prettier-ignore
     const [x1P, y1P] = Matrix2.dotVector2(
         [cosPhi, sinPhi, -sinPhi, cosPhi], 
@@ -91,15 +96,15 @@ function arcEndpointToCenterParameterization({
     // correctRadii
     let lambda = x1P ** 2 / srcRx ** 2 + y1P ** 2 / srcRy ** 2;
     if (lambda > 1) {
-        srcRx = Math.sqrt(lambda) * srcRx;
-        srcRy = Math.sqrt(lambda) * srcRy;
+        srcRx = Maths.sqrt(lambda) * srcRx;
+        srcRy = Maths.sqrt(lambda) * srcRy;
     }
-    const [rx, ry] = [Math.abs(srcRx), Math.abs(srcRy)];
+    const [rx, ry] = [Maths.abs(srcRx), Maths.abs(srcRy)];
     const sign = laf !== sf ? 1 : -1;
     //prettier-ignore
     const [cxP, cyP] = Vector2.scalarMultiply(
         [(rx * y1P) / ry, (-ry * x1P) / rx], 
-        sign * Math.sqrt((rx ** 2 * ry ** 2 - rx ** 2 * y1P ** 2 - ry ** 2 * x1P ** 2) / (rx ** 2 * y1P ** 2 + ry ** 2 * x1P ** 2))
+        sign * Maths.sqrt((rx ** 2 * ry ** 2 - rx ** 2 * y1P ** 2 - ry ** 2 * x1P ** 2) / (rx ** 2 * y1P ** 2 + ry ** 2 * x1P ** 2))
     )
     //prettier-ignore
     const [cx, cy] = Vector2.add(
@@ -117,9 +122,9 @@ function arcEndpointToCenterParameterization({
     //prettier-ignore
     const deltaA = 
         !sf && deltaAP > 0 
-        ? deltaAP - Math.PI *2 
+        ? deltaAP - Maths.PI *2 
         : sf && deltaAP < 0 
-        ? deltaAP + Math.PI *2 
+        ? deltaAP + Maths.PI *2 
         : deltaAP
     const ea = sa + deltaA;
 

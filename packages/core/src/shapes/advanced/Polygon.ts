@@ -1,4 +1,4 @@
-import { Assert, Vector2, Math, Type, Utility, Coordinates } from "@geomtoy/util";
+import { Assert, Vector2, Maths, Type, Utility, Coordinates } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Shape from "../../base/Shape";
@@ -146,7 +146,7 @@ class Polygon extends Shape implements TransformableShape {
                 return [index, indexOrUuid];
             }
         } else {
-            if (Math.between(indexOrUuid, 0, this.vertexCount - 1, true, true)) {
+            if (Maths.between(indexOrUuid, 0, this.vertexCount - 1, true, true)) {
                 return [indexOrUuid, this._vertices[indexOrUuid].uuid];
             }
         }
@@ -158,7 +158,7 @@ class Polygon extends Shape implements TransformableShape {
     }
     getUuidOfIndex(index: number) {
         Assert.isInteger(index, "index");
-        return Math.between(index, 0, this.vertexCount - 1, true, true) ? this._vertices[index].uuid : "";
+        return Maths.between(index, 0, this.vertexCount - 1, true, true) ? this._vertices[index].uuid : "";
     }
 
     getLineSegment(indexOrUuid: number | string) {
@@ -272,7 +272,7 @@ class Polygon extends Shape implements TransformableShape {
             a += Vector2.cross(c1, c2);
         });
         a = a / 2;
-        return Math.abs(a);
+        return Maths.abs(a);
     }
     getCentroidPoint() {
         const l = this.vertexCount;
@@ -336,7 +336,7 @@ class Polygon extends Shape implements TransformableShape {
                 c2 = Utility.nth(cs, index - l + 1)!;
             if (Coordinates.y(c1) > Coordinates.y(c) !== Coordinates.y(c2) > Coordinates.y(c)) {
                 let cp = Vector2.cross(Vector2.from(c1, c), Vector2.from(c1, c2));
-                if (Math.equalTo(cp, 0, epsilon)) {
+                if (Maths.equalTo(cp, 0, epsilon)) {
                     ret = true;
                     return;
                 }
@@ -355,7 +355,7 @@ class Polygon extends Shape implements TransformableShape {
                 c2 = Utility.nth(cs, index - l + 1)!;
             if (Coordinates.y(c1) > Coordinates.y(c) !== Coordinates.y(c2) > Coordinates.y(c)) {
                 let cp = Vector2.cross(Vector2.from(c1, c), Vector2.from(c1, c2));
-                if (Math.lessThan(cp, 0, epsilon) !== Coordinates.y(c2) < Coordinates.y(c1)) {
+                if (Maths.lessThan(cp, 0, epsilon) !== Coordinates.y(c2) < Coordinates.y(c1)) {
                     ret = true;
                     return;
                 }

@@ -1,4 +1,4 @@
-import { Math } from "@geomtoy/util";
+import { Maths } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../decorator";
 import Matrix from "../helper/Matrix";
 
@@ -57,10 +57,10 @@ class Transformation extends BaseObject {
      */
     rotate(angle: number, originPoint?: [number, number] | Point) {
         const t = Object.assign(Matrix.identity, {
-            a: Math.cos(angle),
-            b: -Math.sin(angle),
-            c: Math.sin(angle),
-            d: Math.cos(angle)
+            a: Maths.cos(angle),
+            b: -Maths.sin(angle),
+            c: Maths.sin(angle),
+            d: Maths.cos(angle)
         });
         if (originPoint !== undefined) {
             const [x, y] = originPoint instanceof Point ? originPoint.coordinates : originPoint;
@@ -95,8 +95,8 @@ class Transformation extends BaseObject {
      */
     skew(angleX: number, angleY: number, originPoint?: [number, number] | Point) {
         const t = Object.assign(Matrix.identity, {
-            b: Math.tan(angleY),
-            c: Math.tan(angleX)
+            b: Maths.tan(angleY),
+            c: Maths.tan(angleX)
         });
 
         if (originPoint !== undefined) {
@@ -181,17 +181,17 @@ class Transformation extends BaseObject {
             skewX = 0,
             skewY = 0;
         if (a !== 0 || b !== 0) {
-            let r = Math.hypot(a, b);
-            rotation = b > 0 ? Math.acos(a / r) : -Math.acos(a / r);
+            let r = Maths.hypot(a, b);
+            rotation = b > 0 ? Maths.acos(a / r) : -Maths.acos(a / r);
             scaleX = r;
             scaleY = determinant / r;
-            skewX = Math.atan((a * c + b * d) / r ** 2);
+            skewX = Maths.atan((a * c + b * d) / r ** 2);
         } else if (c !== 0 || d !== 0) {
-            let s = Math.hypot(c, d);
-            rotation = Math.PI / 2 - (d > 0 ? Math.acos(-c / s) : -Math.acos(c / s));
+            let s = Maths.hypot(c, d);
+            rotation = Maths.PI / 2 - (d > 0 ? Maths.acos(-c / s) : -Maths.acos(c / s));
             scaleX = determinant / s;
             scaleY = s;
-            skewY = Math.atan((a * c + b * d) / s ** 2); //always 0
+            skewY = Maths.atan((a * c + b * d) / s ** 2); //always 0
         } else {
             scaleX = 0;
             scaleY = 0;

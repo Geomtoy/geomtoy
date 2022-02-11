@@ -1,11 +1,11 @@
-import { Math, Vector2 } from "@geomtoy/util";
+import { Maths, Vector2 } from "@geomtoy/util";
 
 class Cartesian {
     constructor(public x: number, public y: number) {}
     toPolar() {
         let { x, y } = this,
-            r = Math.hypot(x, y),
-            theta = Math.atan2(y, x);
+            r = Maths.hypot(x, y),
+            theta = Maths.atan2(y, x);
         return new Polar(r, theta);
     }
     toBarycentric(c1: [number, number], c2: [number, number], c3: [number, number]) {
@@ -35,8 +35,8 @@ class Polar {
     constructor(public r: number, public theta: number) {}
     toCartesian() {
         let { r, theta } = this,
-            x = r * Math.cos(theta),
-            y = r * Math.sin(theta);
+            x = r * Maths.cos(theta),
+            y = r * Maths.sin(theta);
         return new Cartesian(x, y);
     }
     valueOf(): [number, number] {
@@ -50,7 +50,7 @@ class Barycentric {
     }
     simplify() {
         let { lambda1, lambda2, lambda3 } = this;
-        if (!Math.equalTo(lambda1 + lambda2 + lambda3, 1, Number.EPSILON)) {
+        if (!Maths.equalTo(lambda1 + lambda2 + lambda3, 1, Number.EPSILON)) {
             let sum = lambda1 + lambda2 + lambda3;
             this.lambda1 /= sum;
             this.lambda2 /= sum;
@@ -73,7 +73,7 @@ class Trilinear {
     }
     simplify() {
         let { lambda1, lambda2, lambda3 } = this;
-        if (!Math.equalTo(lambda1 + lambda2 + lambda3, 1, Number.EPSILON)) {
+        if (!Maths.equalTo(lambda1 + lambda2 + lambda3, 1, Number.EPSILON)) {
             let sum = lambda1 + lambda2 + lambda3;
             this.lambda1 /= sum;
             this.lambda2 /= sum;

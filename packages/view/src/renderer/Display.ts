@@ -1,4 +1,4 @@
-import { Math, Assert, Coordinates } from "@geomtoy/util";
+import { Maths, Assert, Coordinates } from "@geomtoy/util";
 import { Matrix } from "@geomtoy/core";
 
 import type Renderer from "./Renderer";
@@ -8,14 +8,14 @@ import type { ViewportDescriptor } from "@geomtoy/core";
 const defaultContainerWidth = 300;
 const defaultContainerHeight = 150;
 
-const minDensity = Math.pow(10, -5);
-const maxDensity = Math.pow(10, 5);
-const maxZoom = Math.pow(10, 8);
-const minZoom = Math.pow(10, -8);
-const maxOrigin = Math.pow(2, 32);
-const minOrigin = -Math.pow(2, 32);
-const maxPan = Math.pow(2, 44);
-const minPan = -Math.pow(2, 44);
+const minDensity = Maths.pow(10, -5);
+const maxDensity = Maths.pow(10, 5);
+const maxZoom = Maths.pow(10, 8);
+const minZoom = Maths.pow(10, -8);
+const maxOrigin = Maths.pow(2, 32);
+const minOrigin = -Maths.pow(2, 32);
+const maxPan = Maths.pow(2, 44);
+const minPan = -Maths.pow(2, 44);
 
 export default class Display implements ViewportDescriptor {
     private _renderer: Renderer;
@@ -57,7 +57,7 @@ export default class Display implements ViewportDescriptor {
     set density(value) {
         Assert.isPositiveNumber(value, "density");
         Assert.condition(/^1e[+-]\d+$/i.test(value.toExponential()), "[G]The `density` should be a power of 10.");
-        value = Math.clamp(value, minDensity, maxDensity);
+        value = Maths.clamp(value, minDensity, maxDensity);
         this._density = value;
         this._refresh();
     }
@@ -70,7 +70,7 @@ export default class Display implements ViewportDescriptor {
     }
     set zoom(value) {
         Assert.isPositiveNumber(value, "zoom");
-        value = Math.clamp(value, minZoom, maxZoom);
+        value = Maths.clamp(value, minZoom, maxZoom);
         // Only keep two significand digits, so after all calculations, the width and height of the grid pattern image will be integers.
         this._zoom = Number(value.toPrecision(2));
         this._refresh();
@@ -81,8 +81,8 @@ export default class Display implements ViewportDescriptor {
     set origin(value) {
         Assert.isCoordinates(value, "origin");
         let [ox, oy] = value;
-        ox = Math.clamp(ox, minOrigin, maxOrigin);
-        oy = Math.clamp(oy, minOrigin, maxOrigin);
+        ox = Maths.clamp(ox, minOrigin, maxOrigin);
+        oy = Maths.clamp(oy, minOrigin, maxOrigin);
         this._origin = [ox, oy];
         this._refresh();
     }
@@ -95,8 +95,8 @@ export default class Display implements ViewportDescriptor {
     set pan(value) {
         Assert.isCoordinates(value, "pan");
         let [px, py] = value;
-        px = Math.clamp(px, minPan, maxPan);
-        py = Math.clamp(py, minPan, maxPan);
+        px = Maths.clamp(px, minPan, maxPan);
+        py = Maths.clamp(py, minPan, maxPan);
         this._pan = [px, py];
         this._refresh();
     }

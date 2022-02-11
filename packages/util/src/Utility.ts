@@ -1,4 +1,4 @@
-import Math from "./Math";
+import Maths from "./Maths";
 import Type from "./Type";
 
 import type { StaticClass } from "./types";
@@ -74,7 +74,7 @@ class Utility {
     }
     static range(start: number, stop: number, step = 1) {
         [start, stop] = start > stop ? [stop, start] : [start, stop];
-        return Array.from({ length: Math.ceil((stop - start) / step) }, (_, i) => start + i * step);
+        return Array.from({ length: Maths.ceil((stop - start) / step) }, (_, i) => start + i * step);
     }
     static head<T>(arr: ArrayLike<T>): T | undefined {
         let l = arr.length;
@@ -103,7 +103,20 @@ class Utility {
         return n < 0 || n >= l ? undefined : arr[n];
     }
 
+    /**
+     * Sort the array `arr` in `order` by value of array elements.
+     * @note This method mutates `arr`.
+     * @param arr
+     * @param order default "asc"
+     */
     static sort<T>(arr: T[], order?: "asc" | "desc"): T[];
+    /**
+     * Sort the array `arr` in `orders` by the result of iteratees `iters` executed on array elements.
+     * @note This method mutates `arr`.
+     * @param arr
+     * @param iters
+     * @param orders default ["asc", ...]
+     */
     static sort<T>(arr: T[], iters: ((elem: any) => any)[], orders?: ("asc" | "desc")[]): T[];
     static sort<T>(arr: T[], a1?: any, a2?: any) {
         let iters: ((elem: any) => any)[];
@@ -140,7 +153,7 @@ class Utility {
     }
     static uuid() {
         return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-            const r = (Math.random() * 16) | 0;
+            const r = (Maths.random() * 16) | 0;
             const v = c == "x" ? r : (r & 0x3) | 0x8;
             return v.toString(16);
         });

@@ -1,4 +1,4 @@
-import { Angle, Assert, Vector2, Type, Utility, Coordinates, Math } from "@geomtoy/util";
+import { Angle, Assert, Vector2, Type, Utility, Coordinates, Maths } from "@geomtoy/util";
 import { validAndWithSameOwner } from "../../decorator";
 
 import Shape from "../../base/Shape";
@@ -150,7 +150,7 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
     isSameAs(circle: Circle): boolean {
         if (this === circle) return true;
         const epsilon = this.options_.epsilon;
-        return Coordinates.isEqualTo(this.centerCoordinates, circle.centerCoordinates, epsilon) && Math.equalTo(this.radius, circle.radius, epsilon);
+        return Coordinates.isEqualTo(this.centerCoordinates, circle.centerCoordinates, epsilon) && Maths.equalTo(this.radius, circle.radius, epsilon);
     }
     isConcentricWithCircle(circle: Circle): boolean {
         const epsilon = this.options_.epsilon;
@@ -170,19 +170,19 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
             ssr = (circle.radius + this.radius) ** 2,
             sdr = (circle.radius - this.radius) ** 2,
             epsilon = this.options_.epsilon;
-        return Math.lessThan(sd, ssr, epsilon) && Math.greaterThan(sd, sdr, epsilon);
+        return Maths.lessThan(sd, ssr, epsilon) && Maths.greaterThan(sd, sdr, epsilon);
     }
     isInternallyTangentToCircle(circle: Circle): boolean {
         let sd = Vector2.squaredMagnitude(Vector2.from(circle.centerCoordinates, this.centerCoordinates)),
             sdr = (circle.radius - this.radius) ** 2,
             epsilon = this.options_.epsilon;
-        return Math.equalTo(sd, sdr, epsilon);
+        return Maths.equalTo(sd, sdr, epsilon);
     }
     isExternallyTangentToCircle(circle: Circle): boolean {
         let sd = Vector2.squaredMagnitude(Vector2.from(circle.centerCoordinates, this.centerCoordinates)),
             ssr = (circle.radius + this.radius) ** 2,
             epsilon = this.options_.epsilon;
-        return Math.equalTo(sd, ssr, epsilon);
+        return Maths.equalTo(sd, ssr, epsilon);
     }
     isTangentToCircle(circle: Circle): boolean {
         return this.isInternallyTangentToCircle(circle) || this.isExternallyTangentToCircle(circle);
@@ -190,10 +190,10 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
     // #endregion
 
     getPerimeter() {
-        return 2 * Math.PI * this.radius;
+        return 2 * Maths.PI * this.radius;
     }
     getArea() {
-        return Math.PI * this.radius ** 2;
+        return Maths.PI * this.radius ** 2;
     }
 
     getPointAtAngle(angle: number): Point {
@@ -205,7 +205,7 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
     // todo
     getArcBetweenAngle(startAngle: number, endAngle: number, positive = true): null | Arc {
         const epsilon = this.options_.epsilon;
-        if (Math.equalTo(Angle.simplify(startAngle), Angle.simplify(endAngle), epsilon)) return null;
+        if (Maths.equalTo(Angle.simplify(startAngle), Angle.simplify(endAngle), epsilon)) return null;
         return new Arc(this.owner, this.centerCoordinates, this.radius, this.radius, startAngle, endAngle, positive);
     }
     getChordLineSegmentBetweenAngle(startAngle: number, endAngle: number) {
@@ -219,21 +219,21 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
         const sd = Vector2.squaredMagnitude(Vector2.from(this.centerCoordinates, c));
         const sr = this.radius ** 2;
         const epsilon = this.options_.epsilon;
-        return Math.equalTo(sd, sr, epsilon);
+        return Maths.equalTo(sd, sr, epsilon);
     }
     isPointOutside(point: [number, number] | Point) {
         const c = point instanceof Point ? point.coordinates : point;
         const sd = Vector2.squaredMagnitude(Vector2.from(this.centerCoordinates, c));
         const sr = this.radius ** 2;
         const epsilon = this.options_.epsilon;
-        return Math.greaterThan(sd, sr, epsilon);
+        return Maths.greaterThan(sd, sr, epsilon);
     }
     isPointInside(point: [number, number] | Point) {
         const c = point instanceof Point ? point.coordinates : point;
         const sd = Vector2.squaredMagnitude(Vector2.from(this.centerCoordinates, c));
         const sr = this.radius ** 2;
         const epsilon = this.options_.epsilon;
-        return Math.lessThan(sd, sr, epsilon);
+        return Maths.lessThan(sd, sr, epsilon);
     }
 
     /**
@@ -270,7 +270,7 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
             v1 = point.coordinates,
             v01 = Vector2.from(v0, v1),
             dist = Vector2.magnitude(v01),
-            ia = Math.acos(this.radius / dist),
+            ia = Maths.acos(this.radius / dist),
             angles = [-ia, ia];
 
         let ret = angles.map(a => {
@@ -312,7 +312,7 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
         const c2 = this.centerCoordinates;
         const sd = Vector2.squaredMagnitude(Vector2.from(c1, c2));
         const epsilon = this.options_.epsilon;
-        return Math.lessThan(sd, (circle.radius - this.radius) ** 2, epsilon);
+        return Maths.lessThan(sd, (circle.radius - this.radius) ** 2, epsilon);
     }
     /**
      * `圆this`是否在`圆circle`的外部，包含circle
@@ -322,7 +322,7 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
         const c2 = this.centerCoordinates;
         const sd = Vector2.squaredMagnitude(Vector2.from(c1, c2));
         const epsilon = this.options_.epsilon;
-        return Math.greaterThan(sd, (circle.radius + this.radius) ** 2, epsilon);
+        return Maths.greaterThan(sd, (circle.radius + this.radius) ** 2, epsilon);
     }
 
     getIntersectionPointsWithCircle(circle: Circle) {
@@ -331,7 +331,7 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
             pP = circle.centerPoint,
             vOP = new Vector(this.owner, pO, pP),
             dist = pO.getDistanceBetweenPoint(pP),
-            angle = Math.acos((this.radius ** 2 + dist ** 2 - circle.radius ** 2) / (2 * this.radius * dist)),
+            angle = Maths.acos((this.radius ** 2 + dist ** 2 - circle.radius ** 2) / (2 * this.radius * dist)),
             baseAngle = vOP.angle,
             points = [this.getPointAtAngle(baseAngle + angle), this.getPointAtAngle(baseAngle - angle)];
         return points;
@@ -389,7 +389,7 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
             });
         }
         // 2条外公切线
-        let angle = Math.acos(radiusDiff / Math.sqrt(sd)),
+        let angle = Maths.acos(radiusDiff / Maths.sqrt(sd)),
             p1 = circle1.getPointAtAngle(baseAngle + angle),
             p2 = circle2.getPointAtAngle(baseAngle + angle),
             p3 = circle1.getPointAtAngle(baseAngle - angle),
@@ -406,7 +406,7 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
 
         //情况6，相离，再求出内公切线
         if (sd > radiusSum ** 2) {
-            let angle = Math.acos(radiusSum / Math.sqrt(sd)),
+            let angle = Maths.acos(radiusSum / Maths.sqrt(sd)),
                 p1 = circle1.getPointAtAngle(baseAngle + angle),
                 p2 = circle2.getPointAtAngle(baseAngle + angle),
                 p3 = circle1.getPointAtAngle(baseAngle - angle),
@@ -459,7 +459,7 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
         if (!this.isValid()) return g;
 
         const c = this.centerCoordinates;
-        g.centerArcTo(...c, this.radius, this.radius, 0, 0, 2 * Math.PI);
+        g.centerArcTo(...c, this.radius, this.radius, 0, 0, 2 * Maths.PI);
         g.close();
         return g;
     }

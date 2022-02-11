@@ -1,10 +1,11 @@
 import Geomtoy from "@geomtoy/core";
-import { colors, mathFont } from "./assets/assets";
-import { Math } from "@geomtoy/util";
+import { Maths } from "@geomtoy/util";
 import { View, ViewElement, CanvasRenderer, SvgRenderer } from "@geomtoy/view";
 
-import type { EventObject, Text, Point } from "@geomtoy/core";
+import { colors, mathFont } from "./assets/assets";
 import { initRenderer, setDescription, switchRenderer } from "./assets/default";
+
+import type { EventObject, Text, Point } from "@geomtoy/core";
 
 const [canvas, svg] = initRenderer();
 setDescription(`
@@ -25,7 +26,6 @@ setDescription(`
 `);
 
 const epsilon = 2 ** -32;
-
 const G = new Geomtoy({
     epsilon: epsilon,
     graphics: {
@@ -105,14 +105,14 @@ const main = () => {
     const labelP = G.Text("P", mathFont).bind([[pointP, "any"]], offsetLabel, { priority: 0 });
 
     pointP.on("x y", function () {
-        if (Math.abs(lineAB.slope) <= 1) {
+        if (Maths.abs(lineAB.slope) <= 1) {
             this.y = lineAB.getYWhereXEqualTo(this.x);
         } else {
             this.x = lineAB.getXWhereYEqualTo(this.y);
         }
         const d1 = G.Vector(pointA, this).angle;
         const d2 = G.Vector(pointA, pointB).angle;
-        this.data("distToPointA", (Math.equalTo(d1, d2, epsilon) ? 1 : -1) * this.getDistanceBetweenPoint(pointA));
+        this.data("distToPointA", (Maths.equalTo(d1, d2, epsilon) ? 1 : -1) * this.getDistanceBetweenPoint(pointA));
     });
 
     const [pointInt1, pointInt2] = [G.Point.zero(), G.Point.zero()];
