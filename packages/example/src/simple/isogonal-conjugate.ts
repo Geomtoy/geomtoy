@@ -1,14 +1,14 @@
 import Geomtoy from "@geomtoy/core";
 import { Maths } from "@geomtoy/util";
 import { View, ViewElement, CanvasRenderer, SvgRenderer } from "@geomtoy/view";
-
-import { colors, mathFont } from "./assets/assets";
-import { initRenderer, setDescription, switchRenderer } from "./assets/default";
+import color from "../assets/color";
+import { mathFont } from "../assets/font";
+import tpl from "../assets/templates/full-dual-renderer";
 
 import type { EventObject, Text, Point } from "@geomtoy/core";
 
-const [canvas, svg] = initRenderer();
-setDescription(`
+const [canvas, svg] = tpl.initRenderer();
+tpl.setDescription(`
     <strong>Touchables</strong>
     <ul>
         <li>Points: A, B, P</li>
@@ -25,9 +25,8 @@ setDescription(`
     </ol>
 `);
 
-const epsilon = 2 ** -32;
 const G = new Geomtoy({
-    epsilon: epsilon,
+    epsilon: 2 ** -32,
     graphics: {
         pointSize: 6,
         arrow: {
@@ -52,7 +51,7 @@ svgRenderer.display.zoom = 1;
 // svgRenderer.display.xAxisPositiveOnRight = false;
 
 const view = new View(G, { hoverForemost: false });
-switchRenderer({ canvas: canvasRenderer, svg: svgRenderer }, "canvas", renderer => {
+tpl.switchRenderer({ canvas: canvasRenderer, svg: svgRenderer }, "canvas", renderer => {
     view.use(renderer, (width, height) => (view.renderer.display.origin = [width / 2, height / 2]));
 });
 
@@ -112,7 +111,7 @@ const main = () => {
         }
         const d1 = G.Vector(pointA, this).angle;
         const d2 = G.Vector(pointA, pointB).angle;
-        this.data("distToPointA", (Maths.equalTo(d1, d2, epsilon) ? 1 : -1) * this.getDistanceBetweenPoint(pointA));
+        this.data("distToPointA", (Maths.equalTo(d1, d2, G.options().epsilon) ? 1 : -1) * this.getDistanceBetweenPoint(pointA));
     });
 
     const [pointInt1, pointInt2] = [G.Point.zero(), G.Point.zero()];
@@ -154,31 +153,31 @@ const main = () => {
     // const image = G.Image(0, 0, 25, 60, "https://img2.baidu.com/it/u=2911187851,1970588509&fm=26&fmt=auto");
 
     const hoverStyle = {
-        fill: colors.orange,
-        stroke: colors.orange + "AA"
+        fill: color("orange"),
+        stroke: color("orange", 0.75)
     };
     const activeStyle = {
-        fill: colors.blue + "AA",
-        stroke: colors.blue + "AA"
+        fill: color("blue"),
+        stroke: color("blue", 0.75)
     };
 
-    view.add(new ViewElement(pointA, true, { fill: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(labelA, false, { fill: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(pointB, true, { fill: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(labelB, false, { fill: colors.black }, hoverStyle, activeStyle))
+    view.add(new ViewElement(pointA, true, { fill: color("black") }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelA, false, { fill: color("black") }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointB, true, { fill: color("black") }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelB, false, { fill: color("black") }, hoverStyle, activeStyle))
 
-        .add(new ViewElement(pointP, true, { fill: colors.green }, hoverStyle, activeStyle))
-        .add(new ViewElement(labelP, false, { fill: colors.green }, hoverStyle, activeStyle))
-        .add(new ViewElement(lineAB, true, { stroke: colors.orange, strokeWidth: 3, fill: "transparent" }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointP, true, { fill: color("green") }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelP, false, { fill: color("green") }, hoverStyle, activeStyle))
+        .add(new ViewElement(lineAB, true, { stroke: color("orange"), strokeWidth: 3, fill: "transparent" }, hoverStyle, activeStyle))
 
-        .add(new ViewElement(labelO, false, { fill: colors.purple }))
-        .add(new ViewElement(circle, true, { fill: colors.purple + "20", stroke: colors.purple, strokeWidth: 1 }, hoverStyle, activeStyle))
-        .add(new ViewElement(pointO, false, { stroke: colors.purple, strokeWidth: 2 }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelO, false, { fill: color("red") }))
+        .add(new ViewElement(circle, true, { fill: color("red", 0.2), stroke: color("red"), strokeWidth: 1 }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointO, false, { stroke: color("red"), strokeWidth: 2 }, hoverStyle, activeStyle))
 
-        .add(new ViewElement(pointInt1, false, { stroke: colors.lightBlue, strokeWidth: 2 }, hoverStyle, activeStyle))
-        .add(new ViewElement(pointInt2, false, { stroke: colors.lightBlue, strokeWidth: 2 }, hoverStyle, activeStyle))
-        .add(new ViewElement(image, true, { fill: colors.red + "AA" }, hoverStyle, activeStyle))
-        .add(new ViewElement(G.Point.zero(), false, { fill: colors.grey }, hoverStyle, activeStyle));
-    // .add(new ViewElement(path, true, { fill:colors.red +"AA" }, hoverStyle, activeStyle));
+        .add(new ViewElement(pointInt1, false, { stroke: color("lightBlue"), strokeWidth: 2 }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointInt2, false, { stroke: color("lightBlue"), strokeWidth: 2 }, hoverStyle, activeStyle))
+        .add(new ViewElement(image, true, { fill: color("red", 0.75) }, hoverStyle, activeStyle))
+        .add(new ViewElement(G.Point.zero(), false, { fill: color("gray") }, hoverStyle, activeStyle));
+    // .add(new ViewElement(path, true, { fill: color("red", 0.75) }, hoverStyle, activeStyle));
 };
 main();

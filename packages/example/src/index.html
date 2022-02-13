@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Geomtoy examples</title>
+        <style>
+            body {
+                font-size: 16px;
+                font-family: Verdana, Tahoma, Helvetica, "Lucida Grande", Arial, Geneva, Lucid, "Avant Garde", sans-serif;
+            }
+
+            ul {
+                list-style-type: none;
+            }
+
+            #treeRoot {
+                margin: 0 auto;
+                padding: 0;
+            }
+
+            .dir {
+                cursor: pointer;
+            }
+
+            .dir::before {
+                content: "\1F4C1";
+                color: black;
+                display: inline-block;
+                margin-right: 6px;
+            }
+
+            .dir-open::before {
+                content: "\1F4C2";
+            }
+
+            .file::before {
+                content: "\1F4C4";
+                color: gray;
+                display: inline-block;
+                margin-right: 6px;
+            }
+
+            .nested {
+                display: none;
+            }
+
+            .active {
+                display: block;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1>Geomtoy examples</h1>
+        <ul id="treeRoot"></ul>
+        <script>
+            const data = __DATA__;
+
+            function treeRecursion(data, parentElement) {
+                data.children.forEach(item => {
+                    const li = document.createElement("li");
+                    if (item.type === "file") {
+                        li.innerHTML = `<a class="file" href="${item.url}">${item.name}</a>`;
+                        parentElement.append(li);
+                    }
+                    if (item.type === "dir") {
+                        li.innerHTML = `<span class="dir dir-open">${item.name}</span><ul class="nested active"></ul>`;
+                        parentElement.append(li);
+                        treeRecursion(item, li.querySelector("ul.nested"));
+                    }
+                });
+            }
+            treeRecursion(data, document.querySelector("#treeRoot"));
+
+            const togglers = document.getElementsByClassName("dir");
+            for (const t of togglers) {
+                t.addEventListener("click", function () {
+                    this.parentElement.querySelector(".nested").classList.toggle("active");
+                    this.classList.toggle("dir-open");
+                });
+            }
+        </script>
+    </body>
+</html>

@@ -1,11 +1,13 @@
 import Geomtoy from "@geomtoy/core";
-import { colors, mathFont } from "./assets/assets";
 import { View, ViewElement, CanvasRenderer, SvgRenderer } from "@geomtoy/view";
-import type { EventObject, Text, Point } from "@geomtoy/core";
-import { initRenderer, switchRenderer, setDescription } from "./assets/default";
+import color from "../assets/color";
+import { mathFont } from "../assets/font";
+import tpl from "../assets/templates/full-dual-renderer";
 
-const [canvas, svg] = initRenderer();
-setDescription(`
+import type { EventObject, Text, Point, Triangle } from "@geomtoy/core";
+
+const [canvas, svg] = tpl.initRenderer();
+tpl.setDescription(`
     <strong>Touchables</strong>
     <ul>
         <li>Points: A, B, P</li>
@@ -48,7 +50,7 @@ svgRenderer.display.zoom = 1;
 // svgRenderer.display.xAxisPositiveOnRight = false;
 
 const view = new View(G, { hoverForemost: false });
-switchRenderer({ canvas: canvasRenderer, svg: svgRenderer }, "canvas", renderer => {
+tpl.switchRenderer({ canvas: canvasRenderer, svg: svgRenderer }, "canvas", renderer => {
     view.use(renderer, (width, height) => (view.renderer.display.origin = [width / 2, height / 2]));
 });
 const main = () => {
@@ -92,7 +94,7 @@ const main = () => {
         this.copyFrom(e.target.isValid() ? e.target.getPointWhereXEqualTo(5) : null);
     });
 
-    const triangleBind = [triangle, "any"] as [typeof triangle, string];
+    const triangleBind = [triangle, "any"] as [Triangle, string];
 
     const medianSegments = G.Group([G.LineSegment(), G.LineSegment(), G.LineSegment()]).bind([triangleBind], function ([e]) {
         if (triangle.isValid()) {
@@ -136,9 +138,7 @@ const main = () => {
         }
     });
     const orthocenterPoint = G.Point().bind([triangleBind], function ([e]) {
-        if (triangle.isValid()) {
-            this.copyFrom(e.target.getOrthocenterPoint());
-        }
+        e.target.isValid() && this.copyFrom(e.target.getOrthocenterPoint());
     });
 
     const antimedialTriangle = G.Triangle().bind([triangleBind], function ([e]) {
@@ -229,44 +229,43 @@ const main = () => {
         }
     });
 
-    const commonZIndex = 1000;
-
     const hoverStyle = {
-        fill: colors.white + "AA",
-        stroke: colors.white + "AA"
+        fill: color("white", 0.75),
+        stroke: color("white", 0.75)
     };
     const activeStyle = {
-        fill: colors.blue + "AA",
-        stroke: colors.blue + "AA"
+        fill: color("blue", 0.75),
+        stroke: color("blue", 0.75)
     };
 
-    view.add(new ViewElement(G.Point.zero(), false, { fill: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(pointA, true, { fill: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(labelA, false, { fill: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(pointB, true, { fill: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(labelB, false, { fill: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(pointC, true, { fill: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(labelC, false, { fill: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(triangle, false, { stroke: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(vector, true, { fill: colors.black }, hoverStyle, activeStyle))
-        .add(new ViewElement(medianSegments, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(incenterPoint, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(inscribedCircle, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(centroidPoint, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(orthocenterPoint, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(antimedialTriangle, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(orthicTriangle, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(polarCircle, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(perpendicularlyBisectingLines, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(circumcenterPoint, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(circumscribedCircle, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(escenterPoints, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(escribedCircles, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(symmedianSegments, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(lemoinePoint, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(eulerLine, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(ninePointCenterPoint, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle))
-        .add(new ViewElement(ninePointCircle, false, { stroke: colors.red, strokeWidth: 3 }, hoverStyle, activeStyle));
+    view.add(new ViewElement(G.Point.zero(), false, { fill: color("black") }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointA, true, { fill: color("black") }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelA, false, { fill: color("black") }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointB, true, { fill: color("black") }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelB, false, { fill: color("black") }, hoverStyle, activeStyle))
+        .add(new ViewElement(pointC, true, { fill: color("black") }, hoverStyle, activeStyle))
+        .add(new ViewElement(labelC, false, { fill: color("black") }, hoverStyle, activeStyle))
+        .add(new ViewElement(triangle, false, { stroke: color("black") }, hoverStyle, activeStyle))
+        .add(new ViewElement(vector, true, { fill: color("black") }, hoverStyle, activeStyle))
+
+        .add(new ViewElement(centroidPoint, false, { stroke: color("amber"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(medianSegments, false, { stroke: color("amber"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(incenterPoint, false, { stroke: color("blue"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(inscribedCircle, false, { stroke: color("blue"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(orthocenterPoint, false, { stroke: color("purple"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(antimedialTriangle, false, { stroke: color("green"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(orthicTriangle, false, { stroke: color("yellow"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(polarCircle, false, { stroke: color("purple"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(perpendicularlyBisectingLines, false, { stroke: color("teal"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(circumcenterPoint, false, { stroke: color("cyan"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(circumscribedCircle, false, { stroke: color("cyan"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(escenterPoints, false, { stroke: color("red"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(escribedCircles, false, { stroke: color("red"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(symmedianSegments, false, { stroke: color("indigo"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(lemoinePoint, false, { stroke: color("indigo"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(eulerLine, false, { stroke: color("black"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(ninePointCenterPoint, false, { stroke: color("lime"), strokeWidth: 3 }, hoverStyle, activeStyle))
+        .add(new ViewElement(ninePointCircle, false, { stroke: color("lime"), strokeWidth: 3 }, hoverStyle, activeStyle));
 
     view.foremost(pointA.uuid);
     view.foremost(labelA.uuid);

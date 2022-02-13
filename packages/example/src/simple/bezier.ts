@@ -1,14 +1,14 @@
-// import Geomtoy from "../../src/geomtoy";
-// import "./assets/default";
-// import { colors, mathFont } from "./assets/assets";
-// import { Collection, Drawable, Touchable } from "./assets/GeomObjectWrapper";
+// import Geomtoy from "@geomtoy/core";
+// import { Maths } from "@geomtoy/util";
+// import { View, ViewElement, CanvasRenderer, SvgRenderer } from "@geomtoy/view";
 
-// import type { EventObject, Text, Point, LineSegment } from "../../src/geomtoy/package";
+// import { colors, mathFont } from "../assets/assets";
+// import { initRenderer, setDescription, switchRenderer } from "../assets/default";
 
-// const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-// const svg = document.querySelector("#svg") as SVGSVGElement;
-// const description = document.querySelector("#description") as HTMLElement;
-// description.innerHTML = `
+// import type { EventObject, Text, Point } from "@geomtoy/core";
+
+// const [canvas, svg] = initRenderer();
+// setDescription(`
 //     <strong>Touchables</strong>
 //     <ul>
 //         <li>Points: A, B, P</li>
@@ -23,9 +23,7 @@
 //         <li>Point A, point B and point P will follow line AB to move.</li>
 //         <li>Move line AB or circle O to get the intersection points of them.</li>
 //     </ol>
-// `;
-
-// svg.style.display = "none";
+// `);
 
 // const G = new Geomtoy(100, 100, {
 //     epsilon: 2 ** -32,

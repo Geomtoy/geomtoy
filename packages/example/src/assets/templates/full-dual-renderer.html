@@ -1,0 +1,52 @@
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-size: 14px;
+        font-family: Verdana, Tahoma, Helvetica, "Lucida Grande", Arial, Geneva, Lucid, "Avant Garde", sans-serif;
+    }
+
+    html,
+    body {
+        width: 100%;
+        height: 100%;
+    }
+
+    aside {
+        position: absolute;
+        padding: 10px;
+        right: 0;
+        bottom: 0;
+    }
+
+    article {
+        position: absolute;
+        box-sizing: border-box;
+        user-select: none;
+        pointer-events: none;
+        padding: 10px;
+        width: 400px;
+        left: 0;
+        top: 0;
+    }
+
+    @media (max-width: 400px) {
+        article {
+            display: none;
+        }
+    }
+</style>
+
+<aside id="switch">
+    <form name="rendererSwitch">
+        <input id="rendererSVG" name="renderer" type="radio" value="svg" />
+        <label for="rendererSVG">SVG</label>
+        <input id="rendererCanvas" name="renderer" type="radio" value="canvas" />
+        <label for="rendererCanvas">Canvas</label>
+    </form>
+</aside>
+<article id="description"></article>
+
+<canvas id="canvas"></canvas>
+<svg id="svg" xmlns="http://www.w3.org/2000/svg" version="1.1"></svg>

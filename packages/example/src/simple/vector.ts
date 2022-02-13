@@ -1,6 +1,3 @@
-
-
-
 // import Geomtoy from "../../src/geomtoy";
 // import "./assets/default";
 // import { colors, mathFont } from "./assets/assets";
@@ -44,10 +41,9 @@
 // });
 
 // const main = () => {
-    
+
 //     const vectorA = G.Vector(7,7)
 //     vectorA.point1Coordinate = [2,2]
-
 
 //     collection
 //         .setDrawable("coordinateSystemOriginPoint", new Drawable(G.Point.zero(), true, colors.grey, undefined, 0))
@@ -55,4 +51,3 @@
 //         // .setTouchable("image", new Touchable(image, false, colors.purple, colors.purple, 3));
 // };
 // main();
-
