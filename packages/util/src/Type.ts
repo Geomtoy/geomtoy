@@ -1,6 +1,7 @@
 import Coordinates from "./Coordinates";
 import Size from "./Size";
 import Box from "./Box";
+import Complex from "./Complex";
 
 import type { StaticClass } from "./types";
 
@@ -69,6 +70,9 @@ class Type {
     }
     static isBox(v: any): v is [number, number, number, number] {
         return Type.isArray(v) && v.length === 4 && Box.isValid(v as [number, number, number, number]);
+    }
+    static isComplex(v: any): v is [number, number] {
+        return Type.isArray(v) && v.length === 2 && Complex.isValid(v as [number, number]);
     }
     // #endregion
 }
