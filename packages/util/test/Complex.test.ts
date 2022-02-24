@@ -1,4 +1,5 @@
 import { Complex, Maths } from "../src";
+import { diffFlatNumberArray } from "./util/assertion";
 
 const expect = chai.expect;
 
@@ -53,7 +54,7 @@ describe("Complex", () => {
 
     it("reciprocal", () => {
         expect(Complex.reciprocal(b)).to.deep.equal([-0.12, -0.16]);
-        expect(Complex.reciprocal(c)).to.deep.equal([NaN, NaN]);
+        expect(Complex.reciprocal([0, 0])).to.deep.equal([Infinity, Infinity]);
     });
 
     it("scalarMultiply", () => {
@@ -71,10 +72,8 @@ describe("Complex", () => {
     });
 
     it("trigonometric functions", () => {
-        expect(Complex.sin(b)).to.deep.equal([-3.853738037919377, -27.016813258003932]);
-        expect(Complex.cos(b)).to.deep.equal([-27.034945603074224, 3.851153334811777]);
-        expect(Complex.sec(b)).to.deep.equal([-0.03625349691586887, -0.005164344607753179]);
-        expect(Complex.csc(b)).to.deep.equal([-0.005174473184019398, 0.03627588962862602]);
-        expect(Complex.tan(b)).to.deep.equal([0.00018734620462948492, 0.999355987381473]);
+        expect(diffFlatNumberArray(Complex.sin(b), [-3.853738037919377, -27.016813258003932])).to.be.false;
+        expect(diffFlatNumberArray(Complex.cos(b), [-27.034945603074224, 3.851153334811777])).to.be.false;
+        expect(diffFlatNumberArray(Complex.tan(b), [0.00018734620462948492, 0.999355987381473])).to.be.false;
     });
 });
