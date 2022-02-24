@@ -189,7 +189,7 @@ class Ray extends Shape implements InfiniteOpenShape, TransformableShape {
         return this;
     }
     toString() {
-        //prettier-ignore
+        // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
             `\tx: ${this.x}`,

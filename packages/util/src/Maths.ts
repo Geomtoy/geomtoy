@@ -128,7 +128,7 @@ class Maths {
         return Math.acos(1 / n);
     }
     /**
-     * Return the arccosecant of number `n`.
+     * Returns the arccosecant of number `n`.
      * @note New added method, not existed in `Math`.
      * @param n
      */

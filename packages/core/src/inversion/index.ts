@@ -161,7 +161,7 @@ class Inversion extends BaseObject {
     }
 
     toString() {
-        //prettier-ignore
+        // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
             `\tcenterCoordinates: {`,

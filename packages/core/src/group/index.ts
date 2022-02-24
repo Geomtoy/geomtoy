@@ -35,7 +35,7 @@ class Group extends EventTarget {
     }
 
     toString() {
-        //prettier-ignore
+        // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
             `\tlength: ${this.items.length}`,

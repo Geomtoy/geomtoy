@@ -12,8 +12,7 @@ import type Transformation from "../transformation";
 import type Matrix from "../helper/Matrix";
 import type EventObject from "../event/EventObject";
 
-
-//#region Common
+// #region Common
 /** @internal */
 export type ObjectCollection = {
     [K in keyof typeof objects]: typeof objects[K];
@@ -24,7 +23,7 @@ export type ShapeCollection = {
 };
 
 export type Tail<A> = A extends [infer H, ...infer T] ? T : never;
-//prettier-ignore
+// prettier-ignore
 export type ConstructorOverloads<T> =
     T extends {
         new(...args: infer A1): infer R1
@@ -293,9 +292,9 @@ export type ConstructorOverloads<T> =
         new (...args: A1) => R1
     ]
     : never
-//#endregion
+// #endregion
 
-//#region Geomtoy
+// #region Geomtoy
 export type StaticMethodsMapper<T extends { new (...args: any[]): any }> = {
     [K in keyof T as T[K] extends (...args: any[]) => any ? K : never]: T[K] extends (...args: any[]) => any ? T[K] : never;
 };
@@ -347,9 +346,9 @@ export interface ViewportDescriptor {
     globalViewBox: [number, number, number, number];
 }
 
-//#endregion
+// #endregion
 
-//#region Shape
+// #region Shape
 export type Direction = "positive" | "negative";
 export interface ClosedShape {
     getLength(): number;
@@ -376,9 +375,9 @@ export interface RotationFeaturedShape {
 export interface TransformableShape {
     apply(transformation: Transformation): Shape;
 }
-//#endregion
+// #endregion
 
-//#region Data
+// #region Data
 export type PointLineData = {
     point: Point;
     line: Line;
@@ -401,9 +400,9 @@ export type LineSegmentRayLineData = {
     ray: Ray;
     line: Line;
 };
-//#endregion
+// #endregion
 
-//#region Event
+// #region Event
 // export type EventTargetEventNamesPair<T extends EventTarget> = T | [T, string];
 
 // export type EventObjectFromEventTargetEventNamesPair<T extends EventTargetEventNamesPair<U>[], U extends EventTarget> = {
@@ -465,9 +464,9 @@ export type EventObjectFromPair<T extends EventTargetEventsPair[]> = {
 //     uuid: string
 //     index: number
 // }
-//#endregion
+// #endregion
 
-//#region Graphics
+// #region Graphics
 export const enum GraphicsCommandType {
     MoveTo = "moveTo",
     LineTo = "lineTo",
@@ -564,18 +563,18 @@ export type GraphicsCloseCommand = {
     type: GraphicsCommandType.Close;
 };
 
-//#endregion
+// #endregion
 
-//#region Font
+// #region Font
 export type FontConfig = {
     fontSize: number;
     fontFamily: string;
     fontBold: boolean;
     fontItalic: boolean;
 };
-//#endregion
+// #endregion
 
-//#region Path
+// #region Path
 export type PathCommand = PathMoveToCommand | PathLineToCommand | PathBezierCurveToCommand | PathQuadraticBezierCurveToCommand | PathArcToCommand;
 
 export type PathCommandWithUuid = PathCommand & { uuid: string };
@@ -624,9 +623,9 @@ export type PathArcToCommand = {
     largeArc: boolean;
     positive: boolean;
 };
-//#endregion
+// #endregion
 
-//#region Polygon
+// #region Polygon
 export type PolygonVertex = {
     x: number;
     y: number;
@@ -634,9 +633,9 @@ export type PolygonVertex = {
 
 export type PolygonVertexWithUuid = PolygonVertex & { uuid: string };
 
-//#endregion
+// #endregion
 
-//#region Relationship
+// #region Relationship
 export type AnyShape = InstanceType<ShapeCollection[keyof ShapeCollection]>;
 
 export type KeyOfShape<T> = {
@@ -649,7 +648,7 @@ export type AnyRelationship = {
 
 export type VerbOfRelationship<T extends AnyRelationship> = T["verb"];
 
-//prettier-ignore
+// prettier-ignore
 export type RelationshipMethodName<T extends AnyShape, U extends AnyShape, V extends AnyRelationship> = 
     `${Uncapitalize<KeyOfShape<T>>}${VerbOfRelationship<V>}${KeyOfShape<U>}` & keyof V
 
@@ -657,4 +656,4 @@ export type RelationshipMethod<T extends AnyShape, U extends AnyShape, V extends
     ? V[RelationshipMethodName<T, U, V>]
     : never;
 
-//#endregion
+// #endregion

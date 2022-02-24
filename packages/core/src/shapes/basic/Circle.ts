@@ -478,7 +478,7 @@ class Circle extends Shape implements ClosedShape, TransformableShape {
         return this;
     }
     toString() {
-        //prettier-ignore
+        // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
             `\tcenterX: ${this.centerX}`,

@@ -92,7 +92,7 @@ export default class Graphics {
     endpointArcTo(radiusX: number, radiusY: number, xAxisRotation: number, largeArc: boolean, positive: boolean, x: number, y: number) {
         const [point1X, point1Y] = this.currentXY;
         const [point2X, point2Y] = [x, y];
-        //prettier-ignore
+        // prettier-ignore
         const {
             centerX,
             centerY,

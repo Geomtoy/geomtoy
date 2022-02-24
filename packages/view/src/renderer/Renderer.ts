@@ -52,6 +52,10 @@ export default abstract class Renderer {
         }
     }
 
+    //todo
+    // abstract clear()
+    // abstract autoRedraw()
+    // abstract autoRedrawBatch()
     abstract draw(shape: Shape, onTop: boolean): PathLike;
     abstract drawBatch(shapes: Shape[], onTop: boolean): PathLike[];
 

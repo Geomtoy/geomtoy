@@ -11,7 +11,7 @@ import type { OwnerCarrier } from "../types";
 
 class Wrap {
     static verb = "Wraps" as const;
-    //#region Circle
+    // #region Circle
     static circleWrapsCircle(this: OwnerCarrier, circle: Circle, otherCircle: Circle) {
         const sd = Vector2.squaredMagnitude(Vector2.from(circle.centerCoordinates, otherCircle.centerCoordinates));
         const sdr = (circle.radius - otherCircle.radius) ** 2;
@@ -24,7 +24,7 @@ class Wrap {
     static circleWrapsArc(this: OwnerCarrier, circle: Circle, arc: Arc) {}
     static circleWrapsBezier(this: OwnerCarrier, circle: Circle, bezier: Bezier) {}
     static circleWrapsQuadraticBezier(this: OwnerCarrier, circle: Circle, quadraticBezier: QuadraticBezier) {}
-    //#endregion
+    // #endregion
 }
 
 export default Wrap;

@@ -333,7 +333,7 @@ class Vector extends Shape implements TransformableShape {
         return this;
     }
     toString() {
-        //prettier-ignore
+        // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
             `\tx: ${this.x}`,

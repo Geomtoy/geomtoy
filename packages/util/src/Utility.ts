@@ -72,6 +72,7 @@ class Utility {
         }
         return cloneDeepInner(target);
     }
+    // #region Array
     static range(start: number, stop: number, step = 1) {
         [start, stop] = start > stop ? [stop, start] : [start, stop];
         return Array.from({ length: Maths.ceil((stop - start) / step) }, (_, i) => start + i * step);
@@ -102,12 +103,11 @@ class Utility {
         n += n < 0 ? l : 0;
         return n < 0 || n >= l ? undefined : arr[n];
     }
-
     /**
      * Sort the array `arr` in `order` by value of array elements.
      * @note This method mutates `arr`.
      * @param arr
-     * @param order default "asc"
+     * @param order default `asc`
      */
     static sort<T>(arr: T[], order?: "asc" | "desc"): T[];
     /**
@@ -115,7 +115,7 @@ class Utility {
      * @note This method mutates `arr`.
      * @param arr
      * @param iters
-     * @param orders default ["asc", ...]
+     * @param orders default [`asc`, ...]
      */
     static sort<T>(arr: T[], iters: ((elem: any) => any)[], orders?: ("asc" | "desc")[]): T[];
     static sort<T>(arr: T[], a1?: any, a2?: any) {
@@ -142,6 +142,7 @@ class Utility {
             return 0;
         });
     }
+    // #endregion
     static lowerFirstChar(s: string) {
         return s.charAt(0).toLowerCase() + s.slice(1);
     }

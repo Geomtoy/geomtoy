@@ -38,7 +38,7 @@ class Matrix3 {
         ] as [number, number, number, number, number, number, number, number, number];
     }
     /**
-     * Return the dot product of matrix3 `m` and vector3 `v`.
+     * Returns the dot product of matrix3 `m` and vector3 `v`.
      * @param m
      * @param v
      */

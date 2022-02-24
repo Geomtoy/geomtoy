@@ -411,13 +411,13 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
     /**
      * Get the lerping(**lerp** here means **linear interpolation and extrapolation**) point of line segment `this`.
      * @description
-     * - When the `weight` is in the interval `[0, 1]`, it is interpolation:
-     *      - If "weight=0", return `point1`.
-     *      - If "weight=1", return `point2`.
-     *      - If "0<weight<1", return a point between `point1` and `point2`.
+     * - When the `weight` is in the interval $[0,1]$, it is interpolation:
+     *      - If `weight` is 0, return `point1`.
+     *      - If `weight` is 1, return `point2`.
+     *      - If `weight` is in $(0,1)$, return a point between `point1` and `point2`.
      * - When the `weight` is in the interval $(-\infty,0)$ and $(1,\infty)$, it is extrapolation:
-     *      - If "weight<0", return a point exterior of `point1`.
-     *      - If "weight>1", return a point exterior of `point2`.
+     *      - If `weight` is in $(-\infty,0)$, return a point exterior of `point1`.
+     *      - If `weight` is in $(1,\infty)$, return a point exterior of `point2`.
      * @param {number} weight
      * @returns {Point}
      */
@@ -464,11 +464,11 @@ class LineSegment extends Shape implements FiniteOpenShape, TransformableShape {
      * @description
      * - When `lambda` is equal to -1, return `null`.
      * - When `lambda` is in the interval $[0,\infty]$, return a internal division point, a point between `point1` and `point2`:
-     *      - If "lambda=0", return `point1`.
-     *      - If "lambda=$\infty$", return `point2`.
+     *      - If `lambda` is 0`, return `point1`.
+     *      - If `lambda` is $\infty$, return `point2`.
      * - When `lambda` is in the interval $(-\infty, -1)$ and $(-1, 0)$, return a external division point:
-     *      - If "-1<lambda<0", return a point exterior of `point1`.
-     *      - If "lambda<-1", return a point exterior of `point2`.
+     *      - If `lambda` in $(-1,0)$, return a point exterior of `point1`.
+     *      - If `lambda` in $(-\infty, -1)$, return a point exterior of `point2`.
      *
      * @param {number} lambda
      * @returns {Point}

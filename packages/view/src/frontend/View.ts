@@ -178,7 +178,7 @@ export default class View {
         const path = element.path!;
         let strokeWidth = element.style().strokeWidth || this._defaultStyle.strokeWidth;
         strokeWidth = this._hasTouchDevice ? strokeWidth + extraStrokeWidthForTouch : strokeWidth;
-        //prettier-ignore
+        // prettier-ignore
         return Type.isArray(path) 
             ? path.some(p => this._pointChecker.isPointIn(x, y, p, strokeWidth, true))
             : this._pointChecker.isPointIn(x, y, path, strokeWidth, true);

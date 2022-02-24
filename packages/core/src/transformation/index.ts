@@ -214,7 +214,7 @@ class Transformation extends BaseObject {
     }
     toString() {
         let [a, b, c, d, e, f] = this.get();
-        //prettier-ignore
+        // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
             `\ta: ${a}`,

@@ -93,7 +93,7 @@ export default abstract class Interface {
         // In this way, the size of the final pattern image is always an integer.
         // But we still need to do the `toFixed(2)` here, even if it's not seem to be necessary.
         // It' a float point number world, so this must be something you should think of: 9.8/5 = 1.9600000000000002 not 1.96.
-        //prettier-ignore
+        // prettier-ignore
         return Number(
             (
                 coef >= 1 && coef < 2
@@ -165,7 +165,7 @@ export default abstract class Interface {
             image.setAttribute("href", svgDataUrl);
         } else {
             image.setAttribute("href", svgDataUrl);
-            //@ts-ignore
+            // @ts-ignore
             promise = image.decode() as Promise<void>;
         }
         return [promise, image] as const;
@@ -206,7 +206,7 @@ export default abstract class Interface {
             originLabel += `%3Ctext x='${tOx - labelYOffset}' y='${tOy + labelXOffset}' text-anchor='end'%3E0%3C/text%3E`;
         }
 
-        //prettier-ignore
+        // prettier-ignore
         const svgDataUrl =
             `data:image/svg+xml;charset=utf8,` +
             `%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} ${h}' width='${w}' height='${h}'%3E` +

@@ -57,7 +57,7 @@ class Vector2 {
         return v[0] ** 2 + v[1] ** 2;
     }
     /**
-     * Return a new vector2 of vector2 `u` adding vector2 `v`.
+     * Returns a new vector2 of adding `u` by `v`.
      * @param u
      * @param v
      */
@@ -67,7 +67,7 @@ class Vector2 {
         return [ux + vx, uy + vy] as [number, number];
     }
     /**
-     * Returns a new vector2 of vector2 `u` subtracting vector2 `v`.
+     * Returns a new vector2 of subtracting `u` by `v`.
      * @param u
      * @param v
      */
