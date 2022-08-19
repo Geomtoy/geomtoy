@@ -1,4 +1,4 @@
-import { Complex, Maths } from "../src";
+import { Complex, Maths, Angle } from "../src";
 import { diffFlatNumberArray } from "./util/assertion";
 
 const expect = chai.expect;
@@ -72,8 +72,36 @@ describe("Complex", () => {
     });
 
     it("trigonometric functions", () => {
-        expect(diffFlatNumberArray(Complex.sin(b), [-3.853738037919377, -27.016813258003932])).to.be.false;
-        expect(diffFlatNumberArray(Complex.cos(b), [-27.034945603074224, 3.851153334811777])).to.be.false;
-        expect(diffFlatNumberArray(Complex.tan(b), [0.00018734620462948492, 0.999355987381473])).to.be.false;
+        const a = [-3, 4] as [number, number];
+        expect(diffFlatNumberArray(Complex.sin(a), [-3.853738037919377, -27.016813258003932])).to.be.false;
+        expect(diffFlatNumberArray(Complex.cos(a), [-27.034945603074224, 3.851153334811777])).to.be.false;
+        expect(diffFlatNumberArray(Complex.tan(a), [0.00018734620462948492, 0.999355987381473])).to.be.false;
+
+        const b = Complex.negative([-3 + Maths.PI, 4]);
+        const c = Complex.negative([-3, 4]);
+        const d = [-3 + Maths.PI, 4];
+        expect(diffFlatNumberArray(Complex.asin([-3.853738037919377, -27.016813258003932]), b)).to.be.false;
+        expect(diffFlatNumberArray(Complex.acos([-27.034945603074224, 3.851153334811777]), c)).to.be.false;
+        expect(diffFlatNumberArray(Complex.atan([0.00018734620462948492, 0.999355987381473]), d)).to.be.false;
+    });
+    it("hyperbolic functions", () => {
+        const a = [-3, 4] as [number, number];
+        expect(diffFlatNumberArray(Complex.sinh(a), [6.5481200409110025, -7.61923172032141])).to.be.false;
+        expect(diffFlatNumberArray(Complex.cosh(a), [-6.580663040551157, 7.581552742746545])).to.be.false;
+        expect(diffFlatNumberArray(Complex.tanh(a), [-1.000709536067233, 0.00490825806749606])).to.be.false;
+
+        const b = Complex.negative([-3, 4 - Maths.PI]);
+        const c = Complex.negative([-3, 4 - Maths.PI * 2]);
+        const d = [-3, 4 - Maths.PI];
+        expect(diffFlatNumberArray(Complex.asinh([6.5481200409110025, -7.61923172032141]), b)).to.be.false;
+        expect(diffFlatNumberArray(Complex.acosh([-6.580663040551157, 7.581552742746545]), c)).to.be.false;
+        expect(diffFlatNumberArray(Complex.atanh([-1.000709536067233, 0.00490825806749606]), d)).to.be.false;
+    });
+
+    it("sqrt", () => {
+        expect(Complex.sqrt([3, 4])).to.deep.equal([2, 1]);
+        expect(Complex.sqrt([3, -4])).to.deep.equal([2, -1]);
+        expect(Complex.sqrt([-3, 4])).to.deep.equal([1, 2]);
+        expect(Complex.sqrt([-3, -4])).to.deep.equal([1, -2]);
     });
 });

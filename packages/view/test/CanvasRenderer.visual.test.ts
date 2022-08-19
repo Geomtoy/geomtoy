@@ -1,8 +1,8 @@
 import { canvasSetup, canvasTeardown } from "./util";
 import { visualTestSize, diffPixelData } from "./util/visual";
-import Geomtoy from "@geomtoy/core";
 import { Maths } from "@geomtoy/util";
 import CanvasRenderer from "../src/renderer/CanvasRenderer";
+import { Arc, Bezier, Circle, LineSegment, QuadraticBezier, Triangle } from "@geomtoy/core";
 
 const expect = chai.expect;
 
@@ -10,11 +10,10 @@ describe("CanvasRenderer visual", () => {
     let canvasTestElement: HTMLCanvasElement;
     let canvasNativeElement: HTMLCanvasElement;
     let cr: CanvasRenderer;
-    const g = new Geomtoy();
 
     before(() => {
         [canvasTestElement, canvasNativeElement] = canvasSetup(true);
-        cr = new CanvasRenderer(canvasTestElement, g, { showAxis: false, showGrid: false, showLabel: false });
+        cr = new CanvasRenderer(canvasTestElement, { showAxis: false, showGrid: false, showLabel: false });
         cr.display.width = visualTestSize.width;
         cr.display.height = visualTestSize.height;
         cr.display.xAxisPositiveOnRight = true;
@@ -33,7 +32,7 @@ describe("CanvasRenderer visual", () => {
 
     it("visual-1", async () => {
         const visual1Url = "http://localhost:9876/base/test/visual/visual-1.png";
-        const circle = g.Circle(visualTestSize.width / 2, visualTestSize.height / 2, 10);
+        const circle = new Circle(visualTestSize.width / 2, visualTestSize.height / 2, 10);
         cr.stroke("black");
         cr.fill("transparent");
         cr.draw(circle);
@@ -42,7 +41,7 @@ describe("CanvasRenderer visual", () => {
 
     it("visual-2", async () => {
         const visual1Url = "http://localhost:9876/base/test/visual/visual-2.png";
-        const triangle = g.Triangle(0, 0, 25, 100, 80, 90);
+        const triangle = new Triangle(0, 0, 25, 100, 80, 90);
 
         cr.stroke("red");
         cr.strokeWidth(2);
@@ -56,7 +55,7 @@ describe("CanvasRenderer visual", () => {
         cr.stroke("red");
         cr.strokeWidth(1);
         cr.fill("transparent");
-        cr.draw(g.LineSegment([0, 0], [200, 200]));
+        cr.draw(new LineSegment([0, 0], [200, 200]));
 
         const ctx = canvasNativeElement.getContext("2d")!;
         const path2D = new Path2D();
@@ -75,7 +74,7 @@ describe("CanvasRenderer visual", () => {
         cr.stroke("blue");
         cr.strokeWidth(1);
         cr.fill("transparent");
-        cr.draw(g.QuadraticBezier([100, 100], [200, 200], [150, 150]));
+        cr.draw(new QuadraticBezier([100, 100], [200, 200], [150, 150]));
 
         const ctx = canvasNativeElement.getContext("2d")!;
         const path2D = new Path2D();
@@ -94,7 +93,7 @@ describe("CanvasRenderer visual", () => {
         cr.stroke("green");
         cr.strokeWidth(1);
         cr.fill("transparent");
-        cr.draw(g.Bezier([100, 100], [400, 300], [150, 150], [300, 300]));
+        cr.draw(new Bezier([100, 100], [400, 300], [150, 150], [300, 300]));
 
         const ctx = canvasNativeElement.getContext("2d")!;
         const path2D = new Path2D();
@@ -113,7 +112,7 @@ describe("CanvasRenderer visual", () => {
         cr.stroke("red");
         cr.strokeWidth(1);
         cr.fill("transparent");
-        cr.draw(g.Arc([250, 200], 25, 50, 0.5 * Math.PI, 1 * Math.PI, true, Maths.PI / 3));
+        cr.draw(Arc.fromCenterPointAndStartEndAnglesEtc([250, 200], 25, 50, 0.5 * Math.PI, 1 * Math.PI, true, Maths.PI / 3));
 
         const ctx = canvasNativeElement.getContext("2d")!;
         const path2D = new Path2D();
@@ -131,7 +130,7 @@ describe("CanvasRenderer visual", () => {
         cr.stroke("red");
         cr.strokeWidth(1);
         cr.fill("transparent");
-        cr.draw(g.Arc([100, 200], 30, 50, 0, 2 * Math.PI, true, 0));
+        cr.draw(Arc.fromCenterPointAndStartEndAnglesEtc([100, 200], 30, 50, 0, 2 * Math.PI, true, 0));
 
         const ctx = canvasNativeElement.getContext("2d")!;
         const path2D = new Path2D();
