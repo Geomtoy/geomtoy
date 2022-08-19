@@ -1,45 +1,34 @@
-import { shapes, objects } from "../collection";
-
-import type Geomtoy from "../geomtoy";
 import type EventTarget from "../base/EventTarget";
-import type Shape from "../base/Shape";
-import type Relationship from "../relationship";
-import type Line from "../shapes/basic/Line";
-import type Point from "../shapes/basic/Point";
-import type Ray from "../shapes/basic/Ray";
-import type LineSegment from "../shapes/basic/LineSegment";
-import type Transformation from "../transformation";
-import type Matrix from "../helper/Matrix";
+import type Line from "../geometries/basic/Line";
+import type Point from "../geometries/basic/Point";
+import type Ray from "../geometries/basic/Ray";
+import type LineSegment from "../geometries/basic/LineSegment";
+import type Path from "../geometries/advanced/Path";
 import type EventObject from "../event/EventObject";
+import type ImageGraphics from "../graphics/ImageGraphics";
+import type TextGraphics from "../graphics/TextGraphics";
+import type GeometryGraphics from "../graphics/GeometryGraphics";
 
 // #region Common
-/** @internal */
-export type ObjectCollection = {
-    [K in keyof typeof objects]: typeof objects[K];
-};
-/** @internal */
-export type ShapeCollection = {
-    [K in keyof typeof shapes]: typeof shapes[K];
-};
-
 export type Tail<A> = A extends [infer H, ...infer T] ? T : never;
+
 // prettier-ignore
 export type ConstructorOverloads<T> =
     T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-        new(...args: infer A5): infer R5
-        new(...args: infer A6): infer R6
-        new(...args: infer A7): infer R7
-        new(...args: infer A8): infer R8
-        new(...args: infer A9): infer R9
-        new(...args: infer A10): infer R10
-        new(...args: infer A11): infer R11
-        new(...args: infer A12): infer R12
-        new(...args: infer A13): infer R13
-        new(...args: infer A14): infer R14
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
+        new (...args: infer A9): infer R9
+        new (...args: infer A10): infer R10
+        new (...args: infer A11): infer R11
+        new (...args: infer A12): infer R12
+        new (...args: infer A13): infer R13
+        new (...args: infer A14): infer R14
     }
     ? [
         new (...args: A1) => R1,
@@ -58,19 +47,19 @@ export type ConstructorOverloads<T> =
         new (...args: A14) => R14,
     ]
     : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-        new(...args: infer A5): infer R5
-        new(...args: infer A6): infer R6
-        new(...args: infer A7): infer R7
-        new(...args: infer A8): infer R8
-        new(...args: infer A9): infer R9
-        new(...args: infer A10): infer R10
-        new(...args: infer A11): infer R11
-        new(...args: infer A12): infer R12
-        new(...args: infer A13): infer R13
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
+        new (...args: infer A9): infer R9
+        new (...args: infer A10): infer R10
+        new (...args: infer A11): infer R11
+        new (...args: infer A12): infer R12
+        new (...args: infer A13): infer R13
     }
     ? [
         new (...args: A1) => R1,
@@ -88,18 +77,18 @@ export type ConstructorOverloads<T> =
         new (...args: A13) => R13,
     ]
     : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-        new(...args: infer A5): infer R5
-        new(...args: infer A6): infer R6
-        new(...args: infer A7): infer R7
-        new(...args: infer A8): infer R8
-        new(...args: infer A9): infer R9
-        new(...args: infer A10): infer R10
-        new(...args: infer A11): infer R11
-        new(...args: infer A12): infer R12
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
+        new (...args: infer A9): infer R9
+        new (...args: infer A10): infer R10
+        new (...args: infer A11): infer R11
+        new (...args: infer A12): infer R12
     }
     ? [
         new (...args: A1) => R1,
@@ -116,17 +105,17 @@ export type ConstructorOverloads<T> =
         new (...args: A12) => R12,
     ]
     : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-        new(...args: infer A5): infer R5
-        new(...args: infer A6): infer R6
-        new(...args: infer A7): infer R7
-        new(...args: infer A8): infer R8
-        new(...args: infer A9): infer R9
-        new(...args: infer A10): infer R10
-        new(...args: infer A11): infer R11
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
+        new (...args: infer A9): infer R9
+        new (...args: infer A10): infer R10
+        new (...args: infer A11): infer R11
     }
     ? [
         new (...args: A1) => R1,
@@ -142,16 +131,16 @@ export type ConstructorOverloads<T> =
         new (...args: A11) => R11,
     ]
     : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-        new(...args: infer A5): infer R5
-        new(...args: infer A6): infer R6
-        new(...args: infer A7): infer R7
-        new(...args: infer A8): infer R8
-        new(...args: infer A9): infer R9
-        new(...args: infer A10): infer R10
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
+        new (...args: infer A9): infer R9
+        new (...args: infer A10): infer R10
     }
     ? [
         new (...args: A1) => R1,
@@ -166,15 +155,15 @@ export type ConstructorOverloads<T> =
         new (...args: A10) => R10,
     ]
     : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-        new(...args: infer A5): infer R5
-        new(...args: infer A6): infer R6
-        new(...args: infer A7): infer R7
-        new(...args: infer A8): infer R8
-        new(...args: infer A9): infer R9
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
+        new (...args: infer A9): infer R9
     }
     ? [
         new (...args: A1) => R1,
@@ -188,14 +177,14 @@ export type ConstructorOverloads<T> =
         new (...args: A9) => R9,
     ]
     : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-        new(...args: infer A5): infer R5
-        new(...args: infer A6): infer R6
-        new(...args: infer A7): infer R7
-        new(...args: infer A8): infer R8
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
     }
     ? [
         new (...args: A1) => R1,
@@ -208,13 +197,13 @@ export type ConstructorOverloads<T> =
         new (...args: A8) => R8,
     ]
     : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-        new(...args: infer A5): infer R5
-        new(...args: infer A6): infer R6
-        new(...args: infer A7): infer R7
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
     }
     ? [
         new (...args: A1) => R1,
@@ -226,12 +215,12 @@ export type ConstructorOverloads<T> =
         new (...args: A7) => R7,
     ]
     : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-        new(...args: infer A5): infer R5
-        new(...args: infer A6): infer R6
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
     }
     ? [
         new (...args: A1) => R1,
@@ -242,11 +231,11 @@ export type ConstructorOverloads<T> =
         new (...args: A6) => R6,
     ]
     : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
-        new(...args: infer A5): infer R5
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
     }
     ? [
         new (...args: A1) => R1,
@@ -256,10 +245,10 @@ export type ConstructorOverloads<T> =
         new (...args: A5) => R5
     ]
     : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
-        new(...args: infer A4): infer R4
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
     }
     ? [
         new (...args: A1) => R1,
@@ -268,9 +257,9 @@ export type ConstructorOverloads<T> =
         new (...args: A4) => R4
     ]
     : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
-        new(...args: infer A3): infer R3
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
     }
     ? [
         new (...args: A1) => R1,
@@ -278,59 +267,159 @@ export type ConstructorOverloads<T> =
         new (...args: A3) => R3
     ]
     : T extends {
-        new(...args: infer A1): infer R1
-        new(...args: infer A2): infer R2
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
     }
     ? [
         new (...args: A1) => R1,
         new (...args: A2) => R2
     ]
     : T extends {
-        new(...args: infer A1): infer R1
+        new (...args: infer A1): infer R1
     }
     ? [
         new (...args: A1) => R1
     ]
     : never
+// prettier-ignore
+export type FunctionOverloads<T> =
+    T extends {
+        (...args: infer A1): infer R1
+        (...args: infer A2): infer R2
+        (...args: infer A3): infer R3
+        (...args: infer A4): infer R4
+        (...args: infer A5): infer R5
+        (...args: infer A6): infer R6
+    }
+    ? [
+        (...args: A1) => R1,
+        (...args: A2) => R2,
+        (...args: A3) => R3,
+        (...args: A4) => R4,
+        (...args: A5) => R5,
+        (...args: A6) => R6,
+    ]
+    : T extends {
+        (...args: infer A1): infer R1
+        (...args: infer A2): infer R2
+        (...args: infer A3): infer R3
+        (...args: infer A4): infer R4
+        (...args: infer A5): infer R5
+    }
+    ? [
+        (...args: A1) => R1,
+        (...args: A2) => R2,
+        (...args: A3) => R3,
+        (...args: A4) => R4,
+        (...args: A5) => R5
+    ]
+    : T extends {
+        (...args: infer A1): infer R1
+        (...args: infer A2): infer R2
+        (...args: infer A3): infer R3
+        (...args: infer A4): infer R4
+    }
+    ? [
+        (...args: A1) => R1,
+        (...args: A2) => R2,
+        (...args: A3) => R3,
+        (...args: A4) => R4
+    ]
+    : T extends {
+        (...args: infer A1): infer R1
+        (...args: infer A2): infer R2
+        (...args: infer A3): infer R3
+    }
+    ? [
+        (...args: A1) => R1,
+        (...args: A2) => R2,
+        (...args: A3) => R3
+    ]
+    : T extends {
+        (...args: infer A1): infer R1
+        (...args: infer A2): infer R2
+    }
+    ? [
+        (...args: A1) => R1,
+        (...args: A2) => R2
+    ]
+    : T extends {
+        (...args: infer A1): infer R1
+    }
+    ? [
+        (...args: A1) => R1
+    ]
+    : never
+// prettier-ignore
+export type FunctionOverloadsIndex<L extends 1 | 2 | 3 | 4 | 5 | 6> = 
+    L extends 1
+    ? 0
+    : L extends 2
+    ? 0 | 1
+    : L extends 3
+    ? 0 | 1 | 2
+    : L extends 4
+    ? 0 | 1 | 2 | 3
+    : L extends 5
+    ? 0 | 1 | 2 | 3 | 4
+    : L extends 6
+    ? 0 | 1 | 2 | 3 | 4 | 5
+    : never;
+
+type Intersection<U> = (U extends any ? (arg: U) => void : never) extends (arg: infer I) => void ? I : never;
 // #endregion
 
 // #region Geomtoy
-export type StaticMethodsMapper<T extends { new (...args: any[]): any }> = {
-    [K in keyof T as T[K] extends (...args: any[]) => any ? K : never]: T[K] extends (...args: any[]) => any ? T[K] : never;
+export type FunctionOverloadsLength<T> = FunctionOverloads<T>["length"];
+export type StaticMethodsTailer<T extends { new (...args: any[]): any }> = {
+    [K in keyof T as T[K] extends (...args: any[]) => any ? K : never]: T[K] extends (...args: any[]) => any
+        ? Intersection<
+              {
+                  [KK in FunctionOverloadsIndex<FunctionOverloadsLength<T[K]>>]: (...args: Tail<Parameters<FunctionOverloads<T[K]>[KK]>>) => ReturnType<FunctionOverloads<T[K]>[KK]>;
+              }[FunctionOverloadsIndex<FunctionOverloadsLength<T[K]>>]
+          >
+        : never;
 };
-export type OwnerCarrier = { owner: Geomtoy };
-
 export type ConstructorTailer<T extends { new (...args: any[]): any }> = {
     (...args: Tail<ConstructorParameters<ConstructorOverloads<T>[number]>>): InstanceType<T>;
 };
-export type Factory<T extends { new (...args: any[]): any }> = ConstructorTailer<T> & StaticMethodsMapper<T> & OwnerCarrier;
+export type Factory<T extends { new (...args: any[]): any }> = ConstructorTailer<T> & StaticMethodsTailer<T>;
+
+/* @internal */
+export type FactoryCollection<T extends { [key: string]: { new (...args: any[]): any } }> = {
+    readonly [K in keyof T]: Factory<T[K]>;
+};
+/* @internal */
+export type StaticMethodsCollection<T extends { [key: string]: { new (...args: any[]): any } }> = {
+    readonly [K in keyof T]: StaticMethodsTailer<T[K]>;
+};
 
 // export
 export type RecursivePartial<T> = {
     [K in keyof T]?: T[K] extends (infer U)[] ? RecursivePartial<U>[] : T[K] extends object ? RecursivePartial<T[K]> : T[K];
 };
 
-/** @internal */
-export type ObjectFactoryCollection = {
-    readonly [K in keyof ObjectCollection]: Factory<ObjectCollection[K]>;
-};
-
 // Geomtoy global options
 export type Options = {
     epsilon: number;
+    curveEpsilon: number; 
     graphics: {
-        pointSize: number;
-        lineArrow: boolean;
-        vectorArrow: boolean;
-        rayArrow: boolean;
+        point: {
+            size: number;
+            appearance: PointAppearance;
+        };
         arrow: {
             width: number;
             length: number;
             foldback: number;
             noFoldback: boolean;
         };
+        lineArrow: boolean;
+        vectorArrow: boolean;
+        rayArrow: boolean;
+        polygonSegmentArrow: boolean;
+        pathSegmentArrow: boolean;
     };
-    pathSampleRatio: number;
 };
 
 export interface ViewportDescriptor {
@@ -342,39 +431,44 @@ export interface ViewportDescriptor {
     pan: [number, number];
     xAxisPositiveOnRight: boolean;
     yAxisPositiveOnBottom: boolean;
-    globalTransformation: Matrix;
-    globalViewBox: [number, number, number, number];
+    globalTransformation: [a: number, b: number, c: number, d: number, e: number, f: number];
+    globalViewBox: [x: number, y: number, w: number, h: number];
 }
 
 // #endregion
 
+// #region Dynamic
+export type DynamicObject<T> = {
+    [K in keyof T as K extends `_${string}` | `${string}_` ? never : K extends keyof EventTarget ? never : K]: T[K];
+};
+// #endregion
+
 // #region Shape
-export type Direction = "positive" | "negative";
-export interface ClosedShape {
+export type WindingDirection = 1 /**for positive**/ | -1 /**for negative**/ | 0 /**for undetermined**/;
+export type FillRule = "nonzero" | "evenodd";
+
+export interface ClosedGeometry {
     getLength(): number;
     getArea(): number;
-    getWindingDirection(): Direction;
-    setWindingDirection?(direction: Direction): void;
+    getWindingDirection(): WindingDirection;
     isPointOn(point: [number, number] | Point): boolean;
     isPointOutside(point: [number, number] | Point): boolean;
     isPointInside(point: [number, number] | Point): boolean;
+    toPath(): Path;
 }
-export interface FiniteOpenShape {
+export interface FiniteOpenGeometry {
     getLength(): number;
     isPointOn(point: [number, number] | Point): boolean;
+    toPath(closed?: boolean): Path;
 }
-export interface InfiniteOpenShape {
+export interface InfiniteOpenGeometry {
     isPointOn(point: [number, number] | Point): boolean;
 }
-
-export interface RotationFeaturedShape {
+export interface RotationFeaturedGeometry {
     get rotation();
     set rotation(value: number);
 }
 
-export interface TransformableShape {
-    apply(transformation: Transformation): Shape;
-}
 // #endregion
 
 // #region Data
@@ -403,101 +497,44 @@ export type LineSegmentRayLineData = {
 // #endregion
 
 // #region Event
-// export type EventTargetEventNamesPair<T extends EventTarget> = T | [T, string];
-
-// export type EventObjectFromEventTargetEventNamesPair<T extends EventTargetEventNamesPair<U>[], U extends EventTarget> = {
-//     [K in keyof T & number]:
-//         T[K] extends U
-//         ? EventObject<U>
-//         : T[K] extends [U, string]
-//         ? EventObject<T[K][0]>
-//         : never;
-// };
-
 export type EventTargetEventsPair = [EventTarget, string];
 
 export type EventObjectFromPair<T extends EventTargetEventsPair[]> = {
     [K in keyof T]: T[K] extends EventTargetEventsPair ? EventObject<T[K][0]> : never;
 };
-
-// export const enum EventHandlerType {
-//     On,
-//     Bind
-// }
-
-// export type EventHandler = OnEventHandler | BindEventHandler
-
-// export type OnEventHandler = {
-//     callback: (e: SimpleEventObject | CollectionEventObject) => void
-//     context: EventTarget
-//     priority: number
-//     type: EventHandlerType.On
-// }
-// export type BindEventHandler = {
-//     callback: (e: (EmptyEventObject | SimpleEventObject | CollectionEventObject)[]) => void
-//     context: EventTarget
-//     relatedEventTargets: EventTarget[]
-//     priority: number
-//     type: EventHandlerType.Bind
-// }
-
-// export const enum EventObjectType {
-//     Empty,
-//     Simple,
-//     Collection
-// }
-// export type EventObject = EmptyEventObject | SimpleEventObject | CollectionEventObject
-
-// export type EmptyEventObject = {
-//     target: EventTarget
-//     type: EventObjectType.Empty
-// }
-// export type SimpleEventObject = {
-//     target: EventTarget
-//     type: EventObjectType.Simple
-//     eventName: string
-// }
-// export type CollectionEventObject = {
-//     target: EventTarget
-//     type: EventObjectType.Collection
-//     eventName: string
-//     uuid: string
-//     index: number
-// }
 // #endregion
 
 // #region Graphics
-export const enum GraphicsCommandType {
-    MoveTo = "moveTo",
-    LineTo = "lineTo",
-    BezierCurveTo = "bezierCurveTo",
-    QuadraticBezierCurveTo = "quadraticBezierCurveTo",
-    ArcTo = "arcTo",
-    Close = "close",
-    Text = "text",
-    Image = "image"
-}
+export type PointAppearance = "circle" | "square" | "cross" | "plus" | "diamond";
 
-export type GraphicsCommand =
-    | GraphicsMoveToCommand
-    | GraphicsLineToCommand
-    | GraphicsBezierCurveToCommand
-    | GraphicsQuadraticBezierCurveToCommand
-    | GraphicsArcToCommand
-    | GraphicsCloseCommand
-    | GraphicsTextCommand
-    | GraphicsImageCommand;
+/* @internal */
+export type ArcEndpointParameterization = {
+    point1X: number;
+    point1Y: number;
+    point2X: number;
+    point2Y: number;
+    radiusX: number;
+    radiusY: number;
+    largeArc: boolean;
+    positive: boolean;
+    rotation: number;
+};
+/* @internal */
+export type ArcCenterParameterization = {
+    centerX: number;
+    centerY: number;
+    radiusX: number;
+    radiusY: number;
+    startAngle: number;
+    endAngle: number;
+    positive: boolean;
+    rotation: number;
+};
 
-export type GraphicsGeometryCommand =
-    | GraphicsMoveToCommand
-    | GraphicsLineToCommand
-    | GraphicsBezierCurveToCommand
-    | GraphicsQuadraticBezierCurveToCommand
-    | GraphicsArcToCommand
-    | GraphicsCloseCommand;
+export type Graphics = ImageGraphics | TextGraphics | GeometryGraphics;
 
-export type GraphicsImageCommand = {
-    type: GraphicsCommandType.Image;
+export type ImageGraphicsCommand = {
+    constantSize: boolean;
     x: number;
     y: number;
     width: number;
@@ -508,8 +545,8 @@ export type GraphicsImageCommand = {
     sourceHeight: number;
     imageSource: string;
 };
-export type GraphicsTextCommand = {
-    type: GraphicsCommandType.Text;
+export type TextGraphicsCommand = {
+    constantSize: boolean;
     x: number;
     y: number;
     text: string;
@@ -519,18 +556,35 @@ export type GraphicsTextCommand = {
     fontItalic: boolean;
 };
 
-export type GraphicsMoveToCommand = {
-    type: GraphicsCommandType.MoveTo;
+export type GeometryGraphicsCommand =
+    | GeometryGraphicsMoveToCommand
+    | GeometryGraphicsLineToCommand
+    | GeometryGraphicsBezierToCommand
+    | GeometryGraphicsQuadraticBezierToCommand
+    | GeometryGraphicsArcToCommand
+    | GeometryGraphicsCloseCommand;
+
+export const enum GeometryGraphicsCommandType {
+    MoveTo = "moveTo",
+    LineTo = "lineTo",
+    BezierTo = "bezierTo",
+    QuadraticBezierTo = "quadraticBezierTo",
+    ArcTo = "arcTo",
+    Close = "close"
+}
+
+export type GeometryGraphicsMoveToCommand = {
+    type: GeometryGraphicsCommandType.MoveTo;
     x: number;
     y: number;
 };
-export type GraphicsLineToCommand = {
-    type: GraphicsCommandType.LineTo;
+export type GeometryGraphicsLineToCommand = {
+    type: GeometryGraphicsCommandType.LineTo;
     x: number;
     y: number;
 };
-export type GraphicsBezierCurveToCommand = {
-    type: GraphicsCommandType.BezierCurveTo;
+export type GeometryGraphicsBezierToCommand = {
+    type: GeometryGraphicsCommandType.BezierTo;
     x: number;
     y: number;
     controlPoint1X: number;
@@ -538,29 +592,29 @@ export type GraphicsBezierCurveToCommand = {
     controlPoint2X: number;
     controlPoint2Y: number;
 };
-export type GraphicsQuadraticBezierCurveToCommand = {
-    type: GraphicsCommandType.QuadraticBezierCurveTo;
+export type GeometryGraphicsQuadraticBezierToCommand = {
+    type: GeometryGraphicsCommandType.QuadraticBezierTo;
     x: number;
     y: number;
     controlPointX: number;
     controlPointY: number;
 };
-export type GraphicsArcToCommand = {
-    type: GraphicsCommandType.ArcTo;
+export type GeometryGraphicsArcToCommand = {
+    type: GeometryGraphicsCommandType.ArcTo;
     x: number;
     y: number;
     centerX: number;
     centerY: number;
     radiusX: number;
     radiusY: number;
-    xAxisRotation: number;
+    rotation: number;
     startAngle: number;
     endAngle: number;
     largeArc: boolean;
     positive: boolean;
 };
-export type GraphicsCloseCommand = {
-    type: GraphicsCommandType.Close;
+export type GeometryGraphicsCloseCommand = {
+    type: GeometryGraphicsCommandType.Close;
 };
 
 // #endregion
@@ -575,30 +629,33 @@ export type FontConfig = {
 // #endregion
 
 // #region Path
-export type PathCommand = PathMoveToCommand | PathLineToCommand | PathBezierCurveToCommand | PathQuadraticBezierCurveToCommand | PathArcToCommand;
+export type PathCommand = PathMoveToCommand | PathLineToCommand | PathBezierToCommand | PathQuadraticBezierToCommand | PathArcToCommand;
 
-export type PathCommandWithUuid = PathCommand & { uuid: string };
+export type PathCommandWithUuid = Required<PathCommand>;
 
 export const enum PathCommandType {
     MoveTo = "M",
     LineTo = "L",
-    BezierCurveTo = "C",
-    QuadraticBezierCurveTo = "Q",
+    BezierTo = "C",
+    QuadraticBezierTo = "Q",
     ArcTo = "A"
 }
 
 export type PathMoveToCommand = {
+    uuid?: string;
     type: PathCommandType.MoveTo;
     x: number;
     y: number;
 };
 export type PathLineToCommand = {
+    uuid?: string;
     type: PathCommandType.LineTo;
     x: number;
     y: number;
 };
-export type PathBezierCurveToCommand = {
-    type: PathCommandType.BezierCurveTo;
+export type PathBezierToCommand = {
+    uuid?: string;
+    type: PathCommandType.BezierTo;
     x: number;
     y: number;
     controlPoint1X: number;
@@ -606,20 +663,22 @@ export type PathBezierCurveToCommand = {
     controlPoint2X: number;
     controlPoint2Y: number;
 };
-export type PathQuadraticBezierCurveToCommand = {
-    type: PathCommandType.QuadraticBezierCurveTo;
+export type PathQuadraticBezierToCommand = {
+    uuid?: string;
+    type: PathCommandType.QuadraticBezierTo;
     x: number;
     y: number;
     controlPointX: number;
     controlPointY: number;
 };
 export type PathArcToCommand = {
+    uuid?: string;
     type: PathCommandType.ArcTo;
     x: number;
     y: number;
     radiusX: number;
     radiusY: number;
-    xAxisRotation: number;
+    rotation: number;
     largeArc: boolean;
     positive: boolean;
 };
@@ -627,33 +686,52 @@ export type PathArcToCommand = {
 
 // #region Polygon
 export type PolygonVertex = {
+    uuid?: string;
     x: number;
     y: number;
 };
 
-export type PolygonVertexWithUuid = PolygonVertex & { uuid: string };
+export type PolygonVertexWithUuid = Required<PolygonVertex>;
 
 // #endregion
+/**
+ * @see https://en.wikipedia.org/wiki/Three-valued_logic
+ */
+export type Trilean = true | false | undefined;
 
 // #region Relationship
-export type AnyShape = InstanceType<ShapeCollection[keyof ShapeCollection]>;
+export enum RelationshipPredicate {
+    // Basic relationships
+    Equal = "equal",
+    Separate = "separate",
+    // 2D relationships
+    Contain = "contain",
+    ContainedBy = "containedBy",
+    // 1D relationships
+    Intersect = "intersect",
+    Strike = "strike",
+    Contact = "contact",
+    Cross = "cross",
+    Touch = "touch",
+    Block = "block",
+    BlockedBy = "blockedBy",
+    Connect = "connect",
+    Coincide = "coincide"
+}
 
-export type KeyOfShape<T> = {
-    [K in keyof ShapeCollection]: ShapeCollection[K] extends T ? K : never;
-}[keyof ShapeCollection];
+export type RelateResult<R extends Partial<Record<RelationshipPredicate, any>>> = {
+    [K in RelationshipPredicate as R[K] extends (...args: any[]) => any ? K : never]: R[K] extends (...args: any[]) => any ? ReturnType<R[K]> : never;
+};
 
-export type AnyRelationship = {
-    [K in keyof typeof Relationship.relationshipOperators]: typeof Relationship.relationshipOperators[K];
-}[keyof typeof Relationship.relationshipOperators];
-
-export type VerbOfRelationship<T extends AnyRelationship> = T["verb"];
-
-// prettier-ignore
-export type RelationshipMethodName<T extends AnyShape, U extends AnyShape, V extends AnyRelationship> = 
-    `${Uncapitalize<KeyOfShape<T>>}${VerbOfRelationship<V>}${KeyOfShape<U>}` & keyof V
-
-export type RelationshipMethod<T extends AnyShape, U extends AnyShape, V extends AnyRelationship> = V[RelationshipMethodName<T, U, V>] extends (...args: any[]) => any
-    ? V[RelationshipMethodName<T, U, V>]
-    : never;
+export type RelationshipMethodsOfCollection<T extends RelationshipPredicate | "relate", U extends { [key: string]: { new (...args: any[]): any } }> = {
+    [K in keyof U as InstanceType<U[K]>[T] extends (...args: any[]) => any ? K : never]: InstanceType<U[K]>[T] extends (...args: any[]) => any
+        ? T extends "relate"
+            ? (geometry1: InstanceType<U[K]>["geometry1"], geometry2: InstanceType<U[K]>["geometry2"], predicates?: RelationshipPredicate[]) => ReturnType<InstanceType<U[K]>[T]>
+            : (geometry1: InstanceType<U[K]>["geometry1"], geometry2: InstanceType<U[K]>["geometry2"]) => ReturnType<InstanceType<U[K]>[T]>
+        : never;
+};
+export type RelationshipMethodOverloads<T extends RelationshipPredicate | "relate", U extends { [key: string]: { new (...args: any[]): any } }> = Intersection<
+    RelationshipMethodsOfCollection<T, U>[keyof RelationshipMethodsOfCollection<T, U>]
+>;
 
 // #endregion
