@@ -4,20 +4,20 @@ import Stylable from "./Stylable";
 import type { Style, InteractiveStyle, PathLike } from "../types";
 import type View from "./View";
 
-export default class ViewElement extends Stylable {
-    private _interactable!: boolean;
-    private _autoUpdateView!: boolean;
+export default class ViewGroupElement extends Stylable {
+    private _interactable = false;
+    private _autoUpdateView = false;
     private _uuid = Utility.uuid();
 
-    private _autoUpdateFunction = function (this: ViewElement) {
+    private _autoUpdateFunction = () => {
         if (this.parent) this.parent.render();
-    }.bind(this);
+    };
 
     parent?: View;
-    path?: PathLike;
+    paths?: PathLike[];
 
     constructor(
-        public shape: Shape,
+        public shapes: Shape[],
         { interactable = false, autoUpdateView = true, style, hoverStyle, activeStyle } = {} as Partial<{
             interactable: boolean;
             autoUpdateView: boolean;
@@ -40,19 +40,23 @@ export default class ViewElement extends Stylable {
         this._interactable = value;
         this.parent !== undefined && this.parent.refreshInteractables();
     }
+
     get autoUpdateView() {
         return this._autoUpdateView;
     }
     set autoUpdateView(value) {
         this._autoUpdateView = value;
         if (value) {
-            this.shape.on("any", this._autoUpdateFunction);
+            this.shapes.forEach(shape => {
+                shape.on("any", this._autoUpdateFunction);
+            });
         } else {
-            this.shape.off("any", this._autoUpdateFunction);
+            this.shapes.forEach(shape => {
+                shape.off("any", this._autoUpdateFunction);
+            });
         }
     }
-
     move(deltaX: number, deltaY: number) {
-        this.shape.move(deltaX, deltaY);
+        this.shapes.forEach(shape => shape.move(deltaX, deltaY));
     }
 }

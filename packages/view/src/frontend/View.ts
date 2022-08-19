@@ -1,51 +1,39 @@
-import { Maths, Assert, Type, Utility } from "@geomtoy/util";
+import { Maths, Assert, TransformationMatrix } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import ViewElement from "./ViewElement";
 import { Image } from "@geomtoy/core";
 
 import type Renderer from "../renderer/Renderer";
-import type { Style } from "../types";
-import type Geomtoy from "@geomtoy/core";
+import { Geomtoy } from "@geomtoy/core";
+import ViewGroupElement from "./ViewGroupElement";
+import { ViewEventType } from "./ViewEvents";
 
-const defaultDefaultStyle: Style = {
-    fill: "transparent",
-    stroke: "transparent",
-    strokeWidth: 1,
-    strokeDash: [],
-    strokeDashOffset: 0,
-    strokeLineJoin: "miter",
-    strokeLineCap: "butt",
-    strokeMiterLimit: 10
+const VIEW_DEFAULTS = {
+    hoverForemost: true,
+    activeForemost: true,
+    minZoom: 0.001,
+    maxZoom: 1000,
+    wheelZoomDeltaRate: 1.1,
+    inverseWheelZoom: false,
+    dragThrottleDistance: 10,
+    maxTouchPointerCount: 2,
+    resizeObserverDebouncingTime: 100 //ms
 };
-const defaultMinZoom = 0.001;
-const defaultMaxZoom = 1000;
-const defaultWheelZoomDeltaRate = 1.1;
-const defaultDragThrottleDistance = 10;
-
-const maxTouchPointerCount = 2;
-const extraStrokeWidthForTouch = 5;
-const resizeObserverDebouncingTime = 100; //ms
 
 export default class View {
-    hoverForemost = true;
-    activeForemost = true;
+    private _dragThrottleDistance = VIEW_DEFAULTS.dragThrottleDistance;
+    private _minZoom = VIEW_DEFAULTS.minZoom;
+    private _maxZoom = VIEW_DEFAULTS.maxZoom;
+    private _wheelZoomDeltaRate = VIEW_DEFAULTS.wheelZoomDeltaRate;
 
-    private _dragThrottleDistance = defaultDragThrottleDistance;
-    private _minZoom = defaultMinZoom;
-    private _maxZoom = defaultMaxZoom;
-    private _wheelZoomDeltaRate: number = defaultWheelZoomDeltaRate;
-    private _defaultStyle: Style = Utility.cloneDeep(defaultDefaultStyle);
-
-    private _geomtoy: Geomtoy;
     private _renderer: Renderer = null as unknown as Renderer;
-    private _pointChecker = new PointChecker();
 
     private _hasTouchDevice: boolean;
     private _touchPointers: { id: number; offset: [number, number] }[] = [];
 
-    private _hoverElement: ViewElement | null = null;
-    private _activeElements: ViewElement[] = [];
-    private _deactivatingElement: ViewElement | null = null;
+    private _hoverElement: ViewElement | ViewGroupElement | null = null;
+    private _activeElements: (ViewElement | ViewGroupElement)[] = [];
+    private _deactivatingElement: ViewElement | ViewGroupElement | null = null;
     private _isDragging: boolean = false;
     private _isPanning: boolean = false;
     private _isZooming: boolean = false;
@@ -60,22 +48,21 @@ export default class View {
     private _resizeTimer = 0;
 
     // The `elements` are considered to be stored and arranged from the foremost to the backmost.
-    private _elements: ViewElement[] = [];
-    private _interactables: ViewElement[] = [];
+    private _elements: (ViewElement | ViewGroupElement)[] = [];
+    private _interactables: (ViewElement | ViewGroupElement)[] = [];
 
     private _renderScheduled: boolean = false;
     private _rafTicking = false;
 
     constructor(
-        geomtoy: Geomtoy,
         {
-            hoverForemost,
-            activeForemost,
-            dragThrottleDistance,
-            minZoom,
-            maxZoom,
-            wheelZoomDeltaRate,
-            defaultStyle
+            hoverForemost = VIEW_DEFAULTS.hoverForemost,
+            activeForemost = VIEW_DEFAULTS.activeForemost,
+            dragThrottleDistance = VIEW_DEFAULTS.dragThrottleDistance,
+            minZoom = VIEW_DEFAULTS.minZoom,
+            maxZoom = VIEW_DEFAULTS.maxZoom,
+            wheelZoomDeltaRate = VIEW_DEFAULTS.wheelZoomDeltaRate,
+            inverseWheelZoom = VIEW_DEFAULTS.inverseWheelZoom
         }: Partial<{
             hoverForemost: boolean;
             activeForemost: boolean;
@@ -83,23 +70,25 @@ export default class View {
             minZoom: number;
             maxZoom: number;
             wheelZoomDeltaRate: number;
-            defaultStyle: Partial<Style>;
-        }> = {},
+            inverseWheelZoom: boolean;
+        }>,
         renderer?: Renderer
     ) {
-        this._geomtoy = geomtoy;
-
-        hoverForemost && (this.hoverForemost = hoverForemost);
-        activeForemost && (this.activeForemost = activeForemost);
-        minZoom && (this.minZoom = minZoom);
-        maxZoom && (this.maxZoom = maxZoom);
-        dragThrottleDistance && (this.dragThrottleDistance = dragThrottleDistance);
-        wheelZoomDeltaRate && (this.wheelZoomDeltaRate = wheelZoomDeltaRate);
-        defaultStyle && (this.defaultStyle = defaultStyle);
+        this.hoverForemost = hoverForemost;
+        this.activeForemost = activeForemost;
+        this.minZoom = minZoom;
+        this.maxZoom = maxZoom;
+        this.dragThrottleDistance = dragThrottleDistance;
+        this.wheelZoomDeltaRate = wheelZoomDeltaRate;
+        this.inverseWheelZoom = inverseWheelZoom;
         renderer && (this.renderer = renderer);
 
         this._hasTouchDevice = window.matchMedia("(any-pointer: coarse)").matches || "ontouchstart" in window || navigator.maxTouchPoints > 0;
     }
+
+    hoverForemost: boolean;
+    activeForemost: boolean;
+    inverseWheelZoom: boolean;
 
     get minZoom() {
         return this._minZoom;
@@ -130,24 +119,16 @@ export default class View {
         Assert.condition(value !== 1, "[G]The `wheelZoomDeltaRate` can not be 1.");
         this._wheelZoomDeltaRate = value;
     }
-    get defaultStyle(): Style {
-        return Utility.cloneDeep(this._defaultStyle);
-    }
-    set defaultStyle(value: Partial<Style>) {
-        Utility.assignDeep(this._defaultStyle, value);
-    }
+
     get renderer() {
         Assert.condition(this._renderer !== null, "[G]You should set the `renderer` property of the `View` first.");
         return this._renderer;
     }
     set renderer(value) {
-        Assert.condition(this.geomtoy === value.geomtoy, "[G]A `View` can only be present by a `Renderer` with the same `geomtoy`.");
         this._renderer = value;
+        value.view = this;
     }
 
-    get geomtoy() {
-        return this._geomtoy;
-    }
     get elements() {
         return [...this._elements];
     }
@@ -174,17 +155,17 @@ export default class View {
             });
         }
     }
-    private _isPointInElement(element: ViewElement, x: number, y: number) {
-        const path = element.path!;
-        let strokeWidth = element.style().strokeWidth || this._defaultStyle.strokeWidth;
-        strokeWidth = this._hasTouchDevice ? strokeWidth + extraStrokeWidthForTouch : strokeWidth;
-        // prettier-ignore
-        return Type.isArray(path) 
-            ? path.some(p => this._pointChecker.isPointIn(x, y, p, strokeWidth, true))
-            : this._pointChecker.isPointIn(x, y, path, strokeWidth, true);
+    private _isPointInElement(element: ViewElement | ViewGroupElement, x: number, y: number) {
+        if (element instanceof ViewElement) {
+            if (element.path === undefined) return false;
+            return PointChecker.isPointIn(x, y, element.path!, element.style(), this._hasTouchDevice);
+        } else {
+            if (element.paths === undefined) return false;
+            return element.paths.some((_, index) => PointChecker.isPointIn(x, y, element.paths![index], element.style(), this._hasTouchDevice));
+        }
     }
     private _addTouch(id: number, offset: [number, number]) {
-        if (this._touchPointers.length === maxTouchPointerCount) return;
+        if (this._touchPointers.length === VIEW_DEFAULTS.maxTouchPointerCount) return;
         this._touchPointers.push({ id, offset });
     }
     private _updateTouch(id: number, offset: [number, number]) {
@@ -202,10 +183,29 @@ export default class View {
         this._touchPointers = [];
     }
 
+    private _eventHandler: { [key: string]: ((...args: any[]) => any)[] } = {};
+
+    on(eventType: ViewEventType, handler: (...args: any[]) => any) {
+        if(this._eventHandler[eventType] === undefined) this._eventHandler[eventType] = []
+        this._eventHandler[eventType].push(handler);
+    }
+    off(eventType: ViewEventType, handler: (...args: any[]) => any) {
+        const index = this._eventHandler[eventType].findIndex(h => h === handler);
+        this._eventHandler[eventType].splice(index, 1);
+    }
+    clear(eventType?: ViewEventType) {
+        if (eventType === undefined) {
+            this._eventHandler = {};
+        } else {
+            this._eventHandler[eventType] = [];
+        }
+    }
+
     cursor(type: "default" | "pointer" | "move" | "grab" | "grabbing" | "zoom-in" | "zoom-out") {
         this.renderer.container.style.cursor = type;
     }
 
+    // todo view will still need emit some event.
     private readonly _pointerDownHandler = function (this: View, e: PointerEvent) {
         const isMouse = e.pointerType === "mouse";
         const isTouch = e.pointerType === "touch";
@@ -216,7 +216,7 @@ export default class View {
         if (isMouse && e.buttons !== 1) return;
 
         if (isMouse) {
-            const atOffset = this.renderer.display.globalTransformation.antitransformCoordinates(pointerOffset);
+            const atOffset = TransformationMatrix.antitransformCoordinates(this.renderer.display.globalTransformation, pointerOffset);
             const foundIndex = this._interactables.findIndex(element => this._isPointInElement(element, ...atOffset));
             if (foundIndex !== -1) {
                 this.cursor("pointer");
@@ -238,7 +238,7 @@ export default class View {
         }
         if (isTouch) {
             if (this._touchPointers.length === 1) {
-                const atOffset = this.renderer.display.globalTransformation.antitransformCoordinates(pointerOffset);
+                const atOffset = TransformationMatrix.antitransformCoordinates(this.renderer.display.globalTransformation, pointerOffset);
                 const foundIndex = this._interactables.findIndex(element => this._isPointInElement(element, ...atOffset));
                 if (foundIndex !== -1) {
                     this.cursor("pointer");
@@ -273,6 +273,9 @@ export default class View {
                 this._preparingPanning = true;
                 this._preparingZooming = true;
             }
+        }
+        if (this._eventHandler[ViewEventType.PointerDown]?.length) {
+            this._nextTick(() => this._eventHandler[ViewEventType.PointerDown].forEach(cb => cb()));
         }
     }.bind(this);
     private readonly _pointerUpHandler = function (this: View, e: PointerEvent) {
@@ -338,7 +341,7 @@ export default class View {
 
         if (isMouse) {
             this._requestRAFTick(() => {
-                const atOffset = this.renderer.display.globalTransformation.antitransformCoordinates(pointerOffset);
+                const atOffset = TransformationMatrix.antitransformCoordinates(this.renderer.display.globalTransformation, pointerOffset);
                 if (this._preparingDragging) {
                     const scale = this.renderer.display.density * this.renderer.display.zoom;
                     const dragDistance = Maths.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
@@ -370,9 +373,13 @@ export default class View {
                         this._hoverElement = this._interactables[foundIndex];
                         this.render();
                     } else {
-                        this.cursor("default");
-                        this._hoverElement = null;
-                        this.render();
+                        if (this._hoverElement !== null) {
+                            this.cursor("default");
+                            this._hoverElement = null;
+                            this.render();
+                        } else {
+                            // do nothing
+                        }
                     }
                 }
             });
@@ -380,7 +387,7 @@ export default class View {
 
         if (isTouch) {
             this._requestRAFTick(() => {
-                const atOffset = this.renderer.display.globalTransformation.antitransformCoordinates(pointerOffset);
+                const atOffset = TransformationMatrix.antitransformCoordinates(this.renderer.display.globalTransformation, pointerOffset);
                 if (this._preparingDragging) {
                     const scale = this.renderer.display.density * this.renderer.display.zoom;
                     const dragDistance = Maths.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
@@ -417,9 +424,9 @@ export default class View {
                     let zoom = display.zoom * deltaZoom;
                     zoom = zoom < this.minZoom ? this.minZoom : zoom > this.maxZoom ? this.maxZoom : zoom;
 
-                    const [atOffsetX, atOffsetY] = display.globalTransformation.antitransformCoordinates(centerOffset);
+                    const [atOffsetX, atOffsetY] = TransformationMatrix.antitransformCoordinates(display.globalTransformation, centerOffset);
                     display.zoom = zoom;
-                    const [scaledOffsetX, scaledOffsetY] = display.globalTransformation.transformCoordinates([atOffsetX, atOffsetY]);
+                    const [scaledOffsetX, scaledOffsetY] = TransformationMatrix.transformCoordinates(display.globalTransformation, [atOffsetX, atOffsetY]);
                     const [zoomOffsetX, zoomOffsetY] = [centerOffset[0] - scaledOffsetX, centerOffset[1] - scaledOffsetY];
                     display.pan = [display.pan[0] + deltaX + zoomOffsetX, display.pan[1] + deltaY + zoomOffsetY];
                     this.render();
@@ -428,17 +435,22 @@ export default class View {
         }
     }.bind(this);
     private readonly _wheelHandler = function (this: View, e: WheelEvent) {
+        e.preventDefault();
         const mouseOffset = [e.offsetX, e.offsetY] as [number, number];
         const deltaY = e.deltaY;
         this._requestRAFTick(() => {
             const display = this.renderer.display;
-            let zoom = deltaY < 0 ? display.zoom / this.wheelZoomDeltaRate : deltaY > 0 ? display.zoom * this.wheelZoomDeltaRate : display.zoom;
-
+            let zoom: number;
+            if (this.inverseWheelZoom) {
+                zoom = deltaY < 0 ? display.zoom / this.wheelZoomDeltaRate : deltaY > 0 ? display.zoom * this.wheelZoomDeltaRate : display.zoom;
+            } else {
+                zoom = deltaY > 0 ? display.zoom / this.wheelZoomDeltaRate : deltaY < 0 ? display.zoom * this.wheelZoomDeltaRate : display.zoom;
+            }
             zoom = zoom < this.minZoom ? this.minZoom : zoom > this.maxZoom ? this.maxZoom : zoom;
 
-            const [atOffsetX, atOffsetY] = display.globalTransformation.antitransformCoordinates(mouseOffset);
+            const [atOffsetX, atOffsetY] = TransformationMatrix.antitransformCoordinates(display.globalTransformation, mouseOffset);
             display.zoom = zoom;
-            const [scaledOffsetX, scaledOffsetY] = display.globalTransformation.transformCoordinates([atOffsetX, atOffsetY]);
+            const [scaledOffsetX, scaledOffsetY] = TransformationMatrix.transformCoordinates(display.globalTransformation, [atOffsetX, atOffsetY]);
             const [zoomOffsetX, zoomOffsetY] = [mouseOffset[0] - scaledOffsetX, mouseOffset[1] - scaledOffsetY];
             display.pan = [display.pan[0] + zoomOffsetX, display.pan[1] + zoomOffsetY];
 
@@ -447,18 +459,18 @@ export default class View {
     }.bind(this);
 
     startInteractive() {
-        this.renderer.container.addEventListener("pointerdown", this._pointerDownHandler);
-        this.renderer.container.addEventListener("pointerup", this._pointerUpHandler);
-        this.renderer.container.addEventListener("pointerleave", this._pointerLeaveHandler);
-        this.renderer.container.addEventListener("pointermove", this._pointerMoveHandler);
-        this.renderer.container.addEventListener("wheel", this._wheelHandler);
+        this.renderer.container.addEventListener("pointerdown", this._pointerDownHandler as EventListener);
+        this.renderer.container.addEventListener("pointerup", this._pointerUpHandler as EventListener);
+        this.renderer.container.addEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
+        this.renderer.container.addEventListener("pointermove", this._pointerMoveHandler as EventListener);
+        this.renderer.container.addEventListener("wheel", this._wheelHandler as EventListener);
     }
     stopInteractive() {
-        this.renderer.container.removeEventListener("pointerdown", this._pointerDownHandler);
-        this.renderer.container.removeEventListener("pointerup", this._pointerUpHandler);
-        this.renderer.container.addEventListener("pointerleave", this._pointerLeaveHandler);
-        this.renderer.container.removeEventListener("pointermove", this._pointerMoveHandler);
-        this.renderer.container.removeEventListener("wheel", this._wheelHandler);
+        this.renderer.container.removeEventListener("pointerdown", this._pointerDownHandler as EventListener);
+        this.renderer.container.removeEventListener("pointerup", this._pointerUpHandler as EventListener);
+        this.renderer.container.addEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
+        this.renderer.container.removeEventListener("pointermove", this._pointerMoveHandler as EventListener);
+        this.renderer.container.removeEventListener("wheel", this._wheelHandler as EventListener);
     }
     startResponsive(callback: (width: number, height: number) => void) {
         // immediately call by `ResizeObserver` initialization in the microtask queue
@@ -466,18 +478,22 @@ export default class View {
         if (this._resizeObserver !== null) return;
         const ob = new ResizeObserver(entries => {
             for (let entry of entries) {
-                this.renderer.display.width = entry.contentRect.width;
-                this.renderer.display.height = entry.contentRect.height;
+                const w = Maths.floor(entry.contentRect.width);
+                const h = Maths.floor(entry.contentRect.height);
                 if (!immediatelyFirstCalled) {
+                    this.renderer.display.width = w;
+                    this.renderer.display.height = h;
                     immediatelyFirstCalled = true;
-                    callback(entry.contentRect.width, entry.contentRect.height);
+                    callback(w, h);
                     this.render();
                 } else {
                     window.clearTimeout(this._resizeTimer);
                     this._resizeTimer = window.setTimeout(() => {
-                        callback(entry.contentRect.width, entry.contentRect.height);
+                        this.renderer.display.width = w;
+                        this.renderer.display.height = h;
+                        callback(w, h);
                         this.render();
-                    }, resizeObserverDebouncingTime);
+                    }, VIEW_DEFAULTS.resizeObserverDebouncingTime);
                 }
             }
         });
@@ -498,7 +514,8 @@ export default class View {
             const [cx, cy] = [display.width / 2, display.height / 2];
 
             display.zoom = zoom;
-            const [scaledOffsetX, scaledOffsetY] = display.globalTransformation.transformCoordinates([atCx, atCy]);
+
+            const [scaledOffsetX, scaledOffsetY] = TransformationMatrix.transformCoordinates(display.globalTransformation, [atCx, atCy]);
             const [zoomOffsetX, zoomOffsetY] = [cx - scaledOffsetX, cy - scaledOffsetY];
             display.pan = [display.pan[0] + zoomOffsetX, display.pan[1] + zoomOffsetY];
         } else {
@@ -510,9 +527,12 @@ export default class View {
         this.renderer.display.pan = [this.renderer.display.pan[0] + panX, this.renderer.display.pan[1] + panY];
         this.render();
     }
-    add(element: ViewElement, forward = false) {
+
+    add(element: ViewElement | ViewGroupElement, forward = false) {
         const index = this._elements.findIndex(el => el.uuid === element.uuid);
-        if (index !== -1) return console.warn(`[G]The \`View\` already has a \`ViewElement\` with \`uuid\`: ${element.uuid}`), this;
+        if (index !== -1) return console.warn(`[G]The \`View\` already has a element with \`uuid\`: ${element.uuid}`), this;
+        // set `parent` of element to `this`
+        element.parent = this;
         if (forward) {
             this._elements.unshift(element);
         } else {
@@ -522,13 +542,32 @@ export default class View {
         this.render();
         return this;
     }
+    addBatch(elements: (ViewElement | ViewGroupElement)[], forward = false) {
+        elements.forEach(element => {
+            const index = this._elements.findIndex(el => el.uuid === element.uuid);
+            if (index !== -1) return console.warn(`[G]The \`View\` already has a element with \`uuid\`: ${element.uuid}`), this;
+            // set `parent` of element to `this`
+            element.parent = this;
+            if (forward) {
+                this._elements.unshift(element);
+            } else {
+                this._elements.push(element);
+            }
+        });
+        this.refreshInteractables();
+        this.render();
+        return this;
+    }
+
     remove(uuid: string): this;
-    remove(element: ViewElement): this;
-    remove(arg: string | ViewElement) {
-        const uuid = arg instanceof ViewElement ? arg.uuid : arg;
+    remove(element: ViewElement | ViewGroupElement): this;
+    remove(arg: string | ViewElement | ViewGroupElement) {
+        const uuid = arg instanceof ViewElement || arg instanceof ViewGroupElement ? arg.uuid : arg;
         const index = this._elements.findIndex(el => el.uuid === uuid);
         if (index === -1) return this;
         const element = this._elements.splice(index, 1)[0];
+        // set `parent` of element to `undefined`
+        element.parent = undefined;
         this.refreshInteractables();
         // clear state
         if (this._hoverElement === element) this._hoverElement = null;
@@ -539,6 +578,28 @@ export default class View {
         this.render();
         return this;
     }
+
+    removeBatch(uuids: string[]): this;
+    removeBatch(elements: (ViewElement | ViewGroupElement)[]): this;
+    removeBatch(args: string[] | (ViewElement | ViewGroupElement)[]) {
+        args.forEach(arg => {
+            const uuid = arg instanceof ViewElement || arg instanceof ViewGroupElement ? arg.uuid : arg;
+            const index = this._elements.findIndex(el => el.uuid === uuid);
+            if (index === -1) return this;
+            const element = this._elements.splice(index, 1)[0];
+            // set `parent` of element to `undefined`
+            element.parent = undefined;
+            this.refreshInteractables();
+            // clear state
+            if (this._hoverElement === element) this._hoverElement = null;
+            if (this._deactivatingElement === element) this._deactivatingElement = null;
+            const index2 = this._activeElements.indexOf(element);
+            if (index2 !== -1) this._activeElements.splice(1, 0);
+        });
+        this.render();
+        return this;
+    }
+
     activate(uuid: string): this;
     activate(element: ViewElement): this;
     activate(arg: string | ViewElement) {
@@ -607,19 +668,30 @@ export default class View {
         }
         return this;
     }
+
+    private _nextTick = Geomtoy.nextTick;
+
     render() {
         if (this._renderScheduled) return;
         this._renderScheduled = true;
 
-        this.geomtoy.nextTick(() => {
+        this._nextTick(() => {
             const renderer = this.renderer;
             this._elements.forEach(el => {
-                if (el.object instanceof Image) {
-                    const imageSource = (el.object as Image).imageSource;
-                    renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.render.bind(this)).catch(console.error);
+                const isGroup = el instanceof ViewGroupElement;
+
+                if (!isGroup) {
+                    if (el.shape instanceof Image) {
+                        const imageSource = el.shape.imageSource;
+                        renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.render.bind(this)).catch(console.error);
+                    }
+                } else {
+                    (el.shapes.filter(shape => shape instanceof Image) as Image[]).forEach(image => {
+                        const imageSource = image.imageSource;
+                        renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.render.bind(this)).catch(console.error);
+                    });
                 }
 
-                const ds = this._defaultStyle;
                 const s = el.style();
                 const hs = el.hoverStyle();
                 const as = el.activeStyle();
@@ -627,17 +699,27 @@ export default class View {
                 const hover = this._hoverElement === el;
                 const active = this._activeElements.includes(el);
                 // `active` has a higher priority than `hover`
-                renderer.fill((active && as.fill) || (hover && hs.fill) || s.fill || ds.fill);
-                renderer.stroke((active && as.stroke) || (hover && hs.stroke) || s.stroke || ds.stroke);
-                renderer.strokeWidth((active && as.strokeWidth) || (hover && hs.strokeWidth) || s.strokeWidth || ds.strokeWidth);
-                renderer.strokeDash(s.strokeDash || ds.strokeDash);
-                renderer.strokeDashOffset(s.strokeDashOffset || ds.strokeDashOffset);
-                renderer.strokeLineJoin(s.strokeLineJoin || ds.strokeLineJoin);
-                renderer.strokeLineCap(s.strokeLineCap || ds.strokeLineCap);
-                renderer.strokeMiterLimit(s.strokeMiterLimit || ds.strokeMiterLimit);
+
+                renderer.paintOrder(s.paintOrder);
+
+                renderer.noFill(s.noFill);
+                renderer.fill((active && as.fill) || (hover && hs.fill) || s.fill);
+
+                renderer.noStroke(s.noStroke);
+                renderer.stroke((active && as.stroke) || (hover && hs.stroke) || s.stroke);
+                renderer.strokeWidth((active && as.strokeWidth) || (hover && hs.strokeWidth) || s.strokeWidth);
+                renderer.strokeDash(s.strokeDash);
+                renderer.strokeDashOffset(s.strokeDashOffset);
+                renderer.strokeLineJoin(s.strokeLineJoin);
+                renderer.strokeLineCap(s.strokeLineCap);
+                renderer.strokeMiterLimit(s.strokeMiterLimit);
 
                 const onTop = (hover && this.hoverForemost) || (active && this.activeForemost);
-                el.path = el.isObjectShape() ? renderer.draw(el.object, onTop) : el.isObjectGroup() ? renderer.drawBatch(el.object.items, onTop) : undefined;
+                if (isGroup) {
+                    el.paths = renderer.drawBatch(el.shapes, onTop);
+                } else {
+                    el.path = renderer.draw(el.shape, onTop);
+                }
             });
             this._renderScheduled = false;
         });

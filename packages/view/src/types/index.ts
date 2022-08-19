@@ -1,7 +1,12 @@
+import { ViewportDescriptor } from "@geomtoy/core";
+
 export type StrokeLineJoinType = "bevel" | "miter" | "round";
 export type StrokeLineCapType = "butt" | "round" | "square";
-
+export type PaintOrderType = "stroke" | "fill";
 export type Style = {
+    paintOrder: PaintOrderType;
+    noStroke: boolean;
+    noFill: boolean;
     fill: string;
     stroke: string;
     strokeWidth: number;
@@ -11,9 +16,13 @@ export type Style = {
     strokeMiterLimit: number;
     strokeLineCap: StrokeLineCapType;
 };
-export type InteractiveStyle = Omit<Style, "strokeDash" | "strokeDashOffset" | "strokeLineJoin" | "strokeMiterLimit" | "strokeLineCap">;
+export type InteractiveStyle = {
+    fill: string;
+    stroke: string;
+    strokeWidth: number;
+};
 
-export type InterfaceOptions = {
+export type InterfaceSettings = {
     showAxis: boolean;
     axisColor: string;
     showLabel: boolean;
@@ -24,6 +33,7 @@ export type InterfaceOptions = {
     primaryGridColor: string;
     secondaryGridColor: string;
 };
+export type DisplaySettings = Omit<ViewportDescriptor, "globalTransformation" | "globalViewBox">;
 
 export const enum ImageSourceStatus {
     Successful,

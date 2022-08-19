@@ -1,8 +1,9 @@
-import { Utility } from "@geomtoy/util";
-import type Renderer from "./Renderer";
-import type { InterfaceOptions } from "../types";
+import { TransformationMatrix, Utility } from "@geomtoy/util";
 
-const defaultInterfaceOptions: InterfaceOptions = {
+import type Renderer from "./Renderer";
+import type { InterfaceSettings } from "../types";
+
+const INTERFACE_DEFAULTS: InterfaceSettings = {
     showAxis: true,
     axisColor: "#666666",
     showLabel: true,
@@ -14,7 +15,19 @@ const defaultInterfaceOptions: InterfaceOptions = {
     secondaryGridColor: "#f0f0f0"
 };
 
-export default abstract class Interface {
+const INTERFACE_INTERNAL_DEFAULTS = {
+    onlyGridPatternGridSize: 50,
+    onlyGridPatternImageSize: 100,
+    axisArrowLength: 6,
+    axisArrowWidth: 4,
+    labelXOffset: 12,
+    labelYOffset: 6,
+    labelFontSize: 12,
+    exponentialNotationLower: -6,
+    exponentialNotationUpper: 6
+} as const;
+
+export default abstract class Interface implements InterfaceSettings {
     private _renderer: Renderer;
     // x-axis exceeded on top
     private _xEt = false;
@@ -44,37 +57,25 @@ export default abstract class Interface {
      * Plus: CanvasRenderingContext2D.createPattern can't use svg image. This is a big todo....
      */
     private _svgImageElementDecodeSupported = true;
-
-    protected options_ = Utility.cloneDeep(defaultInterfaceOptions);
-
-    constructor(renderer: Renderer) {
+    constructor(renderer: Renderer, interfaceSettings: Partial<InterfaceSettings> = {}) {
         this._renderer = renderer;
+        Object.assign(this, Utility.cloneDeep(interfaceSettings));
 
-        const tempSvgImageElement = document.createElementNS("http://www.w3.org/2000/svg", "image");
-        this._svgImageElementDecodeSupported = "decode" in tempSvgImageElement;
+        this._svgImageElementDecodeSupported = "decode" in document.createElementNS("http://www.w3.org/2000/svg", "image");
     }
+
+    showAxis = INTERFACE_DEFAULTS.showAxis;
+    axisColor = INTERFACE_DEFAULTS.axisColor;
+    showLabel = INTERFACE_DEFAULTS.showLabel;
+    labelFillColor = INTERFACE_DEFAULTS.labelFillColor;
+    labelStrokeColor = INTERFACE_DEFAULTS.labelStrokeColor;
+    showGrid = INTERFACE_DEFAULTS.showGrid;
+    showPrimaryGridOnly = INTERFACE_DEFAULTS.showPrimaryGridOnly;
+    primaryGridColor = INTERFACE_DEFAULTS.primaryGridColor;
+    secondaryGridColor = INTERFACE_DEFAULTS.secondaryGridColor;
 
     get renderer() {
         return this._renderer;
-    }
-
-    static readonly onlyGridPatternGridSize = 50 as const;
-    static readonly onlyGridPatternImageSize = 100 as const;
-    static readonly axisArrowLength = 6;
-    static readonly axisArrowWidth = 4;
-    static readonly labelXOffset = 12;
-    static readonly labelYOffset = 6;
-    static readonly labelFontSize = 12;
-    static readonly exponentialNotationLower = -6;
-    static readonly exponentialNotationUpper = 6;
-
-    options(): InterfaceOptions;
-    options(value?: Partial<InterfaceOptions>): void;
-    options(value?: Partial<InterfaceOptions>) {
-        if (value === undefined) {
-            return Utility.cloneDeep(this.options_);
-        }
-        Utility.assignDeep(this.options_, value);
     }
 
     abstract create(): Promise<DocumentFragment | HTMLCanvasElement>;
@@ -115,38 +116,15 @@ export default abstract class Interface {
         return Number(n.toPrecision(precision));
     }
     private _labelValue(n: number) {
+        const { exponentialNotationUpper, exponentialNotationLower } = INTERFACE_INTERNAL_DEFAULTS;
         // do `_exactValue` again
         n = this._exactValue(n);
         let [, exp] = this._disassembleExponentialNotation(n);
-        if (exp > Interface.exponentialNotationUpper || exp < Interface.exponentialNotationLower) {
+        if (exp > exponentialNotationUpper || exp < exponentialNotationLower) {
             return n.toExponential().replace("+", "");
         }
         return n.toString();
     }
-
-    protected prepare_() {
-        const { globalTransformation, width, height, zoom } = this.renderer.display;
-
-        const [tOx, tOy] = globalTransformation.transformCoordinates([0, 0]);
-        [this._tOx, this._tOy] = [tOx, tOy];
-        this._xEt = tOy <= 0;
-        this._xEb = tOy >= height - Interface.labelXOffset;
-        this._yEl = tOx <= Interface.labelYOffset;
-        this._yEr = tOx >= width;
-
-        const ratio = this._ratioOf(zoom);
-        this._ratio = ratio;
-
-        const gridSize = this._exactValue(this._ratio * Interface.onlyGridPatternGridSize);
-        const imageSize = this._exactValue(this._ratio * Interface.onlyGridPatternImageSize);
-
-        this._gridSize = gridSize;
-        this._imageSize = imageSize;
-
-        const [tOxRem, tOyRem] = [tOx < 0 ? (tOx % gridSize) + gridSize : tOx % gridSize, tOy < 0 ? (tOy % gridSize) + gridSize : tOy % gridSize];
-        [this._tOxRem, this._tOyRem] = [tOxRem, tOyRem];
-    }
-
     private _decodeImage(width: number, height: number, svgDataUrl: string) {
         const image = document.createElementNS("http://www.w3.org/2000/svg", "image");
         image.setAttribute("width", `${width}`);
@@ -171,12 +149,34 @@ export default abstract class Interface {
         return [promise, image] as const;
     }
 
+    protected prepare_() {
+        const { globalTransformation, width, height, zoom } = this.renderer.display;
+        const { onlyGridPatternGridSize, onlyGridPatternImageSize, labelXOffset, labelYOffset } = INTERFACE_INTERNAL_DEFAULTS;
+        const [tOx, tOy] = TransformationMatrix.transformCoordinates(globalTransformation, [0, 0]);
+        [this._tOx, this._tOy] = [tOx, tOy];
+        this._xEt = tOy <= 0;
+        this._xEb = tOy >= height - labelXOffset;
+        this._yEl = tOx <= labelYOffset;
+        this._yEr = tOx >= width;
+
+        const ratio = this._ratioOf(zoom);
+        this._ratio = ratio;
+
+        const gridSize = this._exactValue(this._ratio * onlyGridPatternGridSize);
+        const imageSize = this._exactValue(this._ratio * onlyGridPatternImageSize);
+
+        this._gridSize = gridSize;
+        this._imageSize = imageSize;
+
+        const [tOxRem, tOyRem] = [tOx < 0 ? (tOx % gridSize) + gridSize : tOx % gridSize, tOy < 0 ? (tOy % gridSize) + gridSize : tOy % gridSize];
+        [this._tOxRem, this._tOyRem] = [tOxRem, tOyRem];
+    }
     protected labelImage_() {
-        let { labelFillColor, labelStrokeColor } = this.options_;
+        let { labelFillColor, labelStrokeColor } = this;
         labelFillColor = this._adjustHexColorString(labelFillColor);
         labelStrokeColor = this._adjustHexColorString(labelStrokeColor);
 
-        const { labelFontSize, labelXOffset, labelYOffset } = Interface;
+        const { labelFontSize, labelXOffset, labelYOffset } = INTERFACE_INTERNAL_DEFAULTS;
         const { _xEt: xEt, _xEb: xEb, _yEl: yEl, _yEr: yEr, _tOx: tOx, _tOy: tOy, _tOxRem: tOxRem, _tOyRem: tOyRem, _gridSize: gridSize } = this;
         const { density, zoom, width: w, height: h, xAxisPositiveOnRight: xPr, yAxisPositiveOnBottom: yPb } = this.renderer.display;
         const scale = density * zoom;
@@ -220,10 +220,10 @@ export default abstract class Interface {
         return this._decodeImage(w, h, svgDataUrl);
     }
     protected axisImage_() {
-        let { axisColor } = this.options_;
+        let { axisColor } = this;
         axisColor = this._adjustHexColorString(axisColor);
 
-        const { axisArrowLength, axisArrowWidth } = Interface;
+        const { axisArrowLength, axisArrowWidth } = INTERFACE_INTERNAL_DEFAULTS;
         const { _tOx: tOx, _tOy: tOy } = this;
         const { width: w, height: h, xAxisPositiveOnRight: xPr, yAxisPositiveOnBottom: yPb } = this.renderer.display;
 
@@ -254,11 +254,11 @@ export default abstract class Interface {
         return this._decodeImage(w, h, svgDataUrl);
     }
     protected gridPatternImage_() {
-        let { showPrimaryGridOnly, primaryGridColor, secondaryGridColor } = this.options_;
+        let { showPrimaryGridOnly, primaryGridColor, secondaryGridColor } = this;
         primaryGridColor = this._adjustHexColorString(primaryGridColor);
         secondaryGridColor = this._adjustHexColorString(secondaryGridColor);
 
-        const { onlyGridPatternImageSize, onlyGridPatternGridSize } = Interface;
+        const { onlyGridPatternImageSize, onlyGridPatternGridSize } = INTERFACE_INTERNAL_DEFAULTS;
         const { _tOxRem: tOxRem, _tOyRem: tOyRem, _ratio: ratio, _imageSize: imageSize } = this;
 
         // viewBoxX, viewBoxY are always in the interval: [0, 50)

@@ -1,57 +1,32 @@
 import { Assert, Type } from "@geomtoy/util";
 
-import ImageSourceManager from "../helper/ImageSourceManager";
-import TextMeasurer from "../helper/TextMeasurer";
+import ImageSourceManager from "./ImageSourceManager";
 import Display from "./Display";
-
-import type { ContainerElement, StrokeLineCapType, StrokeLineJoinType, PathLike, Style } from "../types";
-
-import type Geomtoy from "@geomtoy/core";
+import Interface from "./Interface";
+import type View from "../frontend/View";
+import type { ContainerElement, StrokeLineCapType, StrokeLineJoinType, PathLike, Style, PaintOrderType } from "../types";
 import type { Shape } from "@geomtoy/core";
 
-const dataKeyRendererInitialized = "data-renderer-initialized";
+const DATA_KEY_RENDERER_INITIALIZED = "data-renderer-initialized";
 
 export default abstract class Renderer {
-    abstract get container(): ContainerElement;
-
-    private _geomtoy: Geomtoy;
-    private _display: Display;
-    private _imageSourceManager = new ImageSourceManager();
-    private _textMeasurer = new TextMeasurer();
     protected style_: Partial<Style> = {};
 
     constantImage = false;
 
-    constructor(geomtoy: Geomtoy) {
-        this._geomtoy = geomtoy;
-        this._display = new Display(this);
-    }
+    view?: View;
 
-    get geomtoy() {
-        return this._geomtoy;
-    }
-    get display() {
-        return this._display;
-    }
-    get imageSourceManager() {
-        return this._imageSourceManager;
-    }
-    get textMeasurer() {
-        return this._textMeasurer;
-    }
+    abstract get container(): ContainerElement;
+    abstract get interface(): Interface;
+    abstract get display(): Display;
+    abstract get imageSourceManager(): ImageSourceManager;
 
     protected manageRendererInitialized_() {
-        if (this.container.getAttribute(dataKeyRendererInitialized) !== null) {
+        if (this.container.getAttribute(DATA_KEY_RENDERER_INITIALIZED) !== null) {
             throw new Error("[G]A renderer has been initialized on this element.");
         }
-        this.container.setAttribute(dataKeyRendererInitialized, "");
+        this.container.setAttribute(DATA_KEY_RENDERER_INITIALIZED, "");
     }
-    protected isShapeOwnerEqual_(shape: Shape) {
-        if (shape.owner !== this.geomtoy) {
-            throw new Error("[G]A `Shape` can only be drawn by a `Renderer` that has the same `geomtoy` as its `owner`.");
-        }
-    }
-
     //todo
     // abstract clear()
     // abstract autoRedraw()
@@ -59,6 +34,15 @@ export default abstract class Renderer {
     abstract draw(shape: Shape, onTop: boolean): PathLike;
     abstract drawBatch(shapes: Shape[], onTop: boolean): PathLike[];
 
+    paintOrder(order: PaintOrderType) {
+        this.style_.paintOrder = order;
+    }
+    noFill(noFill: boolean) {
+        this.style_.noFill = noFill;
+    }
+    noStroke(noStroke: boolean) {
+        this.style_.noStroke = noStroke;
+    }
     fill(fill: string) {
         this.style_.fill = fill;
     }

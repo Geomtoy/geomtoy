@@ -1,9 +1,40 @@
-export { default as Renderer } from "./renderer/Renderer";
-export { default as CanvasRenderer } from "./renderer/CanvasRenderer";
-export { default as SvgRenderer } from "./renderer/SvgRenderer";
-export { default as View } from "./frontend/View";
-export { default as ViewElement } from "./frontend/ViewElement";
-export { default as Display } from "./renderer/Display";
-export { default as ImageSourceManager } from "./helper/ImageSourceManager";
+import Renderer from "./renderer/Renderer";
+import CanvasRenderer from "./renderer/CanvasRenderer";
+import SvgRenderer from "./renderer/SvgRenderer";
+/**
+ * @category Renderer
+ */
+export { Renderer, CanvasRenderer, SvgRenderer };
+
+import View from "./frontend/View";
+import ViewElement from "./frontend/ViewElement";
+import ViewGroupElement from "./frontend/ViewGroupElement";
+/**
+ * @category Frontend
+ */
+export { View, ViewElement, ViewGroupElement };
+export * from "./frontend/ViewEvents"
+
+import Display from "./renderer/Display";
+/**
+ * @category Display
+ */
+export { Display };
+
+import Interface from "./renderer/Interface";
+import CanvasInterface from "./renderer/CanvasInterface";
+import SvgInterface from "./renderer/SvgInterface";
+/**
+ * @category Interface
+ */
+export { Interface, CanvasInterface, SvgInterface };
+
+import ImageSourceManager from "./renderer/ImageSourceManager";
+import CanvasImageSourceManager from "./renderer/CanvasImageSourceManager";
+import SvgImageSourceManager from "./renderer/SvgImageSourceManager";
+/**
+ * @category Other
+ */
+export { ImageSourceManager, CanvasImageSourceManager, SvgImageSourceManager };
 
 export * from "./types";

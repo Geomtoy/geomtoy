@@ -1,12 +1,13 @@
 import Interface from "./Interface";
 
 import type SvgRenderer from "./SvgRenderer";
+import type { InterfaceSettings } from "../types";
 
 export default class SvgInterface extends Interface {
     private _interfaceBuffer = document.createDocumentFragment();
 
-    constructor(renderer: SvgRenderer) {
-        super(renderer);
+    constructor(renderer: SvgRenderer, interfaceSettings: Partial<InterfaceSettings>) {
+        super(renderer, interfaceSettings);
     }
 
     async create() {
@@ -18,21 +19,21 @@ export default class SvgInterface extends Interface {
     }
 
     private async _createLabel() {
-        if (!this.options_.showLabel) return;
+        if (!this.showLabel) return;
         const [promise, img] = this.labelImage_();
         return promise.then(() => {
             this._interfaceBuffer.append(img);
         });
     }
     private async _createAxis() {
-        if (!this.options_.showAxis) return;
+        if (!this.showAxis) return;
         const [promise, img] = this.axisImage_();
         return promise.then(() => {
             this._interfaceBuffer.append(img);
         });
     }
     private async _createGrid() {
-        if (!this.options_.showGrid) return;
+        if (!this.showGrid) return;
         const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
         const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
         rect.setAttribute("x", "0");

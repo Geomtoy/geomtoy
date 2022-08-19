@@ -1,42 +1,54 @@
-import { Maths, Assert, Coordinates } from "@geomtoy/util";
-import { Matrix } from "@geomtoy/core";
+import { Maths, Assert, Coordinates, Utility, TransformationMatrix } from "@geomtoy/util";
 
 import type Renderer from "./Renderer";
 import type { ViewportDescriptor } from "@geomtoy/core";
+import type { DisplaySettings } from "../types";
 
 // 300x150 is the browser default size for both `<canvas>` and `<svg>`
-const defaultContainerWidth = 300;
-const defaultContainerHeight = 150;
+const DEFAULT_CONTAINER_WIDTH = 300;
+const DEFAULT_CONTAINER_HEIGHT = 150;
 
-const minDensity = Maths.pow(10, -5);
-const maxDensity = Maths.pow(10, 5);
-const maxZoom = Maths.pow(10, 8);
-const minZoom = Maths.pow(10, -8);
-const maxOrigin = Maths.pow(2, 32);
-const minOrigin = -Maths.pow(2, 32);
-const maxPan = Maths.pow(2, 44);
-const minPan = -Maths.pow(2, 44);
+const DISPLAY_DEFAULTS = {
+    density: 1,
+    zoom: 1,
+    origin: [0, 0] as [number, number],
+    pan: [0, 0] as [number, number],
+    xAxisPositiveOnRight: true,
+    yAxisPositiveOnBottom: true
+};
+
+const DISPLAY_DEFAULT_RANGES = {
+    minDensity: Maths.pow(10, -5),
+    maxDensity: Maths.pow(10, 5),
+    maxZoom: Maths.pow(10, 8),
+    minZoom: Maths.pow(10, -8),
+    maxOrigin: Maths.pow(2, 32),
+    minOrigin: -Maths.pow(2, 32),
+    maxPan: Maths.pow(2, 44),
+    minPan: -Maths.pow(2, 44)
+};
 
 export default class Display implements ViewportDescriptor {
     private _renderer: Renderer;
 
-    private _density = 1;
-    private _zoom = 1;
-    private _origin = [0, 0] as [number, number];
-    private _pan = [0, 0] as [number, number];
-    private _xAxisPositiveOnRight = true;
-    private _yAxisPositiveOnBottom = true;
+    private _density = DISPLAY_DEFAULTS.density;
+    private _zoom = DISPLAY_DEFAULTS.zoom;
+    private _origin = DISPLAY_DEFAULTS.origin;
+    private _pan = DISPLAY_DEFAULTS.pan;
+    private _xAxisPositiveOnRight = DISPLAY_DEFAULTS.xAxisPositiveOnRight;
+    private _yAxisPositiveOnBottom = DISPLAY_DEFAULTS.yAxisPositiveOnBottom;
 
-    private _globalTransformation = Matrix.identity;
+    private _globalTransformation = TransformationMatrix.identity();
     private _globalViewBox = [NaN, NaN, NaN, NaN] as [number, number, number, number];
 
-    constructor(renderer: Renderer) {
+    constructor(renderer: Renderer, displaySettings: Partial<DisplaySettings> = {}) {
         this._renderer = renderer;
+        Object.assign(this, Utility.cloneDeep(displaySettings));
     }
 
-    //? What if the user set `width` or `height` with percentage?
+    //? What if the user set `width` or `height` with percentage? - calculate it.
     get width() {
-        return Number(this._renderer.container.getAttribute("width")) || defaultContainerWidth;
+        return Number(this._renderer.container.getAttribute("width")) || DEFAULT_CONTAINER_WIDTH;
     }
     set width(value) {
         Assert.isPositiveNumber(value, "width");
@@ -44,7 +56,7 @@ export default class Display implements ViewportDescriptor {
         this._refresh();
     }
     get height() {
-        return Number(this._renderer.container.getAttribute("height")) || defaultContainerHeight;
+        return Number(this._renderer.container.getAttribute("height")) || DEFAULT_CONTAINER_HEIGHT;
     }
     set height(value) {
         Assert.isPositiveNumber(value, "height");
@@ -57,7 +69,7 @@ export default class Display implements ViewportDescriptor {
     set density(value) {
         Assert.isPositiveNumber(value, "density");
         Assert.condition(/^1e[+-]\d+$/i.test(value.toExponential()), "[G]The `density` should be a power of 10.");
-        value = Maths.clamp(value, minDensity, maxDensity);
+        value = Maths.clamp(value, DISPLAY_DEFAULT_RANGES.minDensity, DISPLAY_DEFAULT_RANGES.maxDensity);
         this._density = value;
         this._refresh();
     }
@@ -70,7 +82,7 @@ export default class Display implements ViewportDescriptor {
     }
     set zoom(value) {
         Assert.isPositiveNumber(value, "zoom");
-        value = Maths.clamp(value, minZoom, maxZoom);
+        value = Maths.clamp(value, DISPLAY_DEFAULT_RANGES.minZoom, DISPLAY_DEFAULT_RANGES.maxZoom);
         // Only keep two significand digits, so after all calculations, the width and height of the grid pattern image will be integers.
         this._zoom = Number(value.toPrecision(2));
         this._refresh();
@@ -81,8 +93,8 @@ export default class Display implements ViewportDescriptor {
     set origin(value) {
         Assert.isCoordinates(value, "origin");
         let [ox, oy] = value;
-        ox = Maths.clamp(ox, minOrigin, maxOrigin);
-        oy = Maths.clamp(oy, minOrigin, maxOrigin);
+        ox = Maths.clamp(ox, DISPLAY_DEFAULT_RANGES.minOrigin, DISPLAY_DEFAULT_RANGES.maxOrigin);
+        oy = Maths.clamp(oy, DISPLAY_DEFAULT_RANGES.minOrigin, DISPLAY_DEFAULT_RANGES.maxOrigin);
         this._origin = [ox, oy];
         this._refresh();
     }
@@ -95,8 +107,8 @@ export default class Display implements ViewportDescriptor {
     set pan(value) {
         Assert.isCoordinates(value, "pan");
         let [px, py] = value;
-        px = Maths.clamp(px, minPan, maxPan);
-        py = Maths.clamp(py, minPan, maxPan);
+        px = Maths.clamp(px, DISPLAY_DEFAULT_RANGES.minPan, DISPLAY_DEFAULT_RANGES.maxPan);
+        py = Maths.clamp(py, DISPLAY_DEFAULT_RANGES.minPan, DISPLAY_DEFAULT_RANGES.maxPan);
         this._pan = [px, py];
         this._refresh();
     }
@@ -115,25 +127,25 @@ export default class Display implements ViewportDescriptor {
         this._refresh();
     }
 
-    get globalTransformation(): Matrix {
-        return this._globalTransformation.clone();
+    get globalTransformation() {
+        return [...this._globalTransformation] as [number, number, number, number, number, number];
     }
-    get globalViewBox(): [number, number, number, number] {
-        return [...this._globalViewBox];
+    get globalViewBox() {
+        return [...this._globalViewBox] as [number, number, number, number];
     }
 
     private _refresh() {
         const { width, height, density, zoom, origin, pan, xAxisPositiveOnRight: xPr, yAxisPositiveOnBottom: yPb } = this;
 
         const scale = density * zoom;
-        const offset: [number, number] = [Coordinates.x(origin) + Coordinates.x(pan), Coordinates.y(origin) + Coordinates.y(pan)];
+        const [offsetX, offsetY] = [Coordinates.x(origin) + Coordinates.x(pan), Coordinates.y(origin) + Coordinates.y(pan)];
 
-        this._globalTransformation
-            .identitySelf()
-            .postMultiplySelf(new Matrix(1, 0, 0, 1, ...offset))
-            .postMultiplySelf(new Matrix(xPr ? scale : -scale, 0, 0, yPb ? scale : -scale, 0, 0));
+        let gt = TransformationMatrix.identity();
+        gt = TransformationMatrix.multiply(gt, TransformationMatrix.translate(offsetX, offsetY));
+        gt = TransformationMatrix.multiply(gt, TransformationMatrix.scale(xPr ? scale : -scale, yPb ? scale : -scale));
 
-        const [x, y] = this.globalTransformation.antitransformCoordinates([xPr ? 0 : width, yPb ? 0 : height]);
-        this._globalViewBox = [x, y, width / scale, height / scale];
+        this._globalTransformation = gt;
+        const [x, y] = TransformationMatrix.antitransformCoordinates(gt, [xPr ? 0 : width, yPb ? 0 : height]);
+        this._globalViewBox = [x, y, width / scale, height / scale] as [number, number, number, number];
     }
 }

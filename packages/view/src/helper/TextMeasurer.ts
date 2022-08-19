@@ -1,5 +1,5 @@
 export default class TextMeasurer {
-    private _context = document.createElement("canvas").getContext("2d")!;
+    private static _context = document.createElement("canvas").getContext("2d")!;
 
     /**
      * Measure the width and height of the text(in identity).
@@ -8,7 +8,7 @@ export default class TextMeasurer {
      * @param text
      * @returns
      */
-    measure(
+    static measure(
         style: {
             fontSize: number;
             fontFamily: string;
