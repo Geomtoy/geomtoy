@@ -402,7 +402,7 @@ export type RecursivePartial<T> = {
 // Geomtoy global options
 export type Options = {
     epsilon: number;
-    curveEpsilon: number; 
+    curveEpsilon: number;
     graphics: {
         point: {
             size: number;
