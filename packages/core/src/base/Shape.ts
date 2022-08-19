@@ -1,50 +1,35 @@
 import EventTarget from "./EventTarget";
-
-import type Geomtoy from "../geomtoy";
-import type Graphics from "../graphics";
-import { ViewportDescriptor } from "../types";
+import type { Graphics, ViewportDescriptor } from "../types";
 
 export default abstract class Shape extends EventTarget {
-    constructor(owner: Geomtoy) {
-        super(owner);
-    }
-    get type() {
-        return this.name;
-    }
-
     /**
-     * Check if `this` is valid.
+     * Whether shape `this` is proper, `proper` means that the essential properties of the shape are properly set in the proper range.
      */
-    abstract isValid(): boolean;
+    protected abstract initialized_(): boolean;
+    /**
+     * Move shape `this` by `deltaX` and `deltaY`.
+     * @param deltaX
+     * @param deltaY
+     */
+    abstract move(deltaX: number, deltaY: number): this;
+    /**
+     * Move shape `this` by `distance` along `angle`.
+     * @param angle
+     * @param distance
+     */
+    abstract moveAlongAngle(angle: number, distance: number): this;
+    /**
+     * Get a clone of shape `this`.
+     */
     abstract clone(): Shape;
+    /**
+     * Set the essential properties of shape `this` to be equal to `shape`.
+     * @param shape
+     */
     abstract copyFrom(shape: Shape | null): this;
     /**
-     * Get `Graphics` which describing the commands of drawing `this`.
+     * Get shape data which describing the commands of drawing shape `this`.
      * @param viewport
      */
     abstract getGraphics(viewport: ViewportDescriptor): Graphics;
-    /**
-     * Move `this` by `deltaX` and `deltaY` to get new clone of `this`.
-     * @param deltaX
-     * @param deltaY
-     */
-    abstract move(deltaX: number, deltaY: number): Shape;
-    /**
-     * Move `this` itself by `deltaX` and `deltaY`.
-     * @param deltaX
-     * @param deltaY
-     */
-    abstract moveSelf(deltaX: number, deltaY: number): this;
-    /**
-     * Move `this` with `distance` along `angle` to get new clone of `this`.
-     * @param angle
-     * @param distance
-     */
-    abstract moveAlongAngle(angle: number, distance: number): Shape;
-    /**
-     * Move `this` itself with `distance` along `angle`.
-     * @param angle
-     * @param distance
-     */
-    abstract moveAlongAngleSelf(angle: number, distance: number): this;
 }

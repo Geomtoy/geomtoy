@@ -1,12 +1,12 @@
 import { Assert, Utility, Type } from "@geomtoy/util";
-import { schedulerOf } from "../helper/Scheduler";
 import BaseObject from "./BaseObject";
-import EventCache from "../helper/EventCache";
+import EventCache from "../event/EventCache";
 import EventHandler from "../event/EventHandler";
 import EventObject from "../event/EventObject";
+import { scheduler } from "../geomtoy";
 
-import type Geomtoy from "../geomtoy";
 import type { EventTargetEventsPair, EventObjectFromPair } from "../types";
+import { STATE_IDENTIFIER } from "../misc/decor-cache";
 
 const eventsSplitterReg = /\s+/;
 const eventPatternAnyReg = /^(\w+\|){1,}\w+$/i;
@@ -20,25 +20,14 @@ const eventNameForAll = "all";
 const onEventHandlerDefaultPriority = 1;
 const bindEventHandlerDefaultPriority = 1000;
 
-// Below is a hack and not type strong way to achieve `abstract static` members which `Typescript` do not support now.
-interface EventTarget {
-    constructor: Function & {
-        readonly events: {
-            [key: string]: string;
-        };
-    };
-}
-abstract class EventTarget extends BaseObject {
-    private _scheduler = schedulerOf(this.owner);
+export default abstract class EventTarget extends BaseObject {
     private _muted = false;
-
-    constructor(owner: Geomtoy) {
-        super(owner);
-    }
 
     get muted() {
         return this._muted;
     }
+    abstract get events(): { [key: string]: string };
+
     mute() {
         this._muted = true;
     }
@@ -64,7 +53,7 @@ abstract class EventTarget extends BaseObject {
         const hs = this._eventMap;
         const handler = new EventHandler(eventPattern, callback, context, relatedTargets, priority, hasRecursiveEffect);
         hs.push(handler);
-        // From max to in according to priority.
+        // From max to min according to priority.
         hs.sort((a, b) => b.priority - a.priority);
     }
     private _removeHandler(eventPattern: string, callback: (...args: any[]) => void, context: EventTarget) {
@@ -79,8 +68,7 @@ abstract class EventTarget extends BaseObject {
     private _hasEvent(eventName: string) {
         if (eventName === eventNameForAll) return true;
         if (eventName === eventNameForAny) return true;
-
-        return Object.values(this.constructor.events).includes(eventName);
+        return Object.values(this.events).includes(eventName);
     }
 
     // events: a string joint some event patterns like: "x|y radius"
@@ -138,7 +126,6 @@ abstract class EventTarget extends BaseObject {
                     ? false
                     : true;
             }
-
             return !this._hasEvent(p) ? (console.warn(`[G]There is no event named \`${p}\` in \`${this.name}\` , so it will be ignored.`), false) : true;
         });
     }
@@ -184,15 +171,15 @@ abstract class EventTarget extends BaseObject {
     }
 
     private _translateAny() {
-        return Object.values(this.constructor.events).join(eventPatternAnySplitter);
+        return Object.values(this.events).join(eventPatternAnySplitter);
     }
     private _translateAll() {
-        return Object.values(this.constructor.events).join(eventPatternAllSplitter);
+        return Object.values(this.events).join(eventPatternAllSplitter);
     }
 
     private _schedule() {
         this._eventScheduled = true;
-        this._scheduler.queue(() => {
+        scheduler.queue(() => {
             // #region Event Handling Logic
             //
             // While an event handler of this `EventTarget` is being invoked:
@@ -260,7 +247,7 @@ abstract class EventTarget extends BaseObject {
                 let result = this._getEventObjectsFromCache(pattern);
                 if (result !== null) {
                     // Handler with recursive effect will only be invoked once!
-                    if (this._scheduler.isMarked(h.callback, h.context) && h.hasRecursiveEffect) return;
+                    if (scheduler.isMarked(h.callback, h.context) && h.hasRecursiveEffect) return;
 
                     result.forEach(eo => {
                         if (h.relatedTargets !== undefined) {
@@ -274,7 +261,7 @@ abstract class EventTarget extends BaseObject {
                     });
 
                     // So the same callback(such as in the `bind` method) bound to multiple events of multiple objects will not be invoked multiple times.
-                    this._scheduler.mark(h.callback, h.context);
+                    scheduler.mark(h.callback, h.context);
                 }
             });
 
@@ -283,13 +270,19 @@ abstract class EventTarget extends BaseObject {
         });
     }
 
+    protected [STATE_IDENTIFIER] = Utility.now();
+
     protected trigger_<T extends EventTarget>(this: T, eventObject: EventObject<T>) {
         if (this._muted) return this;
+        this[STATE_IDENTIFIER] = eventObject.timestamp;
+
         // Here we put the triggering event name in to the `_eventCache` instead of directly invoking the event handlers in the event.
         // Doing so to avoid repeatedly invoking the event handlers in one loop.
         // No matter how many times an event of `EventTarget` is triggered,
         // we only need to record here, the event has been triggered, and the event handlers of it need to be invoked.
-        if (!this._eventCache.has(eventObject)) this._eventCache.add(eventObject);
+        if (!this._eventCache.has(eventObject)) {
+            this._eventCache.add(eventObject);
+        }
         // If the event handling of this `EventTarget` is in progress,
         // only uncached events can have their callbacks unmarked.
         // We can't change the invoking status of the callbacks of cached event.
@@ -334,17 +327,14 @@ abstract class EventTarget extends BaseObject {
         const { targets, pairs } = this._parsePairs(eventTargetEventsPairs);
         pairs.forEach(te => {
             const [target, events] = te;
-            this._parseEvents(events).forEach(p => {
+            target._parseEvents(events).forEach(p => {
                 if (target._hasHandler(p, callback, this)) {
                     return console.warn(`[G]An event handler with the same event pattern \`${p}\`, callback and context \`${this}\` already exists in \`${target}\`, so it will be ignored.`);
                 }
                 target._addHandler(p, callback, this, targets, priority, hasRecursiveEffect);
 
                 if (immediately && !immediatelyCalled) {
-                    callback.call(
-                        this,
-                        targets.map(target => EventObject.empty(target))
-                    );
+                    callback.call(this, targets.map(target => EventObject.empty(target)) as [...EventObjectFromPair<T>]);
                     immediatelyCalled = true;
                 }
             });
@@ -356,12 +346,10 @@ abstract class EventTarget extends BaseObject {
         const { pairs } = this._parsePairs(eventTargetEventsPairs);
         pairs.forEach(te => {
             const [target, events] = te;
-            this._parseEvents(events).forEach(p => {
+            target._parseEvents(events).forEach(p => {
                 target._removeHandler(p, callback, this);
             });
         });
         return this;
     }
 }
-
-export default EventTarget;
