@@ -3,11 +3,11 @@
         "target": "ES2015",
         "moduleResolution": "node",
         "strict": true,
-        "strictFunctionTypes": false,
         "noFallthroughCasesInSwitch": true,
         // "noImplicitOverride": true,
         // "noUnusedLocals":true,
         // "noUnusedParameters":true,
+        "experimentalDecorators": true,
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
         "noEmit": true

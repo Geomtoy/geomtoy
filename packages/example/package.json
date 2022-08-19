@@ -10,7 +10,8 @@
     },
     "license": "GPL-3.0-or-later",
     "scripts": {
-        "serve": "rollup --config --watch"
+        "serve": "rollup --config --watch",
+        "generate": "rollup --config --environment GENERATE"
     },
     "publishConfig": {
         "access": "public"

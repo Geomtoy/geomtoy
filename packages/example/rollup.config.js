@@ -1,29 +1,33 @@
-const babel = require("@rollup/plugin-babel").default;
-const nodeResolve = require("@rollup/plugin-node-resolve").default;
-const html = require("@rollup/plugin-html").default;
+const { babel } = require("@rollup/plugin-babel");
+const { nodeResolve } = require("@rollup/plugin-node-resolve");
+const html = require("@rollup/plugin-html");
+const del = require("rollup-plugin-delete");
+const copy = require("rollup-plugin-copy");
 const serve = require("rollup-plugin-serve");
 const livereload = require("rollup-plugin-livereload");
-const ejs = require("rollup-plugin-ejs");
+const json = require("@rollup/plugin-json");
+const pluginUtils = require("@rollup/pluginutils");
+const ejs = require("ejs");
 const { config } = require("../../package.json");
 
 const fs = require("fs");
 const path = require("path");
 
 const extensions = [".js", ".ts"];
-const exclude = "./node_modules/!(@geomtoy/*)";
 
 const exampleSrcPath = "./src";
 const exampleDistPath = "./dist";
 const host = "0.0.0.0";
 const port = 1347;
 
-const traverseDir = (dir, callback, withoutDirName) => {
+const traverseDir = (dir, callback, excludes) => {
     const entries = fs.readdirSync(dir);
     entries.forEach(entry => {
         const entryPath = path.resolve(dir, entry);
-        if (fs.statSync(entryPath).isDirectory() && entry !== withoutDirName) {
-            traverseDir(entryPath, callback, withoutDirName);
+        if (fs.statSync(entryPath).isDirectory() && !excludes.includes(entry)) {
+            traverseDir(entryPath, callback, excludes);
         } else {
+            if (entry.startsWith("_")) return;
             callback(entryPath);
         }
     });
@@ -42,7 +46,7 @@ const examples = (() => {
                 });
             }
         },
-        "assets"
+        ["assets"]
     );
     return ret;
 })();
@@ -60,11 +64,12 @@ export default {
         manualChunks: {
             geomtoy: [config.packages.core.scopedName, config.packages.util.scopedName, config.packages.view.scopedName]
         },
-        chunkFileNames: "assets/[name].js"
+        chunkFileNames: "js/[name].js"
     },
     plugins: [
         nodeResolve({ extensions }),
-        babel({ babelHelpers: "bundled", extensions, exclude }),
+        json({ namedExports: false, preferConst: true }),
+        babel({ babelHelpers: "bundled", extensions }),
         ...examples.map(item =>
             html({
                 fileName: path.join(item.fileSubDir, item.fileName) + ".html",
@@ -75,24 +80,38 @@ export default {
                         <head>
                             <meta charset="UTF-8">
                             <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                            ${process.env.GENERATE === "true" ? "<base href='/geomtoy-examples/' />" : "<base href='/' />"}
                             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                            <title>${"Geomtoy - " + item.fileName.split("-").join(" ")}</title>
-                            <script src="${item.fileName + ".js"}" type="module"></script>
+                            <title>${"Geomtoy examples-" + item.fileSubDir.split(path.sep).join("/") + "/" + item.fileName}</title>
                         </head>
-                        <body></body>
+                        <body>
+                            <script src="${item.fileSubDir.split(path.sep).join("/") + "/" + item.fileName + ".js"}" type="module"></script>
+                        </body>
                     </html>`;
                 }
             })
         ),
-        ejs({
-            include: ["**/*.ejs", "**/*.html"],
-            exclude: ["**/index.html"]
+        del({
+            targets: exampleDistPath + "/*",
+            runOnce: true
         }),
+        (function () {
+            const filter = pluginUtils.createFilter(["**/*.ejs", "**/*.html"]);
+            return {
+                name: "ejs",
+                transform: function (code, id) {
+                    if (filter(id)) {
+                        const tplString = ejs.render(code, {}, { filename: id });
+                        return `const tpl = \`${tplString}\`; export default tpl;`;
+                    }
+                }
+            };
+        })(),
         (function () {
             let already = false;
             return {
-                name: "index",
-                generateBundle: function () {
+                name: "sidebar tree json",
+                buildStart: function () {
                     if (!already) {
                         already = true;
                         const treeData = examples.reduce(
@@ -115,21 +134,26 @@ export default {
                             },
                             { children: [], type: "dir" }
                         );
-                        const srcIndexPath = path.resolve(exampleSrcPath, "index.html");
-                        const distIndexPath = path.resolve(exampleDistPath, "index.html");
-                        let indexHtmlContent = fs.readFileSync(srcIndexPath, "utf-8");
-                        indexHtmlContent = indexHtmlContent.replace("__DATA__", JSON.stringify(treeData));
-                        fs.writeFileSync(distIndexPath, indexHtmlContent);
+                        const jsonPath = path.resolve(exampleSrcPath, "tree.json");
+                        fs.writeFileSync(jsonPath, JSON.stringify(treeData));
                     }
                 }
             };
         })(),
-        serve({
-            contentBase: exampleDistPath,
-            // open: true,
-            host: host,
-            port: port
+        copy({
+            targets: [{ src: "src/assets/styles/*", dest: "dist/css" }],
+            copyOnce: true
         }),
-        livereload(exampleDistPath)
+        ...(process.env.GENERATE === "true"
+            ? []
+            : [
+                  serve({
+                      contentBase: exampleDistPath,
+                      // open: true,
+                      host: host,
+                      port: port
+                  }),
+                  livereload(exampleDistPath)
+              ])
     ]
 };

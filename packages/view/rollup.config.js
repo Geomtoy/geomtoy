@@ -4,8 +4,6 @@ const { terser } = require("rollup-plugin-terser");
 const { config } = require("../../package.json");
 
 const extensions = [".js", ".ts"];
-const exclude = "./node_modules/**";
-
 const pkgCore = config.packages.core;
 const pkgUtil = config.packages.util;
 const pkgView = config.packages.view;
@@ -49,5 +47,5 @@ export default {
     external(id) {
         return id.indexOf(config.scope) >= 0;
     },
-    plugins: [nodeResolve({ extensions }), babel({ babelHelpers: "bundled", extensions, exclude })]
+    plugins: [nodeResolve({ extensions }), babel({ babelHelpers: "bundled", extensions })]
 };
