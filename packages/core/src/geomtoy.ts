@@ -1,78 +1,114 @@
-import { Utility, Type } from "@geomtoy/util";
-import { sealed } from "./decorator";
-import Scheduler, { schedulerOf } from "./helper/Scheduler";
-import Optioner, { optionerOf } from "./helper/Optioner";
+import { Utility } from "@geomtoy/util";
+import EventTarget from "./base/EventTarget";
+import { Options, RecursivePartial } from "./types";
 
-import { Options, Tail, ConstructorOverloads, ConstructorTailer, RecursivePartial, Factory, StaticMethodsMapper, OwnerCarrier, ObjectFactoryCollection } from "./types";
-import BaseObject from "./base/BaseObject";
-import { objects } from "./collection";
+const SCHEDULER_FLUSH_TIMEOUT = 1000; //1000ms
+const DEFAULT_OPTIONS: Options = {
+    epsilon: 2 ** -32,
+    curveEpsilon: 2 ** -16,
+    graphics: {
+        point: {
+            size: 6,
+            appearance: "circle" // global default
+        },
+        arrow: {
+            width: 5,
+            length: 10,
+            foldback: 0,
+            noFoldback: true
+        },
+        lineArrow: true,
+        vectorArrow: true,
+        rayArrow: true,
+        polygonSegmentArrow: true,
+        pathSegmentArrow: true
+    }
+};
 
-function factory<T extends { new (...args: any[]): any }>(owner: Geomtoy, ctor: T): Factory<T> {
-    // Use arrow function to define tailed constructor and static methods to avoid user trying to `new`(create instance of) them.
-    const constructorTailer: ConstructorTailer<T> = (...args: Tail<ConstructorParameters<ConstructorOverloads<T>[number]>>) => {
-        return new ctor(owner, ...(args as Tail<ConstructorParameters<T>>));
-    };
+const optioner = {
+    options: Utility.cloneDeep(DEFAULT_OPTIONS),
 
-    const staticMethodsMapper: StaticMethodsMapper<T> = {} as StaticMethodsMapper<T>;
-    // DO use `Object.getOwnPropertyNames` to retrieve all enumerable and non-enumerable property names,
-    // for static methods defined as function like `static method(){}` is non-enumerable according to ES6 standard,
-    // and static methods defined as variable like `static method = function(){} or () => {}` is enumerable according to ES6 standard.
-    Object.getOwnPropertyNames(ctor).forEach(name => {
-        let member = ctor[name as Extract<keyof T, string>];
-        if (Type.isFunction(member)) {
-            staticMethodsMapper[name as keyof StaticMethodsMapper<T>] = member as unknown as StaticMethodsMapper<T>[keyof StaticMethodsMapper<T>];
-        }
-    });
-    const ownerCarrier: OwnerCarrier = { owner };
-    return Object.assign(constructorTailer, staticMethodsMapper, ownerCarrier);
-}
+    getOptions() {
+        return Utility.cloneDeep(this.options);
+    },
+    setOptions(options: RecursivePartial<Options>) {
+        Utility.assignDeep(this.options, options);
+        this.applyOptionsRules();
+    },
+    applyOptionsRules() {
+        if (this.options.epsilon > 2 ** -16) this.options.epsilon = 2 ** -16;
+        if (this.options.epsilon < 2 ** -52) this.options.epsilon = 2 ** -52;
+    }
+};
 
-interface Geomtoy extends ObjectFactoryCollection {}
-class Geomtoy {
-    private _uuid = Utility.uuid();
+const scheduler = {
+    callbackMarkMap: new Map<(...args: any[]) => void, WeakSet<EventTarget>>(),
 
-    private _scheduler: Scheduler;
-    private _optioner: Optioner;
+    mark(callback: (...args: any[]) => void, context: EventTarget) {
+        if (!this.callbackMarkMap.has(callback)) this.callbackMarkMap.set(callback, new WeakSet());
+        const contexts = this.callbackMarkMap.get(callback)!;
+        contexts.add(context);
+    },
 
-    constructor(options: RecursivePartial<Options> = {}) {
-        Object.keys(objects).forEach((name: keyof typeof objects) => {
-            Object.defineProperty(this, name, {
-                configurable: false,
-                enumerable: true,
-                get() {
-                    return factory(this, objects[name]);
+    isMarked(callback: (...args: any[]) => any, context: EventTarget) {
+        if (!this.callbackMarkMap.has(callback)) return false;
+        const contexts = this.callbackMarkMap.get(callback)!;
+        return contexts.has(context);
+    },
+
+    clearMark() {
+        this.callbackMarkMap.clear();
+    },
+
+    internalQueue: [] as ((...args: any) => any)[],
+    externalQueue: [] as ((...args: any) => any)[],
+
+    flushed: false,
+
+    flushQueue() {
+        // We now do the final flush the queue to end the current loop.
+        // First set the flag.
+        this.flushed = true;
+        // Use a resolved `Promise` to do the microtask. Try queueMicrotask() ?
+        Promise.resolve().then(() => {
+            const timeOrigin = Utility.now();
+            while (this.internalQueue.length !== 0) {
+                this.internalQueue.shift()!();
+                if (Utility.now() - timeOrigin > SCHEDULER_FLUSH_TIMEOUT) {
+                    console.error(
+                        "[G]Geomtoy stopped the event handling for there could be some mistakes in your code like circular event triggering causing an infinite recursion. Please check your code."
+                    );
+                    break;
                 }
-            });
+            }
+            this.clearMark();
+            while (this.externalQueue.length !== 0) {
+                // We don’t care if there is an infinite recursion in `nextTick`.
+                this.externalQueue.shift()!();
+            }
+            this.flushed = false;
         });
-        this._optioner = optionerOf(this);
-        this._scheduler = schedulerOf(this);
-        this.options(options);
-        return Object.seal(this);
-    }
+    },
+    queue(objectSchedule: () => any) {
+        this.internalQueue.push(objectSchedule);
+        if (!this.flushed) this.flushQueue();
+    },
+    nextTick(todo: () => any) {
+        if (this.externalQueue.includes(todo)) return;
 
-    get name() {
-        return this.constructor.name;
+        this.externalQueue.push(todo);
+        if (!this.flushed) this.flushQueue();
     }
-    get uuid() {
-        return this._uuid;
-    }
+};
 
-    options(): Options;
-    options(options: RecursivePartial<Options>): void;
-    options(options?: any) {
-        if (options === undefined) return this._optioner.getOptions();
-        this._optioner.setOptions(options);
-    }
+export { optioner, scheduler };
 
-    nextTick(todo: (...args: any) => any) {
-        this._scheduler.nextTick(todo);
-    }
+const getOptions = optioner.getOptions.bind(optioner);
+const setOptions = optioner.setOptions.bind(optioner);
+const nextTick = scheduler.nextTick.bind(scheduler);
 
-    adopt(object: BaseObject) {
-        object.owner = this;
-    }
-}
-
-sealed(Geomtoy);
-
-export default Geomtoy;
+export default {
+    getOptions,
+    setOptions,
+    nextTick
+};
