@@ -1,9 +1,8 @@
 import { Utility } from "@geomtoy/util";
 import EventTarget from "../base/EventTarget";
-
 import type Geomtoy from "../geomtoy";
 
-const flushTimeout = 1000; //1000ms
+const SCHEDULER_FLUSH_TIMEOUT = 1000; //1000ms
 const schedulerMap = new WeakMap<Geomtoy, Scheduler>();
 
 class Scheduler {
@@ -38,7 +37,7 @@ class Scheduler {
             const timeOrigin = Utility.now();
             while (this.internalQueue.length !== 0) {
                 this.internalQueue.shift()!();
-                if (Utility.now() - timeOrigin > flushTimeout) {
+                if (Utility.now() - timeOrigin > SCHEDULER_FLUSH_TIMEOUT) {
                     console.error(
                         "[G]Geomtoy stopped the event handling for there could be some mistakes in your code like circular event triggering causing an infinite recursion. Please check your code."
                     );

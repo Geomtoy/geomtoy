@@ -5,19 +5,24 @@ import type { Options, RecursivePartial } from "../types";
 
 export const defaultOptions: Options = {
     epsilon: 2 ** -32,
+    curveEpsilon: 2 ** -16,
     graphics: {
-        pointSize: 2,
-        lineArrow: true,
-        vectorArrow: true,
-        rayArrow: true,
+        point: {
+            size: 6,
+            appearance: "circle" // global default
+        },
         arrow: {
             width: 5,
             length: 10,
-            foldback: 1,
-            noFoldback: false
-        }
-    },
-    pathSampleRatio: 100
+            foldback: 0,
+            noFoldback: true
+        },
+        lineArrow: true,
+        vectorArrow: true,
+        rayArrow: true,
+        polygonSegmentArrow: true,
+        pathSegmentArrow: true
+    }
 };
 const optionerMap: WeakMap<Geomtoy, Optioner> = new WeakMap();
 
