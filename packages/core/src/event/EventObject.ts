@@ -4,7 +4,7 @@ class EventObject<T extends EventTarget> {
     timestamp = Date.now();
     target: T;
     event?: string;
-    index?: number;
+    indexOrKey?: number | string;
     uuid?: string;
     original?: EventObject<T> | EventObject<T>[];
 
@@ -20,10 +20,10 @@ class EventObject<T extends EventTarget> {
         ret.event = eventName;
         return ret;
     }
-    static collection<ST extends EventTarget>(target: ST, eventName: string, index: number, uuid: string) {
+    static collection<ST extends EventTarget>(target: ST, eventName: string, indexOrKey: number | string, uuid: string) {
         const ret = new EventObject(target);
         ret.event = eventName;
-        ret.index = index;
+        ret.indexOrKey = indexOrKey;
         ret.uuid = uuid;
         return ret;
     }
@@ -45,7 +45,7 @@ class EventObject<T extends EventTarget> {
 function isSameEventObject<T extends EventTarget>(eventObject1: EventObject<T>, eventObject2: EventObject<T>) {
     if (eventObject1.target !== eventObject2.target) return false;
     if (eventObject1.event !== eventObject2.event) return false;
-    if (eventObject1.index !== eventObject2.index) return false;
+    if (eventObject1.indexOrKey !== eventObject2.indexOrKey) return false;
     if (eventObject1.uuid !== eventObject2.uuid) return false;
     if (eventObject1.original !== eventObject2.original) return false;
     return true;
