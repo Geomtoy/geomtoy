@@ -13,7 +13,7 @@ import ViewGroupElement from "./frontend/ViewGroupElement";
  * @category Frontend
  */
 export { View, ViewElement, ViewGroupElement };
-export * from "./frontend/ViewEvents"
+export * from "./frontend/ViewEvents";
 
 import Display from "./renderer/Display";
 /**

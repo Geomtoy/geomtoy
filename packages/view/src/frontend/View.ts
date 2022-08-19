@@ -186,7 +186,7 @@ export default class View {
     private _eventHandler: { [key: string]: ((...args: any[]) => any)[] } = {};
 
     on(eventType: ViewEventType, handler: (...args: any[]) => any) {
-        if(this._eventHandler[eventType] === undefined) this._eventHandler[eventType] = []
+        if (this._eventHandler[eventType] === undefined) this._eventHandler[eventType] = [];
         this._eventHandler[eventType].push(handler);
     }
     off(eventType: ViewEventType, handler: (...args: any[]) => any) {
