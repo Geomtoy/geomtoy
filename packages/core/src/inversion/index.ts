@@ -1,165 +1,242 @@
-import { Assert, Maths, Vector2, Type, Coordinates } from "@geomtoy/util";
-import { validAndWithSameOwner } from "../decorator";
+import { Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
+import { validGeometryArguments } from "../misc/decor-valid-geometry";
 
-import BaseObject from "../base/BaseObject";
-import Point from "../shapes/basic/Point";
-import Line from "../shapes/basic/Line";
-import Circle from "../shapes/basic/Circle";
+import EventTarget from "../base/EventTarget";
+import Circle from "../geometries/basic/Circle";
+import Line from "../geometries/basic/Line";
+import Point from "../geometries/basic/Point";
 
-import type Geomtoy from "../geomtoy";
+import EventObject from "../event/EventObject";
+import { optioner } from "../geomtoy";
+import { getCoordinates } from "../misc/point-like";
 
-const defaultInversionPower = 10000;
+const INVERSION_DEFAULT_POWER = 10000;
 
-class Inversion extends BaseObject {
+export default class Inversion extends EventTarget {
     private _centerX = 0;
     private _centerY = 0;
-    private _power = defaultInversionPower;
+    private _power = INVERSION_DEFAULT_POWER;
 
-    constructor(owner: Geomtoy, centerX: number, centerY: number, power?: number);
-    constructor(owner: Geomtoy, centerCoordinates: [number, number], power?: number);
-    constructor(owner: Geomtoy, centerPoint: Point, power?: number);
-    constructor(o: Geomtoy, a1?: any, a2?: any, a3?: any) {
-        super(o);
-        if (Type.isNumber(a1)) {
-            this.centerCoordinates([a1, a2]);
-            this.power(a3);
+    constructor(centerX: number, centerY: number, power?: number);
+    constructor(centerCoordinates: [number, number], power?: number);
+    constructor(centerPoint: Point, power?: number);
+    constructor();
+    constructor(a0?: any, a1?: any, a2?: any) {
+        super();
+        if (Type.isNumber(a0)) {
+            Object.assign(this, { centerX: a0, centerY: a1, power: a2 ?? this._power });
         }
-        if (Type.isCoordinates(a1)) {
-            this.centerCoordinates(a1);
-            this.power(a2);
+        if (Type.isArray(a0)) {
+            Object.assign(this, { centerCoordinates: a0, power: a1 ?? this._power });
         }
-        if (a1 instanceof Point) {
-            this.centerCoordinates(a1);
-            this.power(a2);
+        if (a0 instanceof Point) {
+            Object.assign(this, { centerPoint: a0, power: a1 ?? this._power });
         }
-        return Object.seal(this);
     }
 
-    centerCoordinates(): [number, number];
-    centerCoordinates(value: [number, number] | Point): void;
-    centerCoordinates(value?: any) {
-        if (value === undefined) {
-            return [this._centerX, this._centerY] as [number, number];
-        }
-        const c = value instanceof Point ? value.coordinates : (Assert.isCoordinates(value, "value"), value);
-        this._centerX = Coordinates.x(c);
-        this._centerY = Coordinates.y(c);
+    get events() {
+        return {
+            centerXChanged: "centerX" as const,
+            centerYChanged: "centerY" as const,
+            powerChanged: "power" as const
+        };
     }
 
-    power(): number;
-    power(value: number): void;
-    power(value?: any) {
-        if (value === undefined) {
-            return this._power;
-        }
-        Assert.isNonZeroNumber(value, "value");
+    private _setCenterX(value: number) {
+        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(EventObject.simple(this, this.events.centerXChanged));
+        this._centerX = value;
+    }
+    private _setCenterY(value: number) {
+        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(EventObject.simple(this, this.events.centerYChanged));
+        this._centerY = value;
+    }
+    private _setPower(value: number) {
+        if (!Utility.isEqualTo(this._power, value)) this.trigger_(EventObject.simple(this, this.events.powerChanged));
         this._power = value;
     }
 
-    /**
-     * Find the inversion of `point`
-     * @description
-     * If `point` is same as the inversion center, return `null`.
-     * If `point` is not same as the inversion center, return the inverted point.
-     * @param point
-     * @returns
-     */
-    invertPoint(point: Point) {
-        // If `point` is the inversion center, the inverted point is the point at infinity, so we return `null`
-        if (point.isSameAs(new Point(this.owner, this.centerCoordinates()))) return null;
-
-        const c0 = this.centerCoordinates();
-        const power = this.power();
-        const c1 = point.coordinates;
-        const v01 = Vector2.from(c0, c1);
-        const d = Vector2.magnitude(v01);
-        const id = Maths.abs(power / d);
-
-        // When `power` > 0, `v01` and `v02` are in the same direction.
-        // When `power` < 0, `v01` and `v02` are in the opposite direction.
-        const angle = power > 0 ? Vector2.angle(v01) : Vector2.angle(Vector2.negative(v01));
-
-        const v02 = Vector2.from2(angle, id);
-        const c2 = Vector2.add(c0, v02);
-        return new Point(this.owner, c2);
+    get centerX() {
+        return this._centerX;
+    }
+    set centerX(value) {
+        Assert.isRealNumber(value, "centerX");
+        this._setCenterX(value);
+    }
+    get centerY() {
+        return this._centerY;
+    }
+    set centerY(value) {
+        Assert.isRealNumber(value, "centerY");
+        this._setCenterY(value);
+    }
+    get centerCoordinates() {
+        return [this._centerX, this._centerY] as [number, number];
+    }
+    set centerCoordinates(value) {
+        Assert.isCoordinates(value, "centerCoordinates");
+        this._setCenterX(Coordinates.x(value));
+        this._setCenterY(Coordinates.y(value));
+    }
+    get centerPoint() {
+        return new Point(this._centerX, this._centerY);
+    }
+    set centerPoint(value) {
+        this._setCenterX(value.x);
+        this._setCenterY(value.y);
+    }
+    get power() {
+        return this._power;
+    }
+    set power(value) {
+        // We do not support imaginary circles
+        Assert.isPositiveNumber(value, "power");
+        this._setPower(value);
     }
 
     /**
-     * Find the inversion of `line`.
+     * Whether point `point` is self-inverse in inversion `this`.
+     * @param point
+     */
+    @validGeometryArguments
+    isPointSelfInverse(point: Point) {
+        const c0 = getCoordinates(point, "point");
+        const sd = Vector2.squaredMagnitude(Vector2.from(this.centerCoordinates, c0));
+        return Maths.equalTo(sd, this.power, optioner.options.epsilon);
+    }
+    /**
+     * Whether line `line` is self-inverse in inversion `this`.
+     * @param line
+     */
+    @validGeometryArguments
+    isLineSelfInverse(line: Line) {
+        return line.isPointOn(this.centerCoordinates);
+    }
+    /**
+     * Whether circle `circle` is self-inverse in inversion `this`.
+     * @param circle
+     */
+    @validGeometryArguments
+    isCircleSelfInverse(circle: Circle) {
+        const inversionBasisCircle = new Circle(this.centerCoordinates, Maths.sqrt(this.power));
+        const { centerCoordinates: cc0, radius: r0 } = inversionBasisCircle;
+        const { centerCoordinates: cci, radius: ri } = circle;
+        const epsilon = optioner.options.epsilon;
+        // the circle is the basis circle of inversion.
+        if (Coordinates.isEqualTo(cc0, cci, epsilon) && Maths.equalTo(r0, ri, epsilon)) {
+            return true;
+        }
+        // the circle is orthogonal circle of the basis circle of inversion.
+        return circle.isOrthogonalToCircle(inversionBasisCircle);
+    }
+    /**
+     * Returns the inverse of point `point`.
+     * @description
+     * - If `point` is same as the inversion center, returns `null`.
+     * - Else returns the inverse point.
+     * @param point
+     */
+    @validGeometryArguments
+    invertPoint(point: [number, number] | Point) {
+        // If `point` is the inversion center, the inverse point is the point at infinity, so we return `null`
+        const cc = this.centerCoordinates;
+        const c1 = getCoordinates(point, "point");
+        const epsilon = optioner.options.epsilon;
+        if (Coordinates.isEqualTo(cc, c1, epsilon)) {
+            console.warn("[G]The `point` is same as the inversion center, `null` will be returned.");
+            return null;
+        }
+        const power = this.power;
+        const v1 = Vector2.from(cc, c1);
+        const d = Vector2.magnitude(v1);
+        const id = power / d;
+        const angle = Vector2.angle(v1);
+        const v2 = Vector2.from2(angle, id);
+        const c2 = Vector2.add(cc, v2);
+        return new Point(c2);
+    }
+    /**
+     * Returns the inverse of line `line`.
      * @description
      * If `line` passes through the inversion center, return itself(cloned).
-     * If `line` does not pass through the inversion center, return the inverted circle.
+     * If `line` does not pass through the inversion center, return the inverse circle.
      * @param line
-     * @returns
      */
+    @validGeometryArguments
     invertLine(line: Line): Line | Circle {
-        if (line.isPointOn(this.centerCoordinates())) return line.clone();
+        // The inversion center is on `line`, then we get a line.
+        // If we treat a line as a circle with infinite radius and centered at infinite point,
+        // then we still get a inverse of line.
+        if (line.isPointOn(this.centerCoordinates)) return line.clone();
 
-        const c0 = this.centerCoordinates();
-        const power = this.power();
-        const c1 = line.getPerpendicularPointFromPoint(c0).coordinates;
-        const v01 = Vector2.from(c0, c1);
-        const d = Vector2.magnitude(v01);
-        const id = Maths.abs(power / d);
+        // The inversion center is not on `line`, then we get a circle, and the inversion center is on this circle.
+        const cc = this.centerCoordinates;
+        const power = this.power;
+        const c1 = line.getClosestPointFrom(cc).coordinates;
+        const v1 = Vector2.from(cc, c1);
+        const d = Vector2.magnitude(v1);
+        const angle = Vector2.angle(v1);
+        const id = power / d;
         const radius = id / 2;
+        const v2 = Vector2.from2(angle, radius);
+        const c2 = Vector2.add(cc, v2);
 
-        // When `power` > 0, `v01` and `v02` are in the same direction.
-        // When `power` < 0, `v01` and `v02` are in the opposite direction.
-        const angle = power > 0 ? Vector2.angle(v01) : Vector2.angle(Vector2.negative(v01));
-
-        const v02 = Vector2.from2(angle, radius);
-        const c2 = Vector2.add(c0, v02);
-
-        return new Circle(this.owner, c2, radius);
+        return new Circle(c2, radius);
     }
-
     /**
-     * Find the inversion of `circle`.
+     * Returns the inverse of circle `circle`.
      * @description
-     * If `circle` passes through the inversion center, return the inverted line.
-     * If `circle` does not pass through the inversion center, return the inverted circle.
+     * If `circle` passes through the inversion center, return the inverse line.
+     * If `circle` does not pass through the inversion center, return the inverse circle.
      * @param circle
-     * @returns
      */
-    invertCircle(circle: Circle): Line | Circle {
-        const c0 = this.centerCoordinates();
-        const power = this.power();
+    @validGeometryArguments
+    invertCircle(circle: Circle) {
+        const cc = this.centerCoordinates;
+        const power = this.power;
         const c1 = circle.centerCoordinates;
         const radius = circle.radius;
-        const v01 = Vector2.from(c0, c1);
+        const v1 = Vector2.from(cc, c1);
+        const epsilon = optioner.options.epsilon;
 
-        if (circle.isPointOn(this.centerCoordinates())) {
-            const id = Maths.abs((power / 2) * radius);
-            const l = Line.fromTwoPoints.call(this, c0, c1)!;
+        // The inversion center is the same as the center of `circle`, then we get a circle.
 
-            // When `power` > 0, `v01` and `v02` are in the same direction.
-            // When `power` < 0, `v01` and `v02` are in the opposite direction.
-            const angle = power > 0 ? Vector2.angle(v01) : Vector2.angle(Vector2.negative(v01));
+        // This equal to inverting all the points of `circle` individually, and we get a concentric circle.
+        if (Coordinates.isEqualTo(cc, c1, epsilon)) {
+            return new Circle(c1, power / radius);
+        }
 
-            const v02 = Vector2.from2(angle, id);
-            const c2 = Vector2.add(c0, v02);
-
+        // The inversion center is on `circle`, then we get a line.
+        if (circle.isPointOn(this.centerCoordinates)) {
+            const id = power / (2 * radius);
+            const l = Line.fromTwoPoints(cc, c1)!;
+            const angle = Vector2.angle(v1);
+            const v2 = Vector2.from2(angle, id);
+            const c2 = Vector2.add(cc, v2);
             return l.getPerpendicularLineFromPoint(c2);
-        } else {
-            const d = Vector2.magnitude(v01);
-            const i = 1 / Maths.abs(d - radius);
-            const j = 1 / Maths.abs(d + radius);
-            const r = ((i - j) * Maths.abs(power)) / 2;
-            const s = ((i + j) * Maths.abs(power)) / 2;
+        }
+        // The inversion center is not on `circle`, then we get a circle.
+        else {
+            const d = Vector2.magnitude(v1);
+            const i = Maths.abs(d - radius);
+            const j = d + radius;
+            const ii = power / i;
+            const ij = power / j;
 
-            // When `power` > 0 and inversion center is inside `circle`,  v01` and `v02` are in the opposite direction.
-            // When `power` > 0 and inversion center is outside `circle`, `v01` and `v02` are in the same direction.
-            // When `power` < 0 and inversion center is inside `circle`, `v01` and `v02` are in the same direction.
-            // When `power` < 0 and inversion center is outside `circle`, `v01` and `v02` are in the opposite direction.
-            const angle = power > 0 !== circle.isPointInside(c0) ? Vector2.angle(v01) : Vector2.angle(Vector2.negative(v01));
-
-            const v02 = Vector2.from2(angle, s);
-            const c2 = Vector2.add(c0, v02);
-
-            return new Circle(this.owner, c2, r);
+            if (circle.isPointInside(cc)) {
+                const angle = Vector2.angle(v1);
+                const r = (ii + ij) / 2;
+                const v2 = Vector2.from2(angle, r - ii);
+                const c2 = Vector2.add(cc, v2);
+                return new Circle(c2, r);
+            } else {
+                const angle = Vector2.angle(v1);
+                const r = (ii - ij) / 2;
+                const v2 = Vector2.from2(angle, r + ij);
+                const c2 = Vector2.add(cc, v2);
+                return new Circle(c2, r);
+            }
         }
     }
-
     toString() {
         // prettier-ignore
         return [
@@ -169,7 +246,7 @@ class Inversion extends BaseObject {
             `\t\ty: ${this._centerY}`,
             `\t}`,
             `\tpower: ${this.power}`, 
-            `} owned by Geomtoy(${this.owner.uuid})`
+            `}`
         ].join("\n")
     }
     toArray() {
@@ -179,6 +256,3 @@ class Inversion extends BaseObject {
         return {};
     }
 }
-validAndWithSameOwner(Inversion);
-
-export default Inversion;
