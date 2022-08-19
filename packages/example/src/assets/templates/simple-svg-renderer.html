@@ -1,0 +1,27 @@
+<style>
+    body {
+        overflow: hidden;
+        font-size: 14px;
+        font-family: Verdana, Tahoma, Helvetica, "Lucida Grande", Arial, Geneva, Lucid, "Avant Garde", sans-serif;
+    }
+
+    article {
+        position: absolute;
+        box-sizing: border-box;
+        user-select: none;
+        pointer-events: none;
+        padding: 10px;
+        width: 400px;
+        left: 0;
+        top: 0;
+    }
+
+    @media (max-width: 400px) {
+        article {
+            display: none;
+        }
+    }
+</style>
+
+<article id="description"></article>
+<svg id="svg" xmlns="http://www.w3.org/2000/svg" version="1.1"></svg>

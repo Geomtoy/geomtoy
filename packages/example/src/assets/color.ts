@@ -310,6 +310,6 @@ type ChromaticColor = Chromatic | `${Chromatic}-${ChromaticLevels}`;
 export default function color(name: NeutralColor | ChromaticColor | MonoColor, alpha?: number) {
     const [c, l] = name.split("-");
     // @ts-ignore
-    const hex = l !== undefined ? colors[c][l] : ["black", "white"].includes(c) ? colors[c] : colors[c]["500"]; // primary
+    const hex: string = l !== undefined ? colors[c][l] : ["black", "white"].includes(c) ? colors[c] : colors[c]["500"]; // primary
     return alpha !== undefined ? hex + ((alpha * 255) << 0).toString(16) : hex;
 }

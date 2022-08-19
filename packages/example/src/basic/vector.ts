@@ -12,8 +12,7 @@
 // description.innerHTML = ``;
 // canvas.style.display = "none";
 
-// const G = new Geomtoy(100, 100, {
-//     epsilon: 2 ** -32,
+// const g = new Geomtoy(100, 100, {
 //     graphics: {
 //         pointSize: 6,
 //         arrow: {
@@ -24,10 +23,10 @@
 //         }
 //     }
 // });
-// G.yAxisPositiveOnBottom = false;
-// G.scale = 10;
+// g.yAxisPositiveOnBottom = false;
+// g.scale = 10;
 
-// const renderer = new Geomtoy.adapters.VanillaSvg(svg, G);
+// const renderer = new Geomtoy.adapters.VanillaSvg(svg, g);
 // renderer.lineJoin("round");
 // const collection = new Collection();
 // const interact = new Interact(renderer, collection);
@@ -35,18 +34,18 @@
 // interact.startDragAndDrop();
 // interact.startZoomAndPan();
 // interact.startResponsive((width, height) => {
-//     G.width = width;
-//     G.height = height;
-//     G.origin = [width / 2, height / 2];
+//     g.width = width;
+//     g.height = height;
+//     g.origin = [width / 2, height / 2];
 // });
 
 // const main = () => {
 
-//     const vectorA = G.Vector(7,7)
+//     const vectorA = g.Vector(7,7)
 //     vectorA.point1Coordinate = [2,2]
 
 //     collection
-//         .setDrawable("coordinateSystemOriginPoint", new Drawable(G.Point.zero(), true, colors.grey, undefined, 0))
+//         .setDrawable("coordinateSystemOriginPoint", new Drawable(g.Point.zero(), true, colors.grey, undefined, 0))
 //         .setTouchable("vectorA", new Touchable(vectorA, false, colors.black, colors.black, 3))
 //         // .setTouchable("image", new Touchable(image, false, colors.purple, colors.purple, 3));
 // };

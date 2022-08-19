@@ -1,0 +1,44 @@
+@media (min-width: 992px) {
+    #sidebar {
+        position: sticky;
+        top: 76px;
+        display: block !important;
+        height: calc(100vh - 76px);
+        overflow-y: auto;
+    }
+}
+
+#treeRoot {
+    padding-left: 0 !important;
+    list-style: none;
+}
+#treeRoot ul {
+    list-style: none;
+}
+
+.dir {
+    cursor: pointer;
+}
+
+.dir::before {
+    content: "\1F4C1";
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.dir-open::before {
+    content: "\1F4C2";
+}
+
+.file::before {
+    content: "\1F4C4";
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.nested {
+    display: none;
+}
+.active {
+    display: block;
+}
