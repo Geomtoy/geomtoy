@@ -1,6 +1,11 @@
 export type StaticClass = {
     new (...args: any[]): never;
 };
+
+export type RootMultiplicity<T extends number | [number, number]> = {
+    root: T;
+    multiplicity: number;
+};
 /** @internal */
 export interface RpolyQuadRParam {
     sr: number;

@@ -1,8 +1,3 @@
-import Coordinates from "./Coordinates";
-import Size from "./Size";
-import Box from "./Box";
-import Complex from "./Complex";
-
 import type { StaticClass } from "./types";
 
 interface Type extends StaticClass {}
@@ -30,11 +25,14 @@ class Type {
     }
     static isFunction(v: any): v is (...args: any[]) => any {
         const t = Object.prototype.toString.call(v);
-        return t == "[object Function]" || t == "[object AsyncFunction]" || t == "[object GeneratorFunction]";
+        return t === "[object Function]" || t === "[object AsyncFunction]" || t === "[object GeneratorFunction]";
     }
     // #endregion
 
     // #region Number
+    static isInteger(v: any) {
+        return Number.isInteger(v);
+    }
     static isNaN(v: any) {
         return Number.isNaN(v);
     }
@@ -47,32 +45,20 @@ class Type {
     static isExtendedRealNumber(v: any) {
         return Type.isNumber(v) && !Type.isNaN(v);
     }
-    static isInteger(v: any) {
-        return Number.isInteger(v);
-    }
     static isPositiveNumber(v: any) {
         return Type.isRealNumber(v) && v > 0;
     }
     static isNegativeNumber(v: any) {
         return Type.isRealNumber(v) && v < 0;
     }
+    static isNonNegativeNumber(v: any) {
+        return Type.isRealNumber(v) && !(v < 0);
+    }
+    static isNonPositiveNumber(v: any) {
+        return Type.isRealNumber(v) && !(v > 0);
+    }
     static isNonZeroNumber(v: any) {
         return Type.isRealNumber(v) && v !== 0;
-    }
-    // #endregion
-
-    // #region Array structures
-    static isCoordinates(v: any): v is [number, number] {
-        return Type.isArray(v) && v.length === 2 && Coordinates.isValid(v as [number, number]);
-    }
-    static isSize(v: any): v is [number, number] {
-        return Type.isArray(v) && v.length === 2 && Size.isValid(v as [number, number]);
-    }
-    static isBox(v: any): v is [number, number, number, number] {
-        return Type.isArray(v) && v.length === 4 && Box.isValid(v as [number, number, number, number]);
-    }
-    static isComplex(v: any): v is [number, number] {
-        return Type.isArray(v) && v.length === 2 && Complex.isValid(v as [number, number]);
     }
     // #endregion
 }

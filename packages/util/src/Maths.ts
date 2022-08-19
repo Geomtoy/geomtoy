@@ -1,3 +1,4 @@
+import Type from "./Type";
 import type { StaticClass } from "./types";
 
 interface Maths extends StaticClass {}
@@ -37,34 +38,27 @@ class Maths {
      * The square root of 2.
      */
     static SQRT2 = Math.SQRT2;
-    /**
-     * The tangent of the half of $\pi$, it is considered to be the maximum absolute value returned by a trigonometric functions to avoid `Infinity`.
-     * @note New added constant, not existed in `Math`.
-     */
-    static TAN90 = Math.tan(Math.PI / 2); //16331239353195370
-    /**
-     * The cotangent of the half of $\pi$, it is considered to be the minium absolute value returned by a trigonometric functions to avoid 0.
-     * @note New added constant, not existed in `Math`.
-     */
-    static COT90 = 1 / Math.tan(Math.PI / 2); // 6.123233995736766e-17, and it is less than Number.EPSILON(=2.220446049250313e-16)
+    // /**
+    //  * The tangent of the half of $\pi$, it is considered to be the maximum absolute value returned by a trigonometric functions to avoid `Infinity`.
+    //  * @note New added constant, not existed in `Math`.
+    //  */
+    // static TAN90 = Math.tan(Math.PI / 2); //16331239353195370
+    // /**
+    //  * The cotangent of the half of $\pi$, it is considered to be the minium absolute value returned by a trigonometric functions to avoid 0.
+    //  * @note New added constant, not existed in `Math`.
+    //  */
+    // static COT90 = 1 / Math.tan(Math.PI / 2); // 6.123233995736766e-17, and it is less than Number.EPSILON(=2.220446049250313e-16)
 
     // #region Trigonometric functions
     /*
     @see https://en.wikipedia.org/wiki/Trigonometric_functions
     */
-    /* 
-    Because `Infinity` cannot participate in calculations well, and we need to implement
-    the secant, cosecant, cotangent functions works on 0, `Math.PI / 2` etc.,
-    so we must keep or make sure the sine, cosine, tangent functions
-    to return approximate values when the return value is 0.
-     */
     /**
      * Returns the sine of number `n`.
-     * @note Modified method, different from the one in `Math`.
      * @param n
      */
     static sin(n: number) {
-        return n === 0 ? Maths.COT90 : Math.sin(n);
+        return Math.sin(n);
     }
     /**
      * Returns the cosine of number `n`.
@@ -95,7 +89,7 @@ class Maths {
      * @param n
      */
     static tan(n: number) {
-        return n === 0 ? Maths.COT90 : Math.tan(n);
+        return Math.tan(n);
     }
     /**
      * Returns the cotangent of number `n`.
@@ -262,7 +256,8 @@ class Maths {
     So when `y` and `x` are respectively equal to `±0`, `Math.atan2` need return `NaN`(even there is an underflow).
     */
     static atan2(y: number, x: number) {
-        return y === 0 && x === 0 ? NaN : Math.atan2(y, x);
+        // return y === 0 && x === 0 ? NaN : Math.atan2(y, x);
+        return Math.atan2(y, x);
     }
     /**
      * Returns the absolute value of number `n`.
@@ -446,9 +441,9 @@ class Maths {
         b = Math.abs(b);
         if (b > a) [a, b] = [b, a];
         while (true) {
-            if (b == 0) return a;
+            if (b === 0) return a;
             a %= b;
-            if (a == 0) return b;
+            if (a === 0) return b;
             b %= a;
         }
     }
@@ -465,6 +460,12 @@ class Maths {
         return (a * b) / Maths.gcd(a, b);
     }
 
+    static sum(...values: number[]) {
+        return values.reduce((acc, v) => acc + v, 0);
+    }
+    static avg(...values: number[]) {
+        return Maths.sum(...values) / values.length;
+    }
     /**
      * Lerp between `u` and `v` by `t`.
      * @note New added method, not existed in `Math`.
@@ -488,24 +489,26 @@ class Maths {
      * @param u
      */
     static clamp(n: number, l: number, u: number): number {
+        if (l > u) [l, u] = [u, l];
         return n < l ? l : n > u ? u : n;
     }
     /**
      * Whether number `n` between the lower bound `l` and the upper bound `u`.
      * @note New added method, not existed in `Math`.
      * @summary
-     * - If `lOpen` = `false`, `uOpen` = `false`, then the interval to check is $(l,u)$.
-     * - If `lOpen` = `true`, `uOpen` = `false`, then the interval to check is $[l,u)$.
-     * - If `lOpen` = `false`, `uOpen` = `true`, then the interval to check is $(l,u]$.
-     * - If `lOpen` = `true`, `uOpen` = `true`, then the interval to check is $[l,u]$.
+     * Interval description:
+     * - If `lowerOpen` = `false`, `upperOpen` = `false`, then the interval to check is $[l,u]$.
+     * - If `lowerOpen` = `true`, `upperOpen` = `false`, then the interval to check is $(l,u]$.
+     * - If `lowerOpen` = `false`, `upperOpen` = `true`, then the interval to check is $[l,u)$.
+     * - If `lowerOpen` = `true`, `upperOpen` = `true`, then the interval to check is $(l,u)$.
      * @param n
      * @param l
      * @param u
-     * @param lOpen
-     * @param uOpen
      */
-    static between(n: number, l: number, u: number, lOpen = false, uOpen = false) {
-        return (lOpen ? n > l : n >= l) && (uOpen ? n < u : n <= u);
+    static between(n: number, l: number, u: number, lowerOpen: boolean, upperOpen: boolean, epsilon: number) {
+        if (l > u) [l, u] = [u, l];
+        if (Number.isNaN(n)) return false;
+        return (lowerOpen ? Maths.greaterThan(n, l, epsilon) : !Maths.lessThan(n, l, epsilon)) && (upperOpen ? Maths.lessThan(n, u, epsilon) : !Maths.greaterThan(n, u, epsilon));
     }
     /**
      * Floating point number comparison reference
@@ -527,6 +530,8 @@ class Maths {
      * @param epsilon
      */
     static equalTo(a: number, b: number, epsilon: number) {
+        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a === b;
+        if (Number.isNaN(a) || Number.isNaN(b)) return false;
         if (Math.abs(a - b) <= epsilon) return true;
         return Math.abs(a - b) <= (Math.abs(a) < Math.abs(b) ? Math.abs(b) : Math.abs(a)) * epsilon;
     }
@@ -538,6 +543,8 @@ class Maths {
      * @param epsilon
      */
     static greaterThan(a: number, b: number, epsilon: number) {
+        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a > b;
+        if (Number.isNaN(a) || Number.isNaN(b)) return false;
         if (Math.abs(a - b) <= epsilon) return false;
         return a - b > (Math.abs(a) < Math.abs(b) ? Math.abs(b) : Math.abs(a)) * epsilon;
     }
@@ -549,6 +556,8 @@ class Maths {
      * @param epsilon
      */
     static lessThan(a: number, b: number, epsilon: number) {
+        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a < b;
+        if (Number.isNaN(a) || Number.isNaN(b)) return false;
         if (Math.abs(b - a) <= epsilon) return false;
         return b - a > (Math.abs(a) < Math.abs(b) ? Math.abs(b) : Math.abs(a)) * epsilon;
     }
@@ -564,6 +573,8 @@ class Maths {
      * @param epsilon
      */
     static compare(a: number, b: number, epsilon: number) {
+        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a < b ? -1 : a > b ? 1 : 0;
+        if (Number.isNaN(a) || Number.isNaN(b)) return NaN;
         let d = a - b,
             r = Math.abs(a) < Math.abs(b) ? Math.abs(b) : Math.abs(a);
         return Math.abs(d) <= epsilon ? 0 : d > r * epsilon ? 1 : -d > r * epsilon ? -1 : 0;

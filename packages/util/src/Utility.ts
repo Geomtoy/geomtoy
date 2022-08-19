@@ -9,15 +9,9 @@ class Utility {
         throw new Error("[G]`Utility` can not used as a constructor.");
     }
     static isEqualTo(value: any, otherValue: any) {
-        if (value === otherValue) return true;
-
-        if (Type.isString(value) || Type.isBoolean(value) || Type.isNumber(value)) {
-            if (value !== otherValue) return false;
-        }
-        if (Type.isPlainObject(value) || Type.isArray(value)) {
-            if (!Utility.compareDeep(value, otherValue)) return false;
-        }
-        return true;
+        if (Object.is(value, otherValue)) return true;
+        if (Type.isPlainObject(value) || Type.isArray(value)) return Utility.compareDeep(value, otherValue);
+        return false;
     }
     static compareDeep(object1: { [key: string]: any }, object2: { [key: string]: any }) {
         function compareDeepInner(object1: any, object2: any): boolean {
@@ -28,26 +22,28 @@ class Utility {
                 if (Object.keys(object1).length !== Object.keys(object2).length) return false;
                 return Object.keys(object1).every(key => compareDeepInner(object1[key], object2[key]));
             } else {
-                return object1 === object2;
+                return Object.is(object1, object2);
             }
         }
         return compareDeepInner(object1, object2);
     }
     static assignDeep(target: { [key: string]: any }, source: any) {
         function assignDeepInner(target: { [key: string]: any }, source: any) {
-            Object.keys(target).forEach((key: keyof typeof target) => {
-                if (Type.isPlainObject(target[key])) {
-                    if (Type.isPlainObject(source[key])) {
-                        assignDeepInner(target[key], source[key]);
+            Object.keys(target)
+                .concat(Object.keys(source))
+                .forEach(key => {
+                    if (Type.isPlainObject(target[key])) {
+                        if (Type.isPlainObject(source[key])) {
+                            assignDeepInner(target[key], source[key]);
+                        }
+                    } else if (Type.isArray(target[key])) {
+                        if (Type.isArray(source[key])) {
+                            assignDeepInner(target[key], source[key]);
+                        }
+                    } else {
+                        if (source[key] !== undefined) target[key] = source[key];
                     }
-                } else if (Type.isArray(target[key])) {
-                    if (Type.isArray(source[key])) {
-                        assignDeepInner(target[key], source[key]);
-                    }
-                } else {
-                    if (source[key] !== undefined) target[key] = source[key];
-                }
-            });
+                });
         }
         assignDeepInner(target, source);
     }
@@ -103,45 +99,69 @@ class Utility {
         n += n < 0 ? l : 0;
         return n < 0 || n >= l ? undefined : arr[n];
     }
-    /**
-     * Sort the array `arr` in `order` by value of array elements.
-     * @note This method mutates `arr`.
-     * @param arr
-     * @param order default `asc`
-     */
-    static sort<T>(arr: T[], order?: "asc" | "desc"): T[];
-    /**
-     * Sort the array `arr` in `orders` by the result of iteratees `iters` executed on array elements.
-     * @note This method mutates `arr`.
-     * @param arr
-     * @param iters
-     * @param orders default [`asc`, ...]
-     */
-    static sort<T>(arr: T[], iters: ((elem: any) => any)[], orders?: ("asc" | "desc")[]): T[];
-    static sort<T>(arr: T[], a1?: any, a2?: any) {
-        let iters: ((elem: any) => any)[];
-        let orders: ("asc" | "desc")[];
 
-        if (!Type.isArray(a1)) {
-            iters = [(elem: any) => elem];
-            orders = [a1];
-        } else {
-            iters = a1;
-            orders = a2 || [];
-        }
-        const iterLength = iters.length;
+    /**
+     * Sort the array `arr` with a `comparator` in ASC order. This method returns the same array passed in.
+     * @note This method mutates `arr`.
+     * @param arr
+     * @param comparator
+     */
+    static sortWith<T>(arr: T[], comparator: (a: T, b: T) => number) {
+        return arr.sort(comparator);
+    }
+    /**
+     * Sort the array `arr` by mapped values with `mappers` in ASC order. This method returns the same array passed in.
+     * @note This method mutates `arr`.
+     * @param arr
+     * @param mappers
+     */
+    static sortBy<T>(arr: T[], mappers: ((elem: T) => any)[]) {
+        const mapperLength = mappers.length;
+
         return arr.sort((a, b) => {
-            for (let i = 0; i < iterLength; i++) {
-                const order = orders[i] || "asc";
-                const ia = iters[i](a);
-                const ib = iters[i](b);
-                if (ia === ib) continue;
-                if (ia < ib) return order === "asc" ? -1 : 1;
-                if (ia > ib) return order === "desc" ? -1 : 1;
+            for (let i = 0; i < mapperLength; i++) {
+                const ma = mappers[i](a);
+                const mb = mappers[i](b);
+                if (ma === mb) continue;
+                if (ma < mb) return -1;
+                if (ma > mb) return 1;
             }
             return 0;
         });
     }
+    /**
+     * Returns a new array with unique values. Deduplication by comparing the values with `comparator`.
+     * @param arr
+     * @param comparator
+     * @returns
+     */
+    static uniqWith<T>(arr: T[], comparator: (a: T, b: T) => boolean) {
+        const uniques: T[] = [];
+        arr.forEach(elem => {
+            if (uniques.findIndex(u => comparator(elem, u)) === -1) {
+                uniques.push(elem);
+            }
+        });
+        return uniques;
+    }
+    /**
+     * Returns a new array with unique values. Deduplication by comparing the values returned by `mapper`.
+     * @param arr
+     * @param mapper
+     */
+    static uniqBy<T>(arr: T[], mapper: (elem: T) => any) {
+        const uniques: T[] = [];
+        const mappedUniques: any[] = [];
+        arr.forEach(elem => {
+            const mapped = mapper(elem);
+            if (!mappedUniques.includes(mapped)) {
+                uniques.push(elem);
+                mappedUniques.push(mapped);
+            }
+        });
+        return uniques;
+    }
+
     // #endregion
     static lowerFirstChar(s: string) {
         return s.charAt(0).toLowerCase() + s.slice(1);
@@ -155,7 +175,7 @@ class Utility {
     static uuid() {
         return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
             const r = (Maths.random() * 16) | 0;
-            const v = c == "x" ? r : (r & 0x3) | 0x8;
+            const v = c === "x" ? r : (r & 0x3) | 0x8;
             return v.toString(16);
         });
     }

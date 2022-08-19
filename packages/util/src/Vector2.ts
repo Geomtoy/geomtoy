@@ -28,6 +28,13 @@ class Vector2 {
         return [m * Maths.cos(a), m * Maths.sin(a)] as [number, number];
     }
     /**
+     * Whether vector2 `v` is zero.
+     * @param v
+     */
+    static isZero(v: [number, number]) {
+        return v[0] === 0 && v[1] === 0;
+    }
+    /**
      * Returns the angle of vector2 `v`.
      * @param v
      */
@@ -35,11 +42,12 @@ class Vector2 {
         return Maths.atan2(v[1], v[0]);
     }
     /**
-     * Returns the angle from `u` to `v`.
+     * Returns the angle from `u` to `v` in the interval $(-\pi,\pi]$.
      * @param u
      * @param v
      */
     static angleTo(u: [number, number], v: [number, number]) {
+        if (Vector2.isZero(u) || Vector2.isZero(v)) return NaN;
         return (Vector2.cross(u, v) >= 0 ? 1 : -1) * Maths.acos(Vector2.dot(u, v) / (Vector2.magnitude(u) * Vector2.magnitude(v)));
     }
     /**
@@ -79,7 +87,7 @@ class Vector2 {
     /**
      * Returns a new vector2 of vector2 `v` multiplying a scalar `s`.
      * @param v
-     * @param scalar
+     * @param s
      */
     static scalarMultiply(v: [number, number], s: number) {
         return [v[0] * s, v[1] * s] as [number, number];
@@ -102,7 +110,7 @@ class Vector2 {
     static cross(u: [number, number], v: [number, number]) {
         const [ux, uy] = u;
         const [vx, vy] = v;
-        return ux * vy - uy * vx;
+        return ux * vy - vx * uy;
     }
     /**
      * Returns the projection(a vector2) of vector2 `u` on vector2 `v`.
@@ -112,7 +120,7 @@ class Vector2 {
     static project(u: [number, number], v: [number, number]) {
         const [ux, uy] = u;
         const [vx, vy] = v;
-        if (vx === 0 && vy === 0) return [NaN, NaN] as [number, number];
+        if (Vector2.isZero(v)) return [NaN, NaN] as [number, number];
         return Vector2.scalarMultiply([vx, vy], Vector2.dot([ux, uy], [vx, vy]) / Vector2.dot([vx, vy], [vx, vy]));
     }
     /**
@@ -125,22 +133,11 @@ class Vector2 {
         return Vector2.add(Vector2.scalarMultiply(u, 1 - t), Vector2.scalarMultiply(v, t));
     }
     /**
-     * Returns a new vector2 of the spherical linear interpolation between vector2 `u` and vector2 `v`.
-     * @param u
-     * @param v
-     * @param t
-     */
-    static slerp(u: [number, number], v: [number, number], t: number) {
-        const theta = Maths.abs(Vector2.angleTo(u, v)); // the included angle, not rotation angle with sign
-        const sinTheta = Maths.sin(theta);
-        const [t1, t2] = [Maths.sin((1 - t) * theta) / sinTheta, Maths.sin(t * theta) / sinTheta];
-        return Vector2.add(Vector2.scalarMultiply(u, t1), Vector2.scalarMultiply(v, t2));
-    }
-    /**
      * Returns the unit vector2 in the direction of vector2 `v`.
      * @param v
      */
     static normalize(v: [number, number]) {
+        if (Vector2.isZero(v)) return [0, 0] as [number, number];
         const magnitude = Vector2.magnitude(v);
         return [v[0] / magnitude, v[1] / magnitude] as [number, number];
     }

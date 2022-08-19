@@ -10,6 +10,30 @@ class Box {
         throw new Error("[G]`Box` can not used as a constructor.");
     }
     /**
+     * Whether `v` is a valid box.
+     * @param v
+     */
+    static is(v: any): v is [number, number, number, number] {
+        return Type.isArray(v) && v.length === 4 && v.every(elem => Type.isRealNumber(elem)) && v[2] >= 0 && v[3] >= 0;
+    }
+    static isZero(v: [number, number, number, number]): v is [number, number, number, number] {
+        return Type.isArray(v) && v.length === 4 && v.every(elem => Type.isRealNumber(elem)) && (v[2] === 0 || v[3] === 0);
+    }
+    static isNoneZero(v: [number, number, number, number]): v is [number, number, number, number] {
+        return Type.isArray(v) && v.length === 4 && v.every(elem => Type.isRealNumber(elem)) && v[2] > 0 && v[3] > 0;
+    }
+
+    /**
+     * Whether box `b1` is equal to box `b2`. If `epsilon` is not `undefined`, make an approximate comparison.
+     * @param b1
+     * @param b2
+     * @param epsilon
+     */
+    static isEqualTo(b1: [number, number, number, number], b2: [number, number, number, number], epsilon?: number) {
+        if (epsilon === undefined) return b1[0] === b2[0] && b1[1] === b2[1] && b1[2] === b2[2] && b1[3] === b2[3];
+        return Maths.equalTo(b1[0], b2[0], epsilon) && Maths.equalTo(b1[1], b2[1], epsilon) && Maths.equalTo(b1[2], b2[2], epsilon) && Maths.equalTo(b1[3], b2[3], epsilon);
+    }
+    /**
      * The `x` parameter of box `b`.
      * @param b
      * @param x
@@ -21,7 +45,7 @@ class Box {
     /**
      * The `y` parameter of box `b`.
      * @param b
-     * @param x
+     * @param y
      */
     static y(b: [number, number, number, number], y?: number) {
         if (y !== undefined) b[1] = y;
@@ -46,67 +70,32 @@ class Box {
         return b[3];
     }
     /**
-     * The `minX` parameter of box `b`.
+     * Returns the minium x of box `b`.
      * @param b
-     * @param minX
      */
-    static minX(b: [number, number, number, number], minX?: number) {
-        return Box.x(b, minX);
+    static minX(b: [number, number, number, number]) {
+        return b[0];
     }
     /**
-     * The `minY` parameter of box `b`.
+     * Returns the minium y of box `b`.
      * @param b
-     * @param minY
      */
-    static minY(b: [number, number, number, number], minY?: number) {
-        return Box.y(b, minY);
+    static minY(b: [number, number, number, number]) {
+        return b[1];
     }
     /**
-     * The `maxX` parameter of box `b`.
+     * Returns the maximum x of box `b`.
      * @param b
-     * @param maxX
      */
-    static maxX(b: [number, number, number, number], maxX?: number) {
-        if (maxX !== undefined) b[2] = maxX - b[0];
+    static maxX(b: [number, number, number, number]) {
         return b[0] + b[2];
     }
     /**
-     * The `maxY` parameter of box `b`.
+     * Returns the maximum y of box `b`.
      * @param b
-     * @param maxY
      */
-    static maxY(b: [number, number, number, number], maxY?: number) {
-        if (maxY !== undefined) b[3] = maxY - b[1];
+    static maxY(b: [number, number, number, number]) {
         return b[1] + b[3];
-    }
-    /**
-     * Whether box `b` is valid.
-     * @param b
-     */
-    static isValid(b: [number, number, number, number]) {
-        return b.every(elem => Type.isRealNumber(elem)) && b[2] > 0 && b[3] > 0;
-    }
-    /**
-     * Whether box `b1` is equal to box `b2`. If `epsilon` is not `undefined`, make an approximate comparison.
-     * @param b1
-     * @param b2
-     * @param epsilon
-     */
-    static isEqualTo(b1: [number, number, number, number], b2: [number, number, number, number], epsilon?: number) {
-        if (epsilon === undefined) return b1[0] === b2[0] && b1[1] === b2[1] && b1[2] === b2[2] && b1[3] === b2[3];
-        return Maths.equalTo(b1[0], b2[0], epsilon) && Maths.equalTo(b1[1], b2[1], epsilon) && Maths.equalTo(b1[2], b2[2], epsilon) && Maths.equalTo(b1[3], b2[3], epsilon);
-    }
-    /**
-     * Returns a new box defined from coordinates `c1` to coordinates `c2`.
-     * @param c1
-     * @param c2
-     */
-    static from(c1: [number, number], c2: [number, number]) {
-        const minX = Maths.min(Coordinates.x(c1), Coordinates.x(c2));
-        const minY = Maths.min(Coordinates.y(c1), Coordinates.y(c2));
-        const width = Maths.abs(Coordinates.x(c1) - Coordinates.x(c2));
-        const height = Maths.abs(Coordinates.y(c1) - Coordinates.y(c2));
-        return [minX, minY, width, height] as [number, number, number, number];
     }
     /**
      * Returns the minium x and minium y coordinates of box `b`.
@@ -135,6 +124,67 @@ class Box {
      */
     static nm(b: [number, number, number, number]) {
         return [b[0], b[1] + b[3]] as [number, number];
+    }
+    /**
+     * Returns a new box defined from coordinates `c1` to coordinates `c2` as the diagonal.
+     * @param c1
+     * @param c2
+     */
+    static from(c1: [number, number], c2: [number, number]) {
+        const [x1, y1] = c1;
+        const [x2, y2] = c2;
+        const [minX, maxX] = [Maths.min(x1, x2), Maths.max(x1, x2)];
+        const [minY, maxY] = [Maths.min(y1, y2), Maths.max(y1, y2)];
+        return [minX, minY, maxX - minX, maxY - minY] as [number, number, number, number];
+    }
+    static coordinatesInside(c: [number, number], b: [number, number, number, number], epsilon?: number) {
+        if (Box.isZero(b)) return false;
+        const [minX, maxX, minY, maxY] = [Box.minX(b), Box.maxX(b), Box.minY(b), Box.maxY(b)];
+        const [x, y] = c;
+        if (epsilon === undefined) {
+            return x > minX && x < maxX && y > minY && y < maxY;
+        }
+        return Maths.between(x, minX, maxX, true, true, epsilon) && Maths.between(y, minY, maxY, true, true, epsilon);
+    }
+    static coordinatesOutside(c: [number, number], b: [number, number, number, number], epsilon?: number) {
+        if (Box.isZero(b)) return false;
+        const [minX, maxX, minY, maxY] = [Box.minX(b), Box.maxX(b), Box.minY(b), Box.maxY(b)];
+        const [x, y] = c;
+        if (epsilon === undefined) {
+            return x < minX || x > maxX || y < minY || y > maxY;
+        }
+        return Maths.lessThan(x, minX, epsilon) || Maths.greaterThan(x, maxX, epsilon) || Maths.lessThan(y, minY, epsilon) || Maths.greaterThan(y, maxY, epsilon);
+    }
+    static coordinatesOn(c: [number, number], b: [number, number, number, number], epsilon?: number) {
+        if (Box.isZero(b)) return false;
+        return !Box.coordinatesInside(c, b, epsilon) && !Box.coordinatesOutside(c, b, epsilon);
+    }
+
+    static extend(b1: [number, number, number, number], b2: [number, number, number, number]) {
+        const minX = Maths.min(Box.minX(b1), Box.minX(b2));
+        const minY = Maths.min(Box.minY(b1), Box.minY(b2));
+        const maxX = Maths.max(Box.maxX(b1), Box.maxX(b2));
+        const maxY = Maths.max(Box.maxY(b1), Box.maxY(b2));
+        return [minX, minY, maxX - minX, maxY - minY] as [number, number, number, number];
+    }
+    static collide(b1: [number, number, number, number], b2: [number, number, number, number], epsilon?: number) {
+        if (Box.isZero(b1) || Box.isZero(b2)) return false;
+        const [nx1, ny1, mx1, my1] = [b1[0], b1[1], b1[0] + b1[2], b1[1] + b1[3]];
+        const [nx2, ny2, mx2, my2] = [b2[0], b2[1], b2[0] + b2[2], b2[1] + b2[3]];
+        if (epsilon === undefined) {
+            if (nx1 <= mx2 && mx1 >= nx2 && ny1 <= my2 && my1 >= ny2) return true;
+            return false;
+        } else {
+            //prettier-ignore
+            if (
+                !Maths.greaterThan(nx1, mx2,epsilon) &&
+                !Maths.lessThan(mx1, nx2, epsilon) &&
+                !Maths.greaterThan(ny1, my2, epsilon) &&
+                !Maths.lessThan(my1, ny2, epsilon)
+            )  
+                return true;
+            return false;
+        }
     }
 }
 

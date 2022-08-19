@@ -1,7 +1,10 @@
+import Maths from "./Maths";
 import type { StaticClass } from "./types";
 
 interface Matrix2 extends StaticClass {}
 class Matrix2 {
+    //m00 m01
+    //m10 m11
     constructor() {
         throw new Error("[G]`Matrix2` can not used as a constructor.");
     }
@@ -20,11 +23,11 @@ class Matrix2 {
      */
     static dotVector2(m: [number, number, number, number], v: [number, number]) {
         const [m00, m01, m10, m11] = m;
-        const [x, y] = v;
+        const [v0, v1] = v;
 
-        //m00 m01  x  x  = m00*x+m01*y
-        //m10 m11     y    m10*x+m11*y
-        return [m00 * x + m01 * y, m10 * x + m11 * y] as [number, number];
+        //m00 m01  *  v0  = m00*v0+m01*v1
+        //m10 m11     v1    m10*v0+m11*v1
+        return [m00 * v0 + m01 * v1, m10 * v0 + m11 * v1] as [number, number];
     }
     /**
      * Returns a new matrix2 of matrix2 `m` multiplying a scalar `s`.
