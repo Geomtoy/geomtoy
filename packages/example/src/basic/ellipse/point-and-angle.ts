@@ -12,12 +12,12 @@ tpl.addSection(`Get point at angle`);
     const view = new View({}, new CanvasRenderer(card.canvas, {}, { density: 10, zoom: 0.5, yAxisPositiveOnBottom: false }));
     view.startResponsive((width, height) => (view.renderer.display.origin = [width / 2, height / 2]));
     view.startInteractive();
-    const ellipse = new Ellipse(0,0, 40,10,0)
-    const angle = Maths.PI/4
-    const point = ellipse.getPointAtAngle(angle)
+    const ellipse = new Ellipse(0, 0, 40, 10, 0);
+    const angle = Maths.PI / 4;
+    const point = ellipse.getPointAtAngle(angle);
 
     view.add(new ViewElement(ellipse, { interactable: true, ...lightStrokeFill("brown") }));
-    view.add(new ViewElement(point, { interactable: true, ...lightStrokeFill("brown") }));  
+    view.add(new ViewElement(point, { interactable: true, ...lightStrokeFill("brown") }));
 }
 
 tpl.addSection(`Get angle of point`);
@@ -26,7 +26,6 @@ tpl.addSection(`Get angle of point`);
     // const view = new View({}, new CanvasRenderer(card.canvas, {}, { density: 10, zoom: 0.1, yAxisPositiveOnBottom: false }));
     // view.startResponsive((width, height) => (view.renderer.display.origin = [width / 2, height / 2]));
     // view.startInteractive();
-
     // const point1 = new Point(-80, -80);
     // const point2 = new Point(-60, 30);
     // const point3 = new Point(10, 10);
@@ -35,7 +34,6 @@ tpl.addSection(`Get angle of point`);
     //     time1: 1 / 3,
     //     time2: 2 / 3
     // });
-
     // const bezier = new Bezier().bind(
     //     [
     //         [point1, "any"],
@@ -50,7 +48,6 @@ tpl.addSection(`Get angle of point`);
     //         if (b !== null) this.copyFrom(b);
     //     }
     // );
-
     // card.setDescription(
     //     codeHtml(`
     // const point1 = new Point(-80, -80);
@@ -61,7 +58,6 @@ tpl.addSection(`Get angle of point`);
     //     time1: 1 / 3,
     //     time2: 2 / 3
     // });
-
     // const bezier = new Bezier().bind(
     //     [
     //         [point1, "any"],
@@ -78,7 +74,6 @@ tpl.addSection(`Get angle of point`);
     // );
     // `)
     // );
-
     // // #region Pane
     // // @ts-ignore
     // const pane = new Tweakpane.Pane({ title: "Construction-2", container: card.pane });
@@ -90,12 +85,9 @@ tpl.addSection(`Get angle of point`);
     // point2.on("any", () => p2Input.refresh());
     // point3.on("any", () => p3Input.refresh());
     // point4.on("any", () => p4Input.refresh());
-
     // pane.addInput(times, "time1", { min: Number.EPSILON, max: 1 - Number.EPSILON });
     // pane.addInput(times, "time2", { min: Number.EPSILON, max: 1 - Number.EPSILON });
-
     // // #endregion
-
     // const shapeArray = new ShapeArray().bind([[bezier, "any"]], function ([e]) {
     //     this.shapes = [
     //         e.target.point1,
@@ -107,7 +99,6 @@ tpl.addSection(`Get angle of point`);
     //         new LineSegment(e.target.controlPoint2, e.target.point2)
     //     ];
     // });
-
     // view.add(new ViewElement(point1, { interactable: true, ...lightStrokeFill("brown") }));
     // view.add(new ViewElement(point2, { interactable: true, ...lightStrokeFill("brown") }));
     // view.add(new ViewElement(point3, { interactable: true, ...lightStrokeFill("brown") }));

@@ -21,14 +21,12 @@ tpl.title("Inversion: inverse of circle");
     const circle2 = new Circle().bind([[centerPoint2, "any"]], function ([e1]) {
         this.copyFrom(new Circle(e1.target, 15));
     });
- 
 
     const point = new Point(0, 0);
     // const inversion = new Inversion(point,2)
- 
+
     // const invCircle1 = inversion.invertCircle(circle1) as Circle
     // const invCircle2 = inversion.invertCircle(circle2) as Circle
- 
 
     // const lines = Circle.getCommonTangentLinesOfTwoCircles(invCircle1,invCircle2).map(v=>v[0])
 
@@ -52,12 +50,12 @@ tpl.title("Inversion: inverse of circle");
     view.add(new ViewElement(circle2, { interactable: false, ...strokeFill("blue") }));
     // view.add(new ViewElement(invCircle1, { interactable: false, ...lightStroke("red") }));
     // view.add(new ViewElement(invCircle2, { interactable: false, ...lightStroke("blue") }));
- 
+
     // view.add(new ViewElement(new Circle(inversion.centerCoordinates, inversion.power),{ interactable: true, ...lightStrokeFill("green") }))
 
     view.add(new ViewElement(point, { interactable: true, ...lightStrokeFill("teal") }), true);
     // view.add(new ViewGroupElement(lines, { interactable: false, ...lightStroke("gray") }));
-    view.add(new ViewGroupElement(circles.shapes, { interactable: false, ...lightStroke("brown") }),true);
+    view.add(new ViewGroupElement(circles.shapes, { interactable: false, ...lightStroke("brown") }), true);
 
     // view.add(new ViewElement(line, { interactable: false, ...thinStroke("purple") }));
     // view.add(new ViewElement(invLine, { interactable: false, ...thinStroke("purple") }));

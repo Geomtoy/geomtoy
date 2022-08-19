@@ -34,8 +34,8 @@ tpl.title("Arc extrema and bounding box");
     );
     const extremePoints = new ShapeArray().bind([[arc, "any"]], function ([e]) {
         this.shapes = e.target.extrema().map(([p]) => {
-            p.appearance = "plus"
-            return p
+            p.appearance = "plus";
+            return p;
         });
     });
     const boundingBoxRectangle = new Rectangle().bind([[arc, "any"]], function ([e]) {
@@ -91,6 +91,6 @@ tpl.title("Arc extrema and bounding box");
 
     view.add(new ViewElement(centerPoint, { interactable: true, ...lightStrokeFill("brown") }));
     view.add(new ViewElement(arc, { interactable: false, ...stroke("brown") }));
-    view.add(new ViewGroupElement(extremePoints.shapes, { interactable: false, ...stroke("green") }),true);
+    view.add(new ViewGroupElement(extremePoints.shapes, { interactable: false, ...stroke("green") }), true);
     view.add(new ViewElement(boundingBoxRectangle, { interactable: false, ...stroke("cyan") }));
 }

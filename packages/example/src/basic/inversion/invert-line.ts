@@ -40,7 +40,6 @@ tpl.title("Inversion: inverse of line");
         }
     );
 
-    
     const lineInverse = new Arbitrary().bind(
         [
             [line, "any"],
