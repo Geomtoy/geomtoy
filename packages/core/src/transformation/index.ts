@@ -1,240 +1,360 @@
-import { Maths } from "@geomtoy/util";
-import { validAndWithSameOwner } from "../decorator";
-import Matrix from "../helper/Matrix";
+import { Assert, TransformationMatrix, Type, Utility } from "@geomtoy/util";
+import { validGeometryArguments } from "../misc/decor-valid-geometry";
+import EventObject from "../event/EventObject";
+import EventTarget from "../base/EventTarget";
+import type Point from "../geometries/basic/Point";
+import type Line from "../geometries/basic/Line";
+import { getCoordinates } from "../misc/point-like";
 
-import BaseObject from "../base/BaseObject";
-import Point from "../shapes/basic/Point";
-import Line from "../shapes/basic/Line";
+export default class Transformation extends EventTarget {
+    private _matrix = TransformationMatrix.identity();
 
-import type Geomtoy from "../geomtoy";
-
-class Transformation extends BaseObject {
-    private _matrix: Matrix = Matrix.identity;
-
-    constructor(owner: Geomtoy) {
-        super(owner);
-        return Object.seal(this);
+    constructor(matrix?: [a: number, b: number, c: number, d: number, e: number, f: number]) {
+        super();
+        if (matrix !== undefined) {
+            this.matrix = matrix;
+        }
     }
-    /**
-     * Get the matrix of transformation `this`.
-     */
-    get(): [number, number, number, number, number, number] {
-        let { a, b, c, d, e, f } = this._matrix;
-        return [a, b, c, d, e, f];
+    get events() {
+        return {
+            matrixChanged: "matrix" as const
+        };
     }
-    /**
-     * Set the matrix of transformation `this`.
-     */
-    set(value: [number, number, number, number, number, number]) {
-        let [a, b, c, d, e, f] = value;
-        Object.assign(this._matrix, { a, b, c, d, e, f });
-        return this;
+    private _setMatrix(value: [number, number, number, number, number, number]) {
+        if (!Utility.isEqualTo(this._matrix, value)) this.trigger_(EventObject.simple(this, this.events.matrixChanged));
+        Object.assign(this._matrix, value);
     }
+    get matrix() {
+        return [...this._matrix] as [a: number, b: number, c: number, d: number, e: number, f: number];
+    }
+    set matrix(value: [a: number, b: number, c: number, d: number, e: number, f: number]) {
+        const [a, b, c, d, e, f] = value;
+        Assert.isRealNumber(a, "a");
+        Assert.isRealNumber(b, "b");
+        Assert.isRealNumber(c, "c");
+        Assert.isRealNumber(d, "d");
+        Assert.isRealNumber(e, "e");
+        Assert.isRealNumber(f, "f");
+        this._setMatrix(value);
+    }
+
+    private _withPrePostTranslation(m: [number, number, number, number, number, number], x: number, y: number) {
+        return TransformationMatrix.multiply(TransformationMatrix.multiply(TransformationMatrix.translate(x, y), m), TransformationMatrix.translate(-x, -y));
+    }
+    private _postMultiply(m: [number, number, number, number, number, number]) {
+        return TransformationMatrix.multiply(this._matrix, m);
+    }
+    private _preMultiply(m: [number, number, number, number, number, number]) {
+        return TransformationMatrix.multiply(m, this._matrix);
+    }
+
     /**
      * Reset transformation `this` by the identity matrix.
      */
     reset() {
-        this._matrix.identitySelf();
+        this._setMatrix(TransformationMatrix.identity());
         return this;
     }
+    /**
+     * Invert transformation `this`.
+     */
     invert() {
-        this._matrix.invertSelf();
+        this._setMatrix(TransformationMatrix.invert(this._matrix));
         return this;
     }
     /**
-     * Add a translation to transformation `this`.
+     * Set transformation `this` to a translation with `offsetX` and `offsetY`.
+     * @param offsetX
+     * @param offsetY
      */
-    translate(offsetX: number, offsetY: number) {
-        let t = Object.assign(Matrix.identity, {
-            e: offsetX,
-            f: offsetY
-        }) as Matrix;
-        this._matrix.postMultiplySelf(t);
-        return this;
-    }
-    /**
-     * Add a rotation to transformation `this`.
-     */
-    rotate(angle: number, originPoint?: [number, number] | Point) {
-        const t = Object.assign(Matrix.identity, {
-            a: Maths.cos(angle),
-            b: -Maths.sin(angle),
-            c: Maths.sin(angle),
-            d: Maths.cos(angle)
-        });
-        if (originPoint !== undefined) {
-            const [x, y] = originPoint instanceof Point ? originPoint.coordinates : originPoint;
-            const preTranslation = Object.assign(Matrix.identity, { e: x, f: y });
-            const postTranslation = Object.assign(Matrix.identity, { e: -x, f: -y });
-            t.preMultiplySelf(preTranslation);
-            t.postMultiplySelf(postTranslation);
-        }
-        this._matrix.postMultiplySelf(t);
-        return this;
-    }
-    /**
-     * Add a scaling to transformation `this`.
-     */
-    scale(factorX: number, factorY: number, originPoint?: [number, number] | Point) {
-        const t = Object.assign(Matrix.identity, {
-            a: factorX,
-            d: factorY
-        });
-        if (originPoint !== undefined) {
-            const [x, y] = originPoint instanceof Point ? originPoint.coordinates : originPoint;
-            const preTranslation = Object.assign(Matrix.identity, { e: x, f: y });
-            const postTranslation = Object.assign(Matrix.identity, { e: -x, f: -y });
-            t.preMultiplySelf(preTranslation);
-            t.postMultiplySelf(postTranslation);
-        }
-        this._matrix.postMultiplySelf(t);
-        return this;
-    }
-    /**
-     * Add a skewing to transformation `this`.
-     */
-    skew(angleX: number, angleY: number, originPoint?: [number, number] | Point) {
-        const t = Object.assign(Matrix.identity, {
-            b: Maths.tan(angleY),
-            c: Maths.tan(angleX)
-        });
+    setTranslate(offsetX: number, offsetY: number) {
+        Assert.isRealNumber(offsetX, "offsetX");
+        Assert.isRealNumber(offsetY, "offsetY");
 
-        if (originPoint !== undefined) {
-            const [x, y] = originPoint instanceof Point ? originPoint.coordinates : originPoint;
-            const preTranslation = Object.assign(Matrix.identity, { e: x, f: y });
-            const postTranslation = Object.assign(Matrix.identity, { e: -x, f: -y });
-            t.preMultiplySelf(preTranslation);
-            t.postMultiplySelf(postTranslation);
-        }
-        this._matrix.postMultiplySelf(t);
-        return this;
+        this._setMatrix(TransformationMatrix.translate(offsetX, offsetY));
     }
     /**
-     * Add a line reflection to transformation `this`.
+     * Add a translation with `offsetX` and `offsetY` to transformation `this`.
+     * @param offsetX
+     * @param offsetY
+     * @param preOrPost `pre` = premultiply, `post` = postmultiply(default)
      */
-    lineReflect(line: Line) {
-        const [a, b, c] = line.getGeneralEquationParameters();
-        const denom = a ** 2 + b ** 2;
-        const t = Object.assign(Matrix.identity, {
-            a: (b ** 2 - a ** 2) / denom,
-            b: -(2 * a * b) / denom,
-            c: -(2 * a * b) / denom,
-            d: -(b ** 2 - a ** 2) / denom,
-            e: -(2 * a * c) / denom,
-            f: -(2 * b * c) / denom
-        }) as Matrix;
-        this._matrix.postMultiplySelf(t);
+    addTranslate(offsetX: number, offsetY: number, preOrPost: "pre" | "post" = "post") {
+        Assert.isRealNumber(offsetX, "offsetX");
+        Assert.isRealNumber(offsetY, "offsetY");
+
+        const m = TransformationMatrix.translate(offsetX, offsetY);
+        this._setMatrix(preOrPost === "post" ? this._postMultiply(m) : this._preMultiply(m));
         return this;
     }
     /**
-     * Add a point reflection to transformation `this`.
+     * Set transformation `this` to a rotation with `angle` and `originPoint`(if provided).
+     * @param angle
+     * @param originPoint
      */
-    pointReflect(point: [number, number] | Point) {
-        const [x, y] = point instanceof Point ? point.coordinates : point;
-        const t = Object.assign(Matrix.identity, {
-            a: -1,
-            d: -1,
-            e: 2 * x,
-            f: 2 * y
-        });
-        this._matrix.postMultiplySelf(t);
+    @validGeometryArguments
+    setRotate(angle: number, originPoint?: [number, number] | Point) {
+        Assert.isRealNumber(angle, "angle");
+
+        const [x, y] = originPoint == undefined ? [0, 0] : getCoordinates(originPoint, "originPoint");
+        let m = TransformationMatrix.rotate(angle);
+        if (x !== 0 || y !== 0) m = this._withPrePostTranslation(m, x, y);
+        this._setMatrix(m);
         return this;
     }
     /**
-     * Add a matrix transformation to transformation `this`.
+     * Add a rotation with `angle` and `originPoint`(if provided) to transformation `this`.
+     * @param angle
+     * @param originPoint
+     * @param preOrPost `pre` = premultiply, `post` = postmultiply(default)
      */
-    matrix(a: number, b: number, c: number, d: number, e: number, f: number) {
-        let t = new Matrix(a, b, c, d, e, f);
-        this._matrix.postMultiplySelf(t);
+    addRotate(angle: number, preOrPost?: "pre" | "post"): this;
+    addRotate(angle: number, originPoint?: [number, number] | Point, preOrPost?: "pre" | "post"): this;
+    @validGeometryArguments
+    addRotate(angle: number, a1?: any, a2?: any) {
+        Assert.isRealNumber(angle, "angle");
+
+        const preOrPost: "pre" | "post" = (Type.isString(a1) ? a1 : a2) || "post";
+        const [x, y] = (Type.isArray(a1) && getCoordinates(a1 as [number, number], "originPoint")) || [0, 0];
+        let m = TransformationMatrix.rotate(angle);
+        if (x !== 0 || y !== 0) m = this._withPrePostTranslation(m, x, y);
+        this._setMatrix(preOrPost === "post" ? this._postMultiply(m) : this._preMultiply(m));
         return this;
     }
     /**
-     * Transform `coordinates` with the current transformation
-     * to the coordinates corresponding to the identity matrix (the initial state without any transformation),
-     * and the visual position of the coordinates will not change.
+     * Set transformation `this` to a scaling with `factorX`, `factorY` and `originPoint`(if provided).
+     * @param factorX
+     * @param factorY
+     * @param originPoint
+     */
+    @validGeometryArguments
+    setScale(factorX: number, factorY: number, originPoint?: [number, number] | Point) {
+        Assert.isRealNumber(factorX, "factorX");
+        Assert.isRealNumber(factorY, "factorY");
+
+        const [x, y] = originPoint == undefined ? [0, 0] : getCoordinates(originPoint, "originPoint");
+        let m = TransformationMatrix.scale(factorX, factorY);
+        if (x !== 0 || y !== 0) m = this._withPrePostTranslation(m, x, y);
+        this._setMatrix(m);
+        return this;
+    }
+    /**
+     * Add a scaling with `factorX`, `factorY` and `originPoint`(if provided) to transformation `this`.
+     * @param factorX
+     * @param factorY
+     * @param originPoint
+     * @param preOrPost `pre` = premultiply, `post` = postmultiply(default)
+     */
+    addScale(factorX: number, factorY: number, preOrPost?: "pre" | "post"): this;
+    addScale(factorX: number, factorY: number, originPoint?: [number, number] | Point, preOrPost?: "pre" | "post"): this;
+    @validGeometryArguments
+    addScale(factorX: number, factorY: number, a2?: any, a3?: any) {
+        Assert.isRealNumber(factorX, "factorX");
+        Assert.isRealNumber(factorY, "factorY");
+
+        const preOrPost: "pre" | "post" = (Type.isString(a2) ? a2 : a3) || "post";
+        const [x, y] = (Type.isArray(a2) && getCoordinates(a2 as [number, number], "originPoint")) || [0, 0];
+        let m = TransformationMatrix.scale(factorX, factorY);
+        if (x !== 0 || y !== 0) m = this._withPrePostTranslation(m, x, y);
+        this._setMatrix(preOrPost === "post" ? this._postMultiply(m) : this._preMultiply(m));
+        return this;
+    }
+    /**
+     * Set transformation `this` to a skewing with `angleX`, `angleY` and `originPoint`(if provided).
+     * @param angleX
+     * @param angleY
+     * @param originPoint
+     */
+    @validGeometryArguments
+    setSkew(angleX: number, angleY: number, originPoint?: [number, number] | Point) {
+        Assert.isRealNumber(angleX, "angleX");
+        Assert.isRealNumber(angleY, "angleY");
+
+        const [x, y] = originPoint == undefined ? [0, 0] : getCoordinates(originPoint, "originPoint");
+        let m = TransformationMatrix.skew(angleX, angleY);
+        if (x !== 0 || y !== 0) m = this._withPrePostTranslation(m, x, y);
+        this._setMatrix(m);
+        return this;
+    }
+    /**
+     * Add a skewing with `angleX`, `angleY` and `originPoint`(if provided) to transformation `this`.
+     * @param angleX
+     * @param angleY
+     * @param originPoint
+     * @param preOrPost `pre` = premultiply, `post` = postmultiply(default)
+     */
+
+    addSkew(angleX: number, angleY: number, preOrPost?: "pre" | "post"): this;
+    addSkew(angleX: number, angleY: number, originPoint?: [number, number] | Point, preOrPost?: "pre" | "post"): this;
+    @validGeometryArguments
+    addSkew(angleX: number, angleY: number, a2?: any, a3?: any) {
+        Assert.isRealNumber(angleX, "angleX");
+        Assert.isRealNumber(angleY, "angleY");
+
+        const preOrPost: "pre" | "post" = (Type.isString(a2) ? a2 : a3) || "post";
+        const [x, y] = (Type.isArray(a2) && getCoordinates(a2 as [number, number], "originPoint")) || [0, 0];
+        let m = TransformationMatrix.skew(angleX, angleY);
+        if (x !== 0 || y !== 0) m = this._withPrePostTranslation(m, x, y);
+        this._setMatrix(preOrPost === "post" ? this._postMultiply(m) : this._preMultiply(m));
+        return this;
+    }
+
+    /**
+     * Set transformation `this` to a line reflection with `line`.
+     * @param line
+     */
+    @validGeometryArguments
+    setLineReflect(line: Line) {
+        const [a, b, c] = line.getImplicitFunctionCoefs();
+        this._setMatrix(TransformationMatrix.lineReflect(a, b, c));
+        return this;
+    }
+    /**
+     * Add a line reflection with `line` to transformation `this`.
+     * @param line
+     * @param preOrPost `pre` = premultiply, `post` = postmultiply(default)
+     */
+    @validGeometryArguments
+    addLineReflect(line: Line, preOrPost: "pre" | "post" = "post") {
+        const [a, b, c] = line.getImplicitFunctionCoefs();
+        const m = TransformationMatrix.lineReflect(a, b, c);
+        this._setMatrix(preOrPost === "post" ? this._postMultiply(m) : this._preMultiply(m));
+        return this;
+    }
+    /**
+     * Set transformation `this` to a point reflection with `point`.
+     * @param point
+     */
+    @validGeometryArguments
+    setPointReflect(point: [number, number] | Point) {
+        const [x, y] = getCoordinates(point, "point");
+        this._setMatrix(TransformationMatrix.pointReflect(x, y));
+        return this;
+    }
+    /**
+     * Add a point reflection with `point` to transformation `this`.
+     * @param point
+     * @param preOrPost `pre` = premultiply, `post` = postmultiply(default)
+     */
+    @validGeometryArguments
+    addPointReflect(point: [number, number] | Point, preOrPost: "pre" | "post" = "post") {
+        const [x, y] = getCoordinates(point, "point");
+        const m = TransformationMatrix.pointReflect(x, y);
+        this._setMatrix(preOrPost === "post" ? this._postMultiply(m) : this._preMultiply(m));
+        return this;
+    }
+    /**
+     * Set transformation `this` to a matrix.
+     * @param a
+     * @param b
+     * @param c
+     * @param d
+     * @param e
+     * @param f
+     */
+    setMatrix(a: number, b: number, c: number, d: number, e: number, f: number) {
+        Assert.isRealNumber(a, "a");
+        Assert.isRealNumber(b, "b");
+        Assert.isRealNumber(c, "c");
+        Assert.isRealNumber(d, "d");
+        Assert.isRealNumber(e, "e");
+        Assert.isRealNumber(f, "f");
+        this._setMatrix([a, b, c, d, e, f]);
+        return this;
+    }
+    /**
+     * Add a matrix to transformation `this`.
+     * @param a
+     * @param b
+     * @param c
+     * @param d
+     * @param e
+     * @param f
+     * @param preOrPost `pre` = premultiply, `post` = postmultiply(default)
+     */
+    addMatrix(a: number, b: number, c: number, d: number, e: number, f: number, preOrPost: "pre" | "post" = "post") {
+        Assert.isRealNumber(a, "a");
+        Assert.isRealNumber(b, "b");
+        Assert.isRealNumber(c, "c");
+        Assert.isRealNumber(d, "d");
+        Assert.isRealNumber(e, "e");
+        Assert.isRealNumber(f, "f");
+        const m = [a, b, c, d, e, f] as [number, number, number, number, number, number];
+        this._setMatrix(preOrPost === "post" ? this._postMultiply(m) : this._preMultiply(m));
+        return this;
+    }
+    /**
+     * Transform `coordinates` with the current transformation matrix
+     * to the coordinates corresponding to the identity matrix, or you can also say,
+     * map the `coordinates` of the local coordinate system to the upper tier coordinate system.
      */
     transformCoordinates(coordinates: [number, number]): [number, number] {
-        return this._matrix.transformCoordinates(coordinates);
+        return TransformationMatrix.transformCoordinates(this._matrix, coordinates);
     }
     /**
-     * Transform `coordinates` corresponding to the identity matrix (the initial state without any transformation)
-     * to the coordinates with the current transformation,
-     * and the visual position of the coordinates will not change.
+     * Transform `coordinates` corresponding to the identity matrix
+     * to the coordinates with the current transformation matrix, or you can also say,
+     * map the `coordinates` of upper tier coordinate system to the local coordinate system.
      */
     antitransformCoordinates(coordinates: [number, number]): [number, number] {
-        return this._matrix.antitransformCoordinates(coordinates);
+        return TransformationMatrix.antitransformCoordinates(this._matrix, coordinates);
     }
     /**
-     * Decompose transformation `this`.
+     * Decompose transformation `this` via the QR-like decomposition.
      * @description The return object (if named `o`) means transformation `this` is equal to
      * ```javascript
-     * this.reset().translate(o.translateX, o.translateY).rotate(o.rotation).scale(o.scaleX, o.scaleY).skew(o.skewX, o.skewY)
+     * this.reset()
+     *  .addTranslate(o.translate[0], o.translate[1])
+     *  .addRotate(o.rotate)
+     *  .addScale(o.scale[0], o.scale[1])
+     *  .addSkew(o.skew[0], o.skew[1])
      * ```
      * @see https://frederic-wang.fr/decomposition-of-2d-transform-matrices.html
      */
-    decompose() {
-        let [a, b, c, d, e, f] = this.get(),
-            determinant = a * d - b * c,
-            rotation = 0,
-            scaleX = 1,
-            scaleY = 1,
-            skewX = 0,
-            skewY = 0;
-        if (a !== 0 || b !== 0) {
-            let r = Maths.hypot(a, b);
-            rotation = b > 0 ? Maths.acos(a / r) : -Maths.acos(a / r);
-            scaleX = r;
-            scaleY = determinant / r;
-            skewX = Maths.atan((a * c + b * d) / r ** 2);
-        } else if (c !== 0 || d !== 0) {
-            let s = Maths.hypot(c, d);
-            rotation = Maths.PI / 2 - (d > 0 ? Maths.acos(-c / s) : -Maths.acos(c / s));
-            scaleX = determinant / s;
-            scaleY = s;
-            skewY = Maths.atan((a * c + b * d) / s ** 2); //always 0
-        } else {
-            scaleX = 0;
-            scaleY = 0;
-        }
-        return {
-            translateX: e,
-            translateY: f,
-            rotation,
-            scaleX,
-            scaleY,
-            skewX,
-            skewY
-        };
+    decomposeQr() {
+        return TransformationMatrix.decomposeQr(this._matrix);
+    }
+    /**
+     * Decompose transformation `this` via SVD-like decomposition.
+     * @description The return object (if named `o`) means transformation `this` is equal to
+     * ```javascript
+     * this.reset()
+     *  .addTranslate(o.translate[0], o.translate[1])
+     *  .addRotate(o.rotate1)
+     *  .addScale(o.scale[0], o.scale[1])
+     *  .addRotate(o.rotate2)
+     * ```
+     * @see https://scicomp.stackexchange.com/questions/8899/robust-algorithm-for-2-times-2-svd
+     * @see https://math.stackexchange.com/questions/861674/decompose-a-2d-arbitrary-transform-into-only-scaling-and-rotation
+     */
+    decomposeSvd() {
+        return TransformationMatrix.decomposeSvd(this._matrix);
+    }
+
+    span() {
+        return TransformationMatrix.span(this._matrix);
     }
     clone() {
-        return new Transformation(this.owner).set(this.get());
+        return new Transformation(this._matrix);
     }
-    copyFrom(from: BaseObject): this {
-        throw new Error("Method not implemented.");
+    copyFrom(transformation: Transformation | null) {
+        if (transformation === null) transformation = new Transformation();
+        this._setMatrix(transformation._matrix);
+        return this;
     }
+
     toString() {
-        let [a, b, c, d, e, f] = this.get();
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
-            `\ta: ${a}`,
-            `\tb: ${b}`,
-            `\tc: ${c}`,
-            `\td: ${d}`,
-            `\te: ${e}`,
-            `\tf: ${f}`,
-            `} owned by Geomtoy(${this.owner.uuid})`
+            `\tmatrix: [${this._matrix.join(" , ")}]`,
+            `}`
         ].join("\n")
     }
     toArray() {
-        return this.get();
+        return [this.matrix] as [[a: number, b: number, c: number, d: number, e: number, f: number]];
     }
     toObject() {
-        let [a, b, c, d, e, f] = this.get();
-        return { a, b, c, d, e, f };
+        return { matrix: this.matrix };
     }
 }
-
-validAndWithSameOwner(Transformation);
-
-export default Transformation;
