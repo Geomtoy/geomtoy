@@ -1,29 +1,34 @@
 import { Assert, Type, Utility } from "@geomtoy/util";
-import Shape from "../base/Shape";
-import Arc from "../geometries/basic/Arc";
-import Bezier from "../geometries/basic/Bezier";
-import LineSegment from "../geometries/basic/LineSegment";
-import Point from "../geometries/basic/Point";
-import QuadraticBezier from "../geometries/basic/QuadraticBezier";
-import GeometryGraphics from "../graphics/GeometryGraphics";
-import EventObject from "../event/EventObject";
+import Shape from "../../base/Shape";
+import Arc from "../basic/Arc";
+import Bezier from "../basic/Bezier";
+import LineSegment from "../basic/LineSegment";
+import Point from "../basic/Point";
+import QuadraticBezier from "../basic/QuadraticBezier";
+import GeometryGraphics from "../../graphics/GeometryGraphics";
+import EventObject from "../../event/EventObject";
 
-import Transformation from "../transformation";
-import { statedWithBoolean } from "../misc/decor-cache";
-import Path from "../geometries/advanced/Path";
-import Polygon from "../geometries/advanced/Polygon";
-import { FillRule, ViewportDescriptor } from "../types";
-import FillRuleHelper from "../helper/FillRuleHelper";
-import { getCoordinates } from "../misc/point-like";
+import Transformation from "../../transformation";
+import { statedWithBoolean } from "../../misc/decor-cache";
+import Path from "./Path";
+import Polygon from "./Polygon";
+import { FillRule, ViewportDescriptor } from "../../types";
+import FillRuleHelper from "../../helper/FillRuleHelper";
+import { getCoordinates } from "../../misc/point-like";
 
 export default class Compound extends Shape {
     private _fillRule: FillRule = "nonzero";
     private _items: (Path | Polygon)[] = [];
 
-    constructor(items?: (Path | Polygon)[]) {
+    constructor(items: (Path | Polygon)[], fillRule?: FillRule);
+    constructor(fillRule?: FillRule);
+    constructor(a0?: any, a1?: any) {
         super();
-        if (Type.isArray(items)) {
-            Object.assign(this, { items });
+        if (Type.isArray(a0)) {
+            Object.assign(this, { items: a0, fillRule: a1 ?? this._fillRule });
+        }
+        if (Type.isString(a0)) {
+            Object.assign(this, { fillRule: a0 });
         }
     }
 
@@ -137,7 +142,6 @@ export default class Compound extends Shape {
         this._items.unshift(item);
         return index;
     }
-
     /**
      * Whether point `point` is on compound `this`.
      * @note
@@ -211,7 +215,7 @@ export default class Compound extends Shape {
         this._setItems(shape.items);
         return this;
     }
-    toString(): string {
+    override toString(): string {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`, 

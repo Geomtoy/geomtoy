@@ -1,52 +1,50 @@
 import BaseObject from "../base/BaseObject";
-import Compound from "../collection/Compound";
-import Path from "../geometries/advanced/Path";
-import Polygon from "../geometries/advanced/Polygon";
-import Description from "./Description";
+import Compound from "../geometries/advanced/Compound";
 import SegmentChainer from "./SegmentChainer";
 import SegmentProcessor from "./SegmentProcessor";
 import SegmentSelector from "./SegmentSelector";
+import { type FillDescription, type AdvancedGeometry } from "../types";
 
 export default class BooleanOperation extends BaseObject {
     private _processor = new SegmentProcessor();
     private _selector = new SegmentSelector();
     private _chainer = new SegmentChainer();
 
-    describe(advancedGeometry: Polygon | Path) {
+    describe(advancedGeometry: AdvancedGeometry) {
         return this._processor.describe(advancedGeometry);
     }
-    combine(descriptionA: Description, descriptionB: Description) {
+    combine(descriptionA: FillDescription, descriptionB: FillDescription) {
         return this._processor.combine(descriptionA, descriptionB);
     }
-    selectSelfUnion(description: Description) {
+    selectSelfUnion(description: FillDescription) {
         return this._selector.selfUnion(description);
     }
-    selectUnion(description: Description) {
+    selectUnion(description: FillDescription) {
         return this._selector.union(description);
     }
-    selectIntersection(description: Description) {
+    selectIntersection(description: FillDescription) {
         return this._selector.intersection(description);
     }
-    selectDifference(description: Description) {
+    selectDifference(description: FillDescription) {
         return this._selector.difference(description);
     }
-    selectDifferenceRev(description: Description) {
+    selectDifferenceRev(description: FillDescription) {
         return this._selector.differenceRev(description);
     }
-    selectExclusion(description: Description) {
+    selectExclusion(description: FillDescription) {
         return this._selector.exclusion(description);
     }
-    chain(description: Description): Compound {
+    chain(description: FillDescription): Compound {
         return this._chainer.chain(description);
     }
-    selfUnion(advancedGeometry: Polygon | Path) {
+    selfUnion(advancedGeometry: AdvancedGeometry) {
         const desc = this.describe(advancedGeometry);
         const selected = this.selectSelfUnion(desc);
         return this._chainer.chain(selected);
     }
     private _operate(
-        advancedGeometry1: Polygon | Path,
-        advancedGeometry2: Polygon | Path,
+        advancedGeometry1: AdvancedGeometry,
+        advancedGeometry2: AdvancedGeometry,
         methodName: "selectUnion" | "selectIntersection" | "selectDifference" | "selectDifferenceRev" | "selectExclusion"
     ) {
         const desc1 = this.describe(advancedGeometry1);
@@ -55,29 +53,29 @@ export default class BooleanOperation extends BaseObject {
         const selected = this[methodName].call(this, combined);
         return this._chainer.chain(selected);
     }
-    union(advancedGeometry1: Polygon | Path, advancedGeometry2: Polygon | Path) {
+    union(advancedGeometry1: AdvancedGeometry, advancedGeometry2: AdvancedGeometry) {
         return this._operate(advancedGeometry1, advancedGeometry2, "selectUnion");
     }
-    intersect(advancedGeometry1: Polygon | Path, advancedGeometry2: Polygon | Path) {
+    intersect(advancedGeometry1: AdvancedGeometry, advancedGeometry2: AdvancedGeometry) {
         return this._operate(advancedGeometry1, advancedGeometry2, "selectIntersection");
     }
-    difference(advancedGeometry1: Polygon | Path, advancedGeometry2: Polygon | Path) {
+    difference(advancedGeometry1: AdvancedGeometry, advancedGeometry2: AdvancedGeometry) {
         return this._operate(advancedGeometry1, advancedGeometry2, "selectDifference");
     }
-    differenceRev(advancedGeometry1: Polygon | Path, advancedGeometry2: Polygon | Path) {
+    differenceRev(advancedGeometry1: AdvancedGeometry, advancedGeometry2: AdvancedGeometry) {
         return this._operate(advancedGeometry1, advancedGeometry2, "selectDifferenceRev");
     }
-    exclusion(advancedGeometry1: Polygon | Path, advancedGeometry2: Polygon | Path) {
+    exclusion(advancedGeometry1: AdvancedGeometry, advancedGeometry2: AdvancedGeometry) {
         return this._operate(advancedGeometry1, advancedGeometry2, "selectExclusion");
     }
 
-    toString(): string {
-        throw new Error("Method not implemented.");
+    override toString() {
+        return `${this.name}(${this.uuid})`;
     }
-    toArray(): any[] {
-        throw new Error("Method not implemented.");
+    override toArray() {
+        return [];
     }
-    toObject(): object {
-        throw new Error("Method not implemented.");
+    override toObject() {
+        return {};
     }
 }

@@ -1,4 +1,4 @@
-import FillRuleHelper from "./FillRuleHelper";
+import FillRuleHelper from "../helper/FillRuleHelper";
 
 import Arc from "../geometries/basic/Arc";
 import Bezier from "../geometries/basic/Bezier";
@@ -6,7 +6,7 @@ import LineSegment from "../geometries/basic/LineSegment";
 import QuadraticBezier from "../geometries/basic/QuadraticBezier";
 import type { FillRule } from "../types";
 
-export default class SegmentFillAnnotator {
+export default class SegmentFillAnnotation {
     thisFill = {
         positive: false,
         negative: false
@@ -33,14 +33,6 @@ export default class SegmentFillAnnotator {
         this.thatFill = this.annotate(segments, fillRule);
         return this;
     }
-    // use in the segment is from original `advancedGeometry`, but in some other structure,
-    // and use to
-    // 1. check the fill of sub advanced geometry(segment coincident is gone).
-    //      If the positive/negative fill of the segment in original `advancedGeometry` is different from the decomposed simple one:
-    //      i.e. A sub polygon it self is positive winding. but the `positiveFilling` of a whatever segment of it is false. It means
-    //      in original `advancedGeometry`, there is no fill in the positive direction of the segment, but sub polygon require fill in this
-    //      direction, so, the sub polygon is a hole(the area should be subtracted.)
-    // 2. check the fill of the segment, when do boolean operation(segment coincident is also gone).
     annotate(segments: (LineSegment | Arc | Bezier | QuadraticBezier)[] | { segment: LineSegment | Arc | Bezier | QuadraticBezier }[], fillRule: FillRule) {
         if (this.portionParams.length > 0) {
             throw new Error(`[G]You need to portion \`segment\`.`);
@@ -51,14 +43,20 @@ export default class SegmentFillAnnotator {
         };
 
         if (fillRule === "nonzero") {
-            const { positive: positiveWn, negative: negativeWn } = SegmentFillAnnotator._helper.windingNumbersOfSegment(this.segment, segments);
+            const { positive: positiveWn, negative: negativeWn } = SegmentFillAnnotation._helper.windingNumbersOfSegment(this.segment, segments);
             ret.positive = positiveWn !== 0;
             ret.negative = negativeWn !== 0;
         } else {
-            const { positive: positiveCn, negative: negativeCn } = SegmentFillAnnotator._helper.crossingNumbersOfSegment(this.segment, segments);
+            const { positive: positiveCn, negative: negativeCn } = SegmentFillAnnotation._helper.crossingNumbersOfSegment(this.segment, segments);
             ret.positive = positiveCn % 2 !== 0;
             ret.negative = negativeCn % 2 !== 0;
         }
+        return ret;
+    }
+    clone() {
+        const ret = new SegmentFillAnnotation(this.segment.clone());
+        ret.thisFill = { ...this.thisFill };
+        ret.thatFill = { ...this.thatFill };
         return ret;
     }
 }

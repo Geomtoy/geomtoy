@@ -29,7 +29,7 @@ import Vector from "./geometries/basic/Vector";
 
 import Path from "./geometries/advanced/Path";
 import Polygon from "./geometries/advanced/Polygon";
-import Compound from "./collection/Compound";
+import Compound from "./geometries/advanced/Compound";
 
 import Image from "./non-geometries/Image";
 import Text from "./non-geometries/Text";

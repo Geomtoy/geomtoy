@@ -41,15 +41,20 @@ export default class Path extends Geometry {
     private _closed: boolean = true;
     private _fillRule: FillRule = "nonzero";
 
-    constructor(commands: PathCommand[], closed?: boolean);
-    constructor(closed?: boolean);
-    constructor(a0?: any, a1?: any) {
+    constructor(commands: PathCommand[], closed?: boolean, fillRule?: FillRule);
+    constructor(closed: boolean, fillRule?: FillRule);
+    constructor(fillRule: FillRule);
+    constructor();
+    constructor(a0?: any, a1?: any, a2?: any) {
         super();
         if (Type.isArray(a0)) {
-            Object.assign(this, { commands: a0, closed: a1 ?? true });
+            Object.assign(this, { commands: a0, closed: a1 ?? this._closed, fillRule: a2 ?? this._fillRule });
         }
         if (Type.isBoolean(a0)) {
-            Object.assign(this, { closed: a0 ?? true });
+            Object.assign(this, { closed: a0, fillRule: a1 ?? this._fillRule });
+        }
+        if (Type.isString(a0)) {
+            Object.assign(this, { fillRule: a0 });
         }
     }
 
@@ -65,23 +70,26 @@ export default class Path extends Geometry {
     }
 
     private _setCommands(value: PathCommand[]) {
-        const commands = value;
+        const commands: Required<PathCommand>[] = value.map(cmd => {
+            return { ...cmd, uuid: Utility.uuid() };
+        });
+
         let firstMoveToIndex = commands.findIndex(cmd => cmd.type === PathCommandType.MoveTo);
-        let temp: PathCommand | null = null;
+        let temp: Required<PathCommand> | null = null;
 
         for (let i = 0, l = commands.length; i < l; i++) {
             const cmd = commands[i];
+
             if (i < firstMoveToIndex) {
                 if (temp === null) {
                     // this is the first command if we have `moveTo` but not first
-                    commands[i] = { ...Path.moveTo([cmd.x, cmd.y]) };
+                    commands[i] = { ...Path.moveTo([cmd.x, cmd.y]), uuid: cmd.uuid };
                     temp = cmd;
                 } else {
                     commands[i] = this._reverseCommand(temp, cmd.x, cmd.y);
                     temp = cmd;
                 }
             }
-
             if (i === firstMoveToIndex) {
                 if (temp !== null) {
                     commands[i] = this._reverseCommand(temp, cmd.x, cmd.y);
@@ -91,25 +99,23 @@ export default class Path extends Geometry {
             }
             if (i > firstMoveToIndex) {
                 if (firstMoveToIndex === -1) {
-                    // this is the first command if we do not have `moveTo`
-                    commands[i] = { ...Path.moveTo([cmd.x, cmd.y]) };
+                    // this is the first command if we do not have `moveTo
+                    commands[i] = { ...Path.moveTo([cmd.x, cmd.y]), uuid: cmd.uuid };
+                    firstMoveToIndex = 0;
                 } else {
                     if (cmd.type === PathCommandType.MoveTo) {
-                        commands[i] = { ...Path.lineTo([cmd.x, cmd.y]) };
+                        commands[i] = { ...Path.lineTo([cmd.x, cmd.y]), uuid: cmd.uuid };
                     }
                 }
             }
 
             if (commands[i].type === PathCommandType.ArcTo) {
-                commands[i] = this._correctAndSetRadii(commands[i] as PathArcToCommand, commands[i - 1]);
+                commands[i] = this._correctAndSetRadii(commands[i] as Required<PathArcToCommand>, commands[i - 1]);
             }
         }
 
         if (!Utility.isEqualTo(this._commands, value)) this.trigger_(EventObject.simple(this, this.events.commandsReset));
-
-        this._commands = value.map(cmd => {
-            return { ...cmd, uuid: Utility.uuid() };
-        });
+        this._commands = commands;
     }
     private _setClosed(value: boolean) {
         if (!Utility.isEqualTo(this._closed, value)) this.trigger_(EventObject.simple(this, this.events.closedChanged));

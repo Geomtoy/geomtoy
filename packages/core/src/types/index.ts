@@ -8,6 +8,9 @@ import type EventObject from "../event/EventObject";
 import type ImageGraphics from "../graphics/ImageGraphics";
 import type TextGraphics from "../graphics/TextGraphics";
 import type GeometryGraphics from "../graphics/GeometryGraphics";
+import Polygon from "../geometries/advanced/Polygon";
+import Compound from "../geometries/advanced/Compound";
+import SegmentFillAnnotation from "../boolean-operation/SegmentFillAnnotation";
 
 // #region Common
 export type Tail<A> = A extends [infer H, ...infer T] ? T : never;
@@ -469,6 +472,15 @@ export interface RotationFeaturedGeometry {
     set rotation(value: number);
 }
 
+// #endregion
+
+// #region BooleanOperation
+export type AdvancedGeometry = Polygon | Path | Compound;
+
+export interface FillDescription {
+    fillRule: FillRule;
+    annotations: SegmentFillAnnotation[];
+}
 // #endregion
 
 // #region Data

@@ -26,15 +26,20 @@ export default class Polygon extends Geometry {
     private _closed: boolean = true;
     private _fillRule: FillRule = "nonzero";
 
-    constructor(vertices: PolygonVertex[], closed?: boolean);
-    constructor(closed?: boolean);
-    constructor(a0?: any, a1?: any) {
+    constructor(vertices: PolygonVertex[], closed?: boolean, fillRule?: FillRule);
+    constructor(closed: boolean, fillRule?: FillRule);
+    constructor(fillRule: FillRule);
+    constructor();
+    constructor(a0?: any, a1?: any, a2?: any) {
         super();
         if (Type.isArray(a0)) {
-            Object.assign(this, { vertices: a0, closed: a1 ?? true });
+            Object.assign(this, { vertices: a0, closed: a1 ?? this._closed, fillRule: a2 ?? this._fillRule });
         }
         if (Type.isBoolean(a0)) {
-            Object.assign(this, { closed: a0 ?? true });
+            Object.assign(this, { closed: a0, fillRule: a1 ?? this._fillRule });
+        }
+        if (Type.isString(a0)) {
+            Object.assign(this, { fillRule: a0 });
         }
     }
 
@@ -177,7 +182,6 @@ export default class Polygon extends Geometry {
 
     private _isPolygonVertex(v: any): v is PolygonVertex {
         if (!Type.isPlainObject(v)) return false;
-        if (Object.keys(v).length !== 2) return false;
         if (!Type.isRealNumber(v.x)) return false;
         if (!Type.isRealNumber(v.y)) return false;
         return true;

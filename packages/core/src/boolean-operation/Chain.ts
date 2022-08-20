@@ -1,12 +1,13 @@
 import { Coordinates } from "@geomtoy/util";
 import { optioner } from "../geomtoy";
-import SegmentFillAnnotator from "../helper/SegmentFillAnnotator";
+import SegmentFillAnnotation from "./SegmentFillAnnotation";
 
 export default class Chain {
-    constructor(initElement: SegmentFillAnnotator) {
-        this.elements.push(initElement);
+    constructor(initialElement: SegmentFillAnnotation) {
+        this.elements.push(initialElement);
     }
-    elements: SegmentFillAnnotator[] = [];
+
+    elements: SegmentFillAnnotation[] = [];
 
     get headCoordinates() {
         return this.elements[0].segment.point1Coordinates;
@@ -14,12 +15,15 @@ export default class Chain {
     get tailCoordinates() {
         return this.elements[this.elements.length - 1].segment.point2Coordinates;
     }
+    get fill() {
+        return this.elements[0].thisFill;
+    }
 
     reverse() {
         this.elements.forEach(element => element.reverse());
         this.elements.reverse();
     }
-    addElement(element: SegmentFillAnnotator, atChainHead: boolean, atElementInit: boolean) {
+    addElement(element: SegmentFillAnnotation, atChainHead: boolean, atElementInit: boolean) {
         if (atChainHead === atElementInit) element.reverse();
         atChainHead ? this.elements.unshift(element) : this.elements.push(element);
     }
@@ -27,10 +31,9 @@ export default class Chain {
         const epsilon = optioner.options.epsilon;
         return Coordinates.isEqualTo(this.headCoordinates, this.tailCoordinates, epsilon);
     }
-
     concat(chain2: Chain, atChainHead1: boolean, atChainHead2: boolean) {
         const chain1 = this;
-        const chain1Longer = chain1.elements.length > chain2.elements.length; // reverse the shorter chain, if needed
+        const chain1Longer = chain1.elements.length > chain2.elements.length; // reverse the shorter chain for performance, if needed
 
         if (atChainHead1) {
             if (atChainHead2) {

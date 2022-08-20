@@ -1,28 +1,31 @@
-import SegmentFillAnnotator from "../helper/SegmentFillAnnotator";
-import Description from "./Description";
+import { type FillDescription } from "../types";
 
 export default class SegmentSelector {
-    private _select(description: Description, selection: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number]) {
-        const retDesc = new Description(description.fillRule);
-        description.annotators.forEach(sfa => {
+    private _select(description: FillDescription, selection: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number]) {
+        const retDesc: FillDescription = {
+            fillRule: description.fillRule,
+            annotations: []
+        };
+        description.annotations.forEach(sfa => {
             let index = 0;
             index += sfa.thisFill.positive ? 8 : 0;
             index += sfa.thisFill.negative ? 4 : 0;
             index += sfa.thatFill.positive ? 2 : 0;
             index += sfa.thatFill.negative ? 1 : 0;
             if (selection[index] !== 0) {
-                // copy the segment to the results, while also calculating the fill
-                const copy = new SegmentFillAnnotator(sfa.segment);
+                // We must have a deep copy here, or will mess up the combined description.
+                // This is the fill description of the boolean operation result geometry, so `thatFill` is gone, and `thisFill` will be set according to the operation.
+                const copy = sfa.clone();
                 copy.thisFill.positive = selection[index] === 1;
                 copy.thisFill.negative = selection[index] === -1;
                 copy.thatFill.positive = false;
                 copy.thatFill.negative = false;
-                retDesc.annotators.push(copy);
+                retDesc.annotations.push(copy);
             }
         });
         return retDesc;
     }
-    selfUnion(description: Description) {
+    selfUnion(description: FillDescription) {
         //      this
         //   pos    neg       keep?               value
         //    0      0   =>   no                  0
@@ -38,7 +41,7 @@ export default class SegmentSelector {
         ]);
     }
 
-    union(description: Description) {
+    union(description: FillDescription) {
         //      this          that
         //   pos    neg    pos    neg       keep?               value
         //    0      0      0      0   =>   no                  0
@@ -65,7 +68,7 @@ export default class SegmentSelector {
             0,  0,  0,  0
         ]);
     }
-    intersection(description: Description) {
+    intersection(description: FillDescription) {
         //      this          that
         //   pos    neg    pos    neg       keep?               value
         //    0      0      0      0   =>   no                  0
@@ -92,7 +95,7 @@ export default class SegmentSelector {
             0, -1,  1,  0
         ]);
     }
-    difference(description: Description) {
+    difference(description: FillDescription) {
         //      this          that
         //   pos    neg    pos    neg       keep?               value
         //    0      0      0      0   =>   no                  0
@@ -119,7 +122,7 @@ export default class SegmentSelector {
             0,  1, -1,  0
         ]);
     }
-    differenceRev(description: Description) {
+    differenceRev(description: FillDescription) {
         //      this          that
         //   pos    neg    pos    neg       keep?               value
         //    0      0      0      0   =>   no                  0
@@ -146,7 +149,7 @@ export default class SegmentSelector {
             0,  0,  0,  0
         ]);
     }
-    exclusion(description: Description) {
+    exclusion(description: FillDescription) {
         //      this          that
         //   pos    neg    pos    neg       keep?               value
         //    0      0      0      0   =>   no                  0
