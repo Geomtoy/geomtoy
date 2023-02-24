@@ -1,13 +1,13 @@
 import { Coordinates } from "@geomtoy/util";
 import { optioner } from "../geomtoy";
-import SegmentFillAnnotation from "./SegmentFillAnnotation";
+import SegmentWithFill from "./SegmentWithFill";
 
 export default class Chain {
-    constructor(initialElement: SegmentFillAnnotation) {
+    constructor(initialElement: SegmentWithFill) {
         this.elements.push(initialElement);
     }
 
-    elements: SegmentFillAnnotation[] = [];
+    elements: SegmentWithFill[] = [];
 
     get headCoordinates() {
         return this.elements[0].segment.point1Coordinates;
@@ -23,7 +23,7 @@ export default class Chain {
         this.elements.forEach(element => element.reverse());
         this.elements.reverse();
     }
-    addElement(element: SegmentFillAnnotation, atChainHead: boolean, atElementInit: boolean) {
+    addElement(element: SegmentWithFill, atChainHead: boolean, atElementInit: boolean) {
         if (atChainHead === atElementInit) element.reverse();
         atChainHead ? this.elements.unshift(element) : this.elements.push(element);
     }

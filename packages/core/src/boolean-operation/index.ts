@@ -1,81 +1,71 @@
 import BaseObject from "../base/BaseObject";
-import Compound from "../geometries/advanced/Compound";
-import SegmentChainer from "./SegmentChainer";
-import SegmentProcessor from "./SegmentProcessor";
-import SegmentSelector from "./SegmentSelector";
-import { type FillDescription, type AdvancedGeometry } from "../types";
+import Compound from "../geometries/general/Compound";
+import { type FillDescription, type GeneralGeometry } from "../types";
+import Chainer from "./Chainer";
+import NaiveProcessor from "./naive/Processor";
+import Selector from "./Selector";
+import SweepLineProcessor from "./sweep-line/Processor";
 
 export default class BooleanOperation extends BaseObject {
-    private _processor = new SegmentProcessor();
-    private _selector = new SegmentSelector();
-    private _chainer = new SegmentChainer();
+    private _processor;
+    private _selector = new Selector();
+    private _chainer = new Chainer();
 
-    describe(advancedGeometry: AdvancedGeometry) {
-        return this._processor.describe(advancedGeometry);
+    constructor(strategy: "naive" | "sweep-line" = "sweep-line") {
+        super();
+        this._processor = strategy === "naive" ? new NaiveProcessor() : new SweepLineProcessor();
     }
-    combine(descriptionA: FillDescription, descriptionB: FillDescription) {
-        return this._processor.combine(descriptionA, descriptionB);
+
+    describe(ggA: GeneralGeometry, ggB?: GeneralGeometry) {
+        return this._processor.describe(ggA, ggB);
     }
-    selectSelfUnion(description: FillDescription) {
-        return this._selector.selfUnion(description);
+
+    selectSelfUnion(desc: FillDescription) {
+        return this._selector.selfUnion(desc);
     }
-    selectUnion(description: FillDescription) {
-        return this._selector.union(description);
+    selectUnion(desc: FillDescription) {
+        return this._selector.union(desc);
     }
-    selectIntersection(description: FillDescription) {
-        return this._selector.intersection(description);
+    selectIntersection(desc: FillDescription) {
+        return this._selector.intersection(desc);
     }
-    selectDifference(description: FillDescription) {
-        return this._selector.difference(description);
+    selectDifference(desc: FillDescription) {
+        return this._selector.difference(desc);
     }
-    selectDifferenceRev(description: FillDescription) {
-        return this._selector.differenceRev(description);
+    selectDifferenceRev(desc: FillDescription) {
+        return this._selector.differenceRev(desc);
     }
-    selectExclusion(description: FillDescription) {
-        return this._selector.exclusion(description);
+    selectExclusion(desc: FillDescription) {
+        return this._selector.exclusion(desc);
     }
-    chain(description: FillDescription): Compound {
-        return this._chainer.chain(description);
+
+    chain(desc: FillDescription): Compound {
+        return this._chainer.chain(desc);
     }
-    selfUnion(advancedGeometry: AdvancedGeometry) {
-        const desc = this.describe(advancedGeometry);
+
+    private _operate(ggA: GeneralGeometry, ggB: GeneralGeometry, methodName: "selectUnion" | "selectIntersection" | "selectDifference" | "selectDifferenceRev" | "selectExclusion") {
+        const desc = this.describe(ggA, ggB);
+        const selected = this[methodName].call(this, desc);
+        return this._chainer.chain(selected);
+    }
+    selfUnion(gg: GeneralGeometry) {
+        const desc = this.describe(gg);
         const selected = this.selectSelfUnion(desc);
         return this._chainer.chain(selected);
     }
-    private _operate(
-        advancedGeometry1: AdvancedGeometry,
-        advancedGeometry2: AdvancedGeometry,
-        methodName: "selectUnion" | "selectIntersection" | "selectDifference" | "selectDifferenceRev" | "selectExclusion"
-    ) {
-        const desc1 = this.describe(advancedGeometry1);
-        const desc2 = this.describe(advancedGeometry2);
-        const combined = this.combine(desc1, desc2);
-        const selected = this[methodName].call(this, combined);
-        return this._chainer.chain(selected);
+    union(ggA: GeneralGeometry, ggB: GeneralGeometry) {
+        return this._operate(ggA, ggB, "selectUnion");
     }
-    union(advancedGeometry1: AdvancedGeometry, advancedGeometry2: AdvancedGeometry) {
-        return this._operate(advancedGeometry1, advancedGeometry2, "selectUnion");
+    intersection(ggA: GeneralGeometry, ggB: GeneralGeometry) {
+        return this._operate(ggA, ggB, "selectIntersection");
     }
-    intersect(advancedGeometry1: AdvancedGeometry, advancedGeometry2: AdvancedGeometry) {
-        return this._operate(advancedGeometry1, advancedGeometry2, "selectIntersection");
+    difference(ggA: GeneralGeometry, ggB: GeneralGeometry) {
+        return this._operate(ggA, ggB, "selectDifference");
     }
-    difference(advancedGeometry1: AdvancedGeometry, advancedGeometry2: AdvancedGeometry) {
-        return this._operate(advancedGeometry1, advancedGeometry2, "selectDifference");
+    differenceRev(ggA: GeneralGeometry, ggB: GeneralGeometry) {
+        return this._operate(ggA, ggB, "selectDifferenceRev");
     }
-    differenceRev(advancedGeometry1: AdvancedGeometry, advancedGeometry2: AdvancedGeometry) {
-        return this._operate(advancedGeometry1, advancedGeometry2, "selectDifferenceRev");
-    }
-    exclusion(advancedGeometry1: AdvancedGeometry, advancedGeometry2: AdvancedGeometry) {
-        return this._operate(advancedGeometry1, advancedGeometry2, "selectExclusion");
-    }
-
-    override toString() {
-        return `${this.name}(${this.uuid})`;
-    }
-    override toArray() {
-        return [];
-    }
-    override toObject() {
-        return {};
+    exclusion(ggA: GeneralGeometry, ggB: GeneralGeometry) {
+        return this._operate(ggA, ggB, "selectExclusion");
     }
 }

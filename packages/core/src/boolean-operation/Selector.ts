@@ -1,26 +1,26 @@
 import { type FillDescription } from "../types";
 
-export default class SegmentSelector {
+export default class Selector {
     private _select(description: FillDescription, selection: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number]) {
         const retDesc: FillDescription = {
             fillRule: description.fillRule,
-            annotations: []
+            segmentWithFills: []
         };
-        description.annotations.forEach(sfa => {
+        description.segmentWithFills.forEach(sf => {
             let index = 0;
-            index += sfa.thisFill.positive ? 8 : 0;
-            index += sfa.thisFill.negative ? 4 : 0;
-            index += sfa.thatFill.positive ? 2 : 0;
-            index += sfa.thatFill.negative ? 1 : 0;
+            index += sf.thisFill.positive ? 8 : 0;
+            index += sf.thisFill.negative ? 4 : 0;
+            index += sf.thatFill.positive ? 2 : 0;
+            index += sf.thatFill.negative ? 1 : 0;
             if (selection[index] !== 0) {
                 // We must have a deep copy here, or will mess up the combined description.
                 // This is the fill description of the boolean operation result geometry, so `thatFill` is gone, and `thisFill` will be set according to the operation.
-                const copy = sfa.clone();
+                const copy = sf.superClone();
                 copy.thisFill.positive = selection[index] === 1;
                 copy.thisFill.negative = selection[index] === -1;
                 copy.thatFill.positive = false;
                 copy.thatFill.negative = false;
-                retDesc.annotations.push(copy);
+                retDesc.segmentWithFills.push(copy);
             }
         });
         return retDesc;
@@ -40,7 +40,6 @@ export default class SegmentSelector {
             0,  0,  0,  0
         ]);
     }
-
     union(description: FillDescription) {
         //      this          that
         //   pos    neg    pos    neg       keep?               value

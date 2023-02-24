@@ -1,44 +1,22 @@
-import { Coordinates, Utility } from "@geomtoy/util";
-import Path from "../geometries/advanced/Path";
-import Polygon from "../geometries/advanced/Polygon";
-import Compound from "../geometries/advanced/Compound";
+import { Coordinates } from "@geomtoy/util";
 import Arc from "../geometries/basic/Arc";
 import Bezier from "../geometries/basic/Bezier";
 import LineSegment from "../geometries/basic/LineSegment";
 import QuadraticBezier from "../geometries/basic/QuadraticBezier";
+import Compound from "../geometries/general/Compound";
+import Path from "../geometries/general/Path";
+import Polygon from "../geometries/general/Polygon";
 import { optioner } from "../geomtoy";
-
 import Chain from "./Chain";
-import LineSegmentLineSegment from "../relationship/classes/LineSegmentLineSegment";
-import QuadraticBezierQuadraticBezier from "../relationship/classes/QuadraticBezierQuadraticBezier";
-import BezierBezier from "../relationship/classes/BezierBezier";
-import ArcArc from "../relationship/classes/ArcArc";
+
 import type { FillDescription, FillRule } from "../types";
 
-export default class SegmentChainer {
-    private _segmentEqual(segmentA: LineSegment | QuadraticBezier | Bezier | Arc, segmentB: LineSegment | QuadraticBezier | Bezier | Arc) {
-        if (segmentA instanceof LineSegment && segmentB instanceof LineSegment) {
-            return new LineSegmentLineSegment(segmentA, segmentB).equal()!;
-        }
-        if (segmentA instanceof QuadraticBezier && segmentB instanceof QuadraticBezier) {
-            return new QuadraticBezierQuadraticBezier(segmentA, segmentB).equal()!;
-        }
-        if (segmentA instanceof Bezier && segmentB instanceof Bezier) {
-            return new BezierBezier(segmentA, segmentB).equal()!;
-        }
-        if (segmentA instanceof Arc && segmentB instanceof Arc) {
-            return new ArcArc(segmentA, segmentB).equal()!;
-        }
-        return false;
-    }
-
+export default class Chainer {
     public chain(description: FillDescription) {
         const chains: Chain[] = [];
         const epsilon = optioner.options.epsilon;
-        // Remove the exact same element, this is very important, or our chains may not be closed.
-        description.annotations = Utility.uniqWith(description.annotations, (a, b) => this._segmentEqual(a.segment, b.segment));
 
-        for (const element of description.annotations) {
+        for (const element of description.segmentWithFills) {
             const init = element.segment.point1Coordinates;
             const term = element.segment.point2Coordinates;
             const elementFill = element.thisFill;
@@ -49,7 +27,7 @@ export default class SegmentChainer {
 
             // Note:
             // Although it seems that we are looking for chains for the element to link on,
-            // But the connotation is that we are looking for the fill area(describe by these segments) for the boolean operation result geometry,
+            // But the connotation is that we are looking for the fill regions(describe by these segments) for the boolean operation result geometry,
             // that is, where exactly does it have fill, this is more critical information.
 
             let initMatch: [chainIndex: number, atChainHead: boolean] | null = null;
@@ -125,11 +103,11 @@ export default class SegmentChainer {
             // - All the inner chains are negative winding as expected and from THE VIEW OF THE FINAL GEOMETRY(`fg`):
             //    - its negative fill=false
             //    - its positive fill=true
-            //    Because it is a hole(or hole-in-hole ...) of `fg`, so its interior is the exterior of `fg` and its exterior is the interior of `fg`.
+            //    Because it is a hole(or island-in-hole ...) of `fg`, so its interior is the exterior of `fg` and its exterior is the interior of `fg`.
             //
             // Then we were surprised to find that, whether it is the inner or outer chain, in the end we only need to make their fill to be:
             // positive fill=true and negative fill=false.
-            // And our `SegmentFillAnnotation` records everything, we just need reverse the chain whose positive fill is not true.
+            // And our `SegmentWithFill` records everything, we just need reverse the chain whose positive fill is not true.
 
             if (!chain.fill.positive) chain.reverse();
             if (!chain.isClosable()) {
