@@ -48,7 +48,6 @@ class Angle {
         const t = Angle.simplify(a);
         return t >= Maths.PI ? t - Maths.PI : t;
     }
-
     /**
      * Convert(with loss) angle `a` into $(-\frac{\pi}{2},\frac{\pi}{2}]$.
      * @param a
@@ -71,24 +70,50 @@ class Angle {
     static radianToDegree(a: number) {
         return a * Angle.RAD2DEG;
     }
-
-    static middle(s: number, e: number, positive: boolean) {
+    /**
+     * Get proportional(defined by `p`) intermediate angle between start angle `s` and end angle `e`.
+     * @param s -start angle
+     * @param e -end angle
+     * @param positive -positive rotation from `s` to `e` or not
+     * @param p -proportion
+     */
+    static fraction(s: number, e: number, positive: boolean, p: number) {
+        Maths.clamp(p, 0, 1);
         s = Angle.simplify(s);
         e = Angle.simplify(e);
         if (!positive) [s, e] = [e, s];
         if (s > e) {
             const da = Maths.PI * 2 - (s - e);
-            return Angle.simplify(s + da / 2);
+            return Angle.simplify(s + da * p);
         } else {
             const da = e - s;
-            return Angle.simplify(s + da / 2);
+            return Angle.simplify(s + da * p);
         }
     }
-
+    /**
+     *
+     * @param a
+     * @param b
+     * @param epsilon
+     * @returns
+     */
     static equalTo(a: number, b: number, epsilon?: number) {
-        if (epsilon === undefined) return Angle.simplify(a) === Angle.simplify(b);
-        return Maths.equalTo(Angle.simplify(a), Angle.simplify(b), epsilon);
+        a = Angle.simplify(a);
+        b = Angle.simplify(b);
+        if (epsilon === undefined) return a === b;
+        return Maths.equalTo(a, b, epsilon);
     }
+
+    static clamp(a: number, s: number, e: number, positive: boolean) {
+        a = Angle.simplify(a);
+        s = Angle.simplify(s);
+        e = Angle.simplify(e);
+        if (!positive) [s, e] = [e, s];
+        if (a < s) return s;
+        if (a > e) return e;
+        return a;
+    }
+
     static between(a: number, s: number, e: number, positive: boolean, startOpen: boolean, endOpen: boolean, epsilon?: number) {
         a = Angle.simplify(a);
         s = Angle.simplify(s);

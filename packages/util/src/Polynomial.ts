@@ -3,7 +3,6 @@ import Complex from "./Complex";
 import Type from "./Type";
 import Utility from "./Utility";
 import type { StaticClass, RootMultiplicity } from "./types";
-import rpoly from "./Polynomial.rpoly";
 import { solve } from "./Polynomial.root";
 
 const MAX_ROOT_FINDING_DEGREE = 100;
@@ -377,49 +376,27 @@ class Polynomial {
      * Returns roots of polynomial equation `p`.
      * @note
      * - Only polynomials with degree up to 100 are supported.
-     * - The returned roots are all present in complex number.
+     * - Complex roots are present [number, number].
      * - The number of roots is the degree of `p`, in other words, the multiplicity of roots is considered.
      * - The returned roots are ordered as follows:
      *      - Pure real roots come first, then the complex roots.
      *      - For pure real roots, the one smaller comes first.
      *      - For complex roots, the one with smaller real part comes first. If the real part is equal, the one with smaller imaginary part comes first.
      *      - Complex roots come in conjugate pairs.
+     * - If the degree of polynomial of `p` is 0, `[]` will be returned
      * @throws
-     * - If the degree of polynomial of `p` is 0, an `Error` will be thrown.
      * - If the degree of polynomial of `p` is greater than 100, an `Error` will be thrown.
      * @param p
      */
-    // static roots(p: number[]) {
-    //     p = Polynomial.standardize(p); // rpoly require a standardized polynomial without leading 0
-
-    //     const d = Polynomial.degree(p);
-    //     if (d < 1) {
-    //         console.warn("[G]The constant or zero polynomial does not have discrete roots.");
-    //         return [];
-    //     }
-    //     if (d > MAX_ROOT_FINDING_DEGREE) {
-    //         throw new Error(`[G]The degree of polynomial \`p\` should not be greater than ${MAX_ROOT_FINDING_DEGREE}.`);
-    //     }
-
-    //     const reals: number[] = [];
-    //     const imags: number[] = [];
-    //     rpoly(p, reals, imags);
-
-    //     const roots: (number | [number, number])[] = [];
-    //     for (let i = 0; i < d; i++) {
-    //         if (imags[i] === 0) roots.push(reals[i]);
-    //         else roots.push([reals[i], imags[i]]);
-    //     }
-    //     console.log(roots)
-    //     return Utility.sortBy(roots, [Complex.is, r => r]);
-    // }
-
     static roots(p: number[]) {
         if (Polynomial.isConstant(p)) {
             console.warn("[G]Constant or zero polynomial does not have discrete roots.");
             return [];
         }
         const d = Polynomial.degree(p);
+        if (d > MAX_ROOT_FINDING_DEGREE) {
+            throw new Error(`[G]The degree of polynomial \`p\` should not be greater than ${MAX_ROOT_FINDING_DEGREE}.`);
+        }
         const solutions: [number, number][] = [];
         solve(p, solutions);
         const roots: (number | [number, number])[] = [];

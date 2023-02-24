@@ -1,7 +1,7 @@
-import Type from "./Type";
 import type { StaticClass } from "./types";
 
 interface Maths extends StaticClass {}
+
 class Maths {
     constructor() {
         throw new Error("[G]`Maths` can not used as a constructor.");
@@ -38,6 +38,17 @@ class Maths {
      * The square root of 2.
      */
     static SQRT2 = Math.SQRT2;
+    /**
+     * Unit roundoff
+     * @see https://en.wikipedia.org/wiki/Machine_epsilon
+     * "The IEEE standard does not define the terms machine epsilon and unit roundoff, so differing definitions of these terms are in use, which can cause some confusion."
+     * "This alternative definition is much more widespread outside academia: machine epsilon is the difference between 1 and the next larger floating point number."
+     * "By this definition, $\varepsilon$ equals the value of the unit in the last place relative to 1, i.e. $b^{-(p-1)}$ (where $b$ is the base of the floating point system and $p$ is the precision)
+     * and the unit roundoff is $u=\varepsilon/2$, assuming round-to-nearest mode, and $u=\varepsilon$, assuming round-by-chop."
+     * @see https://en.wikipedia.org/wiki/Round-off_error#Roundoff_error_under_different_rounding_rules
+     * "There are two common rounding rules, round-by-chop and round-to-nearest. The IEEE standard uses round-to-nearest."
+     */
+    static U = Number.EPSILON / 2;
     // /**
     //  * The tangent of the half of $\pi$, it is considered to be the maximum absolute value returned by a trigonometric functions to avoid `Infinity`.
     //  * @note New added constant, not existed in `Math`.
@@ -515,11 +526,14 @@ class Maths {
      * @see https://www.learncpp.com/cpp-tutorial/relational-operators-and-floating-point-comparisons/comment-page-2/
      * @see https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
      * @see http://stackoverflow.com/questions/17333/most-effective-way-for-float-and-double-comparison
+     * @see https://realtimecollisiondetection.net/blog/?p=89
      *
      * Conclusion:
-     * - Set parameter `epsilon`.
-     * - First use `absEpsilon = epsilon`, check whether the difference between the two numbers is very close to 0(`[-epsilon, epsilon]`), mainly deal with the difference of the decimal part.
-     * - Then calculate `relEpsilon` according to the magnitude: `relEpsilon = magnitude * epsilon`, mainly dealing with the difference of the integer part.
+     * - Set parameter `epsilon` as `absEpsilon` and as `relEpsilon`, `absEpsilon` === `relEpsilon`.
+     * - Use `absEpsilon = epsilon`, check whether the difference between the two numbers is very close to 0(`[-epsilon, epsilon]`), mainly deal with the difference of the decimal part.
+     * - Use `relEpsilon = magnitude * epsilon`, mainly dealing with the difference of the integer part.
+     * - If two numbers is two small, if they are `equal`, but may not past the `relEpsilon` test.
+     * - If two numbers is two large, if they are `equal`, but may not past the `absEpsilon` test.
      */
 
     /**
@@ -530,10 +544,11 @@ class Maths {
      * @param epsilon
      */
     static equalTo(a: number, b: number, epsilon: number) {
-        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a === b;
         if (Number.isNaN(a) || Number.isNaN(b)) return false;
-        if (Math.abs(a - b) <= epsilon) return true;
-        return Math.abs(a - b) <= (Math.abs(a) < Math.abs(b) ? Math.abs(b) : Math.abs(a)) * epsilon;
+        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a === b;
+        const diffAbs = Math.abs(a - b);
+        if (diffAbs <= epsilon) return true;
+        return diffAbs < Math.max(Math.abs(a), Math.abs(b)) * epsilon;
     }
     /**
      * Whether number `a` is definitely greater than number `b`.
@@ -543,10 +558,11 @@ class Maths {
      * @param epsilon
      */
     static greaterThan(a: number, b: number, epsilon: number) {
-        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a > b;
         if (Number.isNaN(a) || Number.isNaN(b)) return false;
-        if (Math.abs(a - b) <= epsilon) return false;
-        return a - b > (Math.abs(a) < Math.abs(b) ? Math.abs(b) : Math.abs(a)) * epsilon;
+        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a > b;
+        const diff = a - b;
+        if (Math.abs(diff) <= epsilon) return false;
+        return a - b > Math.max(Math.abs(a), Math.abs(b)) * epsilon;
     }
     /**
      * Whether number `a` is definitely less than number `b`.
@@ -556,10 +572,11 @@ class Maths {
      * @param epsilon
      */
     static lessThan(a: number, b: number, epsilon: number) {
-        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a < b;
         if (Number.isNaN(a) || Number.isNaN(b)) return false;
-        if (Math.abs(b - a) <= epsilon) return false;
-        return b - a > (Math.abs(a) < Math.abs(b) ? Math.abs(b) : Math.abs(a)) * epsilon;
+        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a < b;
+        const diff = b - a;
+        if (Math.abs(diff) <= epsilon) return false;
+        return b - a > Math.max(Math.abs(a), Math.abs(b)) * epsilon;
     }
     /**
      * Approximately compare number `a` and number `b` with `epsilon`.
@@ -573,11 +590,11 @@ class Maths {
      * @param epsilon
      */
     static compare(a: number, b: number, epsilon: number) {
-        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a < b ? -1 : a > b ? 1 : 0;
         if (Number.isNaN(a) || Number.isNaN(b)) return NaN;
-        let d = a - b,
-            r = Math.abs(a) < Math.abs(b) ? Math.abs(b) : Math.abs(a);
-        return Math.abs(d) <= epsilon ? 0 : d > r * epsilon ? 1 : -d > r * epsilon ? -1 : 0;
+        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a < b ? -1 : a > b ? 1 : 0;
+        const diff = a - b;
+        const r = Math.max(Math.abs(a), Math.abs(b)) * epsilon;
+        return Math.abs(diff) <= epsilon ? 0 : diff > r ? 1 : -diff > r ? -1 : 0;
     }
 }
 export default Maths;
