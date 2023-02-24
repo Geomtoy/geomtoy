@@ -1,18 +1,19 @@
-import { Assert, Type, Utility, Coordinates, Vector2, Maths, Box } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-valid-geometry";
+import { Assert, Box, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import { optioner } from "../../geomtoy";
+import { validGeometry } from "../../misc/decor-geometry";
 
 import Geometry from "../../base/Geometry";
-import Vector from "./Vector";
-import Ray from "./Ray";
-import LineSegment from "./LineSegment";
-import Line from "./Line";
-import GeometryGraphics from "../../graphics/GeometryGraphics";
-import EventObject from "../../event/EventObject";
-import type { PointAppearance, ViewportDescriptor } from "../../types";
+import EventSourceObject from "../../event/EventSourceObject";
+import Graphics from "../../graphics";
 import PointGraphics from "../../helper/PointGraphics";
-import Transformation from "../../transformation";
+import { stated } from "../../misc/decor-cache";
 import { getCoordinates } from "../../misc/point-like";
+import Transformation from "../../transformation";
+import type { PointAppearance, ViewportDescriptor } from "../../types";
+import Line from "./Line";
+import LineSegment from "./LineSegment";
+import Ray from "./Ray";
+import Vector from "./Vector";
 
 @validGeometry
 export default class Point extends Geometry {
@@ -33,19 +34,17 @@ export default class Point extends Geometry {
         }
     }
 
-    get events() {
-        return {
-            xChanged: "x" as const,
-            yChanged: "y" as const
-        };
-    }
+    static override events = {
+        xChanged: "x" as const,
+        yChanged: "y" as const
+    };
 
     private _setX(value: number) {
-        if (!Utility.isEqualTo(this._x, value)) this.trigger_(EventObject.simple(this, this.events.xChanged));
+        if (!Utility.isEqualTo(this._x, value)) this.trigger_(new EventSourceObject(this, Point.events.xChanged));
         this._x = value;
     }
     private _setY(value: number) {
-        if (!Utility.isEqualTo(this._y, value)) this.trigger_(EventObject.simple(this, this.events.yChanged));
+        if (!Utility.isEqualTo(this._y, value)) this.trigger_(new EventSourceObject(this, Point.events.yChanged));
         this._y = value;
     }
 
@@ -72,7 +71,8 @@ export default class Point extends Geometry {
         this._setY(Coordinates.y(value));
     }
 
-    protected initialized_() {
+    @stated
+    initialized() {
         // prettier-ignore
         return (
             !Number.isNaN(this._x) &&
@@ -280,9 +280,10 @@ export default class Point extends Geometry {
     }
 
     getGraphics(viewport: ViewportDescriptor) {
-        const g = new GeometryGraphics();
-        if (!this.initialized_()) return g;
-        g.append(new PointGraphics(this.coordinates, this.appearance).getGraphics(viewport));
+        if (!this.initialized()) return new Graphics();
+
+        const g = new Graphics();
+        g.concat(new PointGraphics(this.coordinates, this.appearance).getGraphics(viewport));
         return g;
     }
 
@@ -299,7 +300,7 @@ export default class Point extends Geometry {
         this._setY(shape._y);
         return this;
     }
-    toString() {
+    override toString() {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
@@ -307,11 +308,5 @@ export default class Point extends Geometry {
             `\ty: ${this.y}`,
             `}`
         ].join("\n")
-    }
-    toArray() {
-        return [this.x, this.y];
-    }
-    toObject() {
-        return { x: this.x, y: this.y };
     }
 }

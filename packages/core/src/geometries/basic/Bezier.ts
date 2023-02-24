@@ -1,22 +1,23 @@
-import { Assert, Type, Utility, Coordinates, Vector2, Polynomial, Matrix4, Maths, Matrix2, RootMultiplicity } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-valid-geometry";
+import { Assert, Coordinates, Maths, Matrix2, Matrix4, Polynomial, RootMultiplicity, Type, Utility, Vector2 } from "@geomtoy/util";
+import { validGeometry } from "../../misc/decor-geometry";
 
 import Geometry from "../../base/Geometry";
-import Point from "./Point";
-import Vector from "./Vector";
+import EventSourceObject from "../../event/EventSourceObject";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
+import Path from "../general/Path";
 import Circle from "./Circle";
 import LineSegment from "./LineSegment";
-import Path from "../advanced/Path";
-import GeometryGraphics from "../../graphics/GeometryGraphics";
-import EventObject from "../../event/EventObject";
+import Point from "./Point";
+import Vector from "./Vector";
 
-import type Transformation from "../../transformation";
-import type { FiniteOpenGeometry } from "../../types";
-import QuadraticBezier from "./QuadraticBezier";
-import { stated } from "../../misc/decor-cache";
 import { optioner } from "../../geomtoy";
-import { getCoordinates } from "../../misc/point-like";
+import Graphics from "../../graphics";
 import { bezierLength } from "../../misc/bezier-length";
+import { stated, statedWithBoolean } from "../../misc/decor-cache";
+import { getCoordinates } from "../../misc/point-like";
+import type Transformation from "../../transformation";
+import type { FiniteOpenGeometry, ViewportDescriptor } from "../../types";
+import QuadraticBezier from "./QuadraticBezier";
 
 @validGeometry
 export default class Bezier extends Geometry implements FiniteOpenGeometry {
@@ -46,49 +47,47 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         }
     }
 
-    get events() {
-        return {
-            point1XChanged: "point1X" as const,
-            point1YChanged: "point1Y" as const,
-            point2XChanged: "point2X" as const,
-            point2YChanged: "point2Y" as const,
-            controlPoint1XChanged: "controlPoint1X" as const,
-            controlPoint1YChanged: "controlPoint1Y" as const,
-            controlPoint2XChanged: "controlPoint2X" as const,
-            controlPoint2YChanged: "controlPoint2Y" as const
-        };
-    }
+    static override events = {
+        point1XChanged: "point1X" as const,
+        point1YChanged: "point1Y" as const,
+        point2XChanged: "point2X" as const,
+        point2YChanged: "point2Y" as const,
+        controlPoint1XChanged: "controlPoint1X" as const,
+        controlPoint1YChanged: "controlPoint1Y" as const,
+        controlPoint2XChanged: "controlPoint2X" as const,
+        controlPoint2YChanged: "controlPoint2Y" as const
+    };
 
     private _setPoint1X(value: number) {
-        if (!Utility.isEqualTo(this._point1X, value)) this.trigger_(EventObject.simple(this, this.events.point1XChanged));
+        if (!Utility.isEqualTo(this._point1X, value)) this.trigger_(new EventSourceObject(this, Bezier.events.point1XChanged));
         this._point1X = value;
     }
     private _setPoint1Y(value: number) {
-        if (!Utility.isEqualTo(this._point1Y, value)) this.trigger_(EventObject.simple(this, this.events.point1YChanged));
+        if (!Utility.isEqualTo(this._point1Y, value)) this.trigger_(new EventSourceObject(this, Bezier.events.point1YChanged));
         this._point1Y = value;
     }
     private _setPoint2X(value: number) {
-        if (!Utility.isEqualTo(this._point2X, value)) this.trigger_(EventObject.simple(this, this.events.point2XChanged));
+        if (!Utility.isEqualTo(this._point2X, value)) this.trigger_(new EventSourceObject(this, Bezier.events.point2XChanged));
         this._point2X = value;
     }
     private _setPoint2Y(value: number) {
-        if (!Utility.isEqualTo(this._point2Y, value)) this.trigger_(EventObject.simple(this, this.events.point2YChanged));
+        if (!Utility.isEqualTo(this._point2Y, value)) this.trigger_(new EventSourceObject(this, Bezier.events.point2YChanged));
         this._point2Y = value;
     }
     private _setControlPoint1X(value: number) {
-        if (!Utility.isEqualTo(this._controlPoint1X, value)) this.trigger_(EventObject.simple(this, this.events.controlPoint1XChanged));
+        if (!Utility.isEqualTo(this._controlPoint1X, value)) this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint1XChanged));
         this._controlPoint1X = value;
     }
     private _setControlPoint1Y(value: number) {
-        if (!Utility.isEqualTo(this._controlPoint1Y, value)) this.trigger_(EventObject.simple(this, this.events.controlPoint1YChanged));
+        if (!Utility.isEqualTo(this._controlPoint1Y, value)) this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint1YChanged));
         this._controlPoint1Y = value;
     }
     private _setControlPoint2X(value: number) {
-        if (!Utility.isEqualTo(this._controlPoint2X, value)) this.trigger_(EventObject.simple(this, this.events.controlPoint2XChanged));
+        if (!Utility.isEqualTo(this._controlPoint2X, value)) this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint2XChanged));
         this._controlPoint2X = value;
     }
     private _setControlPoint2Y(value: number) {
-        if (!Utility.isEqualTo(this._controlPoint2Y, value)) this.trigger_(EventObject.simple(this, this.events.controlPoint2YChanged));
+        if (!Utility.isEqualTo(this._controlPoint2Y, value)) this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint2YChanged));
         this._controlPoint2Y = value;
     }
 
@@ -209,7 +208,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         this._setControlPoint2Y(value.y);
     }
 
-    protected initialized_() {
+    initialized() {
         return (
             !Number.isNaN(this._point1X) &&
             !Number.isNaN(this._point1Y) &&
@@ -248,32 +247,40 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
             .map(t => [new Point(this.getParametricEquation()(t)), t] as [point: Point, time: number]);
     }
 
-    @stated
-    dimensionallyDegenerate() {
-        if (!this.initialized_()) return true;
-        const { point1Coordinates: c1, point2Coordinates: c2, controlPoint1Coordinates: cpc1, controlPoint2Coordinates: cpc2 } = this;
-        const epsilon = optioner.options.epsilon;
-        return Coordinates.isEqualTo(c1, c2, epsilon) && Coordinates.isEqualTo(cpc1, cpc2, epsilon) && Coordinates.isEqualTo(c1, cpc1, epsilon);
-    }
-    @stated
-    nonDimensionallyDegenerate(): this | QuadraticBezier | LineSegment {
-        const { point1Coordinates: c1, point2Coordinates: c2, controlPoint1Coordinates: cpc1 } = this;
+    degenerate(check: false): Point | QuadraticBezier | LineSegment | this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
 
-        const [[cx3, cx2], [cy3, cy2]] = this.getPolynomial();
+        const {
+            point1Coordinates: [x0, y0],
+            controlPoint1Coordinates: [x1, y1],
+            controlPoint2Coordinates: [x2, y2],
+            point2Coordinates: [x3, y3]
+        } = this;
+        const m = [-1, 3, -3, 1, 3, -6, 3, 0, -3, 3, 0, 0, 1, 0, 0, 0] as Parameters<typeof Matrix4.dotVector4>[0];
+        const [cx3, cx2, cx1] = Matrix4.dotVector4(m, [x0, x1, x2, x3]);
+        const [cy3, cy2, cy1] = Matrix4.dotVector4(m, [y0, y1, y2, y3]);
+        const eps = optioner.options.coefficientEpsilon;
+        const d3 = Maths.equalTo(cx3, 0, eps) && Maths.equalTo(cy3, 0, eps);
+        const d2 = Maths.equalTo(cx2, 0, eps) && Maths.equalTo(cy2, 0, eps);
+        const d1 = Maths.equalTo(cx1, 0, eps) && Maths.equalTo(cy1, 0, eps);
 
-        if (cx3 === 0 && cy3 === 0) {
-            // degenerate to quadratic, move like a quadratic
-            if (cx2 === 0 && cy2 === 0) {
-                // degenerate to linear, move like a linear
-                // if (cx1 === 0 && cy1 === 0) {
-                // Degenerate to point, no move. This is a dimensional degeneration, it won't come here
-                // }
-                return new LineSegment(c1, c2);
+        if (check) return d3;
+
+        if (d3) {
+            // degenerate to quadratic
+            if (d2) {
+                // degenerate to linear
+                if (d1) {
+                    // degenerate to point, no move.
+                    return new Point([x0, y0]);
+                }
+                return new LineSegment([x0, y0], [x3, y3]);
             }
-            const [x0, y0] = c1;
-            const [x1, y1] = cpc1;
             const cpc = [(-x0 + 3 * x1) / 2, (-y0 + 3 * y1) / 2] as [number, number];
-            return new QuadraticBezier(c1, c2, cpc);
+            return new QuadraticBezier([x0, y0], [x3, y3], cpc);
         }
         return this;
     }
@@ -285,19 +292,8 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         this.controlPoint2Coordinates = Vector2.add(this.controlPoint2Coordinates, [deltaX, deltaY]);
         return this;
     }
-
-    moveAlongAngle(angle: number, distance: number) {
-        this.point1Coordinates = Vector2.add(this.point1Coordinates, Vector2.from2(angle, distance));
-        this.point2Coordinates = Vector2.add(this.point2Coordinates, Vector2.from2(angle, distance));
-        this.controlPoint1Coordinates = Vector2.add(this.controlPoint1Coordinates, Vector2.from2(angle, distance));
-        this.controlPoint2Coordinates = Vector2.add(this.controlPoint2Coordinates, Vector2.from2(angle, distance));
-        return this;
-    }
     /**
      * Returns a bezier based on provided four points and two times `ts`.
-     * @note
-     * - If two times are equal, `null` will be returned.
-     * - The two times must both be in the interval $(0,1)$, if not, an error will be thrown.
      * @param point1
      * @param point2
      * @param point3
@@ -305,8 +301,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * @param ts
      */
     static fromFourPointsAndTimes(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point, point4: [number, number] | Point, ts: [number, number]) {
-        Assert.condition(ts[0] > 0 && ts[0] < 1, "[G]The first `time` should be a number between 0(not including) and 1(not including).");
-        Assert.condition(ts[1] > 0 && ts[1] < 1, "[G]The second `time` should be a number between 0(not including) and 1(not including).");
+        ts = ts.map(t => Bezier.prototype._clampTime(t, "element of ts")) as typeof ts;
         const c1 = getCoordinates(point1, "point1");
         const c2 = getCoordinates(point2, "point2");
         const c3 = getCoordinates(point3, "point3");
@@ -376,6 +371,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         });
         return [minX, minY, maxX - minX, maxY - minY] as [number, number, number, number];
     }
+
     isTripleLines() {
         // This means $ax^3+bx^2y+cxy^2+dy^3+ex^2+fxy+gy^2+hx+iy+j=0$ can write as $(lx+my+n)^3=0$
         const coefs = this.getImplicitFunctionCoefs();
@@ -424,10 +420,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
     /**
      * Returns the coefficients of the implicit function $ax^3+bx^2y+cxy^2+dy^3+ex^2+fxy+gy^2+hx+iy+j=0$.
      */
-    getImplicitFunctionCoefs():
-        | [a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number]
-        | [a: number, b: number, c: number, d: number, e: number, f: number]
-        | [a: number, b: number, c: number] {
+    getImplicitFunctionCoefs(): [a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number] {
         const [[cx3, cx2, cx1, cx0], [cy3, cy2, cy1, cy0]] = this.getPolynomial();
 
         const [cx02, cx03, cy02, cy03] = [cx0 ** 2, cx0 ** 3, cy0 ** 2, cy0 ** 3];
@@ -435,50 +428,6 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         const [cx22, cx23, cy22, cy23] = [cx2 ** 2, cx2 ** 3, cy2 ** 2, cy2 ** 3];
         const [cx32, cx33, cy32, cy33] = [cx3 ** 2, cx3 ** 3, cy3 ** 2, cy3 ** 3];
 
-        const epsilon = optioner.options.epsilon;
-
-        if (Maths.equalTo(cx3, 0, epsilon) && Maths.equalTo(cy3, 0, epsilon)) {
-            // degenerate to quadratic, move like a quadratic
-            if (Maths.equalTo(cx2, 0, epsilon) && Maths.equalTo(cy2, 0, epsilon)) {
-                // degenerate to linear, move like a linear
-                if (Maths.equalTo(cx1, 0, epsilon) && Maths.equalTo(cy1, 0, epsilon)) {
-                    // Degenerate to point, no move
-                    // This is a dimensional degeneration, it won't come here
-                }
-                // $ax+by+c=0$
-                const a = cy1;
-                const b = -cx1;
-                const c = cx1 * cy0 - cx0 * cy1;
-                return [a, b, c] as [number, number, number];
-            }
-            // $ax^2+bxy+cy^2+dx+ey+f=0$
-            const a = cy22;
-            const b = -2 * cx2 * cy2;
-            const c = cx22;
-            // prettier-ignore
-            const d = 
-                -cx2 * cy12 + 
-                2 * cx2 * cy0 * cy2 + 
-                cx1 * cy1 * cy2 - 
-                2 * cx0 * cy22;
-            // prettier-ignore
-            const e = 
-                -2 * cx22 * cy0 + 
-                cx1 * cx2 * cy1 - 
-                cx12 * cy2 + 
-                2 * cx0 * cx2 * cy2;
-            // prettier-ignore
-            const f = 
-                cx22 * cy02 - 
-                cx1 * cx2 * cy0 * cy1 + 
-                cx0 * cx2 * cy12 + 
-                cx12 * cy0 * cy2 - 
-                2 * cx0 * cx2 * cy0 * cy2 - 
-                cx0 * cx1 * cy1 * cy2 + 
-                cx02 * cy22;
-
-            return [a, b, c, d, e, f] as [number, number, number, number, number, number];
-        }
         // $ax^3+bx^2y+cxy^2+dy^3+ex^2+fxy+gy^2+hx+iy+j=0$
         const a = -cy33;
         const b = 3 * cx3 * cy32;
@@ -681,7 +630,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * @param t
      */
     getPointAtTime(t: number) {
-        Assert.condition(t >= 0 && t <= 1, "[G]The `t` must be between 0(including) and 1(including).");
+        t = this._clampTime(t, "t");
         const [x, y] = this.getParametricEquation()(t);
         return new Point(x, y);
     }
@@ -762,7 +711,6 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         // now xRootsM === undefined && yRootsM === undefined
         return [];
     }
-
     /**
      * Get the time of point `point` on the underlying curve of bezier `this`.
      * @description
@@ -771,8 +719,9 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * - If `point` is on the exterior of `point1`, a number in $(-\infty,0)$ will be returned.
      * - If `point` is on the exterior of `point2`, a number in $(1,\infty)$ will be returned.
      * @note
-     * Since bezier `this` may have a self-intersection, there may be two time values.
-     * In this case, the smaller time value found first will be returned.
+     * If there are multiple times fit this point, the returned time follow this order of priority:
+     * - time in $[0,1]$ will be returned.
+     * - the smallest time will be returned.
      * @param point
      */
     getTimeOfPointExtend(point: [number, number] | Point): number {
@@ -787,19 +736,24 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
             if (!d1 && d2) return 1;
             return a - b;
         });
-        // When degenerate and self-intersecting, there are at most three different times fit the `point`.
-        // We pick the time in $[0,1]$ and smaller one.
         return times[0];
     }
     // #endregion
 
+    private _clampTime(t: number, p: string) {
+        Assert.isRealNumber(t, p);
+        if (t < 0 || t > 1) {
+            console.warn(`[G]The \`${p}\` with value \`${t}\` is not between \`0\`(including) and \`1\`(including). It will be clamped.`);
+        }
+        return Maths.clamp(t, 0, 1);
+    }
     /**
      * Get the tangent vector of bezier `this` at time `t`.
      * @param t
      * @param normalized
      */
     getTangentVectorAtTime(t: number, normalized = false) {
-        Assert.condition(t >= 0 && t <= 1, "[G]The `t` must be between 0(including) and 1(including).");
+        t = this._clampTime(t, "t");
         const [polyX, polyY] = this.getPolynomial();
         const [polyXD, polyYD] = [Polynomial.derivative(polyX), Polynomial.derivative(polyY)];
         const c = this.getParametricEquation()(t);
@@ -812,14 +766,16 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * @param normalized
      */
     getNormalVectorAtTime(t: number, normalized = false) {
-        Assert.condition(t >= 0 && t <= 1, "[G]The `t` must be between 0(including) and 1(including).");
+        t = this._clampTime(t, "t");
         const [polyX, polyY] = this.getPolynomial();
         const [polyXD, polyYD] = [Polynomial.derivative(polyX), Polynomial.derivative(polyY)];
         const tv = [Polynomial.evaluate(polyXD, t), Polynomial.evaluate(polyYD, t)] as [number, number];
+        const ntv = Vector2.normalize(tv);
         const c = this.getParametricEquation()(t);
-        const cvt = this.getCurvatureAtTime(t);
+        const cvt = this.getCurvatureAtTime(t); // handle -0/0?
         const sign = Maths.sign(cvt);
-        const nv = Object.is(sign, -1) || Object.is(sign, -0) ? Vector2.rotate(tv, -Maths.PI / 2) : Vector2.rotate(tv, Maths.PI / 2);
+        const value = Maths.abs(cvt);
+        const nv = Vector2.scalarMultiply(Vector2.rotate(ntv, (sign * Maths.PI) / 2), value);
         return normalized ? new Vector(c, Vector2.normalize(nv)) : new Vector(c, nv);
     }
     /**
@@ -829,7 +785,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * @param t
      */
     getCurvatureAtTime(t: number) {
-        Assert.condition(t >= 0 && t <= 1, "[G]The `t` must be between 0(including) and 1(including).");
+        t = this._clampTime(t, "t");
         const [polyX, polyY] = this.getPolynomial();
         const [polyXD1, polyYD1] = [Polynomial.derivative(polyX, 1), Polynomial.derivative(polyY, 1)];
         const [polyXD2, polyYD2] = [Polynomial.derivative(polyX, 2), Polynomial.derivative(polyY, 2)];
@@ -844,7 +800,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         return num / den;
     }
     /**
-     * Get the osculating circle of quadratic bezier `this` at time `t`.
+     * Get the osculating circle of bezier `this` at time `t`.
      * @description
      * - If the curvature at `t` is $\pm\infty$, `null` will be returned(the circle degenerates to a line).
      * - If the curvature at `t` is 0, `null` will be returned(the circle degenerates to a point).
@@ -852,55 +808,45 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * @param t
      */
     getOsculatingCircleAtTime(t: number) {
+        t = this._clampTime(t, "t");
         const cvt = this.getCurvatureAtTime(t);
-        const p = this.getPointAtTime(t);
+        const { coordinates } = this.getPointAtTime(t);
 
         if (cvt === Infinity || cvt === -Infinity) return null; // the circle is a line
         if (cvt === 0) return null; // the circle is a point
 
         const r = Maths.abs(1 / cvt);
         const angle = this.getNormalVectorAtTime(t).angle;
-        p.moveAlongAngle(angle, r);
-        return new Circle(p, r);
+        const cc = Vector2.add(coordinates, Vector2.from2(angle, r));
+        return new Circle(cc, r);
     }
-
-    splitAtTimes(times: number[]) {
-        Assert.condition(
-            times.every(t => t > 0 && t < 1),
-            "[G]The `times` should all be a number between 0(not including) and 1(not including)."
-        );
+    splitAtTime(t: number) {
+        t = this._clampTime(t, "t");
+        return [this.portionOfExtend(0, t), this.portionOfExtend(t, 1)] as [Bezier, Bezier];
+    }
+    splitAtTimes(ts: number[]) {
+        ts = ts.map(t => this._clampTime(t, "element of ts"));
         const ret: Bezier[] = [];
         const epsilon = optioner.options.epsilon;
-        times = Utility.sortBy(
-            Utility.uniqWith(times, (a, b) => Maths.equalTo(a, b, epsilon)),
+        ts = Utility.sortBy(
+            Utility.uniqWith(ts, (a, b) => Maths.equalTo(a, b, epsilon)),
             [n => n]
         );
-
-        [0, ...times, 1].forEach((_, index, arr) => {
+        [0, ...ts, 1].forEach((_, index, arr) => {
             if (index !== arr.length - 1) {
                 ret.push(this.portionOfExtend(arr[index], arr[index + 1]));
             }
         });
         return ret;
     }
-    splitAtTime(t: number) {
-        Assert.condition(t > 0 && t < 1, "[G]The `t` should be a number between 0(not including) and 1(not including).");
-        return [this.portionOfExtend(0, t), this.portionOfExtend(t, 1)] as [Bezier, Bezier];
-    }
-
     portionOf(t1: number, t2: number) {
-        const epsilon = optioner.options.epsilon;
-        Assert.condition(t1 >= 0 && t2 <= 1, "[G]The `t1` should be a number between 0(including) and 1(including).");
-        Assert.condition(t2 >= 0 && t2 <= 1, "[G]The `t2` should be a number between 0(including) and 1(including).");
-        Assert.condition(!Maths.equalTo(t1, t2, epsilon), "[G]The `t1` and `t2` should not be equal.");
+        t1 = this._clampTime(t1, "t1");
+        t2 = this._clampTime(t2, "t2");
         return this.portionOfExtend(t1, t2);
     }
-
     portionOfExtend(t1: number, t2: number) {
-        const epsilon = optioner.options.epsilon;
         Assert.isRealNumber(t1, "t1");
         Assert.isRealNumber(t2, "t2");
-        Assert.condition(!Maths.equalTo(t1, t2, epsilon), "[G]The `t1` and `t2` should not be equal.");
         if (t1 > t2) [t1, t2] = [t2, t1];
         const {
             point1Coordinates: [x0, y0],
@@ -929,25 +875,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         const o = -3 * (t2 - 1) * t2 ** 2;
         const p = t2 ** 3;
 
-        const matrix = [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p] as [
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number
-        ];
-
+        const matrix = [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p] as Parameters<typeof Matrix4.dotVector4>[0];
         const xs = Matrix4.dotVector4(matrix, [x0, x1, x2, x3]);
         const ys = Matrix4.dotVector4(matrix, [y0, y1, y2, y3]);
 
@@ -969,13 +897,17 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         const ncpc2 = transformation.transformCoordinates(cpc2);
         return new Bezier(nc1, nc2, ncpc1, ncpc2);
     }
-    getGraphics() {
-        const g = new GeometryGraphics();
-        if (!this.initialized_()) return g;
+    getGraphics(viewport: ViewportDescriptor) {
+        const dg = this.degenerate(false);
+        if (dg === null) return new Graphics();
+        if (dg !== this) return (dg as Exclude<typeof dg, this>).getGraphics(viewport);
 
+        const g = new Graphics();
+        const gg = new GeometryGraphic();
+        g.append(gg);
         const { point1Coordinates: c1, point2Coordinates: c2, controlPoint1Coordinates: cpc1, controlPoint2Coordinates: cpc2 } = this;
-        g.moveTo(...c1);
-        g.bezierTo(...cpc1, ...cpc2, ...c2);
+        gg.moveTo(...c1);
+        gg.bezierTo(...cpc1, ...cpc2, ...c2);
         return g;
     }
     clone() {
@@ -993,7 +925,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         this._setControlPoint2Y(shape._controlPoint2Y);
         return this;
     }
-    toString() {
+    override toString() {
         return [
             `${this.name}(${this.uuid}){`,
             `\tpoint1X: ${this.point1X},`,
@@ -1006,20 +938,5 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
             `\tcontrolPoint2Y: ${this.controlPoint2Y}`,
             `}`
         ].join("\n");
-    }
-    toArray() {
-        return [this.point1X, this.point1Y, this.point2X, this.point2Y, this.controlPoint1X, this.controlPoint1Y, this.controlPoint2X, this.controlPoint2Y];
-    }
-    toObject() {
-        return {
-            point1X: this.point1X,
-            point1Y: this.point1Y,
-            point2X: this.point2X,
-            point2Y: this.point2Y,
-            controlPoint1X: this.controlPoint1X,
-            controlPoint1Y: this.controlPoint1Y,
-            controlPoint2X: this.controlPoint2X,
-            controlPoint2Y: this.controlPoint2Y
-        };
     }
 }

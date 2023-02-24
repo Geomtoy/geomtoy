@@ -1,10 +1,10 @@
 import Geometry from "../base/Geometry";
-import EventObject from "../event/EventObject";
-import GeometryGraphics from "../graphics/GeometryGraphics";
-import { validGeometry } from "../misc/decor-valid-geometry";
+import EventSourceObject from "../event/EventSourceObject";
+import Graphics from "../graphics";
+import { stated } from "../misc/decor-cache";
+import { validGeometry } from "../misc/decor-geometry";
 import Transformation from "../transformation";
 import { ViewportDescriptor } from "../types";
-import Point from "./basic/Point";
 
 @validGeometry
 export default class Arbitrary extends Geometry {
@@ -17,10 +17,14 @@ export default class Arbitrary extends Geometry {
         }
     }
 
-    get events() {
-        return {
-            geometryChanged: "geometry"
-        };
+    static override events = {
+        geometryChanged: "geometry"
+    };
+
+    private _setGeometry(value: Geometry | null) {
+        if (value instanceof Arbitrary) value = value._geometry;
+        if (value !== this._geometry) this.trigger_(new EventSourceObject(this, Arbitrary.events.geometryChanged));
+        this._geometry = value;
     }
 
     get geometry() {
@@ -30,19 +34,9 @@ export default class Arbitrary extends Geometry {
         this._setGeometry(value);
     }
 
-    protected initialized_() {
+    @stated
+    initialized() {
         return this._geometry !== null;
-    }
-
-    dimensionallyDegenerate() {
-        if (!this.initialized_()) return true;
-        return this._geometry!.dimensionallyDegenerate?.() ?? false;
-    }
-
-    private _setGeometry(value: Geometry | null) {
-        if (value instanceof Arbitrary) value = value._geometry;
-        if (value !== this._geometry) this.trigger_(EventObject.simple(this, this.events.geometryChanged));
-        this._geometry = value;
     }
 
     is<T extends typeof Geometry>(ctor: T): this is { geometry: InstanceType<T> } {
@@ -57,10 +51,6 @@ export default class Arbitrary extends Geometry {
         this._geometry!.move(deltaX, deltaY);
         return this;
     }
-    moveAlongAngle(angle: number, distance: number) {
-        this._geometry!.moveAlongAngle(angle, distance);
-        return this;
-    }
     clone() {
         return new Arbitrary(this._geometry!);
     }
@@ -69,17 +59,16 @@ export default class Arbitrary extends Geometry {
         return this;
     }
     getGraphics(viewport: ViewportDescriptor) {
-        if (!this.initialized_()) return new GeometryGraphics();
+        if (!this.initialized()) return new Graphics();
         return this._geometry!.getGraphics(viewport);
     }
 
     toString() {
-        return [`${this.name}(${this.uuid}){`, `\tgeometry: ${this.geometry}`, `}`].join("\n");
-    }
-    toArray() {
-        return [];
-    }
-    toObject() {
-        return {};
+        // prettier-ignore
+        return [
+            `${this.name}(${this.uuid}){`,
+             `\tgeometry: ${this.geometry}(${this.geometry?.uuid})`, 
+             `}`
+        ].join("\n");
     }
 }

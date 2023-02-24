@@ -1,21 +1,24 @@
-import { Assert, Type, Utility, Coordinates, Vector2, Maths } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-valid-geometry";
+import { Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
+import { validGeometry } from "../../misc/decor-geometry";
 
 import { Cartesian, Trilinear } from "../../helper/CoordinateSystem";
 
 import Geometry from "../../base/Geometry";
-import Point from "./Point";
+import EventSourceObject from "../../event/EventSourceObject";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import Circle from "./Circle";
-import LineSegment from "./LineSegment";
 import Line from "./Line";
-import GeometryGraphics from "../../graphics/GeometryGraphics";
-import EventObject from "../../event/EventObject";
+import LineSegment from "./LineSegment";
+import Point from "./Point";
 
-import type Transformation from "../../transformation";
-import type { WindingDirection, ClosedGeometry } from "../../types";
-import Polygon from "../advanced/Polygon";
-import Path from "../advanced/Path";
+import SealedShapeArray from "../../collection/SealedShapeArray";
 import { optioner } from "../../geomtoy";
+import Graphics from "../../graphics";
+import { stated, statedWithBoolean } from "../../misc/decor-cache";
+import type Transformation from "../../transformation";
+import type { ClosedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
+import Path from "../general/Path";
+import Polygon from "../general/Polygon";
 
 @validGeometry
 export default class Triangle extends Geometry implements ClosedGeometry {
@@ -43,39 +46,37 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         }
     }
 
-    get events() {
-        return {
-            point1XChanged: "point1X" as const,
-            point1YChanged: "point1Y" as const,
-            point2XChanged: "point2X" as const,
-            point2YChanged: "point2Y" as const,
-            point3XChanged: "point3X" as const,
-            point3YChanged: "point3Y" as const
-        };
-    }
+    static override events = {
+        point1XChanged: "point1X" as const,
+        point1YChanged: "point1Y" as const,
+        point2XChanged: "point2X" as const,
+        point2YChanged: "point2Y" as const,
+        point3XChanged: "point3X" as const,
+        point3YChanged: "point3Y" as const
+    };
 
     private _setPoint1X(value: number) {
-        if (!Utility.isEqualTo(this._point1X, value)) this.trigger_(EventObject.simple(this, this.events.point1XChanged));
+        if (!Utility.isEqualTo(this._point1X, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point1XChanged));
         this._point1X = value;
     }
     private _setPoint1Y(value: number) {
-        if (!Utility.isEqualTo(this._point1Y, value)) this.trigger_(EventObject.simple(this, this.events.point1YChanged));
+        if (!Utility.isEqualTo(this._point1Y, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point1YChanged));
         this._point1Y = value;
     }
     private _setPoint2X(value: number) {
-        if (!Utility.isEqualTo(this._point2X, value)) this.trigger_(EventObject.simple(this, this.events.point2XChanged));
+        if (!Utility.isEqualTo(this._point2X, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point2XChanged));
         this._point2X = value;
     }
     private _setPoint2Y(value: number) {
-        if (!Utility.isEqualTo(this._point2Y, value)) this.trigger_(EventObject.simple(this, this.events.point2YChanged));
+        if (!Utility.isEqualTo(this._point2Y, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point2YChanged));
         this._point2Y = value;
     }
     private _setPoint3X(value: number) {
-        if (!Utility.isEqualTo(this._point3X, value)) this.trigger_(EventObject.simple(this, this.events.point3XChanged));
+        if (!Utility.isEqualTo(this._point3X, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point3XChanged));
         this._point3X = value;
     }
     private _setPoint3Y(value: number) {
-        if (!Utility.isEqualTo(this._point3Y, value)) this.trigger_(EventObject.simple(this, this.events.point3YChanged));
+        if (!Utility.isEqualTo(this._point3Y, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point3YChanged));
         this._point3Y = value;
     }
 
@@ -206,32 +207,39 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         return Maths.abs(Vector2.angleTo(Vector2.from(c3, c1), Vector2.from(c3, c2)));
     }
 
-    static formingCondition = "The three vertices of a `Triangle` should not be collinear, or the sum of the length of any two sides is greater than the third side.";
-
-    dimensionallyDegenerate() {
-        const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
-        const epsilon = optioner.options.epsilon;
-        if (Coordinates.isEqualTo(c1, c2, epsilon) && Coordinates.isEqualTo(c3, c2, epsilon)) {
-            return true;
-        }
-        // Do NOT use vector cross judgment, area judgment, lying on the same line judgment etc.
-        // None of these methods can guarantee that if triangle `this` is judged to be valid, its inner line segment can all be valid.
-        // We just need to follow `Proposition 20`: `Any two sides of a triangle are together greater than the other third side`.
-        return !Maths.greaterThan(Vector2.magnitude(Vector2.from(c1, c2)) + Vector2.magnitude(Vector2.from(c2, c3)), Vector2.magnitude(Vector2.from(c3, c1)), epsilon);
-    }
-    protected initialized_() {
+    initialized() {
         // prettier-ignore
         return (
-            Number.isNaN(this._point1X   ) &&
-            Number.isNaN(this._point1Y) &&
-            Number.isNaN(this._point2X) &&
-            Number.isNaN(this._point2Y) &&
-            Number.isNaN(this._point3X) &&
-            Number.isNaN(this._point3Y) 
+            !Number.isNaN(this._point1X) &&
+            !Number.isNaN(this._point1Y) &&
+            !Number.isNaN(this._point2X) &&
+            !Number.isNaN(this._point2Y) &&
+            !Number.isNaN(this._point3X) &&
+            !Number.isNaN(this._point3Y) 
         );
     }
-    getLength(): number {
-        throw new Error("Method not implemented.");
+
+    degenerate(check: false): Point | SealedShapeArray<[LineSegment, LineSegment, LineSegment]> | SealedShapeArray<[LineSegment, LineSegment]> | SealedShapeArray<[LineSegment]> | this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
+        const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
+        const vectorEpsilon = optioner.options.vectorEpsilon;
+        const triangleForming = Maths.greaterThan(Maths.abs(Vector2.cross(Vector2.from(c1, c3), Vector2.from(c1, c2))), 0, vectorEpsilon);
+
+        if (check) return !triangleForming;
+
+        if (triangleForming) return this;
+
+        const lss = [new LineSegment(c1, c2), new LineSegment(c2, c3), new LineSegment(c3, c1)].filter(ls => ls.degenerate(false) instanceof LineSegment);
+        if (lss.length === 0) return new Point(c1);
+        return new SealedShapeArray(lss);
+    }
+
+    @stated
+    getLength() {
+        return this.side1Length + this.side2Length + this.side3Length;
     }
     /**
      * Get the winding direction of vertices of triangle `this`.
@@ -255,12 +263,6 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         this.point1Coordinates = Vector2.add(this.point1Coordinates, [deltaX, deltaY]);
         this.point2Coordinates = Vector2.add(this.point2Coordinates, [deltaX, deltaY]);
         this.point3Coordinates = Vector2.add(this.point3Coordinates, [deltaX, deltaY]);
-        return this;
-    }
-    moveAlongAngle(angle: number, distance: number) {
-        this.point1Coordinates = Vector2.add(this.point1Coordinates, Vector2.from2(angle, distance));
-        this.point2Coordinates = Vector2.add(this.point2Coordinates, Vector2.from2(angle, distance));
-        this.point3Coordinates = Vector2.add(this.point3Coordinates, Vector2.from2(angle, distance));
         return this;
     }
     /**
@@ -558,9 +560,23 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Get the orthocenter point of triangle `this`.
      */
     getOrthocenterPoint() {
-        const [aa, bb, cc] = [this.angle1, this.angle2, this.angle3];
-        const t: [number, number, number] = [Maths.sec(aa), Maths.sec(bb), Maths.sec(cc)];
-        return this.getPointAtTrilinear(t);
+        const [x1, y1] = this.point1Coordinates;
+        const [x2, y2] = this.point2Coordinates;
+        const [x3, y3] = this.point3Coordinates;
+        const a1 = x1 - x2;
+        const a2 = x2 - x3;
+        const a3 = x3 - x1;
+        const b1 = y1 - y2;
+        const b2 = y2 - y3;
+        const b3 = y3 - y1;
+        const d = x1 * b2 + x2 * b3 + x3 * b1;
+        const x = (b1 * b2 * b3 - (x1 * x2 * b1 + x2 * x3 * b2 + x3 * x1 * b3)) / d;
+        const y = (-a1 * a2 * a3 + (y1 * y2 * a1 + y2 * y3 * a2 + y3 * y1 * a3)) / d;
+        return new Point(x, y);
+
+        // const [aa, bb, cc] = [this.angle1, this.angle2, this.angle3];
+        // const t: [number, number, number] = [Maths.sec(aa), Maths.sec(bb), Maths.sec(cc)];
+        // return this.getPointAtTrilinear(t);
     }
     /**
      * Get the polar circle of triangle `this`.
@@ -572,7 +588,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const area = this.getArea();
         const r = Maths.sqrt((a * b * c) ** 2 / (4 * area ** 2) - (a ** 2 + b ** 2 + c ** 2) / 2);
-        return new Circle(this._getOrthocenterCoordinates(), r);
+        return new Circle(this.getOrthocenterPoint(), r);
     }
     /**
      * Get the orthic triangle of triangle `this`.
@@ -799,7 +815,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * @see {@link https://mathworld.wolfram.com/EulerPoints.html}
      */
     getEulerPoints(): [Point, Point, Point] {
-        const [hx, hy] = this._getOrthocenterCoordinates();
+        const { x: hx, y: hy } = this.getOrthocenterPoint();
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
         const [x3, y3] = this.point3Coordinates;
@@ -824,9 +840,9 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      */
     getEulerLine() {
         if (this.isEquilateralTriangle()) return null;
-        const c1 = this._getCircumcenterCoordinates();
-        const c2 = this._getOrthocenterCoordinates();
-        return Line.fromTwoPoints(c1, c2);
+        const p1 = this.getCircumcenterPoint();
+        const p2 = this.getOrthocenterPoint();
+        return Line.fromTwoPoints(p1, p2);
     }
 
     // #endregion
@@ -857,23 +873,10 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     getExtouchTriangle() {}
     getIncentralTriangle() {}
 
-    _getOrthocenterCoordinates(): [number, number] {
-        const [x1, y1] = this.point1Coordinates;
-        const [x2, y2] = this.point2Coordinates;
-        const [x3, y3] = this.point3Coordinates;
-        const a1 = x1 - x2;
-        const a2 = x2 - x3;
-        const a3 = x3 - x1;
-        const b1 = y1 - y2;
-        const b2 = y2 - y3;
-        const b3 = y3 - y1;
-        const d = x1 * b2 + x2 * b3 + x3 * b1;
-        const x = (b1 * b2 * b3 - (x1 * x2 * b1 + x2 * x3 * b2 + x3 * x1 * b3)) / d;
-        const y = (-a1 * a2 * a3 + (y1 * y2 * a1 + y2 * y3 * a2 + y3 * y1 * a3)) / d;
-        return [x, y];
-    }
-
-    _getIncenterCoordinates(): [number, number] {
+    /**
+     * Get the incenter point of triangle `this`.
+     */
+    getIncenterPoint() {
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
         const [x3, y3] = this.point3Coordinates;
@@ -881,13 +884,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const d = a + b + c; // this.getPerimeter()
         const x = (a * x1 + b * x2 + c * x3) / d;
         const y = (a * y1 + b * y2 + c * y3) / d;
-        return [x, y];
-    }
-    /**
-     * Get the incenter point of triangle `this`.
-     */
-    getIncenterPoint() {
-        return new Point(this._getIncenterCoordinates());
+        return new Point(x, y);
     }
     /**
      * Get the inscribed circle of triangle `this`.
@@ -896,10 +893,12 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const s = this.getArea();
         const d = this.getPerimeter();
         const r = (2 * s) / d;
-        return new Circle(this._getIncenterCoordinates(), r);
+        return new Circle(this.getIncenterPoint(), r);
     }
-
-    _getCircumcenterCoordinates(): [number, number] {
+    /**
+     * Get the circumcenter point of triangle `this`.
+     */
+    getCircumcenterPoint() {
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
         const [x3, y3] = this.point3Coordinates;
@@ -912,13 +911,8 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const d = a1 * b2 - a2 * b1;
         const x = (c1 * b2 - c2 * b1) / d;
         const y = (c2 * a1 - c1 * a2) / d;
-        return [x, y];
-    }
-    /**
-     * Get the circumcenter point of triangle `this`.
-     */
-    getCircumcenterPoint() {
-        return new Point(this._getCircumcenterCoordinates());
+
+        return new Point(x, y);
     }
     /**
      * Get the circumscribed circle of triangle `this`.
@@ -927,10 +921,12 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const area = this.getArea();
         const r = (a * b * c) / (4 * area);
-        return new Circle(this._getCircumcenterCoordinates(), r);
+        return new Circle(this.getCircumcenterPoint(), r);
     }
-
-    _getEscenterCoordinates(): [[number, number], [number, number], [number, number]] {
+    /**
+     * Get the escenter points of triangle `this`.
+     */
+    getEscenterPoints(): [Point, Point, Point] {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
@@ -941,13 +937,6 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const eb: [number, number] = [(a * x1 - b * x2 + c * x3) / ebd, (a * y1 - b * y2 + c * y3) / ebd];
         const ecd = a + b - c;
         const ec: [number, number] = [(a * x1 + b * x2 - c * x3) / ecd, (a * y1 + b * y2 - c * y3) / ecd];
-        return [ea, eb, ec];
-    }
-    /**
-     * Get the escenter points of triangle `this`.
-     */
-    getEscenterPoints(): [Point, Point, Point] {
-        const [ea, eb, ec] = this._getEscenterCoordinates();
         return [new Point(ea), new Point(eb), new Point(ec)];
     }
 
@@ -962,7 +951,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Get the escribed circles of triangle `this`.
      */
     getEscribedCircles(): [Circle, Circle, Circle] {
-        const [ea, eb, ec] = this._getEscenterCoordinates();
+        const [ea, eb, ec] = this.getEscenterPoints();
         const area = this.getArea();
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const ead = -a + b + c;
@@ -1000,15 +989,19 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const nc3 = transformation.transformCoordinates(c3);
         return new Triangle(nc1, nc2, nc3);
     }
-    getGraphics() {
-        const g = new GeometryGraphics();
-        if (!this.initialized_()) return g;
+    getGraphics(viewport: ViewportDescriptor) {
+        const dg = this.degenerate(false);
+        if (dg === null) return new Graphics();
+        if (dg !== this) return (dg as Exclude<typeof dg, this>).getGraphics(viewport);
 
+        const g = new Graphics();
+        const gg = new GeometryGraphic();
+        g.append(gg);
         const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
-        g.moveTo(...c1);
-        g.lineTo(...c2);
-        g.lineTo(...c3);
-        g.close();
+        gg.moveTo(...c1);
+        gg.lineTo(...c2);
+        gg.lineTo(...c3);
+        gg.close();
         return g;
     }
     clone() {
@@ -1024,7 +1017,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         this._setPoint3Y(shape._point3Y);
         return this;
     }
-    toString() {
+    override toString() {
         return [
             `${this.name}(${this.uuid}){`,
             `\tpoint1X: ${this.point1X}`,
@@ -1035,18 +1028,5 @@ export default class Triangle extends Geometry implements ClosedGeometry {
             `\tpoint3Y: ${this.point3Y}`,
             `}`
         ].join("\n");
-    }
-    toArray() {
-        return [this.point1X, this.point1Y, this.point2X, this.point2Y, this.point3X, this.point3Y];
-    }
-    toObject() {
-        return {
-            point1X: this.point1X,
-            point1Y: this.point1Y,
-            point2X: this.point2X,
-            point2Y: this.point2Y,
-            point3X: this.point3X,
-            point3Y: this.point3Y
-        };
     }
 }

@@ -1,28 +1,27 @@
-import Shape from "./Shape";
-import type Transformation from "../transformation";
 import { stated } from "../misc/decor-cache";
+import type Transformation from "../transformation";
+import Shape from "./Shape";
 
 export default abstract class Geometry extends Shape {
     /**
-     * Whether geometry `this` dimensionally degenerates.
-     * @note
-     * Dimensionally degenerate: 2D geometry fall into 1D/0D, 1D geometry fall into 0D.
-     * Example:
-     * A cubic bezier may degenerate to a point - This is a dimensional degeneration.
-     * A cubic bezier may degenerate to a quadratic bezier or a line segment - This is a non-dimensional degeneration.
-     *
-     * This method only cares on degenerations caused by proper essential properties but special positional relationships(mainly the positional relationship of the constituent points),
-     * and does not deal with degenerations caused by improper essential properties.
-     * So this method does not cover all geometrically possible degenerations of geometry `this`.
-     * Besides, the return of this method affects `isValid`.
+     * Whether essential properties of geometry `this` is properly set.
      */
-    dimensionallyDegenerate?(): boolean;
+    abstract initialized(): boolean;
     /**
-     * Whether geometry `this` is valid, `valid` means that the geometry is `proper`, and does not falls into dimensional degenerations.
+     * Whether geometry `this` degenerates.
+     * @see https://en.wikipedia.org/wiki/Degeneracy_(mathematics)
+     * @see https://en.wikipedia.org/wiki/Degenerate_conic
+     * The return of this method affects `isValid`.
+     */
+    degenerate?(check: false): Shape | null;
+    degenerate?(check: true): boolean;
+    /**
+     * Whether geometry `this` is valid, `valid` means that essential properties of geometry `this` is properly set, and does not degenerate.
      */
     @stated
     isValid() {
-        return this.initialized_() && (!this.dimensionallyDegenerate?.() ?? true);
+        if (this.degenerate !== undefined) return !this.degenerate(true);
+        return this.initialized();
     }
     abstract apply(transformation: Transformation): Geometry | null;
 }

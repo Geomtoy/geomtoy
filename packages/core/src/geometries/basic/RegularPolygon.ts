@@ -1,17 +1,20 @@
-import { Assert, Type, Utility, Coordinates, Maths, Vector2 } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-valid-geometry";
+import { Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 
 import Geometry from "../../base/Geometry";
-import Point from "./Point";
-import LineSegment from "./LineSegment";
+import EventSourceObject from "../../event/EventSourceObject";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import Circle from "./Circle";
-import GeometryGraphics from "../../graphics/GeometryGraphics";
-import EventObject from "../../event/EventObject";
+import LineSegment from "./LineSegment";
+import Point from "./Point";
 
-import Transformation from "../../transformation";
-import type { WindingDirection, ClosedGeometry } from "../../types";
-import Path from "../advanced/Path";
 import { optioner } from "../../geomtoy";
+import Graphics from "../../graphics";
+import { statedWithBoolean } from "../../misc/decor-cache";
+import { getCoordinates } from "../../misc/point-like";
+import Transformation from "../../transformation";
+import type { ClosedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
+import Path from "../general/Path";
 
 const REGULAR_POLYGON_MIN_SIDE_COUNT = 3;
 
@@ -41,34 +44,32 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         }
     }
 
-    get events() {
-        return {
-            centerXChanged: "centerX" as const,
-            centerYChanged: "centerY" as const,
-            radiusChanged: "radius" as const,
-            sideCountChanged: "sideCount" as const,
-            rotationChanged: "rotation" as const
-        };
-    }
+    static override events = {
+        centerXChanged: "centerX" as const,
+        centerYChanged: "centerY" as const,
+        radiusChanged: "radius" as const,
+        sideCountChanged: "sideCount" as const,
+        rotationChanged: "rotation" as const
+    };
 
     private _setCenterX(value: number) {
-        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(EventObject.simple(this, this.events.centerXChanged));
+        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.centerXChanged));
         this._centerX = value;
     }
     private _setCenterY(value: number) {
-        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(EventObject.simple(this, this.events.centerYChanged));
+        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.centerYChanged));
         this._centerY = value;
     }
     private _setRadius(value: number) {
-        if (!Utility.isEqualTo(this._radius, value)) this.trigger_(EventObject.simple(this, this.events.radiusChanged));
+        if (!Utility.isEqualTo(this._radius, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.radiusChanged));
         this._radius = value;
     }
     private _setSideCount(value: number) {
-        if (!Utility.isEqualTo(this._sideCount, value)) this.trigger_(EventObject.simple(this, this.events.sideCountChanged));
+        if (!Utility.isEqualTo(this._sideCount, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.sideCountChanged));
         this._sideCount = value;
     }
     private _setRotation(value: number) {
-        if (!Utility.isEqualTo(this._rotation, value)) this.trigger_(EventObject.simple(this, this.events.rotationChanged));
+        if (!Utility.isEqualTo(this._rotation, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.rotationChanged));
         this._rotation = value;
     }
 
@@ -105,7 +106,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         return this._radius;
     }
     set radius(value) {
-        Assert.isPositiveNumber(value, "radius");
+        Assert.isNonNegativeNumber(value, "radius");
         this._setRadius(value);
     }
     get sideCount() {
@@ -147,7 +148,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         return (n * (n - 3)) / 2;
     }
 
-    protected initialized_() {
+    initialized() {
         // prettier-ignore
         return (
             !Number.isNaN(this._centerX) &&
@@ -156,6 +157,19 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
             !Number.isNaN(this._sideCount)
         );
     }
+
+    degenerate(check: false): Point | this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
+        const r0 = Maths.equalTo(this._radius, 0, optioner.options.epsilon);
+        if (check) return r0;
+
+        if (r0) return new Point(this._centerX, this._centerY);
+        return this;
+    }
+
     getWindingDirection() {
         return this._windingDirection;
     }
@@ -178,18 +192,25 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         this.centerCoordinates = Vector2.add(this.centerCoordinates, [deltaX, deltaY]);
         return this;
     }
-    moveAlongAngle(angle: number, distance: number) {
-        this.centerCoordinates = Vector2.add(this.centerCoordinates, Vector2.from2(angle, distance));
-        return this;
+    @validGeometryArguments
+    static fromApothemEtc(apothem: number, centerPoint: [number, number] | Point, sideCount: number, rotation: number = 0) {
+        Assert.isNonNegativeNumber(apothem, "apothem");
+        Assert.isInteger(sideCount, "sideCount");
+        Assert.comparison(sideCount, "sideCount", "ge", 3);
+        Assert.isRealNumber(rotation, "rotation");
+        const cc = getCoordinates(centerPoint, "centerPoint");
+        const r = apothem / Maths.cos(Maths.PI / sideCount);
+        return new RegularPolygon(cc, r, sideCount, rotation);
     }
-
-    static fromApothemEtc(apothem: number, centerCoordinates: [number, number], sideCount: number, rotation: number = 0) {
-        let r = apothem / Maths.cos(Maths.PI / sideCount);
-        return new RegularPolygon(centerCoordinates, r, sideCount, rotation);
-    }
-    static fromSideLengthEtc(sideLength: number, centerCoordinates: [number, number], sideCount: number, rotation: number = 0) {
-        let r = sideLength / Maths.sin(Maths.PI / sideCount) / 2;
-        return new RegularPolygon(centerCoordinates, r, sideCount, rotation);
+    @validGeometryArguments
+    static fromSideLengthEtc(sideLength: number, centerPoint: [number, number] | Point, sideCount: number, rotation: number = 0) {
+        Assert.isNonNegativeNumber(sideLength, "sideLength");
+        Assert.isInteger(sideCount, "sideCount");
+        Assert.comparison(sideCount, "sideCount", "ge", 3);
+        Assert.isRealNumber(rotation, "rotation");
+        const cc = getCoordinates(centerPoint, "centerPoint");
+        const r = sideLength / Maths.sin(Maths.PI / sideCount) / 2;
+        return new RegularPolygon(cc, r, sideCount, rotation);
     }
 
     getVertices() {
@@ -247,16 +268,20 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         return this.toPath().apply(transformation);
     }
 
-    getGraphics() {
-        const g = new GeometryGraphics();
-        if (!this.initialized_()) return g;
+    getGraphics(viewport: ViewportDescriptor) {
+        const dg = this.degenerate(false);
+        if (dg === null) return new Graphics();
+        if (dg !== this) return (dg as Exclude<typeof dg, this>).getGraphics(viewport);
 
+        const g = new Graphics();
+        const gg = new GeometryGraphic();
+        g.append(gg);
         const [head, ...tail] = this.getVertices();
-        g.moveTo(...head.coordinates);
+        gg.moveTo(...head.coordinates);
         tail.forEach(p => {
-            g.lineTo(...p.coordinates);
+            gg.lineTo(...p.coordinates);
         });
-        g.close();
+        gg.close();
         return g;
     }
     clone() {
@@ -271,7 +296,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         this._setRotation(shape._rotation);
         return this;
     }
-    toString() {
+    override toString() {
         return [
             `${this.name}(${this.uuid}){`,
             `\tcenterX: ${this.centerX}`,
@@ -281,17 +306,5 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
             `\trotation: ${this.rotation}`,
             `}`
         ].join("\n");
-    }
-    toArray() {
-        return [this.centerX, this.centerY, this.radius, this.sideCount, this.rotation];
-    }
-    toObject() {
-        return {
-            centerX: this.centerX,
-            centerY: this.centerY,
-            radius: this.radius,
-            sideCount: this.sideCount,
-            rotation: this.rotation
-        };
     }
 }

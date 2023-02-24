@@ -1,15 +1,16 @@
-import { Angle, Assert, Type, Utility, Coordinates, Vector2, Maths, Matrix2, Box } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-valid-geometry";
+import { Assert, Box, Coordinates, Maths, Matrix2, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
-import Point from "./Point";
-import Line from "./Line";
-import GeometryGraphics from "../../graphics/GeometryGraphics";
-import EventObject from "../../event/EventObject";
+import EventSourceObject from "../../event/EventSourceObject";
+import { optioner } from "../../geomtoy";
+import Graphics from "../../graphics";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
+import ArrowGraphics from "../../helper/ArrowGraphics";
+import { validGeometry } from "../../misc/decor-geometry";
+import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
 import type { InfiniteOpenGeometry, ViewportDescriptor } from "../../types";
-import { optioner } from "../../geomtoy";
-import { getCoordinates } from "../../misc/point-like";
-import ArrowGraphics from "../../helper/ArrowGraphics";
+import Line from "./Line";
+import Point from "./Point";
 
 @validGeometry
 export default class Ray extends Geometry implements InfiniteOpenGeometry {
@@ -34,24 +35,22 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         }
     }
 
-    get events() {
-        return {
-            xChanged: "x" as const,
-            yChanged: "y" as const,
-            angleChanged: "angle" as const
-        };
-    }
+    static override events = {
+        xChanged: "x" as const,
+        yChanged: "y" as const,
+        angleChanged: "angle" as const
+    };
 
     private _setX(value: number) {
-        if (!Utility.isEqualTo(this._x, value)) this.trigger_(EventObject.simple(this, this.events.xChanged));
+        if (!Utility.isEqualTo(this._x, value)) this.trigger_(new EventSourceObject(this, Ray.events.xChanged));
         this._x = value;
     }
     private _setY(value: number) {
-        if (!Utility.isEqualTo(this._y, value)) this.trigger_(EventObject.simple(this, this.events.yChanged));
+        if (!Utility.isEqualTo(this._y, value)) this.trigger_(new EventSourceObject(this, Ray.events.yChanged));
         this._y = value;
     }
     private _setAngle(value: number) {
-        if (!Utility.isEqualTo(this._angle, value)) this.trigger_(EventObject.simple(this, this.events.angleChanged));
+        if (!Utility.isEqualTo(this._angle, value)) this.trigger_(new EventSourceObject(this, Ray.events.angleChanged));
         this._angle = value;
     }
 
@@ -92,7 +91,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         this._setAngle(value);
     }
 
-    protected initialized_() {
+    initialized() {
         // prettier-ignore
         return (
             !Number.isNaN(this._x) &&
@@ -112,10 +111,6 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
 
     move(deltaX: number, deltaY: number) {
         this.coordinates = Vector2.add(this.coordinates, [deltaX, deltaY]);
-        return this;
-    }
-    moveAlongAngle(angle: number, distance: number) {
-        this.coordinates = Vector2.add(this.coordinates, Vector2.from2(angle, distance));
         return this;
     }
 
@@ -160,10 +155,6 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         return ret;
     }
 
-    getAngleToRay(ray: Ray) {
-        return Angle.simplify2(this.angle - ray.angle);
-    }
-
     apply(transformation: Transformation) {
         const nc = transformation.transformCoordinates(this.coordinates);
         const [a, b, c, d] = transformation.matrix;
@@ -171,9 +162,11 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         return new Ray(nc, Maths.atan2(nay, nax));
     }
     getGraphics(viewport: ViewportDescriptor) {
-        const g = new GeometryGraphics();
-        if (!this.initialized_()) return g;
+        if (!this.initialized()) return new Graphics();
 
+        const g = new Graphics();
+        const gg = new GeometryGraphic();
+        g.append(gg);
         const gbb = viewport.globalViewBox;
         const epsilon = optioner.options.epsilon;
         const [dx, dy] = Vector2.from2(this.angle, 1);
@@ -191,20 +184,18 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         let tMin = Maths.max(Maths.min(tMinX, tMaxX), Maths.min(tMinY, tMaxY));
         const tMax = Maths.min(Maths.max(tMinX, tMaxX), Maths.max(tMinY, tMaxY));
 
-        const cs: [number, number][] = [];
-
         tMin = Maths.max(tMin, 0);
         if (!Maths.greaterThan(tMax, tMin, epsilon)) {
             return g;
         }
         const c1 = [x + tMin * dx, y + tMin * dy] as [number, number];
         const c2 = [x + tMax * dx, y + tMax * dy] as [number, number];
-        g.moveTo(...c1);
-        g.lineTo(...c2);
+        gg.moveTo(...c1);
+        gg.lineTo(...c2);
 
         if (optioner.options.graphics.rayArrow) {
             const arrowGraphics = new ArrowGraphics(c2, this.angle).getGraphics(viewport);
-            g.append(arrowGraphics);
+            g.concat(arrowGraphics);
         }
 
         return g;
@@ -224,7 +215,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         this._setAngle(shape._angle);
         return this;
     }
-    toString() {
+    override toString() {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
@@ -233,11 +224,5 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
             `\tangle: ${this.angle}`,
             `}`
         ].join("\n")
-    }
-    toArray() {
-        return [this.x, this.y, this.angle];
-    }
-    toObject() {
-        return { x: this.x, y: this.y, angle: this.angle };
     }
 }

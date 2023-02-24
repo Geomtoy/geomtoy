@@ -1,18 +1,20 @@
-import { Angle, Assert, Vector2, Maths, Type, Utility, Coordinates, Box, Matrix2 } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-valid-geometry";
+import { Angle, Assert, Box, Coordinates, Maths, Matrix2, Type, Utility, Vector2 } from "@geomtoy/util";
+import { validGeometry } from "../../misc/decor-geometry";
 
-import ArrowGraphics from "../../helper/ArrowGraphics";
 import Geometry from "../../base/Geometry";
+import ArrowGraphics from "../../helper/ArrowGraphics";
 import Point from "./Point";
 
-import Circle from "./Circle";
-import GeometryGraphics from "../../graphics/GeometryGraphics";
-import EventObject from "../../event/EventObject";
-import type LineSegment from "./LineSegment";
-import type { InfiniteOpenGeometry, ViewportDescriptor } from "../../types";
-import type Transformation from "../../transformation";
+import EventSourceObject from "../../event/EventSourceObject";
 import { optioner } from "../../geomtoy";
+import Graphics from "../../graphics";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
+import { stated } from "../../misc/decor-cache";
 import { getCoordinates } from "../../misc/point-like";
+import type Transformation from "../../transformation";
+import type { InfiniteOpenGeometry, ViewportDescriptor } from "../../types";
+import Circle from "./Circle";
+import type LineSegment from "./LineSegment";
 
 @validGeometry
 export default class Line extends Geometry implements InfiniteOpenGeometry {
@@ -37,27 +39,25 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
         }
     }
 
-    get events() {
-        return {
-            xChanged: "x" as const,
-            yChanged: "y" as const,
-            slopeChanged: "slope" as const,
-            angleChanged: "angle" as const
-        };
-    }
+    static override events = {
+        xChanged: "x" as const,
+        yChanged: "y" as const,
+        slopeChanged: "slope" as const,
+        angleChanged: "angle" as const
+    };
 
     private _setX(value: number) {
-        if (!Utility.isEqualTo(this._x, value)) this.trigger_(EventObject.simple(this, this.events.xChanged));
+        if (!Utility.isEqualTo(this._x, value)) this.trigger_(new EventSourceObject(this, Line.events.xChanged, this._x));
         this._x = value;
     }
     private _setY(value: number) {
-        if (!Utility.isEqualTo(this._y, value)) this.trigger_(EventObject.simple(this, this.events.yChanged));
+        if (!Utility.isEqualTo(this._y, value)) this.trigger_(new EventSourceObject(this, Line.events.yChanged, this._y));
         this._y = value;
     }
     private _setSlope(value: number) {
         if (!Utility.isEqualTo(this._slope, value)) {
-            this.trigger_(EventObject.simple(this, this.events.slopeChanged));
-            this.trigger_(EventObject.simple(this, this.events.angleChanged));
+            this.trigger_(new EventSourceObject(this, Line.events.slopeChanged, this._slope));
+            this.trigger_(new EventSourceObject(this, Line.events.angleChanged, this.angle));
         }
         this._slope = value;
     }
@@ -137,7 +137,8 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
         return slope === 0 ? Infinity : -y / slope + x;
     }
 
-    protected initialized_() {
+    @stated
+    initialized() {
         // prettier-ignore
         return (
             !Number.isNaN(this._x) &&
@@ -224,12 +225,6 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
     move(deltaX: number, deltaY: number) {
         if (deltaX === 0 && deltaY === 0) return this;
         this.coordinates = Vector2.add(this.coordinates, [deltaX, deltaY]);
-        return this;
-    }
-
-    moveAlongAngle(angle: number, distance: number) {
-        if (distance === 0) return this;
-        this.coordinates = Vector2.add(this.coordinates, Vector2.from2(angle, distance));
         return this;
     }
 
@@ -331,22 +326,6 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
     isIntersectedWithCircle(circle: Circle): boolean {
         let epsilon = optioner.options.epsilon;
         return Maths.lessThan(circle.centerPoint.getSquaredDistanceBetweenLine(this), circle.radius ** 2, epsilon);
-    }
-    /**
-     * Get the intersection points of line `this` and circle `circle`.
-     * @param circle
-     */
-    getIntersectionPointsWithCircle(circle: Circle): null | [Point, Point] {
-        if (!this.isIntersectedWithCircle(circle)) return null;
-        let p0 = circle.centerPoint,
-            r = circle.radius,
-            p1 = this.getClosestPointFrom(p0),
-            sd = p0.getSquaredDistanceBetweenPoint(p1),
-            d1i = Maths.sqrt(r ** 2 - sd),
-            a = this.angle,
-            ip1 = p1.moveAlongAngle(a, d1i),
-            ip2 = p1.moveAlongAngle(a + Maths.PI, d1i);
-        return [ip1, ip2];
     }
     /**
      * Whether line `this` is tangent to circle `circle`.
@@ -479,9 +458,11 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
     }
 
     getGraphics(viewport: ViewportDescriptor) {
-        const g = new GeometryGraphics();
-        if (!this.initialized_()) return g;
+        if (!this.initialized()) return new Graphics();
 
+        const g = new Graphics();
+        const gg = new GeometryGraphic();
+        g.append(gg);
         const gbb = viewport.globalViewBox;
         const [a, b, c] = this.getImplicitFunctionCoefs();
         const cs: [number, number][] = [];
@@ -508,14 +489,12 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
         const [c1, c2] = cs;
         const a1 = Vector2.angle(Vector2.from(c2, c1));
         const a2 = Vector2.angle(Vector2.from(c1, c2));
-        g.moveTo(...c1);
-        g.lineTo(...c2);
+        gg.moveTo(...c1);
+        gg.lineTo(...c2);
 
         if (optioner.options.graphics.lineArrow) {
-            const arrowGraphics1 = new ArrowGraphics(c1, a1).getGraphics(viewport);
-            const arrowGraphics2 = new ArrowGraphics(c2, a2).getGraphics(viewport);
-            g.append(arrowGraphics1);
-            g.append(arrowGraphics2);
+            g.concat(new ArrowGraphics(c1, a1).getGraphics(viewport));
+            g.concat(new ArrowGraphics(c2, a2).getGraphics(viewport));
         }
 
         return g;
@@ -537,7 +516,7 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
         this._setSlope(shape._slope);
         return this;
     }
-    toString() {
+    override toString() {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
@@ -546,11 +525,5 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
             `\tslope: ${this.slope}`,
             `}`
         ].join("\n")
-    }
-    toArray() {
-        return [this.x, this.y, this.slope];
-    }
-    toObject() {
-        return { x: this.x, y: this.y, slope: this.slope };
     }
 }

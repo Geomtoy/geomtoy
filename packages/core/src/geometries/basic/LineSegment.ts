@@ -1,19 +1,20 @@
-import { Assert, Vector2, Maths, Type, Utility, Coordinates, Matrix2, Polynomial, Box } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-valid-geometry";
+import { Assert, Box, Coordinates, Maths, Matrix2, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
+import { validGeometry } from "../../misc/decor-geometry";
 
 import Geometry from "../../base/Geometry";
+import EventSourceObject from "../../event/EventSourceObject";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
+import Line from "./Line";
 import Point from "./Point";
 import Vector from "./Vector";
-import Line from "./Line";
-import GeometryGraphics from "../../graphics/GeometryGraphics";
-import EventObject from "../../event/EventObject";
 
-import type Transformation from "../../transformation";
-import type { FiniteOpenGeometry } from "../../types";
-import Path from "../advanced/Path";
-import { stated } from "../../misc/decor-cache";
 import { optioner } from "../../geomtoy";
+import Graphics from "../../graphics";
+import { stated, statedWithBoolean } from "../../misc/decor-cache";
 import { getCoordinates } from "../../misc/point-like";
+import type Transformation from "../../transformation";
+import type { FiniteOpenGeometry, ViewportDescriptor } from "../../types";
+import Path from "../general/Path";
 
 @validGeometry
 export default class LineSegment extends Geometry implements FiniteOpenGeometry {
@@ -39,41 +40,39 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         }
     }
 
-    get events() {
-        return {
-            point1XChanged: "point1X" as const,
-            point1YChanged: "point1Y" as const,
-            point2XChanged: "point2X" as const,
-            point2YChanged: "point2Y" as const,
-            angleChanged: "angle" as const
-        };
-    }
+    static override events = {
+        point1XChanged: "point1X" as const,
+        point1YChanged: "point1Y" as const,
+        point2XChanged: "point2X" as const,
+        point2YChanged: "point2Y" as const,
+        angleChanged: "angle" as const
+    };
 
     private _setPoint1X(value: number) {
         if (!Utility.isEqualTo(this._point1X, value)) {
-            this.trigger_(EventObject.simple(this, this.events.point1XChanged));
-            this.trigger_(EventObject.simple(this, this.events.angleChanged));
+            this.trigger_(new EventSourceObject(this, LineSegment.events.point1XChanged));
+            this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
         }
         this._point1X = value;
     }
     private _setPoint1Y(value: number) {
         if (!Utility.isEqualTo(this._point1Y, value)) {
-            this.trigger_(EventObject.simple(this, this.events.point1YChanged));
-            this.trigger_(EventObject.simple(this, this.events.angleChanged));
+            this.trigger_(new EventSourceObject(this, LineSegment.events.point1YChanged));
+            this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
         }
         this._point1Y = value;
     }
     private _setPoint2X(value: number) {
         if (!Utility.isEqualTo(this._point2X, value)) {
-            this.trigger_(EventObject.simple(this, this.events.point2XChanged));
-            this.trigger_(EventObject.simple(this, this.events.angleChanged));
+            this.trigger_(new EventSourceObject(this, LineSegment.events.point2XChanged));
+            this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
         }
         this._point2X = value;
     }
     private _setPoint2Y(value: number) {
         if (!Utility.isEqualTo(this._point2Y, value)) {
-            this.trigger_(EventObject.simple(this, this.events.point2YChanged));
-            this.trigger_(EventObject.simple(this, this.events.angleChanged));
+            this.trigger_(new EventSourceObject(this, LineSegment.events.point2YChanged));
+            this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
         }
         this._point2Y = value;
     }
@@ -146,7 +145,8 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         this._setPoint2Y(Coordinates.y(nc2));
     }
 
-    protected initialized_() {
+    @stated
+    initialized() {
         // prettier-ignore
         return (
             !Number.isNaN(this._point1X) &&
@@ -156,22 +156,22 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         );
     }
 
-    static formingCondition = "The two endpoints of a `LineSegment` should be distinct, or the length of a `LineSegment` should greater than 0.";
+    degenerate(check: false): Point | this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
 
-    @stated
-    dimensionallyDegenerate() {
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;
-        return Coordinates.isEqualTo(c1, c2, optioner.options.epsilon);
+        const c12 = Coordinates.isEqualTo(c1, c2, optioner.options.epsilon);
+
+        if (check) return c12;
+        return c12 ? new Point(c1) : this;
     }
 
     move(deltaX: number, deltaY: number) {
         this.point1Coordinates = Vector2.add(this.point1Coordinates, [deltaX, deltaY]);
         this.point2Coordinates = Vector2.add(this.point2Coordinates, [deltaX, deltaY]);
-        return this;
-    }
-    moveAlongAngle(angle: number, distance: number) {
-        this.point1Coordinates = Vector2.add(this.point1Coordinates, Vector2.from2(angle, distance));
-        this.point2Coordinates = Vector2.add(this.point2Coordinates, Vector2.from2(angle, distance));
         return this;
     }
     static fromPointAndAngleAndLength(point: [number, number] | Point, angle: number, length: number) {
@@ -330,7 +330,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
 
     splitAtTimes(times: number[]) {
         Assert.condition(
-            times.every(t => t > 0 && t < 1),
+            times.every(t => Maths.greaterThan(t, 0, optioner.options.epsilon) && Maths.lessThan(t, 1, optioner.options.epsilon)),
             "[G]The `times` should all be a number between 0(not including) and 1(not including)."
         );
         const ret: LineSegment[] = [];
@@ -392,7 +392,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
      * Get the normal unit vector of quadratic bezier `this` at time `t`.
      * @param t
      */
-    getNormalUnitVectorAtTime(t: number, normalized = false) {
+    getNormalVectorAtTime(t: number, normalized = false) {
         Assert.condition(t >= 0 && t <= 1, "[G]The `t` must be between 0(including) and 1(including).");
         const [polyX, polyY] = this.getPolynomial();
         const [polyXD, polyYD] = [Polynomial.derivative(polyX), Polynomial.derivative(polyY)];
@@ -478,11 +478,14 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
     getTimeOfPointExtend(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;
-        const [a, b, c] = this.getImplicitFunctionCoefs();
-        if (!Maths.equalTo(a * x + b * y + c, 0, optioner.options.epsilon)) return NaN;
         const v10 = Vector2.from(c1, [x, y]);
         const v12 = Vector2.from(c1, c2);
-        const sign = Vector2.dot(v10, v12) < 0 ? -1 : 1;
+        const cp = Vector2.cross(v10, v12);
+        if (!Maths.equalTo(cp, 0, optioner.options.vectorEpsilon)) {
+            return NaN;
+        }
+        const dp = Vector2.dot(v10, v12);
+        const sign = dp < 0 ? -1 : 1;
         return (sign * Vector2.magnitude(v10)) / Vector2.magnitude(v12);
     }
     // #endregion
@@ -507,12 +510,17 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         const nc2 = transformation.transformCoordinates(c2);
         return new LineSegment(nc1, nc2);
     }
-    getGraphics() {
-        const g = new GeometryGraphics();
-        if (!this.initialized_()) return g;
+    getGraphics(viewport: ViewportDescriptor) {
+        const dg = this.degenerate(false);
+        if (dg === null) return new Graphics();
+        if (dg !== this) return (dg as Exclude<typeof dg, this>).getGraphics(viewport);
+
+        const g = new Graphics();
+        const gg = new GeometryGraphic();
+        g.append(gg);
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;
-        g.moveTo(...c1);
-        g.lineTo(...c2);
+        gg.moveTo(...c1);
+        gg.lineTo(...c2);
         return g;
     }
     clone() {
@@ -526,7 +534,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         this._setPoint2Y(shape._point2Y);
         return this;
     }
-    toString() {
+    override toString() {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
@@ -536,11 +544,5 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
             `\tpoint2Y: ${this.point2Y}`,
             `}`
         ].join("\n");
-    }
-    toArray() {
-        return [this.point1X, this.point1Y, this.point2X, this.point2Y];
-    }
-    toObject() {
-        return { point1X: this.point1X, point1Y: this.point1Y, point2X: this.point2X, point2Y: this.point2Y };
     }
 }

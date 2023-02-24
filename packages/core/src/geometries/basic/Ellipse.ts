@@ -1,22 +1,26 @@
-import { Assert, Type, Utility, Coordinates, Maths, Vector2, Angle, EllipticIntegral } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-valid-geometry";
+import { Angle, Assert, Coordinates, EllipticIntegral, Maths, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
 import { centerToEndpointParameterization } from "../../misc/arc";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 
-import Path from "../advanced/Path";
+import Path from "../general/Path";
 
 import Geometry from "../../base/Geometry";
-import Point from "./Point";
-import GeometryGraphics from "../../graphics/GeometryGraphics";
-import EventObject from "../../event/EventObject";
+import EventSourceObject from "../../event/EventSourceObject";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import Arc from "./Arc";
 import Circle from "./Circle";
-import Vector from "./Vector";
 import Line from "./Line";
+import Point from "./Point";
+import Vector from "./Vector";
 
-import Transformation from "../../transformation";
-import type { WindingDirection, ClosedGeometry, RotationFeaturedGeometry } from "../../types";
+import SealedShapeArray from "../../collection/SealedShapeArray";
 import { optioner } from "../../geomtoy";
+import Graphics from "../../graphics";
+import { stated, statedWithBoolean } from "../../misc/decor-cache";
 import { getCoordinates } from "../../misc/point-like";
+import Transformation from "../../transformation";
+import type { ClosedGeometry, RotationFeaturedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
+import LineSegment from "./LineSegment";
 
 @validGeometry
 export default class Ellipse extends Geometry implements ClosedGeometry, RotationFeaturedGeometry {
@@ -45,34 +49,32 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         }
     }
 
-    get events() {
-        return {
-            centerXChanged: "centerX" as const,
-            centerYChanged: "centerY" as const,
-            radiusXChanged: "radiusX" as const,
-            radiusYChanged: "radiusY" as const,
-            rotationChanged: "rotation" as const
-        };
-    }
+    static override events = {
+        centerXChanged: "centerX" as const,
+        centerYChanged: "centerY" as const,
+        radiusXChanged: "radiusX" as const,
+        radiusYChanged: "radiusY" as const,
+        rotationChanged: "rotation" as const
+    };
 
     private _setCenterX(value: number) {
-        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(EventObject.simple(this, this.events.centerXChanged));
+        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.centerXChanged));
         this._centerX = value;
     }
     private _setCenterY(value: number) {
-        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(EventObject.simple(this, this.events.centerYChanged));
+        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.centerYChanged));
         this._centerY = value;
     }
     private _setRadiusX(value: number) {
-        if (!Utility.isEqualTo(this._radiusX, value)) this.trigger_(EventObject.simple(this, this.events.radiusXChanged));
+        if (!Utility.isEqualTo(this._radiusX, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.radiusXChanged));
         this._radiusX = value;
     }
     private _setRadiusY(value: number) {
-        if (!Utility.isEqualTo(this._radiusY, value)) this.trigger_(EventObject.simple(this, this.events.radiusYChanged));
+        if (!Utility.isEqualTo(this._radiusY, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.radiusYChanged));
         this._radiusY = value;
     }
     private _setRotation(value: number) {
-        if (!Utility.isEqualTo(this._rotation, value)) this.trigger_(EventObject.simple(this, this.events.rotationChanged));
+        if (!Utility.isEqualTo(this._rotation, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.rotationChanged));
         this._rotation = value;
     }
 
@@ -109,14 +111,14 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         return this._radiusX;
     }
     set radiusX(value) {
-        Assert.isPositiveNumber(value, "radiusX");
+        Assert.isNonNegativeNumber(value, "radiusX");
         this._setRadiusX(value);
     }
     get radiusY() {
         return this._radiusY;
     }
     set radiusY(value) {
-        Assert.isPositiveNumber(value, "radiusY");
+        Assert.isNonNegativeNumber(value, "radiusY");
         this._setRadiusY(value);
     }
     get rotation() {
@@ -127,7 +129,8 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         this._setRotation(value);
     }
 
-    protected initialized_() {
+    @stated
+    initialized() {
         // prettier-ignore
         return (
             !Number.isNaN(this._centerX) &&
@@ -135,6 +138,39 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
             !Number.isNaN(this._radiusX) &&
             !Number.isNaN(this._radiusY)
         );
+    }
+
+    degenerate(check: false): Point | SealedShapeArray<[LineSegment, LineSegment]> | this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
+
+        const { radiusX: rx, radiusY: ry, centerCoordinates: cc, rotation: phi } = this;
+        const rx0 = Maths.equalTo(rx, 0, optioner.options.epsilon);
+        const ry0 = Maths.equalTo(ry, 0, optioner.options.epsilon);
+        if (check) return rx0 || ry0;
+
+        if (rx0 && !ry0) {
+            const c1 = Vector2.add(cc, Vector2.rotate([0, ry], phi));
+            const c2 = Vector2.add(cc, Vector2.rotate([0, -ry], phi));
+            // prettier-ignore
+            return new SealedShapeArray([
+                new LineSegment(c1, c2), 
+                new LineSegment(c2, c1)
+            ]);
+        }
+        if (!rx0 && ry0) {
+            const c1 = Vector2.add(cc, Vector2.rotate([0, rx], phi));
+            const c2 = Vector2.add(cc, Vector2.rotate([0, -rx], phi));
+            // prettier-ignore
+            return new SealedShapeArray([
+                new LineSegment(c1, c2), 
+                new LineSegment(c2, c1)
+            ]);
+        }
+        if (rx0 && ry0) return new Point(cc);
+        return this;
     }
 
     /**
@@ -234,7 +270,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const c = Vector2.magnitude(v) / 2;
         const a = distanceSum / 2;
         if (Maths.lessThan(a, c, epsilon)) {
-            console.warn("[G]The `distanceSum` should greater than the distance between two foci.");
+            console.warn("[G]The `distanceSum` should greater than or equal to the distance between two foci.");
             return null;
         }
         const b = Maths.sqrt(a ** 2 - c ** 2);
@@ -336,12 +372,50 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         return Maths.lessThan(f, 1, curveEpsilon);
     }
 
+    @validGeometryArguments
+    getClosestPointFrom(point: [number, number] | Point) {
+        const [x, y] = getCoordinates(point, "point");
+        const { centerX: cx, centerY: cy, rotation: phi, radiusX: rx, radiusY: ry } = this;
+        const cosPhi = Maths.cos(phi);
+        const sinPhi = Maths.sin(phi);
+        const cosPhi2 = cosPhi ** 2;
+        const sinPhi2 = sinPhi ** 2;
+        const rx2 = rx ** 2;
+        const ry2 = ry ** 2;
+
+        const fn = this.getParametricEquation();
+
+        if (cx === x && cy === y && rx2 === ry2) {
+            return new Point(fn(0)); // circle and at centerPoint
+        }
+        let tPoly = [
+            ry * (sinPhi * (cx - x) - cosPhi * (cy - y)),
+            2 * (cosPhi2 * (rx2 - ry2) + cosPhi * rx * (-cx + x) + sinPhi2 * (rx2 - ry2) + sinPhi * rx * (-cy + y)),
+            0,
+            2 * (cosPhi2 * (-rx2 + ry2) + cosPhi * rx * (-cx + x) + sinPhi2 * (-rx2 + ry2) + sinPhi * rx * (-cy + y)),
+            ry * (cosPhi * (cy - y) - sinPhi * (cx - x))
+        ];
+
+        tPoly = Polynomial.monic(tPoly);
+
+        const roots = Polynomial.roots(tPoly).filter(Type.isNumber);
+        const as = roots.map(r => Angle.simplify(Maths.atan(r) * 2));
+
+        let minA = NaN;
+        let minSd = Infinity;
+        as.forEach(a => {
+            const [px, py] = fn(a);
+            const sd = (px - x) ** 2 + (py - y) ** 2;
+            if (sd < minSd) {
+                minSd = sd;
+                minA = a;
+            }
+        });
+        return new Point(fn(minA));
+    }
+
     move(deltaX: number, deltaY: number) {
         this.centerCoordinates = Vector2.add(this.centerCoordinates, [deltaX, deltaY]);
-        return this;
-    }
-    moveAlongAngle(angle: number, distance: number) {
-        this.centerCoordinates = Vector2.add(this.centerCoordinates, Vector2.from2(angle, distance));
         return this;
     }
 
@@ -396,10 +470,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         // rx*cosTheta*sinPhi+ry*sinTheta*cosPhi+cy==y
         const cosTheta = (cosPhi * (x - cx) + sinPhi * (y - cy)) / rx;
         const sinTheta = (cosPhi * (y - cy) - sinPhi * (x - cx)) / ry;
-
-        const curveEpsilon = optioner.options.curveEpsilon;
-
-        if (Maths.equalTo(sinTheta ** 2 + cosTheta ** 2, 1, curveEpsilon)) {
+        if (Maths.equalTo(sinTheta ** 2 + cosTheta ** 2, 1, optioner.options.trigonometricEpsilon)) {
             return Angle.simplify(Maths.atan2(sinTheta, cosTheta));
         }
         return NaN;
@@ -452,7 +523,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     }
     getCurvatureAtAngle(a: number) {
         a = Angle.simplify(a);
-        const { centerX: cx, centerY: cy, rotation: phi, radiusX: rx, radiusY: ry } = this;
+        const { rotation: phi, radiusX: rx, radiusY: ry } = this;
         const cosPhi = Maths.cos(phi);
         const sinPhi = Maths.sin(phi);
         // 1th order derivative of parametric equation
@@ -462,20 +533,20 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const pxD2 = -rx * Maths.cos(a) * cosPhi + ry * Maths.sin(a) * sinPhi;
         const pyD2 = -rx * Maths.cos(a) * sinPhi - ry * Maths.sin(a) * cosPhi;
         const num = pxD1 * pyD2 - pyD1 * pxD2;
-        const den = Maths.pow(pxD1 ** 2 + pxD2 ** 2, 3 / 2);
+        const den = Maths.pow(pxD1 ** 2 + pyD1 ** 2, 3 / 2);
         return num / den;
     }
     getOsculatingCircleAtAngle(a: number) {
         const cvt = this.getCurvatureAtAngle(a);
-        const p = this.getPointAtAngle(a);
+        const { coordinates } = this.getPointAtAngle(a);
 
         if (cvt === Infinity || cvt === -Infinity) return null; // the circle is a line
         if (cvt === 0) return null; // the circle is a point
 
         const r = Maths.abs(1 / cvt);
         const angle = this.getNormalVectorAtAngle(a).angle;
-        const pc = p.moveAlongAngle(angle, r);
-        return new Circle(pc, r);
+        const cc = Vector2.add(coordinates, Vector2.from2(angle, r));
+        return new Circle(cc, r);
     }
 
     /**
@@ -580,12 +651,16 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         return path;
     }
 
-    getGraphics() {
-        const g = new GeometryGraphics();
-        if (!this.initialized_()) return g;
+    getGraphics(viewport: ViewportDescriptor) {
+        const dg = this.degenerate(false);
+        if (dg === null) return new Graphics();
+        if (dg !== this) return (dg as Exclude<typeof dg, this>).getGraphics(viewport);
 
+        const g = new Graphics();
+        const gg = new GeometryGraphic();
+        g.append(gg);
         const { centerX, centerY, radiusX, radiusY, rotation } = this;
-        g.centerArcTo(centerX, centerY, radiusX, radiusY, rotation, 0, 2 * Maths.PI);
+        gg.centerArcTo(centerX, centerY, radiusX, radiusY, rotation, 0, 2 * Maths.PI);
         return g;
     }
     clone() {
@@ -600,7 +675,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         this._setRotation(shape._rotation);
         return this;
     }
-    toString() {
+    override toString() {
         return [
             `${this.name}(${this.uuid}){`,
             `\tcenterX: ${this.centerX}`,
@@ -610,17 +685,5 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
             `\trotation: ${this.rotation}`,
             `}`
         ].join("\n");
-    }
-    toArray() {
-        return [this.centerX, this.centerY, this.radiusX, this.radiusY, this.rotation];
-    }
-    toObject() {
-        return {
-            centerX: this.centerX,
-            centerY: this.centerY,
-            radiusX: this.radiusX,
-            radiusY: this.radiusY,
-            rotation: this.rotation
-        };
     }
 }

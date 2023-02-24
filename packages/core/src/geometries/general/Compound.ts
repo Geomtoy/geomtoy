@@ -1,22 +1,24 @@
-import { Assert, Type, Utility } from "@geomtoy/util";
-import Shape from "../../base/Shape";
+import { Assert, Box, Type, Utility } from "@geomtoy/util";
+import EventSourceObject from "../../event/EventSourceObject";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import Arc from "../basic/Arc";
 import Bezier from "../basic/Bezier";
 import LineSegment from "../basic/LineSegment";
 import Point from "../basic/Point";
 import QuadraticBezier from "../basic/QuadraticBezier";
-import GeometryGraphics from "../../graphics/GeometryGraphics";
-import EventObject from "../../event/EventObject";
 
-import Transformation from "../../transformation";
+import Geometry from "../../base/Geometry";
+import Graphics from "../../graphics";
+import FillRuleHelper from "../../helper/FillRuleHelper";
 import { statedWithBoolean } from "../../misc/decor-cache";
+import { getCoordinates } from "../../misc/point-like";
+import { parseSvgPath } from "../../misc/svg-path";
+import Transformation from "../../transformation";
+import { FillRule, ViewportDescriptor } from "../../types";
 import Path from "./Path";
 import Polygon from "./Polygon";
-import { FillRule, ViewportDescriptor } from "../../types";
-import FillRuleHelper from "../../helper/FillRuleHelper";
-import { getCoordinates } from "../../misc/point-like";
 
-export default class Compound extends Shape {
+export default class Compound extends Geometry {
     private _fillRule: FillRule = "nonzero";
     private _items: (Path | Polygon)[] = [];
 
@@ -32,22 +34,19 @@ export default class Compound extends Shape {
         }
     }
 
-    get events() {
-        return {
-            itemsReset: "reset" as const,
-            itemAdded: "itemAdd" as const,
-            itemRemoved: "itemRemove" as const,
-            itemChanged: "itemChange" as const,
-            fillRuleChanged: "fillRuleChange" as const
-        };
-    }
+    static override events = {
+        itemsReset: "reset" as const,
+        itemAdded: "itemAdd" as const,
+        itemRemoved: "itemRemove" as const,
+        itemChanged: "itemChange" as const,
+        fillRuleChanged: "fillRule" as const
+    };
     private _setItems(value: (Path | Polygon)[]) {
-        if (!Utility.isEqualTo(this._items, value)) this.trigger_(EventObject.simple(this, this.events.itemsReset));
+        this.trigger_(new EventSourceObject(this, Compound.events.itemsReset));
         this._items = [...value];
-        this._items.forEach(item => (item.fillRule = this.fillRule));
     }
     private _setFillRule(value: FillRule) {
-        if (!Utility.isEqualTo(this._fillRule, value)) this.trigger_(EventObject.simple(this, this.events.fillRuleChanged));
+        if (!Utility.isEqualTo(this._fillRule, value)) this.trigger_(new EventSourceObject(this, Compound.events.fillRuleChanged));
         this._fillRule = value;
     }
     get items(): (Path | Polygon)[] {
@@ -68,30 +67,33 @@ export default class Compound extends Shape {
         return this._items.length;
     }
 
-    protected initialized_() {
-        return true;
+    static fromSvgString(data: string) {
+        const paths = parseSvgPath(data);
+        const compound = new Compound();
+        for (const path of paths) {
+            compound.appendItem(new Path(path.commands, path.closed));
+        }
+        return compound;
     }
 
+    initialized() {
+        return true;
+    }
     move(deltaX: number, deltaY: number) {
         Assert.isRealNumber(deltaX, "deltaX");
         Assert.isRealNumber(deltaY, "deltaY");
         if (deltaX === 0 && deltaY === 0) return this;
-        this._items.forEach(item => item.move(deltaX, deltaY));
+        this._items.forEach((item, index) => {
+            item.move(deltaX, deltaY);
+            this.trigger_(new EventSourceObject(this, Compound.events.itemChanged, index));
+        });
         return this;
     }
-    moveAlongAngle(angle: number, distance: number) {
-        Assert.isRealNumber(angle, "angle");
-        Assert.isRealNumber(distance, "distance");
-        if (distance === 0) return this;
-        this._items.forEach(item => item.moveAlongAngle(angle, distance));
-        return this;
-    }
-    getSegment(indexOrUuid: number | string) {}
 
     @statedWithBoolean(false, false)
-    getSegments(excludeNotAllowed = false, assumeClosed = false) {
+    getSegments(clean = false, assumeClosed = false) {
         return this._items.reduce((acc, item) => {
-            acc.push(...item.getSegments(excludeNotAllowed, assumeClosed));
+            acc.push(...item.getSegments(clean, assumeClosed));
             return acc;
         }, [] as (LineSegment | QuadraticBezier | Bezier | Arc)[]);
     }
@@ -110,7 +112,7 @@ export default class Compound extends Shape {
         this._assertIsCompoundItem(item, "item");
         const oldItem = this._items[index] ?? null;
         if (!Utility.isEqualTo(item, oldItem)) {
-            this.trigger_(EventObject.collection(this, this.events.itemChanged, index, ""));
+            this.trigger_(new EventSourceObject(this, Compound.events.itemChanged, index));
             this._items[index] = item;
         }
         return true;
@@ -118,27 +120,27 @@ export default class Compound extends Shape {
     insertItem(index: number, item: Polygon | Path) {
         this._assertIsCompoundItem(item, "item");
         if (this._items[index] === undefined) return false;
-        this.trigger_(EventObject.collection(this, this.events.itemAdded, index + 1, ""));
+        this.trigger_(new EventSourceObject(this, Compound.events.itemAdded, index + 1));
         this._items.splice(index, 0, item);
         return index + 1;
     }
     removeItem(index: number) {
         if (this._items[index] === undefined) return false;
-        this.trigger_(EventObject.collection(this, this.events.itemRemoved, index, ""));
+        this.trigger_(new EventSourceObject(this, Compound.events.itemRemoved, index));
         this._items.splice(index, 1);
         return true;
     }
     appendItem(item: Polygon | Path) {
         this._assertIsCompoundItem(item, "item");
         const index = this.itemCount;
-        this.trigger_(EventObject.collection(this, this.events.itemAdded, index, ""));
+        this.trigger_(new EventSourceObject(this, Compound.events.itemAdded, index));
         this._items.push(item);
         return index;
     }
     prependItem(item: Polygon | Path) {
         this._assertIsCompoundItem(item, "item");
         const index = 0;
-        this.trigger_(EventObject.collection(this, this.events.itemAdded, index, ""));
+        this.trigger_(new EventSourceObject(this, Compound.events.itemAdded, index));
         this._items.unshift(item);
         return index;
     }
@@ -191,6 +193,23 @@ export default class Compound extends Shape {
         }
     }
 
+    clean() {
+        const retCompound = new Compound(this._fillRule);
+        for (const item of this._items) {
+            retCompound.appendItem(item.clean());
+        }
+        return retCompound;
+    }
+
+    getBoundingBox() {
+        let bbox = [Infinity, Infinity, -Infinity, -Infinity] as [number, number, number, number];
+
+        for (const item of this._items) {
+            bbox = Box.extend(bbox, item.getBoundingBox());
+        }
+        return bbox;
+    }
+
     apply(transformation: Transformation) {
         const retCompound = new Compound();
         retCompound._fillRule = this._fillRule;
@@ -200,10 +219,15 @@ export default class Compound extends Shape {
         return retCompound;
     }
     getGraphics(viewport: ViewportDescriptor) {
-        const g = new GeometryGraphics();
-        g.fillRule = this.fillRule;
+        if (!this.initialized()) return new Graphics();
+
+        const g = new Graphics();
         this._items.forEach(item => {
-            g.append(item.getGraphics(viewport));
+            const itemG = item.getGraphics(viewport);
+            itemG.graphics.forEach(gg => {
+                (gg as GeometryGraphic).fillRule = this.fillRule;
+            });
+            g.concat(itemG);
         });
         return g;
     }
@@ -215,20 +239,14 @@ export default class Compound extends Shape {
         this._setItems(shape.items);
         return this;
     }
-    override toString(): string {
+    override toString() {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`, 
             `\titems: [`,
-            `${this.items.map(v => `\t\t${v.name}`).join(",\n")}`,
+            ...this.items.map(item => `\t\t${item.name}(${item.uuid})`),
             `\t]`,
             `}`
         ].join("\n");
-    }
-    toArray(): any[] {
-        throw this.items;
-    }
-    toObject(): object {
-        throw new Error("Method not implemented.");
     }
 }

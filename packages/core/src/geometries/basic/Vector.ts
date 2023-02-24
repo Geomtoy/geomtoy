@@ -1,19 +1,20 @@
-import { Angle, Assert, Type, Vector2, Utility, Coordinates, Maths } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-valid-geometry";
+import { Angle, Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import ArrowGraphics from "../../helper/ArrowGraphics";
+import { validGeometry } from "../../misc/decor-geometry";
 
 import Geometry from "../../base/Geometry";
-import Point from "./Point";
+import EventSourceObject from "../../event/EventSourceObject";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import Line from "./Line";
-import Ray from "./Ray";
 import LineSegment from "./LineSegment";
-import GeometryGraphics from "../../graphics/GeometryGraphics";
-import EventObject from "../../event/EventObject";
+import Point from "./Point";
+import Ray from "./Ray";
 
+import { optioner } from "../../geomtoy";
+import Graphics from "../../graphics";
+import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
 import type { ViewportDescriptor } from "../../types";
-import { optioner } from "../../geomtoy";
-import { getCoordinates } from "../../misc/point-like";
 
 @validGeometry
 export default class Vector extends Geometry {
@@ -54,37 +55,35 @@ export default class Vector extends Geometry {
         }
     }
 
-    get events() {
-        return {
-            xChanged: "x" as const,
-            yChanged: "y" as const,
-            point1XChanged: "point1X" as const,
-            point1YChanged: "point1Y" as const,
-            point2XChanged: "point2X" as const,
-            point2YChanged: "point2Y" as const
-        };
-    }
+    static override events = {
+        xChanged: "x" as const,
+        yChanged: "y" as const,
+        point1XChanged: "point1X" as const,
+        point1YChanged: "point1Y" as const,
+        point2XChanged: "point2X" as const,
+        point2YChanged: "point2Y" as const
+    };
 
     private _setX(value: number) {
         if (!Utility.isEqualTo(this._x, value)) {
-            this.trigger_(EventObject.simple(this, this.events.xChanged));
-            this.trigger_(EventObject.simple(this, this.events.point2XChanged));
+            this.trigger_(new EventSourceObject(this, Vector.events.xChanged));
+            this.trigger_(new EventSourceObject(this, Vector.events.point2XChanged));
         }
         this._x = value;
     }
     private _setY(value: number) {
         if (!Utility.isEqualTo(this._y, value)) {
-            this.trigger_(EventObject.simple(this, this.events.yChanged));
-            this.trigger_(EventObject.simple(this, this.events.point2YChanged));
+            this.trigger_(new EventSourceObject(this, Vector.events.yChanged));
+            this.trigger_(new EventSourceObject(this, Vector.events.point2YChanged));
         }
         this._y = value;
     }
     private _setPoint1X(value: number) {
-        if (!Utility.isEqualTo(this._point1X, value)) this.trigger_(EventObject.simple(this, this.events.point1XChanged));
+        if (!Utility.isEqualTo(this._point1X, value)) this.trigger_(new EventSourceObject(this, Vector.events.point1XChanged));
         this._point1X = value;
     }
     private _setPoint1Y(value: number) {
-        if (!Utility.isEqualTo(this._point1Y, value)) this.trigger_(EventObject.simple(this, this.events.point1YChanged));
+        if (!Utility.isEqualTo(this._point1Y, value)) this.trigger_(new EventSourceObject(this, Vector.events.point1YChanged));
         this._point1Y = value;
     }
 
@@ -191,7 +190,7 @@ export default class Vector extends Geometry {
         return Vector2.magnitude(this.coordinates);
     }
 
-    protected initialized_() {
+    initialized() {
         // prettier-ignore
         return (
             !Number.isNaN(this._x) &&
@@ -201,10 +200,6 @@ export default class Vector extends Geometry {
 
     move(deltaX: number, deltaY: number) {
         this.point1Coordinates = Vector2.add(this.point1Coordinates, [deltaX, deltaY]);
-        return this;
-    }
-    moveAlongAngle(angle: number, distance: number) {
-        this.point1Coordinates = Vector2.add(this.point1Coordinates, Vector2.from2(angle, distance));
         return this;
     }
 
@@ -334,15 +329,18 @@ export default class Vector extends Geometry {
         return new Vector(nc1, nc);
     }
     getGraphics(viewport: ViewportDescriptor) {
-        const g = new GeometryGraphics();
-        if (!this.initialized_()) return g;
+        if (!this.initialized()) return new Graphics();
+
+        const g = new Graphics();
+        const gg = new GeometryGraphic();
+        g.append(gg);
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;
 
-        g.moveTo(...c1);
-        g.lineTo(...c2);
+        gg.moveTo(...c1);
+        gg.lineTo(...c2);
 
         const arrowGraphics = new ArrowGraphics(c2, this.angle).getGraphics(viewport);
-        g.append(arrowGraphics);
+        g.concat(arrowGraphics);
         return g;
     }
     clone() {
@@ -356,7 +354,7 @@ export default class Vector extends Geometry {
         this._setPoint1Y(shape._point1Y);
         return this;
     }
-    toString() {
+    override toString() {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
@@ -366,16 +364,5 @@ export default class Vector extends Geometry {
             `\tpoint1Y: ${this.point1Y}`,
             `}`
         ].join("\n");
-    }
-    toArray() {
-        return [this.x, this.y, this.point1X, this.point1Y];
-    }
-    toObject() {
-        return {
-            x: this.x,
-            y: this.y,
-            point1X: this.point1X,
-            point1Y: this.point1Y
-        };
     }
 }

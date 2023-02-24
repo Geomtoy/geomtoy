@@ -1,129 +1,131 @@
-import { Box, Assert, Type, Utility, Coordinates, Vector2, Maths, Size } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-valid-geometry";
+import { Assert, Box, Coordinates, Maths, Size, Type, Utility, Vector2 } from "@geomtoy/util";
+import { validGeometry } from "../../misc/decor-geometry";
 
 import Geometry from "../../base/Geometry";
-import Point from "./Point";
+import EventSourceObject from "../../event/EventSourceObject";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import Transformation from "../../transformation";
-import GeometryGraphics from "../../graphics/GeometryGraphics";
-import EventObject from "../../event/EventObject";
+import Point from "./Point";
 
-import type { ClosedGeometry, WindingDirection, RotationFeaturedGeometry } from "../../types";
-import Path from "../advanced/Path";
-import Polygon from "../advanced/Polygon";
+import SealedShapeArray from "../../collection/SealedShapeArray";
 import { optioner } from "../../geomtoy";
+import Graphics from "../../graphics";
+import { statedWithBoolean } from "../../misc/decor-cache";
+import type { ClosedGeometry, RotationFeaturedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
+import Path from "../general/Path";
+import Polygon from "../general/Polygon";
+import LineSegment from "./LineSegment";
 
 @validGeometry
 export default class Rectangle extends Geometry implements ClosedGeometry, RotationFeaturedGeometry {
-    private _originX = NaN;
-    private _originY = NaN;
+    private _x = NaN;
+    private _y = NaN;
     private _width = NaN;
     private _height = NaN;
     private _rotation = 0;
 
-    constructor(originX: number, originY: number, width: number, height: number, rotation?: number);
-    constructor(originX: number, originY: number, size: [number, number], rotation?: number);
-    constructor(originCoordinates: [number, number], width: number, height: number, rotation?: number);
-    constructor(originCoordinates: [number, number], size: [number, number], rotation?: number);
-    constructor(originPoint: Point, width: number, height: number, rotation?: number);
-    constructor(originPoint: Point, size: [number, number], rotation?: number);
+    constructor(x: number, y: number, width: number, height: number, rotation?: number);
+    constructor(x: number, y: number, size: [number, number], rotation?: number);
+    constructor(coordinates: [number, number], width: number, height: number, rotation?: number);
+    constructor(coordinates: [number, number], size: [number, number], rotation?: number);
+    constructor(point: Point, width: number, height: number, rotation?: number);
+    constructor(point: Point, size: [number, number], rotation?: number);
     constructor();
     constructor(a0?: any, a1?: any, a2?: any, a3?: any, a4?: any) {
         super();
         if (Type.isNumber(a0)) {
             if (Type.isNumber(a2)) {
-                Object.assign(this, { originX: a0, originY: a1, width: a2, height: a3, rotation: a4 ?? 0 });
+                Object.assign(this, { x: a0, y: a1, width: a2, height: a3, rotation: a4 ?? 0 });
             } else {
-                Object.assign(this, { originX: a0, originY: a1, size: a2, rotation: a3 ?? 0 });
+                Object.assign(this, { x: a0, y: a1, size: a2, rotation: a3 ?? 0 });
             }
         }
         if (Type.isArray(a0)) {
             if (Type.isNumber(a1)) {
-                Object.assign(this, { originCoordinates: a0, width: a1, height: a2, rotation: a3 ?? 0 });
+                Object.assign(this, { coordinates: a0, width: a1, height: a2, rotation: a3 ?? 0 });
             } else {
-                Object.assign(this, { originCoordinates: a0, size: a1, rotation: a2 ?? 0 });
+                Object.assign(this, { coordinates: a0, size: a1, rotation: a2 ?? 0 });
             }
         }
         if (a0 instanceof Point) {
             if (Type.isNumber(a1)) {
-                Object.assign(this, { originPoint: a0, width: a1, height: a2, rotation: a3 ?? 0 });
+                Object.assign(this, { point: a0, width: a1, height: a2, rotation: a3 ?? 0 });
             } else {
-                Object.assign(this, { originPoint: a0, size: a1, rotation: a2 ?? 0 });
+                Object.assign(this, { point: a0, size: a1, rotation: a2 ?? 0 });
             }
         }
     }
 
-    get events() {
-        return {
-            originXChanged: "originX" as const,
-            originYChanged: "originY" as const,
-            widthChanged: "width" as const,
-            heightChanged: "height" as const,
-            rotationChanged: "rotation" as const
-        };
-    }
+    static override events = {
+        xChanged: "x" as const,
+        yChanged: "y" as const,
+        widthChanged: "width" as const,
+        heightChanged: "height" as const,
+        rotationChanged: "rotation" as const
+    };
 
-    private _setOriginX(value: number) {
-        if (!Utility.isEqualTo(this._originX, value)) this.trigger_(EventObject.simple(this, this.events.originXChanged));
-        this._originX = value;
+    private _setX(value: number) {
+        if (!Utility.isEqualTo(this._x, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.xChanged));
+        this._x = value;
     }
-    private _setOriginY(value: number) {
-        if (!Utility.isEqualTo(this._originY, value)) this.trigger_(EventObject.simple(this, this.events.originYChanged));
-        this._originY = value;
+    private _setY(value: number) {
+        if (!Utility.isEqualTo(this._y, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.yChanged));
+        this._y = value;
     }
     private _setWidth(value: number) {
-        if (!Utility.isEqualTo(this._width, value)) this.trigger_(EventObject.simple(this, this.events.widthChanged));
+        if (!Utility.isEqualTo(this._width, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.widthChanged));
         this._width = value;
     }
     private _setHeight(value: number) {
-        if (!Utility.isEqualTo(this._height, value)) this.trigger_(EventObject.simple(this, this.events.heightChanged));
+        if (!Utility.isEqualTo(this._height, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.heightChanged));
         this._height = value;
     }
     private _setRotation(value: number) {
-        if (!Utility.isEqualTo(this._rotation, value)) this.trigger_(EventObject.simple(this, this.events.rotationChanged));
+        if (!Utility.isEqualTo(this._rotation, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.rotationChanged));
         this._rotation = value;
     }
 
-    get originX() {
-        return this._originX;
+    get x() {
+        return this._x;
     }
-    set originX(value) {
-        Assert.isRealNumber(value, "originX");
-        this._setOriginX(value);
+    set x(value) {
+        Assert.isRealNumber(value, "x");
+        this._setX(value);
     }
-    get originY() {
-        return this._originY;
+    get y() {
+        return this._y;
     }
-    set originY(value) {
-        Assert.isRealNumber(value, "originY");
-        this._setOriginY(value);
+    set y(value) {
+        Assert.isRealNumber(value, "y");
+        this._setY(value);
     }
-    get originCoordinates() {
-        return [this._originX, this._originY] as [number, number];
+    get coordinates() {
+        return [this._x, this._y] as [number, number];
     }
-    set originCoordinates(value) {
-        Assert.isCoordinates(value, "originCoordinates");
-        this._setOriginX(Coordinates.x(value));
-        this._setOriginY(Coordinates.y(value));
+    set coordinates(value) {
+        Assert.isCoordinates(value, "coordinates");
+        this._setX(Coordinates.x(value));
+        this._setY(Coordinates.y(value));
     }
-    get originPoint() {
-        return new Point(this._originX, this._originY);
+    get point() {
+        return new Point(this._x, this._y);
     }
-    set originPoint(value) {
-        this._setOriginX(value.x);
-        this._setOriginY(value.y);
+    set point(value) {
+        this._setX(value.x);
+        this._setY(value.y);
     }
     get width() {
         return this._width;
     }
     set width(value) {
-        Assert.isPositiveNumber(value, "width");
+        Assert.isNonNegativeNumber(value, "width");
         this._setWidth(value);
     }
     get height() {
         return this._height;
     }
     set height(value) {
-        Assert.isPositiveNumber(value, "height");
+        Assert.isNonNegativeNumber(value, "height");
         this._setHeight(value);
     }
     get size() {
@@ -142,25 +144,47 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         this._setRotation(value);
     }
 
-    protected initialized_() {
+    initialized() {
         // prettier-ignore
         return (
-            !Number.isNaN(this._originX) &&
-            !Number.isNaN(this._originY) &&
+            !Number.isNaN(this._x) &&
+            !Number.isNaN(this._y) &&
             !Number.isNaN(this._width) &&
             !Number.isNaN(this._height)
         );
     }
 
+    degenerate(check: false): Point | SealedShapeArray<[LineSegment, LineSegment]> | this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
+
+        const w0 = Maths.equalTo(this._width, 0, optioner.options.epsilon);
+        const h0 = Maths.equalTo(this._height, 0, optioner.options.epsilon);
+        if (check) return w0 || h0;
+
+        if (w0 && !h0) {
+            // prettier-ignore
+            return new SealedShapeArray([
+                new LineSegment(this._x, this._y, this._x, this._y + this._height), 
+                new LineSegment(this._x, this._y + this._height, this._x, this._y)
+            ]);
+        }
+        if (!w0 && h0) {
+            // prettier-ignore
+            return new SealedShapeArray([
+                new LineSegment(this._x, this._y, this._x + this._width, this._y), 
+                new LineSegment(this._x + this._width, this._y, this._x, this._y)
+            ]);
+        }
+        if (w0 && h0) return new Point(this._x, this._y);
+        return this;
+    }
+
     static fromTwoPointsAndRotation(point1: Point, point2: Point, rotation = 0) {
         const c1 = point1.coordinates;
         const c2 = point2.coordinates;
-        const epsilon = optioner.options.epsilon;
-
-        if (Coordinates.isEqualTo(c1, c2, epsilon)) {
-            console.warn("[G]Diagonal endpoints `point1` and `point2` of a rectangle can NOT be the same. `null` will be returned");
-            return null;
-        }
         const box = Box.from(c1, c2);
         return new Rectangle(Box.x(box), Box.y(box), Box.width(box), Box.height(box), rotation);
     }
@@ -185,7 +209,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
     }
 
     getVertices(): [Point, Point, Point, Point] {
-        const { originX: x, originY: y, width: w, height: h, rotation } = this;
+        const { x: x, y: y, width: w, height: h, rotation } = this;
         const b: [number, number, number, number] = [x, y, w, h];
         const t = new Transformation();
         t.setRotate(rotation, this.getCenterPoint());
@@ -197,7 +221,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
     }
 
     getCenterPoint() {
-        const c = Vector2.add(this.originCoordinates, [Size.width(this.size) / 2, Size.height(this.size) / 2]);
+        const c = Vector2.add(this.coordinates, [Size.width(this.size) / 2, Size.height(this.size) / 2]);
         return new Point(c);
     }
 
@@ -209,7 +233,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         throw new Error();
         // let xRight = this.owner.xAxisPositiveOnRight,
         //     yBottom = this.owner.yAxisPositiveOnBottom,
-        //     { originX: x, originY: y, width: w, height: h } = this,
+        //     { x: x, y: y, width: w, height: h } = this,
         //     l = x,
         //     r = x + w,
         //     t = y,
@@ -232,11 +256,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         // return ret
     }
     move(deltaX: number, deltaY: number) {
-        this.originCoordinates = Vector2.add(this.originCoordinates, [deltaX, deltaY]);
-        return this;
-    }
-    moveAlongAngle(angle: number, distance: number) {
-        this.originCoordinates = Vector2.add(this.originCoordinates, Vector2.from2(angle, distance));
+        this.coordinates = Vector2.add(this.coordinates, [deltaX, deltaY]);
         return this;
     }
 
@@ -244,7 +264,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         return this.clone().inflateSelf(size);
     }
     inflateSelf(size: [number, number]) {
-        let { originX: x, originY: y, width: w, height: h } = this,
+        let { x: x, y: y, width: w, height: h } = this,
             [sw, sh] = size,
             nx = x - sw,
             ny = y - sh,
@@ -253,8 +273,8 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         if (nw <= 0 || nh <= 0) {
             return this;
         }
-        this.originX = nx;
-        this.originY = ny;
+        this.x = nx;
+        this.y = ny;
         this.width = nw;
         this.height = nh;
         return this;
@@ -303,7 +323,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
     }
 
     apply(transformation: Transformation) {
-        const { originCoordinates: oc, width: w, height: h, rotation } = this;
+        const { coordinates: c, width: w, height: h, rotation } = this;
         const rectangleTransformation = new Transformation();
         rectangleTransformation.setRotate(rotation, this.getCenterPoint());
         const t = transformation.clone().addMatrix(...rectangleTransformation.matrix);
@@ -315,60 +335,54 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         const epsilon = optioner.options.epsilon;
 
         if (Maths.equalTo(kx, 0, epsilon) && Maths.equalTo(ky, 0, epsilon)) {
-            const newOrigin = t.transformCoordinates(oc);
+            const newCoordinates = t.transformCoordinates(c);
             const newWidth = w * sx;
             const newHeight = h * sy;
             const newRotation = rotate;
-            return new Rectangle(newOrigin, newWidth, newHeight, newRotation);
+            return new Rectangle(newCoordinates, newWidth, newHeight, newRotation);
         } else {
             return this.toPath().apply(transformation);
         }
     }
 
-    getGraphics() {
-        const g = new GeometryGraphics();
-        if (!this.initialized_()) return g;
+    getGraphics(viewport: ViewportDescriptor) {
+        const dg = this.degenerate(false);
+        if (dg === null) return new Graphics();
+        if (dg !== this) return (dg as Exclude<typeof dg, this>).getGraphics(viewport);
+
+        const g = new Graphics();
+        const gg = new GeometryGraphic();
+        g.append(gg);
         const [p1, p2, p3, p4] = this.getVertices();
-        g.moveTo(...p1.coordinates);
-        g.lineTo(...p2.coordinates);
-        g.lineTo(...p3.coordinates);
-        g.lineTo(...p4.coordinates);
-        g.close();
+        gg.moveTo(...p1.coordinates);
+        gg.lineTo(...p2.coordinates);
+        gg.lineTo(...p3.coordinates);
+        gg.lineTo(...p4.coordinates);
+        gg.close();
         return g;
     }
     clone() {
-        return new Rectangle(this.originX, this.originY, this.width, this.height, this.rotation);
+        return new Rectangle(this.x, this.y, this.width, this.height, this.rotation);
     }
     copyFrom(shape: Rectangle | null) {
         if (shape === null) shape = new Rectangle();
-        this._setOriginX(shape._originX);
-        this._setOriginY(shape._originY);
+        this._setX(shape._x);
+        this._setY(shape._y);
         this._setWidth(shape._width);
         this._setHeight(shape._height);
         this._setRotation(shape._rotation);
         return this;
     }
-    toString() {
+    override toString() {
+        // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
-            `\toriginX: ${this.originX}`,
-            `\toriginY: ${this.originY}`,
+            `\tx: ${this.x}`,
+            `\ty: ${this.y}`,
             `\twidth: ${this.width}`,
             `\theight: ${this.height}`,
             `\trotation: ${this.rotation}`,
             `}`
         ].join("\n");
-    }
-    toArray() {
-        return [this.originX, this.originY, this.width, this.height, this.rotation];
-    }
-    toObject() {
-        return {
-            originX: this.originX,
-            originY: this.originY,
-            width: this.width,
-            height: this.height,
-            rotation: this.rotation
-        };
     }
 }

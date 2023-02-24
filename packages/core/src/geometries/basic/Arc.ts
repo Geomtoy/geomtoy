@@ -1,22 +1,24 @@
+import { Angle, Assert, Coordinates, Maths, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
 import { optioner } from "../../geomtoy";
-import { Assert, Vector2, Maths, Type, Utility, Coordinates, Polynomial, Angle, TransformationMatrix, Box } from "@geomtoy/util";
 
-import { centerToEndpointParameterization, endpointToCenterParameterization, endpointParameterizationTransform, flexCorrectRadii } from "../../misc/arc";
 import Geometry from "../../base/Geometry";
-import Point from "./Point";
-import Ellipse from "./Ellipse";
+import EventSourceObject from "../../event/EventSourceObject";
+import Graphics from "../../graphics";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
+import { centerToEndpointParameterization, endpointParameterizationTransform, endpointToCenterParameterization, flexCorrectRadii } from "../../misc/arc";
 import Circle from "./Circle";
-import GeometryGraphics from "../../graphics/GeometryGraphics";
-import EventObject from "../../event/EventObject";
+import Ellipse from "./Ellipse";
+import Point from "./Point";
 
+import { stated, statedWithBoolean } from "../../misc/decor-cache";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
+import { completeEllipticIntegralOfSecondKind, incompleteEllipticIntegralOfSecondKind } from "../../misc/elliptic-integral";
+import { getCoordinates } from "../../misc/point-like";
 import Transformation from "../../transformation";
 import type { FiniteOpenGeometry, ViewportDescriptor } from "../../types";
-import Path from "../advanced/Path";
-import { stated } from "../../misc/decor-cache";
+import Path from "../general/Path";
+import LineSegment from "./LineSegment";
 import Vector from "./Vector";
-import { validGeometry, validGeometryArguments } from "../../misc/decor-valid-geometry";
-import { getCoordinates } from "../../misc/point-like";
-import { completeEllipticIntegralOfSecondKind, incompleteEllipticIntegralOfSecondKind } from "../../misc/elliptic-integral";
 
 @validGeometry
 export default class Arc extends Geometry implements FiniteOpenGeometry {
@@ -53,75 +55,73 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         }
     }
 
-    get events() {
-        return {
-            point1XChanged: "point1X" as const,
-            point1YChanged: "point1Y" as const,
-            point2XChanged: "point2X" as const,
-            point2YChanged: "point2Y" as const,
-            radiusXChanged: "radiusX" as const,
-            radiusYChanged: "radiusY" as const,
-            largeArcChanged: "largeArc" as const,
-            positiveChanged: "positive" as const,
-            rotationChanged: "rotation" as const
-        };
-    }
+    static override events = {
+        point1XChanged: "point1X" as const,
+        point1YChanged: "point1Y" as const,
+        point2XChanged: "point2X" as const,
+        point2YChanged: "point2Y" as const,
+        radiusXChanged: "radiusX" as const,
+        radiusYChanged: "radiusY" as const,
+        largeArcChanged: "largeArc" as const,
+        positiveChanged: "positive" as const,
+        rotationChanged: "rotation" as const
+    };
 
     private _setPoint1X(value: number) {
         if (Utility.isEqualTo(this._point1X, value)) return;
         this._point1X = value;
-        this.trigger_(EventObject.simple(this, this.events.point1XChanged));
+        this.trigger_(new EventSourceObject(this, Arc.events.point1XChanged));
         this._correctAndSetRadii();
     }
     private _setPoint1Y(value: number) {
         if (Utility.isEqualTo(this._point1Y, value)) return;
         this._point1Y = value;
-        this.trigger_(EventObject.simple(this, this.events.point1YChanged));
+        this.trigger_(new EventSourceObject(this, Arc.events.point1YChanged));
         this._correctAndSetRadii();
     }
     private _setPoint2X(value: number) {
         if (Utility.isEqualTo(this._point2X, value)) return;
         this._point2X = value;
-        this.trigger_(EventObject.simple(this, this.events.point2XChanged));
+        this.trigger_(new EventSourceObject(this, Arc.events.point2XChanged));
         this._correctAndSetRadii();
     }
     private _setPoint2Y(value: number) {
         if (Utility.isEqualTo(this._point2Y, value)) return;
         this._point2Y = value;
-        this.trigger_(EventObject.simple(this, this.events.point2YChanged));
+        this.trigger_(new EventSourceObject(this, Arc.events.point2YChanged));
         this._correctAndSetRadii();
     }
     private _setRadiusX(value: number) {
         if (Utility.isEqualTo(this._inputRadiusX, value)) return;
         this._inputRadiusX = value;
-        this.trigger_(EventObject.simple(this, this.events.radiusXChanged));
+        this.trigger_(new EventSourceObject(this, Arc.events.radiusXChanged));
         this._correctAndSetRadii();
     }
     private _setRadiusY(value: number) {
         if (Utility.isEqualTo(this._inputRadiusY, value)) return;
         this._inputRadiusY = value;
-        this.trigger_(EventObject.simple(this, this.events.radiusYChanged));
+        this.trigger_(new EventSourceObject(this, Arc.events.radiusYChanged));
         this._correctAndSetRadii();
     }
     private _setLargeArc(value: boolean) {
         if (Utility.isEqualTo(this._largeArc, value)) return;
         this._largeArc = value;
-        this.trigger_(EventObject.simple(this, this.events.largeArcChanged));
+        this.trigger_(new EventSourceObject(this, Arc.events.largeArcChanged));
     }
     private _setPositive(value: boolean) {
         if (Utility.isEqualTo(this._positive, value)) return;
         this._positive = value;
-        this.trigger_(EventObject.simple(this, this.events.positiveChanged));
+        this.trigger_(new EventSourceObject(this, Arc.events.positiveChanged));
     }
     private _setRotation(value: number) {
         if (Utility.isEqualTo(this._rotation, value)) return;
         this._rotation = value;
-        this.trigger_(EventObject.simple(this, this.events.rotationChanged));
+        this.trigger_(new EventSourceObject(this, Arc.events.rotationChanged));
         this._correctAndSetRadii();
     }
 
     private _correctAndSetRadii() {
-        const { _point1X, _point1Y, _point2X, _point2Y, _inputRadiusX, _inputRadiusY, _rotation /* default 0 always not `NaN` */ } = this;
+        const { _point1X, _point1Y, _point2X, _point2Y, _inputRadiusX, _inputRadiusY, _rotation } = this;
         // prettier-ignore
         const correctPrecondition = (
             !Number.isNaN(_point1X) &&
@@ -133,14 +133,26 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
             !Number.isNaN(_inputRadiusY)
         )
         if (correctPrecondition) {
+            if (Maths.equalTo(_inputRadiusX, 0, optioner.options.epsilon) || Maths.equalTo(_inputRadiusY, 0, optioner.options.epsilon)) {
+                if (!Utility.isEqualTo(this._radiusX, _inputRadiusX)) {
+                    this._radiusX = _inputRadiusX;
+                    this.trigger_(new EventSourceObject(this, Arc.events.radiusXChanged));
+                }
+                if (!Utility.isEqualTo(this._radiusY, _inputRadiusY)) {
+                    this._radiusY = _inputRadiusY;
+                    this.trigger_(new EventSourceObject(this, Arc.events.radiusYChanged));
+                }
+                return;
+            }
+
             let [rx, ry] = flexCorrectRadii(_point1X, _point1Y, _point2X, _point2Y, _inputRadiusX, _inputRadiusY, _rotation);
             if (!Utility.isEqualTo(this._radiusX, rx)) {
                 this._radiusX = rx;
-                this.trigger_(EventObject.simple(this, this.events.radiusXChanged));
+                this.trigger_(new EventSourceObject(this, Arc.events.radiusXChanged));
             }
             if (!Utility.isEqualTo(this._radiusY, ry)) {
                 this._radiusY = ry;
-                this.trigger_(EventObject.simple(this, this.events.radiusYChanged));
+                this.trigger_(new EventSourceObject(this, Arc.events.radiusYChanged));
             }
         }
     }
@@ -206,14 +218,14 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         return this._radiusX;
     }
     set radiusX(value) {
-        Assert.isPositiveNumber(value, "radiusX");
+        Assert.isNonNegativeNumber(value, "radiusX");
         this._setRadiusX(value);
     }
     get radiusY() {
         return this._radiusY;
     }
     set radiusY(value) {
-        Assert.isPositiveNumber(value, "radiusY");
+        Assert.isNonNegativeNumber(value, "radiusY");
         this._setRadiusY(value);
     }
     get largeArc() {
@@ -236,7 +248,8 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         this._setRotation(value);
     }
 
-    protected initialized_() {
+    @stated
+    initialized() {
         // prettier-ignore
         return (
             !Number.isNaN(this._point1X) &&
@@ -247,17 +260,31 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
             !Number.isNaN(this._radiusY )
         );
     }
+    degenerate(check: false): Point | LineSegment | this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
 
-    @stated
-    dimensionallyDegenerate() {
-        if (!this.initialized_()) return true;
-        const { point1Coordinates: c1, point2Coordinates: c2 } = this;
-        return Coordinates.isEqualTo(c1, c2, optioner.options.epsilon);
+        const { radiusX: rx, radiusY: ry, point1Coordinates: c1, point2Coordinates: c2 } = this;
+        const rx0 = Maths.equalTo(rx, 0, optioner.options.epsilon);
+        const ry0 = Maths.equalTo(ry, 0, optioner.options.epsilon);
+        const c12 = Coordinates.isEqualTo(c1, c2, optioner.options.epsilon);
+
+        if (check) return rx0 || ry0 || c12;
+
+        if (c12) return new Point(c1);
+
+        if ((rx0 && !ry0) || (!rx0 && ry0)) {
+            return new LineSegment(c1, c2);
+        }
+        if (rx0 && ry0) return null;
+        return this;
     }
 
     static fromCenterPointAndStartEndAnglesEtc(centerPoint: [number, number] | Point, radiusX: number, radiusY: number, startAngle: number, endAngle: number, positive: boolean, rotation = 0) {
-        Assert.isPositiveNumber(radiusX, "radiusX");
-        Assert.isPositiveNumber(radiusY, "radiusY");
+        Assert.isNonNegativeNumber(radiusX, "radiusX");
+        Assert.isNonNegativeNumber(radiusY, "radiusY");
         Assert.isRealNumber(startAngle, "startAngle");
         Assert.isRealNumber(endAngle, "endAngle");
         Assert.isRealNumber(rotation, "rotation");
@@ -280,7 +307,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const [x3, y3] = getCoordinates(radiusControlPoint, "radiusControlPoint");
 
         if (Point.isThreePointsCollinear([x1, y1], [x2, y2], [x3, y3])) {
-            return null;
+            return null; // circle centerPoint at infinity
         }
 
         const a = 2 * (x2 - x1);
@@ -332,11 +359,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         this.point2Coordinates = Vector2.add(this.point2Coordinates, [deltaX, deltaY]);
         return this;
     }
-    moveAlongAngle(angle: number, distance: number) {
-        this.point1Coordinates = Vector2.add(this.point1Coordinates, Vector2.from2(angle, distance));
-        this.point2Coordinates = Vector2.add(this.point2Coordinates, Vector2.from2(angle, distance));
-        return this;
-    }
 
     @stated
     private _centerParameterization() {
@@ -353,24 +375,24 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
             rotation
         });
     }
-
+    // @stated _centerParameterization
     getCenterPoint() {
         const { centerX, centerY } = this._centerParameterization();
         return new Point(centerX, centerY);
     }
-    @stated
+    // @stated _centerParameterization
     getStartEndAngles() {
         const { startAngle, endAngle } = this._centerParameterization();
         return [startAngle, endAngle] as [number, number];
     }
-
+    @stated
     getParametricEquation() {
         return this.toEllipse().getParametricEquation();
     }
+    @stated
     getImplicitFunctionCoefs() {
         return this.toEllipse().getImplicitFunctionCoefs();
     }
-
     @stated
     toEllipse() {
         const { centerX: cx, centerY: cy } = this._centerParameterization();
@@ -378,17 +400,19 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const ellipse = new Ellipse(cx, cy, rx, ry, phi);
         return ellipse;
     }
+    @stated
     isCircularArc() {
         return Maths.equalTo(this.radiusX, this.radiusY, optioner.options.epsilon);
     }
-
-    toCircle() {
-        if (!this.isCircularArc()) {
-            console.warn("[G]The arc is not a is circular arc, and it can not change to a circle.");
-            return null;
-        }
+    @stated
+    toCircleByRadiusX() {
         const { centerX: cx, centerY: cy } = this._centerParameterization();
         return new Circle(cx, cy, this.radiusX);
+    }
+    @stated
+    toCircleByRadiusY() {
+        const { centerX: cx, centerY: cy } = this._centerParameterization();
+        return new Circle(cx, cy, this.radiusY);
     }
 
     reverse() {
@@ -398,10 +422,10 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const [ox2, oy2] = [this._point2X, this._point2Y];
         [this._point1X, this.point1Y] = [ox2, oy2];
         [this._point2X, this.point2Y] = [ox1, oy1];
-        this.trigger_(EventObject.simple(this, this.events.point1XChanged));
-        this.trigger_(EventObject.simple(this, this.events.point1YChanged));
-        this.trigger_(EventObject.simple(this, this.events.point2XChanged));
-        this.trigger_(EventObject.simple(this, this.events.point2YChanged));
+        this.trigger_(new EventSourceObject(this, Arc.events.point1XChanged));
+        this.trigger_(new EventSourceObject(this, Arc.events.point1YChanged));
+        this.trigger_(new EventSourceObject(this, Arc.events.point2XChanged));
+        this.trigger_(new EventSourceObject(this, Arc.events.point2YChanged));
     }
 
     isPointOn(point: [number, number] | Point) {
@@ -409,21 +433,16 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     }
     getAngleOfPoint(point: [number, number] | Point) {
         const a = this.toEllipse().getAngleOfPoint(point);
+        if (Number.isNaN(a)) return a;
         const [sa, ea] = this.getStartEndAngles();
+        const positive = this.positive;
         const epsilon = optioner.options.epsilon;
-        return Angle.between(a, sa, ea, this.positive, false, false, epsilon) ? a : NaN;
+        return Angle.between(a, sa, ea, positive, false, false, epsilon) ? Angle.clamp(a, sa, ea, positive) : NaN;
     }
 
-    private _assertBetweenStartAndEndAngles(value: number, p: string) {
-        const [sa, ea] = this.getStartEndAngles();
-        Assert.condition(
-            Angle.between(value, sa, ea, this.positive, false, false),
-            `[G]The \`${p}\` must be ${this.positive ? "positively" : "negatively"} between ${sa}(including) and ${ea}(including).`
-        );
-    }
-    getPointAtAngle(angle: number) {
-        this._assertBetweenStartAndEndAngles(angle, "angle");
-        return this.toEllipse().getPointAtAngle(angle);
+    getPointAtAngle(a: number) {
+        a = this._clampAngle(a, "a");
+        return this.toEllipse().getPointAtAngle(a);
     }
 
     @stated
@@ -444,44 +463,40 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         return [minX, minY, maxX - minX, maxY - minY] as [number, number, number, number];
     }
 
-    getTangentVectorAtAngle(angle: number, normalized = false): Vector {
-        this._assertBetweenStartAndEndAngles(angle, "angle");
-        const tv = this.toEllipse().getTangentVectorAtAngle(angle, normalized);
-        if (this.positive) {
-            return tv;
-        } else {
-            return tv.negative();
+    private _clampAngle(a: number, p: string) {
+        Assert.isRealNumber(a, p);
+        const { startAngle: sa, endAngle: ea } = this._centerParameterization();
+        const positive = this.positive;
+        if (!Angle.between(a, sa, ea, positive, false, false)) {
+            console.warn(`[G]The \`${p}\` with value \`${a}\` is not ${positive ? "positively" : "negatively"} between \`${sa}\`(including) and \`${ea}\`(including). It will be clamped.`);
         }
+        return Angle.clamp(a, sa, ea, positive);
     }
-    getNormalVectorAtAngle(angle: number, normalized = false): Vector {
-        this._assertBetweenStartAndEndAngles(angle, "angle");
-        const nv = this.toEllipse().getNormalVectorAtAngle(angle, normalized);
-        if (this.positive) {
-            return nv;
-        } else {
-            return nv.negative();
-        }
+
+    getTangentVectorAtAngle(a: number, normalized = false): Vector {
+        a = this._clampAngle(a, "a");
+        const tv = this.toEllipse().getTangentVectorAtAngle(a, normalized);
+        return this.positive ? tv : tv.negative();
     }
-    getCurvatureAtAngle(angle: number) {
-        this._assertBetweenStartAndEndAngles(angle, "angle");
-        const c = this.toEllipse().getCurvatureAtAngle(angle);
+    getNormalVectorAtAngle(a: number, normalized = false): Vector {
+        a = this._clampAngle(a, "a");
+        return this.toEllipse().getNormalVectorAtAngle(a, normalized);
+    }
+    getCurvatureAtAngle(a: number) {
+        a = this._clampAngle(a, "a");
+        const c = this.toEllipse().getCurvatureAtAngle(a);
         return this.positive ? c : -c;
     }
+    getOsculatingCircleAtAngle(a: number) {
+        a = this._clampAngle(a, "a");
+        return this.toEllipse().getOsculatingCircleAtAngle(a);
+    }
 
-    splitAtAngles(angles: number[]) {
-        const [sa, ea] = this.getStartEndAngles();
-        Assert.condition(
-            angles.every(angle => Angle.between(angle, sa, ea, this.positive, false, false)),
-            `[G]The \`angles\` must be all ${this.positive ? "positively" : "negatively"}  between ${sa}(including) and ${ea}(including).`
-        );
-        const ret: Arc[] = [];
-        const epsilon = optioner.options.epsilon;
-
-        angles = Utility.sortBy(
-            Utility.uniqWith(
-                angles.map(a => Angle.simplify(a)),
-                (a, b) => Maths.equalTo(a, b, epsilon)
-            ),
+    // Sort the angles by the `this.positive` from start angle to end angle, this is very important.
+    private _anglesOrder(as: number[]) {
+        const { startAngle: sa, endAngle: ea } = this._centerParameterization();
+        return Utility.sortBy(
+            [...as],
             [
                 n => {
                     if (this.positive) {
@@ -494,23 +509,41 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
                 }
             ]
         );
+    }
+
+    splitAtAngle(a: number) {
+        a = this._clampAngle(a, "a");
+        const { centerX, centerY, startAngle, endAngle } = this._centerParameterization();
+        return [
+            Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, startAngle, a, this.positive, this.rotation),
+            Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a, endAngle, this.positive, this.rotation)
+        ];
+    }
+    splitAtAngles(as: number[]) {
+        const [sa, ea] = this.getStartEndAngles();
+        const ret: Arc[] = [];
+        const epsilon = optioner.options.epsilon;
+        as = as.map(a => this._clampAngle(a, "element of as"));
+        as = this._anglesOrder(Utility.uniqWith(as, (a, b) => Angle.equalTo(a, b, epsilon)));
         const cc = this.getCenterPoint().coordinates;
-        [sa, ...angles, ea].forEach((_, index, arr) => {
+        [sa, ...as, ea].forEach((_, index, arr) => {
             if (index !== arr.length - 1) {
                 ret.push(Arc.fromCenterPointAndStartEndAnglesEtc(cc, this.radiusX, this.radiusY, arr[index], arr[index + 1], this.positive, this.rotation));
             }
         });
         return ret;
     }
-
-    splitAtAngle(angle: number) {
-        this._assertBetweenStartAndEndAngles(angle, "angle");
-        const [sa, ea] = this.getStartEndAngles();
-        const cc = this.getCenterPoint().coordinates;
-        return [
-            Arc.fromCenterPointAndStartEndAnglesEtc(cc, this.radiusX, this.radiusY, sa, angle, this.positive, this.rotation),
-            Arc.fromCenterPointAndStartEndAnglesEtc(cc, this.radiusX, this.radiusY, angle, ea, this.positive, this.rotation)
-        ];
+    portionOf(a1: number, a2: number) {
+        a1 = this._clampAngle(a1, "a1");
+        a2 = this._clampAngle(a2, "a2");
+        const { centerX, centerY } = this._centerParameterization();
+        [a1, a2] = this._anglesOrder([a1, a2]);
+        return Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a1, a2, this.positive, this.rotation);
+    }
+    portionOfExtend(a1: number, a2: number) {
+        const { centerX, centerY } = this._centerParameterization();
+        [a1, a2] = this._anglesOrder([a1, a2]);
+        return Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a1, a2, this.positive, this.rotation);
     }
 
     @validGeometryArguments
@@ -653,11 +686,16 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     }
 
     getGraphics(viewport: ViewportDescriptor) {
-        const g = new GeometryGraphics();
-        if (!this.initialized_()) return g;
+        const dg = this.degenerate(false);
+        if (dg === null) return new Graphics();
+        if (dg !== this) return (dg as Exclude<typeof dg, this>).getGraphics(viewport);
+
+        const g = new Graphics();
+        const gg = new GeometryGraphic();
+        g.append(gg);
         const { point1Coordinates: c1, point2Coordinates: c2, radiusX: rx, radiusY: ry, rotation: rotation, largeArc: largeArc, positive: positive } = this;
-        g.moveTo(...c1);
-        g.endpointArcTo(rx, ry, rotation, largeArc, positive, ...c2);
+        gg.moveTo(...c1);
+        gg.endpointArcTo(rx, ry, rotation, largeArc, positive, ...c2);
         return g;
     }
 
@@ -683,7 +721,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         this._setPositive(shape._positive);
         return this;
     }
-    toString() {
+    override toString() {
         return [
             `${this.name}(${this.uuid}){`,
             `\tpoint1X: ${this.point1X}`,
@@ -697,21 +735,5 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
             `\trotation: ${this.rotation}`,
             `}`
         ].join("\n");
-    }
-    toArray() {
-        return [this.point1X, this.point1Y, this.point2X, this.point2Y, this.radiusX, this.radiusY, this.largeArc, this.positive, this.rotation];
-    }
-    toObject() {
-        return {
-            point1X: this.point1X,
-            point1Y: this.point1Y,
-            point2X: this.point2X,
-            point2Y: this.point2Y,
-            radiusX: this.radiusX,
-            radiusY: this.radiusY,
-            largeArc: this.largeArc,
-            positive: this.positive,
-            rotation: this.rotation
-        };
     }
 }

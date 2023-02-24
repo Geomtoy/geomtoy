@@ -1,17 +1,19 @@
-import { Assert, Type, Utility, Coordinates, Size, Vector2 } from "@geomtoy/util";
+import { Assert, Coordinates, Size, Type, Utility, Vector2 } from "@geomtoy/util";
 
 import Shape from "../base/Shape";
+import EventSourceObject from "../event/EventSourceObject";
 import Point from "../geometries/basic/Point";
-import ImageGraphics from "../graphics/ImageGraphics";
-import EventObject from "../event/EventObject";
+import Graphics from "../graphics";
+import ImageGraphic from "../graphics/ImageGraphic";
+
+const IMAGE_DEFAULT_WIDTH = 100;
+const IMAGE_DEFAULT_HEIGHT = 100;
 
 export default class Image extends Shape {
-    constantSize = false;
-
-    private _x = NaN;
-    private _y = NaN;
-    private _width = NaN;
-    private _height = NaN;
+    private _x = 0;
+    private _y = 0;
+    private _width = IMAGE_DEFAULT_WIDTH;
+    private _height = IMAGE_DEFAULT_HEIGHT;
     private _sourceX = NaN;
     private _sourceY = NaN;
     private _sourceWidth = NaN;
@@ -95,54 +97,52 @@ export default class Image extends Shape {
         }
     }
 
-    get events() {
-        return {
-            xChanged: "x" as const,
-            yChanged: "y" as const,
-            sourceXChanged: "sourceX" as const,
-            sourceYChanged: "sourceY" as const,
-            widthChanged: "width" as const,
-            heightChanged: "height" as const,
-            sourceWidthChanged: "sourceWidth" as const,
-            sourceHeightChanged: "sourceHeight" as const,
-            imageSourceChanged: "imageSource" as const
-        };
-    }
+    static override events = {
+        xChanged: "x" as const,
+        yChanged: "y" as const,
+        sourceXChanged: "sourceX" as const,
+        sourceYChanged: "sourceY" as const,
+        widthChanged: "width" as const,
+        heightChanged: "height" as const,
+        sourceWidthChanged: "sourceWidth" as const,
+        sourceHeightChanged: "sourceHeight" as const,
+        imageSourceChanged: "imageSource" as const
+    };
 
     private _setX(value: number) {
-        if (!Utility.isEqualTo(this._x, value)) this.trigger_(EventObject.simple(this, this.events.xChanged));
+        if (!Utility.isEqualTo(this._x, value)) this.trigger_(new EventSourceObject(this, Image.events.xChanged));
         this._x = value;
     }
     private _setY(value: number) {
-        if (!Utility.isEqualTo(this._y, value)) this.trigger_(EventObject.simple(this, this.events.yChanged));
+        if (!Utility.isEqualTo(this._y, value)) this.trigger_(new EventSourceObject(this, Image.events.yChanged));
         this._y = value;
     }
     private _setWidth(value: number) {
-        if (!Utility.isEqualTo(this._width, value)) this.trigger_(EventObject.simple(this, this.events.widthChanged));
+        if (!Utility.isEqualTo(this._width, value)) this.trigger_(new EventSourceObject(this, Image.events.widthChanged));
         this._width = value;
     }
     private _setHeight(value: number) {
-        if (!Utility.isEqualTo(this._height, value)) this.trigger_(EventObject.simple(this, this.events.heightChanged));
+        if (!Utility.isEqualTo(this._height, value)) this.trigger_(new EventSourceObject(this, Image.events.heightChanged));
         this._height = value;
     }
     private _setSourceX(value: number) {
-        if (!Utility.isEqualTo(this._sourceX, value)) this.trigger_(EventObject.simple(this, this.events.sourceXChanged));
+        if (!Utility.isEqualTo(this._sourceX, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceXChanged));
         this._sourceX = value;
     }
     private _setSourceY(value: number) {
-        if (!Utility.isEqualTo(this._sourceY, value)) this.trigger_(EventObject.simple(this, this.events.sourceYChanged));
+        if (!Utility.isEqualTo(this._sourceY, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceYChanged));
         this._sourceY = value;
     }
     private _setSourceWidth(value: number) {
-        if (!Utility.isEqualTo(this._sourceWidth, value)) this.trigger_(EventObject.simple(this, this.events.sourceWidthChanged));
+        if (!Utility.isEqualTo(this._sourceWidth, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceWidthChanged));
         this._sourceWidth = value;
     }
     private _setSourceHeight(value: number) {
-        if (!Utility.isEqualTo(this._sourceHeight, value)) this.trigger_(EventObject.simple(this, this.events.sourceHeightChanged));
+        if (!Utility.isEqualTo(this._sourceHeight, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceHeightChanged));
         this._sourceHeight = value;
     }
     private _setImageSource(value: string) {
-        if (!Utility.isEqualTo(this._imageSource, value)) this.trigger_(EventObject.simple(this, this.events.imageSourceChanged));
+        if (!Utility.isEqualTo(this._imageSource, value)) this.trigger_(new EventSourceObject(this, Image.events.imageSourceChanged));
         this._imageSource = value;
     }
 
@@ -256,30 +256,16 @@ export default class Image extends Shape {
         this._setImageSource(value);
     }
 
-    protected initialized_() {
-        // prettier-ignore
-        return (
-            !Number.isNaN(this._x) &&
-            !Number.isNaN(this._y) &&
-            !Number.isNaN(this._width) &&
-            !Number.isNaN(this._height)
-        );
-    }
-
     move(deltaX: number, deltaY: number) {
         this.coordinates = Vector2.add(this.coordinates, [deltaX, deltaY]);
         return this;
     }
-    moveAlongAngle(angle: number, distance: number) {
-        this.coordinates = Vector2.add(this.coordinates, Vector2.from2(angle, distance));
-        return this;
-    }
 
     getGraphics() {
-        const g = new ImageGraphics();
-        if (!this.initialized_()) return g;
-        const { constantSize, x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight, imageSource } = this;
-        g.image(constantSize, x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight, imageSource);
+        const ig = new ImageGraphic();
+        const g = new Graphics(ig);
+        const { x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight, imageSource } = this;
+        ig.image(x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight, imageSource);
         return g;
     }
     clone() {
@@ -298,7 +284,7 @@ export default class Image extends Shape {
         this._setImageSource(shape._imageSource);
         return this;
     }
-    toString() {
+    override toString() {
         return [
             `${this.name}(${this.uuid}){`,
             `\tx: ${this.x}`,
@@ -312,21 +298,5 @@ export default class Image extends Shape {
             `\timageSource: ${this.imageSource}`,
             `}`
         ].join("\n");
-    }
-    toArray() {
-        return [this.x, this.y, this.width, this.height, this.sourceX, this.sourceY, this.sourceWidth, this._sourceHeight, this.imageSource];
-    }
-    toObject() {
-        return {
-            x: this.x,
-            y: this.y,
-            width: this.width,
-            height: this.height,
-            sourceX: this.sourceX,
-            sourceY: this.sourceY,
-            sourceWidth: this.sourceWidth,
-            sourceHeight: this.sourceHeight,
-            imageSource: this.imageSource
-        };
     }
 }

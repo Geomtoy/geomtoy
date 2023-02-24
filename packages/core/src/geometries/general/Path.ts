@@ -1,37 +1,40 @@
-import { Assert, Vector2, Type, Utility, Coordinates, Angle } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-valid-geometry";
+import { Angle, Assert, Box, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
+import { validGeometry } from "../../misc/decor-geometry";
 
 import Geometry from "../../base/Geometry";
+import EventSourceObject from "../../event/EventSourceObject";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import Arc from "../basic/Arc";
 import Bezier from "../basic/Bezier";
 import LineSegment from "../basic/LineSegment";
 import Point from "../basic/Point";
 import QuadraticBezier from "../basic/QuadraticBezier";
-import Graphics from "../../graphics/GeometryGraphics";
-import EventObject from "../../event/EventObject";
 
-import {
-    PathCommandType,
-    type PathCommand,
-    type PathCommandWithUuid,
-    type PathMoveToCommand,
-    type PathLineToCommand,
-    type PathBezierToCommand,
-    type PathQuadraticBezierToCommand,
-    type PathArcToCommand,
-    FillRule,
-    ViewportDescriptor
-} from "../../types";
-import Transformation from "../../transformation";
-import { endpointToCenterParameterization, correctRadii, endpointParameterizationTransform } from "../../misc/arc";
-import { next, prev } from "../../misc/loop";
+import { optioner } from "../../geomtoy";
+import Graphics from "../../graphics";
+import ArrowGraphics from "../../helper/ArrowGraphics";
+import FillRuleHelper from "../../helper/FillRuleHelper";
+import { correctRadii, endpointParameterizationTransform, endpointToCenterParameterization } from "../../misc/arc";
 import { arcPathIntegral, bezierPathIntegral, lineSegmentPathIntegral, quadraticBezierPathIntegral } from "../../misc/area-integrate";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
-import FillRuleHelper from "../../helper/FillRuleHelper";
-import IntersectionDescriptor from "../../helper/IntersectionDescriptor";
-import ArrowGraphics from "../../helper/ArrowGraphics";
-import { optioner } from "../../geomtoy";
+import { next, prev } from "../../misc/loop";
 import { getCoordinates } from "../../misc/point-like";
+import { parseSvgPath } from "../../misc/svg-path";
+import Transformation from "../../transformation";
+import {
+    FillRule,
+    PathCommandType,
+    PolygonVertexWithUuid,
+    ViewportDescriptor,
+    WindingDirection,
+    type PathArcToCommand,
+    type PathBezierToCommand,
+    type PathCommand,
+    type PathCommandWithUuid,
+    type PathLineToCommand,
+    type PathMoveToCommand,
+    type PathQuadraticBezierToCommand
+} from "../../types";
 
 const PATH_MIN_COMMAND_COUNT = 2;
 
@@ -58,16 +61,14 @@ export default class Path extends Geometry {
         }
     }
 
-    get events() {
-        return {
-            commandsReset: "reset" as const,
-            commandAdded: "cmdAdd" as const,
-            commandRemoved: "cmdRemove" as const,
-            commandChanged: "cmdChange" as const,
-            closedChanged: "closedChange" as const,
-            fillRuleChanged: "fillRuleChange" as const
-        };
-    }
+    static override events = {
+        commandsReset: "reset" as const,
+        commandAdded: "cmdAdd" as const,
+        commandRemoved: "cmdRemove" as const,
+        commandChanged: "cmdChange" as const,
+        closedChanged: "closed" as const,
+        fillRuleChanged: "fillRule" as const
+    };
 
     private _setCommands(value: PathCommand[]) {
         const commands: Required<PathCommand>[] = value.map(cmd => {
@@ -113,16 +114,15 @@ export default class Path extends Geometry {
                 commands[i] = this._correctAndSetRadii(commands[i] as Required<PathArcToCommand>, commands[i - 1]);
             }
         }
-
-        if (!Utility.isEqualTo(this._commands, value)) this.trigger_(EventObject.simple(this, this.events.commandsReset));
+        this.trigger_(new EventSourceObject(this, Path.events.commandsReset));
         this._commands = commands;
     }
     private _setClosed(value: boolean) {
-        if (!Utility.isEqualTo(this._closed, value)) this.trigger_(EventObject.simple(this, this.events.closedChanged));
+        if (!Utility.isEqualTo(this._closed, value)) this.trigger_(new EventSourceObject(this, Path.events.closedChanged));
         this._closed = value;
     }
     private _setFillRule(value: FillRule) {
-        if (!Utility.isEqualTo(this._fillRule, value)) this.trigger_(EventObject.simple(this, this.events.fillRuleChanged));
+        if (!Utility.isEqualTo(this._fillRule, value)) this.trigger_(new EventSourceObject(this, Path.events.fillRuleChanged));
         this._fillRule = value;
     }
 
@@ -149,23 +149,39 @@ export default class Path extends Geometry {
         return this._commands.length;
     }
 
-    protected initialized_() {
+    initialized() {
         return this._commands.length >= PATH_MIN_COMMAND_COUNT;
     }
 
-    dimensionallyDegenerate() {
-        if (!this.initialized_()) return true;
+    degenerate(check: false): Point | this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
+
         const epsilon = optioner.options.epsilon;
         const commands = this._commands;
         const { x: x0, y: y0 } = commands[0];
 
         for (let i = 1, l = this._commands.length; i < l; i++) {
-            const { x: xi, y: yi } = commands[i];
-            if (!Coordinates.isEqualTo([x0, y0], [xi, yi], epsilon)) {
-                return false;
+            const { x: xi, y: yi, type } = commands[i];
+            if (!Coordinates.isEqualTo([x0, y0], [xi, yi], epsilon)) return check ? false : this;
+
+            if (type === PathCommandType.QuadraticBezierTo) {
+                const { controlPointX: cpx, controlPointY: cpy } = commands[i] as PathQuadraticBezierToCommand;
+                if (!Coordinates.isEqualTo([x0, y0], [cpx, cpy], epsilon)) return check ? false : this;
+            }
+            if (type === PathCommandType.BezierTo) {
+                const { controlPoint1X: cp1x, controlPoint1Y: cp1y, controlPoint2X: cp2x, controlPoint2Y: cp2y } = commands[i] as PathBezierToCommand;
+                if (!Coordinates.isEqualTo([x0, y0], [cp1x, cp1y], epsilon) || !Coordinates.isEqualTo([x0, y0], [cp2x, cp2y], epsilon)) return check ? false : this;
             }
         }
-        return true;
+        return check ? true : new Point(x0, y0);
+    }
+
+    static fromSVGString(data: string) {
+        const paths = parseSvgPath(data);
+        return new Path(paths[0].commands, paths[0].closed);
     }
 
     static fromBezierThroughPointsSmoothly(points: Point[] | [number, number][], closed = false) {}
@@ -266,18 +282,9 @@ export default class Path extends Geometry {
                     break;
                 }
             }
-            this.trigger_(EventObject.collection(this, this.events.commandChanged, i, cmd.uuid));
+            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, i, cmd.uuid));
         });
         return this;
-    }
-    moveAlongAngle(angle: number, distance: number) {
-        Assert.isRealNumber(angle, "angle");
-        Assert.isRealNumber(distance, "distance");
-        if (distance === 0) return this;
-
-        const c: [number, number] = [0, 0];
-        const [dx, dy] = Vector2.add(c, Vector2.from2(angle, distance));
-        return this.move(dx, dy);
     }
 
     private _isPathCommand(v: any): v is PathCommand {
@@ -316,8 +323,8 @@ export default class Path extends Geometry {
                 if (!Type.isPositiveNumber(v.radiusX)) return false;
                 if (!Type.isPositiveNumber(v.radiusY)) return false;
                 if (!Type.isRealNumber(v.rotation)) return false;
-                if (!Type.isBoolean(v.largeArc)) return false;
-                if (!Type.isBoolean(v.positive)) return false;
+                // if (!Type.isBoolean(v.largeArc)) return false;
+                // if (!Type.isBoolean(v.positive)) return false;
                 return true;
             }
             default: {
@@ -333,7 +340,7 @@ export default class Path extends Geometry {
     }
 
     getUuids() {
-        return this._commands.map(vtx => vtx.uuid);
+        return this._commands.map(cmd => cmd.uuid);
     }
     getIndexOfUuid(uuid: string) {
         return this._commands.findIndex(cmd => cmd.uuid === uuid);
@@ -342,51 +349,58 @@ export default class Path extends Geometry {
         return this._commands[index]?.uuid ?? "";
     }
 
+    // #region Segment
     /**
      * Get segment by `indexOrUuid`.
-     * @note
-     * The `closed` property does NOT effect this method, and it is assumed to be true.
      * @param indexOrUuid
+     * @param assumeClosed
      */
-    getSegment(indexOrUuid: number | string) {
+    getSegment(indexOrUuid: number | string, assumeClosed = false) {
         const index = this._indexAt(indexOrUuid);
         if (index === -1) return null;
+        const closed = assumeClosed ? true : this.closed;
+        const nextIndex = next(index, this.commandCount, closed);
+        if (nextIndex === -1) return null;
 
-        const cmd1 = this._commands[index];
-        const cmd2 = this._commands[next(index, this.commandCount, true)];
-        const type = cmd2.type;
+        const cmdCurr = this._commands[index];
+        const cmdNext = this._commands[nextIndex];
+        const type = cmdNext.type;
 
         switch (type) {
             case PathCommandType.MoveTo: {
-                return new LineSegment(cmd1.x, cmd1.y, cmd2.x, cmd2.y);
+                return new LineSegment(cmdCurr.x, cmdCurr.y, cmdNext.x, cmdNext.y);
             }
             case PathCommandType.LineTo: {
-                return new LineSegment(cmd1.x, cmd1.y, cmd2.x, cmd2.y);
+                return new LineSegment(cmdCurr.x, cmdCurr.y, cmdNext.x, cmdNext.y);
             }
             case PathCommandType.BezierTo: {
-                return new Bezier(cmd1.x, cmd1.y, cmd2.x, cmd2.y, cmd2.controlPoint1X, cmd2.controlPoint1Y, cmd2.controlPoint2X, cmd2.controlPoint2Y);
+                return new Bezier(cmdCurr.x, cmdCurr.y, cmdNext.x, cmdNext.y, cmdNext.controlPoint1X, cmdNext.controlPoint1Y, cmdNext.controlPoint2X, cmdNext.controlPoint2Y);
             }
             case PathCommandType.QuadraticBezierTo: {
-                return new QuadraticBezier(cmd1.x, cmd1.y, cmd2.x, cmd2.y, cmd2.controlPointX, cmd2.controlPointY);
+                return new QuadraticBezier(cmdCurr.x, cmdCurr.y, cmdNext.x, cmdNext.y, cmdNext.controlPointX, cmdNext.controlPointY);
             }
             case PathCommandType.ArcTo: {
-                return new Arc(cmd1.x, cmd1.y, cmd2.x, cmd2.y, cmd2.radiusX, cmd2.radiusY, cmd2.largeArc, cmd2.positive, cmd2.rotation);
+                return new Arc(cmdCurr.x, cmdCurr.y, cmdNext.x, cmdNext.y, cmdNext.radiusX, cmdNext.radiusY, cmdNext.largeArc, cmdNext.positive, cmdNext.rotation);
             }
             default: {
                 throw new Error("[G]This should never happen.");
             }
         }
     }
-
+    /**
+     * Get all segments.
+     * @param clean - excluding the segments which degenerate to a point.
+     * @param assumeClosed
+     */
     @statedWithBoolean(false, false)
-    getSegments(excludeDimensionallyDegenerate = false, assumeClosed = false) {
+    getSegments(clean = false, assumeClosed = false) {
         const l = this.commandCount;
         const cl = assumeClosed ? l : this.closed ? l : l - 1;
         const ret: (LineSegment | QuadraticBezier | Bezier | Arc)[] = [];
         for (let i = 0; i < cl; i++) {
-            const segment = this.getSegment(i)!;
-            if (excludeDimensionallyDegenerate) {
-                if (!segment.dimensionallyDegenerate()) {
+            const segment = this.getSegment(i, assumeClosed)!;
+            if (clean) {
+                if (!(segment.degenerate(false) instanceof Point)) {
                     ret.push(segment);
                 }
             } else {
@@ -396,41 +410,7 @@ export default class Path extends Geometry {
         return ret;
     }
 
-    /**
-     * Get previous segment by specifying the current index `indexOrUuid`.
-     * @note
-     * The `closed` property does NOT effect this method, and it is assumed to be true.
-     * @param indexOrUuid
-     */
-    getPrevSegment(indexOrUuid: number | string, allowed = false): [LineSegment | QuadraticBezier | Bezier | Arc | null, number] {
-        let index = this._indexAt(indexOrUuid);
-        if (index === -1) return [null, -1];
-
-        index = prev(index, this.commandCount, true);
-        let seg = this.getSegment(index)!;
-        if (allowed) {
-            while (seg.dimensionallyDegenerate()) {
-                index = prev(index, this.commandCount, true);
-                seg = this.getSegment(index)!;
-            }
-        }
-        return [seg, index];
-    }
-    getNextSegment(indexOrUuid: number | string, allowed = false): [LineSegment | QuadraticBezier | Bezier | Arc | null, number] {
-        let index = this._indexAt(indexOrUuid);
-        if (index === -1) return [null, -1];
-
-        index = next(index, this.commandCount, true);
-        let seg = this.getSegment(index)!;
-        if (allowed) {
-            while (seg.dimensionallyDegenerate()) {
-                index = next(index, this.commandCount, true);
-                seg = this.getSegment(index)!;
-            }
-        }
-        return [seg, index];
-    }
-
+    // #endregion
     /**
      * Whether point `point` is on path `this`.
      * @note
@@ -514,17 +494,11 @@ export default class Path extends Geometry {
         return { ...command, radiusX: rx, radiusY: ry } as T;
     }
 
-    getPrevVertex(indexOrUuid: number | string) {
-        let index = this._indexAt(indexOrUuid);
+    getVertex(indexOrUuid: number | string) {
+        const index = this._indexAt(indexOrUuid);
         if (index === -1) return null;
-        index = prev(index, this.commandCount, true);
-        return this.getCommand(index);
-    }
-    getNextVertex(indexOrUuid: number | string) {
-        let index = this._indexAt(indexOrUuid);
-        if (index === -1) return null;
-        index = next(index, this.commandCount, true);
-        return this.getCommand(index);
+        const { x, y, uuid } = this._commands[index];
+        return { x, y, uuid } as PolygonVertexWithUuid;
     }
 
     // #region Command
@@ -539,7 +513,7 @@ export default class Path extends Geometry {
             let cmd = this._commands[index + 1] as Required<PathArcToCommand>;
             cmd = this._correctAndSetRadii(cmd, this._commands[index]);
             if (!Utility.isEqualTo(this._commands[index + 1], cmd)) {
-                this.trigger_(EventObject.collection(this, this.events.commandChanged, index + 1, cmd.uuid));
+                this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index + 1, cmd.uuid));
                 this._commands[index + 1] = cmd;
             }
         }
@@ -564,7 +538,7 @@ export default class Path extends Geometry {
         }
 
         if (!Utility.isEqualTo(this._commands[index], cmd)) {
-            this.trigger_(EventObject.collection(this, this.events.commandChanged, index, uuid));
+            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index, uuid));
             this._commands[index] = cmd;
         }
 
@@ -591,32 +565,30 @@ export default class Path extends Geometry {
             cmd = this._correctAndSetRadii(cmd, this._commands[index - 1]);
         }
 
-        this.trigger_(EventObject.collection(this, this.events.commandAdded, index, uuid));
+        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, uuid));
         this._commands.splice(index, 0, cmd);
         this._handleNextArcTo(index);
         return [index, uuid] as [number, string];
     }
-
     removeCommand(indexOrUuid: number | string) {
         const index = this._indexAt(indexOrUuid);
         if (index === -1) return false;
-        const uuid = this.commands[index].uuid;
+        const uuid = this._commands[index].uuid;
 
         // handle `moveTo`
-        if (index === 0 && this.commands[1] !== undefined) {
+        if (index === 0 && this._commands[1] !== undefined) {
             const { x: x1, y: y1, uuid: uuid1 } = this._commands[1];
             const cmd1 = { ...Path.moveTo([x1, y1]), uuid: uuid1 };
-            this.trigger_(EventObject.collection(this, this.events.commandChanged, 1, uuid1));
+            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, 1, uuid1));
             this._commands[1] = cmd1;
         }
 
-        this.trigger_(EventObject.collection(this, this.events.commandRemoved, index, uuid));
+        this.trigger_(new EventSourceObject(this, Path.events.commandRemoved, index, uuid));
         this._commands.splice(index, 1);
 
         this._handleNextArcTo(index);
         return true;
     }
-
     appendCommand(command: PathCommand) {
         this._assertIsPathCommand(command, "command");
         const index = this.commandCount;
@@ -637,7 +609,7 @@ export default class Path extends Geometry {
                 cmd = this._correctAndSetRadii(cmd, this._commands[index - 1]);
             }
         }
-        this.trigger_(EventObject.collection(this, this.events.commandAdded, index, uuid));
+        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, uuid));
         this._commands.push(cmd);
         return [index, uuid] as [number, string];
     }
@@ -659,65 +631,92 @@ export default class Path extends Geometry {
                 cmd = { ...Path.moveTo([cmd.x, cmd.y]), uuid };
                 const cmd0 = { ...this._reverseCommand(command, x0, y0), uuid: uuid0 };
 
-                this.trigger_(EventObject.collection(this, this.events.commandChanged, 1, uuid0));
+                this.trigger_(new EventSourceObject(this, Path.events.commandChanged, 1, uuid0));
                 this._commands[0] = cmd0;
             }
         }
-        this.trigger_(EventObject.collection(this, this.events.commandAdded, index, uuid));
+        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, uuid));
         this._commands.unshift(cmd);
         return [index, uuid] as [number, string];
     }
     // #endregion
 
+    /**
+     * Returns a new path with all segments degenerating to point of path `this` cleaned.
+     */
     clean() {
-        const copyPath = this.clone();
-        let i = 0;
-        while (i < copyPath.commandCount - 1) {
-            if (copyPath.getSegment(i)!.dimensionallyDegenerate()) {
-                copyPath.removeCommand(i);
-                continue;
+        const retPath = new Path(this._closed, this._fillRule);
+        const l = this.commandCount;
+        const cl = this.closed ? l : l - 1;
+        const retCommands: PathCommand[] = [];
+
+        retCommands.push(this._commands[0]);
+        for (let i = 1; i < cl; i++) {
+            if (!(this.getSegment(i - 1)!.degenerate(false) instanceof Point)) {
+                retCommands.push(this._commands[i]);
             }
-            i++;
         }
-        return copyPath;
+        retPath.commands = retCommands;
+        return retPath;
     }
 
-    private _getSimpleArea() {
+    getBoundingBox() {
+        let bbox = [Infinity, Infinity, -Infinity, -Infinity] as [number, number, number, number];
+
+        for (const seg of this.getSegments(true)) bbox = Box.extend(bbox, seg.getBoundingBox());
+        return bbox;
+    }
+
+    // #region Length, area, winding direction
+    @stated
+    getLength() {
+        return this.getSegments(true).reduce((acc, seg) => (acc += seg.getLength()), 0);
+    }
+    /**
+     * Get area(simple calculation) of path `this`.
+     * @note
+     * - If path `this` is a simple path, the returned result is correct.
+     * - If path `this` is a complex path, you should do boolean operation - self union first.
+     * Why do we need to compute a possibly wrong value?
+     * It determines the main winding direction of the path (which winding direction has more trends).
+     */
+    @stated
+    getArea() {
         const l = this.commandCount;
         const commands = this._commands;
         let a = 0;
         for (let i = 0; i < l; i++) {
-            const currCmd = commands[i];
-            const nextCmd = commands[next(i, l, true)];
+            const cmdCurr = commands[i];
+            const cmdNext = commands[next(i, l, true)];
 
-            switch (nextCmd.type) {
+            switch (cmdNext.type) {
                 case PathCommandType.MoveTo: {
-                    const { x: x0, y: y0 } = currCmd;
-                    const { x: x1, y: y1 } = nextCmd;
+                    const { x: x0, y: y0 } = cmdCurr;
+                    const { x: x1, y: y1 } = cmdNext;
                     a += lineSegmentPathIntegral(x0, y0, x1, y1);
                     break;
                 }
                 case PathCommandType.LineTo: {
-                    const { x: x0, y: y0 } = currCmd;
-                    const { x: x1, y: y1 } = nextCmd;
+                    const { x: x0, y: y0 } = cmdCurr;
+                    const { x: x1, y: y1 } = cmdNext;
                     a += lineSegmentPathIntegral(x0, y0, x1, y1);
                     break;
                 }
                 case PathCommandType.BezierTo: {
-                    const { x: x0, y: y0 } = currCmd;
-                    const { x: x3, y: y3, controlPoint1X: x1, controlPoint1Y: y1, controlPoint2X: x2, controlPoint2Y: y2 } = nextCmd;
+                    const { x: x0, y: y0 } = cmdCurr;
+                    const { x: x3, y: y3, controlPoint1X: x1, controlPoint1Y: y1, controlPoint2X: x2, controlPoint2Y: y2 } = cmdNext;
                     a += bezierPathIntegral(x0, y0, x1, y1, x2, y2, x3, y3);
                     break;
                 }
                 case PathCommandType.QuadraticBezierTo: {
-                    const { x: x0, y: y0 } = currCmd;
-                    const { x: x2, y: y2, controlPointX: x1, controlPointY: y1 } = nextCmd;
+                    const { x: x0, y: y0 } = cmdCurr;
+                    const { x: x2, y: y2, controlPointX: x1, controlPointY: y1 } = cmdNext;
                     a += quadraticBezierPathIntegral(x0, y0, x1, y1, x2, y2);
                     break;
                 }
                 case PathCommandType.ArcTo: {
-                    const { x: x0, y: y0 } = currCmd;
-                    let { x: x1, y: y1, radiusX, radiusY, rotation, largeArc, positive } = nextCmd;
+                    const { x: x0, y: y0 } = cmdCurr;
+                    let { x: x1, y: y1, radiusX, radiusY, rotation, largeArc, positive } = cmdNext;
                     const acp = endpointToCenterParameterization({
                         point1X: x0,
                         point1Y: y0,
@@ -739,6 +738,11 @@ export default class Path extends Geometry {
         }
         return a;
     }
+    @stated
+    getWindingDirection(): WindingDirection {
+        return Maths.sign(this.getArea()) as WindingDirection;
+    }
+    // #endregion
 
     apply(transformation: Transformation) {
         const path = new Path();
@@ -805,38 +809,43 @@ export default class Path extends Geometry {
     }
 
     getGraphics(viewport: ViewportDescriptor) {
+        const dg = this.degenerate(false);
+        if (dg === null) return new Graphics();
+        if (dg !== this) return (dg as Exclude<typeof dg, this>)!.getGraphics(viewport);
+
         const g = new Graphics();
-        if (!this.initialized_()) return g;
-        g.fillRule = this.fillRule;
+        const gg = new GeometryGraphic();
+        g.append(gg);
+        gg.fillRule = this.fillRule;
         this._commands.forEach(cmd => {
             if (cmd.type === PathCommandType.MoveTo) {
-                g.moveTo(cmd.x, cmd.y);
+                gg.moveTo(cmd.x, cmd.y);
             }
             if (cmd.type === PathCommandType.LineTo) {
-                g.lineTo(cmd.x, cmd.y);
+                gg.lineTo(cmd.x, cmd.y);
             }
             if (cmd.type === PathCommandType.BezierTo) {
-                g.bezierTo(cmd.controlPoint1X, cmd.controlPoint1Y, cmd.controlPoint2X, cmd.controlPoint2Y, cmd.x, cmd.y);
+                gg.bezierTo(cmd.controlPoint1X, cmd.controlPoint1Y, cmd.controlPoint2X, cmd.controlPoint2Y, cmd.x, cmd.y);
             }
             if (cmd.type === PathCommandType.QuadraticBezierTo) {
-                g.quadraticBezierTo(cmd.controlPointX, cmd.controlPointY, cmd.x, cmd.y);
+                gg.quadraticBezierTo(cmd.controlPointX, cmd.controlPointY, cmd.x, cmd.y);
             }
             if (cmd.type === PathCommandType.ArcTo) {
-                g.endpointArcTo(cmd.radiusX, cmd.radiusY, cmd.rotation, cmd.largeArc, cmd.positive, cmd.x, cmd.y);
+                gg.endpointArcTo(cmd.radiusX, cmd.radiusY, cmd.rotation, cmd.largeArc, cmd.positive, cmd.x, cmd.y);
             }
         });
-        if (this.closed) g.close();
+        if (this.closed) gg.close();
         if (optioner.options.graphics.pathSegmentArrow) {
-            this.getSegments().forEach(segment => {
+            this.getSegments(true).forEach(segment => {
                 let vector;
                 if (segment instanceof Arc) {
                     const [sa, ea] = segment.getStartEndAngles();
                     const positive = segment.positive;
-                    vector = segment.getTangentVectorAtAngle(Angle.middle(sa, ea, positive));
+                    vector = segment.getTangentVectorAtAngle(Angle.fraction(sa, ea, positive, 0.5), true);
                 } else {
-                    vector = segment.getTangentVectorAtTime(0.5);
+                    vector = segment.getTangentVectorAtTime(0.5, true);
                 }
-                g.append(new ArrowGraphics(vector.point1Coordinates, vector.angle).getGraphics(viewport));
+                g.concat(new ArrowGraphics(vector.point1Coordinates, vector.angle).getGraphics(viewport));
             });
         }
         return g;
@@ -849,14 +858,14 @@ export default class Path extends Geometry {
         this._setCommands(shape.commands);
         return this;
     }
-    toString(): string {
-        // throw new Error("Method not implemented.");
-        return [`${this.name}(${this.uuid}){`, `\tcommands: ${JSON.stringify(this.commands)}`, `\t}`, `}`].join("\n");
-    }
-    toArray(): any[] {
-        throw new Error("Method not implemented.");
-    }
-    toObject(): object {
-        throw new Error("Method not implemented.");
+    override toString() {
+        // prettier-ignore
+        return [
+            `${this.name}(${this.uuid}){`,
+            `\tclosed: ${this.closed},`,
+            `\tfillRule: ${this.fillRule}`,
+            `\tcommands: ${JSON.stringify(this._commands)}`, 
+            `}`
+        ].join("\n");
     }
 }

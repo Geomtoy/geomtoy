@@ -1,9 +1,9 @@
 import { Angle, Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-valid-geometry";
+import { validGeometry } from "../../misc/decor-geometry";
 
 import Geometry from "../../base/Geometry";
-import EventObject from "../../event/EventObject";
-import GeometryGraphics from "../../graphics/GeometryGraphics";
+import EventSourceObject from "../../event/EventSourceObject";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import Inversion from "../../inversion";
 import Arc from "./Arc";
 import Line from "./Line";
@@ -11,11 +11,13 @@ import Point from "./Point";
 import RegularPolygon from "./RegularPolygon";
 
 import { optioner } from "../../geomtoy";
+import Graphics from "../../graphics";
 import { centerToEndpointParameterization } from "../../misc/arc";
+import { stated, statedWithBoolean } from "../../misc/decor-cache";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
-import type { ClosedGeometry, WindingDirection } from "../../types";
-import Path from "../advanced/Path";
+import type { ClosedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
+import Path from "../general/Path";
 import Vector from "./Vector";
 
 @validGeometry
@@ -41,24 +43,22 @@ export default class Circle extends Geometry implements ClosedGeometry {
         }
     }
 
-    get events() {
-        return {
-            centerXChanged: "centerX" as const,
-            centerYChanged: "centerY" as const,
-            radiusChanged: "radius" as const
-        };
-    }
+    static override events = {
+        centerXChanged: "centerX" as const,
+        centerYChanged: "centerY" as const,
+        radiusChanged: "radius" as const
+    };
 
     private _setCenterX(value: number) {
-        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(EventObject.simple(this, this.events.centerXChanged));
+        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(new EventSourceObject(this, Circle.events.centerXChanged));
         this._centerX = value;
     }
     private _setCenterY(value: number) {
-        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(EventObject.simple(this, this.events.centerYChanged));
+        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(new EventSourceObject(this, Circle.events.centerYChanged));
         this._centerY = value;
     }
     private _setRadius(value: number) {
-        if (!Utility.isEqualTo(this._radius, value)) this.trigger_(EventObject.simple(this, this.events.radiusChanged));
+        if (!Utility.isEqualTo(this._radius, value)) this.trigger_(new EventSourceObject(this, Circle.events.radiusChanged));
         this._radius = value;
     }
 
@@ -95,11 +95,12 @@ export default class Circle extends Geometry implements ClosedGeometry {
         return this._radius;
     }
     set radius(value) {
-        Assert.isPositiveNumber(value, "radius");
+        Assert.isNonNegativeNumber(value, "radius");
         this._setRadius(value);
     }
 
-    protected initialized_() {
+    @stated
+    initialized() {
         // prettier-ignore
         return (
             !Number.isNaN(this._centerX) &&
@@ -107,13 +108,21 @@ export default class Circle extends Geometry implements ClosedGeometry {
             !Number.isNaN(this._radius)
         );
     }
+    degenerate(check: false): Point | this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
+
+        const r0 = Maths.equalTo(this._radius, 0, optioner.options.epsilon);
+        if (check) return r0;
+
+        if (r0) return new Point(this._centerX, this._centerY);
+        return this;
+    }
 
     move(deltaX: number, deltaY: number) {
         this.centerCoordinates = Vector2.add(this.centerCoordinates, [deltaX, deltaY]);
-        return this;
-    }
-    moveAlongAngle(angle: number, distance: number) {
-        this.centerCoordinates = Vector2.add(this.centerCoordinates, Vector2.from2(angle, distance));
         return this;
     }
 
@@ -121,7 +130,6 @@ export default class Circle extends Geometry implements ClosedGeometry {
         const cc = getCoordinates(centerPoint, "centerPoint");
         const cr = getCoordinates(radiusControlPoint, "radiusControlPoint");
         const r = Vector2.magnitude(Vector2.from(cc, cr));
-        if (Maths.equalTo(r, 0, optioner.options.epsilon)) return null;
         return new Circle(cc, r);
     }
 
@@ -180,6 +188,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
         const f = cx ** 2 + cy ** 2 - r ** 2;
         return [a, b, c, d, e, f];
     }
+    // todo rename this to `Angles`
     getArcBetweenAngle(startAngle: number, endAngle: number, positive = true): null | Arc {
         const epsilon = optioner.options.epsilon;
         const sa = Angle.simplify(startAngle);
@@ -209,26 +218,40 @@ export default class Circle extends Geometry implements ClosedGeometry {
         const sr = this.radius ** 2;
         return Maths.lessThan(sd, sr, optioner.options.epsilon);
     }
+
+    getClosestPointFrom(point: [number, number] | Point) {
+        const [x, y] = getCoordinates(point, "point");
+        const [cx, cy] = this.centerCoordinates;
+        let angle;
+
+        if (x === cx && y === cy) {
+            angle = 0; // if `point` is exactly the same as the `centerPoint` then return the point at angle 0.
+        } else {
+            angle = Vector2.angle(Vector2.from([cx, cy], [x, y]));
+        }
+        return this.getPointAtAngle(angle);
+    }
+
     /**
-     * Get the tangent vector of circle `this` at angle `angle`.
-     * @param angle
+     * Get the tangent vector of circle `this` at angle `a`.
+     * @param a
      * @param normalized
      */
-    getTangentVectorAtAngle(angle: number, normalized = false) {
+    getTangentVectorAtAngle(a: number, normalized = false) {
         const r = this.radius;
-        const dx = -r * Maths.sin(angle);
-        const dy = r * Maths.cos(angle);
+        const dx = -r * Maths.sin(a);
+        const dy = r * Maths.cos(a);
         const tv = [dx, dy] as [number, number];
-        const c = this.getParametricEquation()(angle);
+        const c = this.getParametricEquation()(a);
         return normalized ? new Vector(c, Vector2.normalize(tv)) : new Vector(c, tv);
     }
     /**
-     * Get the normal vector of circle `this` at angle `angle`.
-     * @param angle
+     * Get the normal vector of circle `this` at angle `a`.
+     * @param a
      * @param normalized
      */
-    getNormalVectorAtAngle(angle: number, normalized = false) {
-        const c = this.getParametricEquation()(angle);
+    getNormalVectorAtAngle(a: number, normalized = false) {
+        const c = this.getParametricEquation()(a);
         const nv = Vector2.from(c, this.centerCoordinates);
         return normalized ? new Vector(c, Vector2.normalize(nv)) : new Vector(c, nv);
     }
@@ -423,12 +446,17 @@ export default class Circle extends Geometry implements ClosedGeometry {
         return [x, y, w, h] as [number, number, number, number];
     }
 
-    getGraphics() {
-        const g = new GeometryGraphics();
-        if (!this.initialized_()) return g;
+    getGraphics(viewport: ViewportDescriptor) {
+        const dg = this.degenerate(false);
+        if (dg === null) return new Graphics();
+        if (dg !== this) return (dg as Exclude<typeof dg, this>).getGraphics(viewport);
+
+        const g = new Graphics();
+        const gg = new GeometryGraphic();
+        g.append(gg);
         const { centerCoordinates: cc, radius: r } = this;
-        g.centerArcTo(...cc, r, r, 0, 0, 2 * Maths.PI);
-        g.close();
+        gg.centerArcTo(...cc, r, r, 0, 0, 2 * Maths.PI);
+        gg.close();
         return g;
     }
 
@@ -529,7 +557,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
         this._setRadius(shape._radius);
         return this;
     }
-    toString() {
+    override toString() {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
@@ -538,11 +566,5 @@ export default class Circle extends Geometry implements ClosedGeometry {
             `\tradius: ${this.radius}`,
             `}`
         ].join("\n");
-    }
-    toArray() {
-        return [this.centerX, this.centerY, this.radius];
-    }
-    toObject() {
-        return { centerX: this.centerX, centerY: this.centerY, radius: this.radius };
     }
 }
