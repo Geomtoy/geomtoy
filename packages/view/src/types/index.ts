@@ -1,4 +1,4 @@
-import { ViewportDescriptor } from "@geomtoy/core";
+import { ViewportDescriptor, FillRule } from "@geomtoy/core";
 
 export type StrokeLineJoinType = "bevel" | "miter" | "round";
 export type StrokeLineCapType = "butt" | "round" | "square";
@@ -42,4 +42,5 @@ export const enum ImageSourceStatus {
 }
 
 export type PathLike = SVGPathElement | Path2D;
+export type PathInfo = [PathLike, FillRule];
 export type ContainerElement = SVGSVGElement | HTMLCanvasElement;

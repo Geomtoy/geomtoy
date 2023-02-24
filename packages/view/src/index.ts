@@ -7,12 +7,12 @@ import SvgRenderer from "./renderer/SvgRenderer";
 export { Renderer, CanvasRenderer, SvgRenderer };
 
 import View from "./frontend/View";
+import SubView from "./frontend/SubView";
 import ViewElement from "./frontend/ViewElement";
-import ViewGroupElement from "./frontend/ViewGroupElement";
 /**
  * @category Frontend
  */
-export { View, ViewElement, ViewGroupElement };
+export { View, SubView, ViewElement };
 export * from "./frontend/ViewEvents";
 
 import Display from "./renderer/Display";
