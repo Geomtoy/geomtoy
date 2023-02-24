@@ -4,8 +4,13 @@ import { Options, RecursivePartial } from "./types";
 
 const SCHEDULER_FLUSH_TIMEOUT = 1000; //1000ms
 const DEFAULT_OPTIONS: Options = {
-    epsilon: 2 ** -32,
-    curveEpsilon: 2 ** -16,
+    epsilon: 2 ** -32, // coordinates, length, size....
+    coefficientEpsilon: 2 ** -32,
+    trigonometricEpsilon: 2 ** -16,
+    curveEpsilon: 2 ** -16, // coef, coordinates,length,size
+    timeEpsilon: 2 ** -18, // nth bezier time
+    angleEpsilon: 2 ** -16, // angle, circle ,ellipse
+    vectorEpsilon: 2 ** -14, // handle cross product, dot product etc. geometric vector
     graphics: {
         point: {
             size: 6,
@@ -20,8 +25,8 @@ const DEFAULT_OPTIONS: Options = {
         lineArrow: true,
         vectorArrow: true,
         rayArrow: true,
-        polygonSegmentArrow: true,
-        pathSegmentArrow: true
+        polygonSegmentArrow: false,
+        pathSegmentArrow: false
     }
 };
 
@@ -42,15 +47,15 @@ const optioner = {
 };
 
 const scheduler = {
-    callbackMarkMap: new Map<(...args: any[]) => void, WeakSet<EventTarget>>(),
+    callbackMarkMap: new Map<(...args: any) => void, WeakSet<EventTarget>>(),
 
-    mark(callback: (...args: any[]) => void, context: EventTarget) {
+    mark(callback: (...args: any) => void, context: EventTarget) {
         if (!this.callbackMarkMap.has(callback)) this.callbackMarkMap.set(callback, new WeakSet());
         const contexts = this.callbackMarkMap.get(callback)!;
         contexts.add(context);
     },
 
-    isMarked(callback: (...args: any[]) => any, context: EventTarget) {
+    isMarked(callback: (...args: any) => void, context: EventTarget) {
         if (!this.callbackMarkMap.has(callback)) return false;
         const contexts = this.callbackMarkMap.get(callback)!;
         return contexts.has(context);
@@ -60,8 +65,13 @@ const scheduler = {
         this.callbackMarkMap.clear();
     },
 
-    internalQueue: [] as ((...args: any) => any)[],
-    externalQueue: [] as ((...args: any) => any)[],
+    // three queues
+    // - Internal tasks that complete the entire computing process, and are executed and cleared on every tick.
+    internalQueue: [] as (() => void)[],
+    // - External "one-shot" tasks, and are executed and cleared in the next tick.
+    externalQueueNext: [] as (() => void)[],
+    // - External tasks that are always executed on every tick and are never cleared.
+    externalQueueAll: [] as (() => void)[],
 
     flushed: false,
 
@@ -82,21 +92,34 @@ const scheduler = {
                 }
             }
             this.clearMark();
-            while (this.externalQueue.length !== 0) {
-                // We don’t care if there is an infinite recursion in `nextTick`.
-                this.externalQueue.shift()!();
-            }
+
+            for (const fn of [...this.externalQueueNext]) fn();
+            this.externalQueueNext = [];
+
+            for (const fn of [...this.externalQueueAll]) fn();
             this.flushed = false;
         });
     },
-    queue(objectSchedule: () => any) {
-        this.internalQueue.push(objectSchedule);
+
+    queue(fn: () => void) {
+        this.internalQueue.push(fn);
         if (!this.flushed) this.flushQueue();
     },
-    nextTick(todo: () => any) {
-        if (this.externalQueue.includes(todo)) return;
-
-        this.externalQueue.push(todo);
+    tick() {
+        if (!this.flushed) this.flushQueue();
+    },
+    nextTick(fn: () => void) {
+        if (this.externalQueueNext.includes(fn)) return;
+        this.externalQueueNext.push(fn);
+        if (!this.flushed) this.flushQueue();
+    },
+    allTick(fn: () => void, remove = false) {
+        const index = this.externalQueueAll.indexOf(fn);
+        if (index !== -1) {
+            if (remove) this.externalQueueAll.splice(index, 1);
+            return;
+        }
+        this.externalQueueAll.push(fn);
         if (!this.flushed) this.flushQueue();
     }
 };
@@ -106,9 +129,13 @@ export { optioner, scheduler };
 const getOptions = optioner.getOptions.bind(optioner);
 const setOptions = optioner.setOptions.bind(optioner);
 const nextTick = scheduler.nextTick.bind(scheduler);
+const allTick = scheduler.allTick.bind(scheduler);
+const tick = scheduler.tick.bind(scheduler);
 
 export default {
     getOptions,
     setOptions,
-    nextTick
+    nextTick,
+    allTick,
+    tick
 };
