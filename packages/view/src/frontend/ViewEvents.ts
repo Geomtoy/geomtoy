@@ -1,5 +1,4 @@
 import ViewElement from "./ViewElement";
-import ViewGroupElement from "./ViewGroupElement";
 
 export const enum ViewEventType {
     DragStart = "dragStart",
@@ -16,7 +15,10 @@ export const enum ViewEventType {
     PointerMove = "pointerMove",
     PointerDown = "pointerDown",
     PointerUp = "pointerUp",
-    PointerLeave = "pointerLeave"
+    PointerLeave = "pointerLeave",
+
+    Activating = "activating",
+    Deactivating = "deactivating"
 }
 
 export interface ViewEvent {
@@ -31,10 +33,10 @@ export interface ViewDragStartEvent extends ViewEvent {
     elements: ViewElement;
 }
 export interface ViewDraggingEvent {
-    elements: (ViewElement | ViewGroupElement)[];
+    elements: ViewElement[];
 }
 export interface ViewDragEndEvent extends ViewEvent {
-    elements: (ViewElement | ViewGroupElement)[];
+    elements: ViewElement[];
 }
 
 export interface ViewPanStartEvent extends ViewEvent {}
@@ -54,15 +56,15 @@ export interface ViewZoomEndEvent extends ViewEvent {
 export interface ViewPointerEnterEvent extends ViewEvent {}
 
 export interface ViewPointerDownEvent extends ViewEvent {
-    element: null | ViewElement | ViewGroupElement;
+    element: null | ViewElement;
 }
 
 export interface ViewPointerMoveEvent extends ViewEvent {
-    element: null | ViewElement | ViewGroupElement;
+    element: null | ViewElement;
 }
 
 export interface ViewPointerUpEvent extends ViewEvent {
-    element: null | ViewElement | ViewGroupElement;
+    element: null | ViewElement;
 }
 
 export interface ViewPointerLeaveEvent extends ViewEvent {}
