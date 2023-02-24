@@ -4,7 +4,7 @@
  * @see https://observablehq.com/@awhitty/svg-2-elliptical-arc-to-canvas-path2d
  * @see https://html.spec.whatwg.org/multipage/canvas.html#dom-context-2d-ellipse
  */
-import { Maths, Vector2, Angle, TransformationMatrix } from "@geomtoy/util";
+import { Angle, Maths, TransformationMatrix, Vector2 } from "@geomtoy/util";
 import { ArcCenterParameterization, ArcEndpointParameterization } from "../types";
 
 const ARC_ENDPOINT_FULL_APPROX = Maths.PI / 1800;
