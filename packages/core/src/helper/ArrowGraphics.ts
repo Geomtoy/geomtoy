@@ -1,5 +1,7 @@
 import { Vector2, Maths } from "@geomtoy/util";
-import Graphics from "../graphics/GeometryGraphics";
+import GeometryGraphic from "../graphics/GeometryGraphic";
+import Graphics from "../graphics/";
+
 import { optioner } from "../geomtoy";
 import type { ViewportDescriptor } from "../types";
 
@@ -13,20 +15,21 @@ class ArrowGraphics {
         const lengthCoord = Vector2.add(this.coordinates, Vector2.from2(this.angle, -length / scale));
         const wingCoord1 = Vector2.add(lengthCoord, Vector2.from2(this.angle + Maths.PI / 2, width / scale));
         const wingCoord2 = Vector2.add(lengthCoord, Vector2.from2(this.angle - Maths.PI / 2, width / scale));
-        const g = new Graphics();
+        const gg = new GeometryGraphic();
+        const g = new Graphics(gg);
 
         if (noFoldback) {
-            g.moveTo(...this.coordinates);
-            g.lineTo(...wingCoord1);
-            g.moveTo(...this.coordinates);
-            g.lineTo(...wingCoord2);
+            gg.moveTo(...this.coordinates);
+            gg.lineTo(...wingCoord1);
+            gg.moveTo(...this.coordinates);
+            gg.lineTo(...wingCoord2);
         } else {
             const foldbackCoord = Vector2.add(this.coordinates, Vector2.from2(this.angle, (-length * (foldback + 1)) / scale));
-            g.moveTo(...this.coordinates);
-            g.lineTo(...wingCoord1);
-            g.lineTo(...foldbackCoord);
-            g.lineTo(...wingCoord2);
-            g.close();
+            gg.moveTo(...this.coordinates);
+            gg.lineTo(...wingCoord1);
+            gg.lineTo(...foldbackCoord);
+            gg.lineTo(...wingCoord2);
+            gg.close();
         }
         return g;
     }

@@ -1,15 +1,15 @@
 import { centerToEndpointParameterization, endpointToCenterParameterization } from "../misc/arc";
-import { type GeometryGraphicsCommand, GeometryGraphicsCommandType, FillRule } from "../types";
+import { type GeometryGraphicCommand, GeometryGraphicCommandType, FillRule } from "../types";
 
-export default class GeometryGraphics {
-    commands: GeometryGraphicsCommand[] = [];
+export default class GeometryGraphic {
+    commands: GeometryGraphicCommand[] = [];
     fillRule: FillRule = "nonzero";
-    _currentXY: [number, number] = [0, 0];
-    _startXY: [number, number] = [0, 0];
+    private _currentXY: [number, number] = [0, 0];
+    private _startXY: [number, number] = [0, 0];
 
     moveTo(x: number, y: number) {
         this.commands.push({
-            type: GeometryGraphicsCommandType.MoveTo,
+            type: GeometryGraphicCommandType.MoveTo,
             x,
             y
         });
@@ -19,7 +19,7 @@ export default class GeometryGraphics {
     }
     lineTo(x: number, y: number) {
         this.commands.push({
-            type: GeometryGraphicsCommandType.LineTo,
+            type: GeometryGraphicCommandType.LineTo,
             x,
             y
         });
@@ -28,7 +28,7 @@ export default class GeometryGraphics {
     }
     bezierTo(controlPoint1X: number, controlPoint1Y: number, controlPoint2X: number, controlPoint2Y: number, x: number, y: number) {
         this.commands.push({
-            type: GeometryGraphicsCommandType.BezierTo,
+            type: GeometryGraphicCommandType.BezierTo,
             controlPoint1X,
             controlPoint1Y,
             controlPoint2X,
@@ -41,7 +41,7 @@ export default class GeometryGraphics {
     }
     quadraticBezierTo(controlPointX: number, controlPointY: number, x: number, y: number) {
         this.commands.push({
-            type: GeometryGraphicsCommandType.QuadraticBezierTo,
+            type: GeometryGraphicCommandType.QuadraticBezierTo,
             controlPointX,
             controlPointY,
             x,
@@ -64,7 +64,7 @@ export default class GeometryGraphics {
             this.lineTo(point1X, point1Y);
         }
         this.commands.push({
-            type: GeometryGraphicsCommandType.ArcTo,
+            type: GeometryGraphicCommandType.ArcTo,
             centerX,
             centerY,
             radiusX,
@@ -92,7 +92,7 @@ export default class GeometryGraphics {
         } = endpointToCenterParameterization({ point1X, point1Y, point2X,point2Y, radiusX, radiusY, largeArc, positive, rotation })
 
         this.commands.push({
-            type: GeometryGraphicsCommandType.ArcTo,
+            type: GeometryGraphicCommandType.ArcTo,
             centerX,
             centerY,
             radiusX,
@@ -110,18 +110,9 @@ export default class GeometryGraphics {
     }
     close() {
         this.commands.push({
-            type: GeometryGraphicsCommandType.Close
+            type: GeometryGraphicCommandType.Close
         });
         this._currentXY = this._startXY;
         return this;
-    }
-    append(g: GeometryGraphics) {
-        this.commands = [...this.commands, ...g.commands];
-    }
-    prepend(g: GeometryGraphics) {
-        this.commands = [...g.commands, ...this.commands];
-    }
-    clear() {
-        this.commands = [];
     }
 }
