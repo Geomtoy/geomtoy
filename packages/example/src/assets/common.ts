@@ -1,5 +1,4 @@
-import { EventObject, Point, Text } from "@geomtoy/core";
-import { Style } from "@geomtoy/view";
+import { InteractiveStyle, Style } from "@geomtoy/view";
 import color from "./color";
 
 export var mathFont = {
@@ -9,67 +8,86 @@ export var mathFont = {
     fontItalic: true
 };
 
-function styles(strokeColor: Parameters<typeof color>["0"], fillColor: Parameters<typeof color>["0"], strokeWidth: number, noFill: boolean, noStroke: boolean) {
-    let ret = {
-        style: { stroke: color(strokeColor), fill: color(fillColor, 0.2), strokeWidth, noFill, noStroke, paintOrder: "fill" }
+type ColorName = Parameters<typeof color>["0"];
+
+export function styles(strokeColor: ColorName, fillColor: ColorName, style: Omit<Partial<Style>, "stroke" | "fill">) {
+    const strokeWidth = style.strokeWidth ?? 2;
+    return {
+        style: {
+            stroke: color(strokeColor),
+            fill: color(fillColor, 0.5),
+            strokeWidth: strokeWidth,
+            strokeDash: style.strokeDash ?? undefined,
+            noFill: style.noFill ?? false,
+            noStroke: style.noStroke ?? false,
+            paintOrder: "fill"
+        },
+        hoverStyle: {
+            fill: color("blue-a400", 0.5),
+            stroke: color("blue-a400"),
+            strokeWidth
+        },
+        activeStyle: {
+            fill: color("blue-a700", 0.5),
+            stroke: color("blue-a700"),
+            strokeWidth
+        }
     } as {
         style: Partial<Style>;
-        hoverStyle: Partial<Style>;
-        activeStyle: Partial<Style>;
+        hoverStyle: Partial<InteractiveStyle>;
+        activeStyle: Partial<InteractiveStyle>;
     };
-    ret.hoverStyle = {
-        fill: color("blue-a400", 0.2),
-        stroke: color("blue-a400", 0.8),
-        strokeWidth
-    };
-    ret.activeStyle = {
-        fill: color("blue-a700", 0.2),
-        stroke: color("blue-a700", 0.8),
-        strokeWidth
-    };
-    return ret;
 }
 
-export function strokeFill(c: Parameters<typeof color>["0"]) {
-    return styles(c, c, 4, false, false);
+export function strokeFill(c: ColorName) {
+    return styles(c, c, { strokeWidth: 4 });
 }
-export function lightStrokeFill(c: Parameters<typeof color>["0"]) {
-    return styles(c, c, 2, false, false);
+export function lightStrokeFill(c: ColorName) {
+    return styles(c, c, { strokeWidth: 2 });
 }
-export function thinStrokeFill(c: Parameters<typeof color>["0"]) {
-    return styles(c, c, 1, false, false);
-}
-
-export function strokeFillTrans(c: Parameters<typeof color>["0"]) {
-    const ret = styles(c, c, 4, false, false);
-    ret.style.fill = "transparent";
-    return ret;
-}
-export function lightStrokeFillTrans(c: Parameters<typeof color>["0"]) {
-    const ret = styles(c, c, 2, false, false);
-    ret.style.fill = "transparent";
-    return ret;
-}
-export function thinStrokeFillTrans(c: Parameters<typeof color>["0"]) {
-    const ret = styles(c, c, 1, false, false);
-    ret.style.fill = "transparent";
-    return ret;
+export function thinStrokeFill(c: ColorName) {
+    return styles(c, c, { strokeWidth: 1 });
 }
 
-export function stroke(c: Parameters<typeof color>["0"]) {
-    return styles(c, c, 4, true, false);
+export function strokeFillTrans(c: ColorName) {
+    return styles(c, "transparent", { strokeWidth: 4 });
 }
-export function lightStroke(c: Parameters<typeof color>["0"]) {
-    return styles(c, c, 2, true, false);
+export function lightStrokeFillTrans(c: ColorName) {
+    return styles(c, "transparent", { strokeWidth: 2 });
 }
-export function thinStroke(c: Parameters<typeof color>["0"]) {
-    return styles(c, c, 1, true, false);
+export function thinStrokeFillTrans(c: ColorName) {
+    return styles(c, "transparent", { strokeWidth: 1 });
+}
+
+export function strokeOnly(c: ColorName) {
+    return styles(c, c, { strokeWidth: 4, noFill: true });
+}
+export function lightStrokeOnly(c: ColorName) {
+    return styles(c, c, { strokeWidth: 2, noFill: true });
+}
+export function thinStrokeOnly(c: ColorName) {
+    return styles(c, c, { strokeWidth: 1, noFill: true });
+}
+
+export function dashedStroke(c: ColorName) {
+    return styles(c, c, { noFill: true, strokeWidth: 4, strokeDash: [4] });
+}
+export function dashedLightStroke(c: ColorName) {
+    return styles(c, c, { noFill: true, strokeWidth: 2, strokeDash: [3] });
+}
+export function dashedThinStroke(c: ColorName) {
+    return styles(c, c, { noFill: true, strokeWidth: 1, strokeDash: [2] });
+}
+
+export function fillOnly(c: ColorName) {
+    return styles(c, c, { noStroke: true });
 }
 
 export function codeHtml(code: string, lang = "js") {
     return `<pre><code class="language-${lang}">${code}</code></pre>`;
 }
 
-export function offsetLabel(this: Text, [e]: [EventObject<Point>]) {
-    this.point = e.target.clone().move(1, 1);
+export function elementFromString(htmlString: string) {
+    const document = new DOMParser().parseFromString(htmlString, "text/html");
+    return document.body.firstElementChild as HTMLElement;
 }

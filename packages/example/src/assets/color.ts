@@ -301,15 +301,27 @@ const colors = {
 type Mono = "black" | "white";
 type Neutral = "brown" | "gray" | "blueGray";
 type Chromatic = Exclude<keyof typeof colors, Mono | Neutral>;
+
 type NeutralLevels = keyof typeof colors[Neutral];
 type ChromaticLevels = keyof typeof colors[Chromatic];
-type MonoColor = Mono;
+
+type MonoColor = Mono | "transparent";
 type NeutralColor = Neutral | `${Neutral}-${NeutralLevels}`;
 type ChromaticColor = Chromatic | `${Chromatic}-${ChromaticLevels}`;
 
 export default function color(name: NeutralColor | ChromaticColor | MonoColor, alpha?: number) {
     const [c, l] = name.split("-");
-    // @ts-ignore
-    const hex: string = l !== undefined ? colors[c][l] : ["black", "white"].includes(c) ? colors[c] : colors[c]["500"]; // primary
+    let hex: string;
+
+    if (c === "transparent") {
+        return c;
+    }
+    if (["black", "white"].includes(c)) {
+        hex = colors[c as Mono];
+    } else if (["brown", "gray", "blueGray"].includes(c)) {
+        hex = colors[c as Neutral][(l as NeutralLevels) ?? "500"]; // primary color
+    } else {
+        hex = colors[c as Chromatic][(l as ChromaticLevels) ?? "500"]; // primary color
+    }
     return alpha !== undefined ? hex + ((alpha * 255) << 0).toString(16) : hex;
 }
