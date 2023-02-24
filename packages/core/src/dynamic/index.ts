@@ -1,91 +1,93 @@
 import { Utility } from "@geomtoy/util";
 import BaseObject from "../base/BaseObject";
 import EventTarget from "../base/EventTarget";
-import EventObject from "../event/EventObject";
-import type { DynamicObject } from "../types";
+import EventSourceObject from "../event/EventSourceObject";
+import type { DynamicEventTargetConstructor, DynamicObject, FilteredKeys } from "../types";
 
-class DynamicEventTarget<T extends { [key: string]: any }> extends EventTarget {
-    private _object: DynamicObject<T>;
+function getPublicPropertyNames(object: object) {
+    return Object.getOwnPropertyNames(object).filter(name => name !== "constructor" && !name.startsWith("_") && !name.endsWith("_"));
+}
+// "name"
+// "uuid"
+// "data"
+// "toString"
+// "toArray"
+// "toObject"
+const excludeKeysFromBaseObject = getPublicPropertyNames(BaseObject.prototype);
+// "muted"
+// "mute"
+// "unmute"
+// "on"
+// "off"
+// "clear"
+// "bind"
+// "unbind"
+const excludeKeysFromEventTarget = getPublicPropertyNames(EventTarget.prototype);
+const excludeKeys = [...excludeKeysFromBaseObject, ...excludeKeysFromEventTarget];
 
-    constructor(object: T) {
-        super();
-        this._object = { ...object };
-        // "owner"
-        // "name"
-        // "uuid"
-        // "data"
-        const excludeKeysFromBaseObject = this._getPublicPropertyNames(BaseObject.prototype);
-        // "muted"
-        // "mute"
-        // "unmute"
-        // "on"
-        // "off"
-        // "clear"
-        // "bind"
-        // "unbind"
-        const excludeKeysFromEventTarget = this._getPublicPropertyNames(EventTarget.prototype);
-        // "events"
-        // "toString"
-        // "toArray"
-        // "toObject"
-        const excludeKeysFromThis = this._getPublicPropertyNames(Object.getPrototypeOf(this));
+export default class Dynamic extends BaseObject {
+    static get excludeKeys() {
+        return [...excludeKeysFromBaseObject, ...excludeKeysFromEventTarget];
+    }
 
-        const excludeKeys = [...excludeKeysFromBaseObject, ...excludeKeysFromEventTarget, ...excludeKeysFromThis];
+    create<T extends { [key: string]: any }>(object: T) {
+        const templateObject = object;
 
-        Object.getOwnPropertyNames(this._object).forEach(name => {
+        const filteredKeys: FilteredKeys<T>[] = [];
+        Object.getOwnPropertyNames(object).forEach(name => {
             if (name.startsWith("_") || name.endsWith("_")) {
                 console.warn(`[G]The \`${name}\` key was found to start or end with \`_\` which is not allowed, so it will be ignored.`);
-                delete this._object[name as keyof DynamicObject<T>];
                 return;
             }
             if (excludeKeys.includes(name)) {
                 console.warn(`[G]The \`${name}\` key was found to override the keys of \`EventTarget\` which is not allowed, so it will be ignore.`);
-                delete this._object[name as keyof DynamicObject<T>];
                 return;
             }
+            filteredKeys.push(name as FilteredKeys<T>);
+        });
 
-            Object.defineProperty(this, name, {
+        const events: { [key: string]: string } = {};
+        filteredKeys.forEach(key => {
+            events[`${key as string}Changed`] = key as string;
+        });
+
+        const dynamicEventTarget = class DynamicEventTarget extends EventTarget {
+            private _object: DynamicObject<T> = {} as DynamicObject<T>;
+
+            constructor(object?: DynamicObject<T>) {
+                super();
+                filteredKeys.forEach(key => {
+                    this._object[key] = object?.[key] ?? templateObject[key];
+                });
+                return Object.seal(this);
+            }
+
+            static override events = events;
+
+            override toString() {
+                // prettier-ignore
+                return [
+                    `${this.name}(${this.uuid}){`,
+                    ...filteredKeys.map(key => `\t${key as string}: ${this._object[key]}`), 
+                    `}`
+                ].join("\n");
+            }
+        };
+
+        filteredKeys.forEach(key => {
+            Object.defineProperty(dynamicEventTarget.prototype, key, {
                 get() {
-                    return this._object[name];
+                    return this._object[key];
                 },
                 set(value) {
-                    if (!Utility.isEqualTo(this._object[name], value)) this.trigger_(EventObject.simple(this, this.events[`${name}Changed`]));
-                    this._object[name] = value;
+                    if (!Utility.isEqualTo(this._object[key], value)) this.trigger_(new EventSourceObject(this, dynamicEventTarget.events[`${key as string}Changed`]));
+                    this._object[key] = value;
                 }
             });
         });
-        return Object.seal(this);
-    }
+        Object.seal(dynamicEventTarget);
+        Object.seal(dynamicEventTarget.prototype);
 
-    private _getPublicPropertyNames(object: object) {
-        return Object.getOwnPropertyNames(object).filter(name => name !== "constructor" && !name.startsWith("_") && !name.endsWith("_"));
-    }
-
-    get events() {
-        const events: { [key: string]: string } = {};
-        Object.getOwnPropertyNames(this._object).forEach(name => {
-            events[`${name}Changed`] = name;
-        });
-        return events as {
-            [K in keyof DynamicObject<T> & string as `${K}Changed`]: K;
-        };
-    }
-    toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.uuid}){`,
-            ...Object.getOwnPropertyNames(this._object).map(name=> `\t${name}: ${this._object[name as keyof DynamicObject<T>]}`),
-            `}`
-        ].join("\n");
-    }
-    toArray() {
-        return Object.values(this._object) as DynamicObject<T>[keyof DynamicObject<T>][];
-    }
-    toObject() {
-        return { ...this._object } as DynamicObject<T>;
+        return dynamicEventTarget as unknown as DynamicEventTargetConstructor<T>;
     }
 }
-
-const Dynamic: new <T extends { [key: string]: any }>(object: T) => DynamicObject<T> & EventTarget = DynamicEventTarget as any;
-
-export default Dynamic;
