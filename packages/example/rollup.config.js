@@ -60,6 +60,7 @@ export default {
     },
     output: {
         dir: exampleDistPath,
+        sourcemap: true,
         format: "esm",
         manualChunks: {
             geomtoy: [config.packages.core.scopedName, config.packages.util.scopedName, config.packages.view.scopedName]
@@ -141,7 +142,10 @@ export default {
             };
         })(),
         copy({
-            targets: [{ src: "src/assets/styles/*", dest: "dist/css" }],
+            targets: [
+                { src: "src/assets/styles/*", dest: "dist/css" },
+                { src: "src/assets/images/*", dest: "dist/img" }
+            ],
             copyOnce: true
         }),
         ...(process.env.GENERATE === "true"
