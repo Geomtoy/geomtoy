@@ -133,11 +133,14 @@ export default class Display implements ViewportDescriptor {
     get globalViewBox() {
         return [...this._globalViewBox] as [number, number, number, number];
     }
+    get scale() {
+        return this._density * this._zoom;
+    }
 
     private _refresh() {
-        const { width, height, density, zoom, origin, pan, xAxisPositiveOnRight: xPr, yAxisPositiveOnBottom: yPb } = this;
+        const { width, height, origin, pan, xAxisPositiveOnRight: xPr, yAxisPositiveOnBottom: yPb } = this;
 
-        const scale = density * zoom;
+        const scale = this.scale;
         const [offsetX, offsetY] = [Coordinates.x(origin) + Coordinates.x(pan), Coordinates.y(origin) + Coordinates.y(pan)];
 
         let gt = TransformationMatrix.identity();
