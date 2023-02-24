@@ -1,18 +1,17 @@
-import { svgSetup, svgTeardown } from "./util";
-import { visualTestSize, diffPixelData } from "./util/visual";
-import Geomtoy from "@geomtoy/core";
+import { Circle, Triangle } from "@geomtoy/core";
 import SvgRenderer from "../src/renderer/SvgRenderer";
+import { svgSetup, svgTeardown } from "./util";
+import { diffPixelData, visualTestSize } from "./util/visual";
 
 const expect = chai.expect;
 
 describe("SvgRenderer", () => {
     let svgElement: SVGSVGElement;
     let sr: SvgRenderer;
-    const g = new Geomtoy();
 
     before(() => {
         svgElement = svgSetup();
-        sr = new SvgRenderer(svgElement, g, { showAxis: false, showGrid: false, showLabel: false });
+        sr = new SvgRenderer(svgElement, { showAxis: false, showGrid: false, showLabel: false });
     });
     after(() => {
         svgTeardown();
@@ -20,7 +19,7 @@ describe("SvgRenderer", () => {
 
     it("visual-1", async () => {
         const visual1Url = "http://localhost:9876/base/test/visual/visual-1.png";
-        const circle = g.Circle(visualTestSize.width / 2, visualTestSize.height / 2, 10);
+        const circle = new Circle(visualTestSize.width / 2, visualTestSize.height / 2, 10);
         sr.stroke("black");
         sr.fill("transparent");
         sr.draw(circle);
@@ -29,7 +28,7 @@ describe("SvgRenderer", () => {
 
     it("visual-2", async () => {
         const visual1Url = "http://localhost:9876/base/test/visual/visual-2.png";
-        const triangle = g.Triangle(0, 0, 25, 100, 80, 90);
+        const triangle = new Triangle(0, 0, 25, 100, 80, 90);
 
         sr.stroke("red");
         sr.fill("rgba(255,0,0,0.5)");

@@ -8,11 +8,10 @@ const expect = chai.expect;
 describe("CanvasRenderer", () => {
     let canvasElement: HTMLCanvasElement;
     let sr: CanvasRenderer;
-    const g = new Geomtoy();
 
     before(() => {
         canvasElement = canvasSetup();
-        sr = new CanvasRenderer(canvasElement, g, { showAxis: false, showGrid: false, showLabel: false });
+        sr = new CanvasRenderer(canvasElement, { showAxis: false, showGrid: false, showLabel: false });
     });
     after(() => {
         // canvasTeardown();
