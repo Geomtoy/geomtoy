@@ -10,6 +10,7 @@ import QuadraticBezierQuadraticBezier from "../relationship/classes/QuadraticBez
 import RayArc from "../relationship/classes/RayArc";
 import RayBezier from "../relationship/classes/RayBezier";
 import RayQuadraticBezier from "../relationship/classes/RayQuadraticBezier";
+import type { BasicSegment } from "../types";
 
 const TEST_RAY_OFFSET = 2 ** -22;
 
@@ -18,7 +19,7 @@ const TEST_RAY_OFFSET = 2 ** -22;
 
 // Change name to VertexIntersection
 export default class EndpointIntersection {
-    private _segmentData(segment: LineSegment | Bezier | QuadraticBezier | Arc, inOrOut: "in" | "out") {
+    private _segmentData(segment: BasicSegment, inOrOut: "in" | "out") {
         // prettier-ignore
         const param = inOrOut === "in"
          ? (segment instanceof Arc ? segment.getStartEndAngles()[1] : 1) 
@@ -36,11 +37,11 @@ export default class EndpointIntersection {
         };
     }
 
-    private _isLinear(segment: LineSegment | Bezier | QuadraticBezier | Arc): segment is LineSegment {
+    private _isLinear(segment: BasicSegment): segment is LineSegment {
         if (segment instanceof LineSegment) return true;
         if (segment instanceof Bezier || segment instanceof QuadraticBezier) {
-            const ndg = segment.nonDimensionallyDegenerate();
-            return ndg instanceof LineSegment;
+            const dg = segment.degenerate(false);
+            return dg instanceof LineSegment;
         }
         return false;
     }
@@ -163,13 +164,7 @@ export default class EndpointIntersection {
         return p1ToP2;
     }
 
-    determine(
-        intersection: [number, number],
-        aInSegment: LineSegment | Bezier | QuadraticBezier | Arc,
-        aOutSegment: LineSegment | Bezier | QuadraticBezier | Arc,
-        bInSegment: LineSegment | Bezier | QuadraticBezier | Arc,
-        bOutSegment: LineSegment | Bezier | QuadraticBezier | Arc
-    ) {
+    determine(intersection: [number, number], aInSegment: BasicSegment, aOutSegment: BasicSegment, bInSegment: BasicSegment, bOutSegment: BasicSegment) {
         const aInData = this._segmentData(aInSegment, "in");
         const aOutData = this._segmentData(aOutSegment, "out");
         const bInData = this._segmentData(bInSegment, "in");

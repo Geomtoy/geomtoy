@@ -1,21 +1,22 @@
 import { Angle, Box, Coordinates, Maths, Vector2 } from "@geomtoy/util";
-import Line from "../geometries/basic/Line";
-import Ray from "../geometries/basic/Ray";
-import LineSegment from "../geometries/basic/LineSegment";
-import QuadraticBezier from "../geometries/basic/QuadraticBezier";
-import Bezier from "../geometries/basic/Bezier";
 import Arc from "../geometries/basic/Arc";
-import LineLineSegment from "../relationship/classes/LineLineSegment";
-import LineBezier from "../relationship/classes/LineBezier";
-import LineQuadraticBezier from "../relationship/classes/LineQuadraticBezier";
-import LineArc from "../relationship/classes/LineArc";
-import RayLineSegment from "../relationship/classes/RayLineSegment";
-import RayQuadraticBezier from "../relationship/classes/RayQuadraticBezier";
-import RayBezier from "../relationship/classes/RayBezier";
-import RayArc from "../relationship/classes/RayArc";
+import Bezier from "../geometries/basic/Bezier";
+import Line from "../geometries/basic/Line";
+import LineSegment from "../geometries/basic/LineSegment";
 import Point from "../geometries/basic/Point";
+import QuadraticBezier from "../geometries/basic/QuadraticBezier";
+import Ray from "../geometries/basic/Ray";
 import { optioner } from "../geomtoy";
 import { getCoordinates } from "../misc/point-like";
+import LineArc from "../relationship/classes/LineArc";
+import LineBezier from "../relationship/classes/LineBezier";
+import LineLineSegment from "../relationship/classes/LineLineSegment";
+import LineQuadraticBezier from "../relationship/classes/LineQuadraticBezier";
+import RayArc from "../relationship/classes/RayArc";
+import RayBezier from "../relationship/classes/RayBezier";
+import RayLineSegment from "../relationship/classes/RayLineSegment";
+import RayQuadraticBezier from "../relationship/classes/RayQuadraticBezier";
+import { BasicSegment } from "../types";
 
 export default class FillRuleHelper {
     // line touch box is also consider colliding.
@@ -64,7 +65,7 @@ export default class FillRuleHelper {
         return !Maths.lessThan(tMax, Maths.max(tMin, 0), epsilon);
     }
 
-    windingNumberOfPoint(point: [number, number] | Point, angle: number, segments: (LineSegment | Arc | Bezier | QuadraticBezier)[], preventOn = true) {
+    windingNumberOfPoint(point: [number, number] | Point, angle: number, segments: BasicSegment[], preventOn = true) {
         const epsilon = optioner.options.epsilon;
         const coordinates = getCoordinates(point, "point");
 
@@ -120,7 +121,7 @@ export default class FillRuleHelper {
         return wn;
     }
 
-    crossingNumberOfPoint(point: [number, number] | Point, angle: number, segments: (LineSegment | Arc | Bezier | QuadraticBezier)[], preventOn = true) {
+    crossingNumberOfPoint(point: [number, number] | Point, angle: number, segments: BasicSegment[], preventOn = true) {
         const epsilon = optioner.options.epsilon;
         const coordinates = getCoordinates(point, "point");
 
@@ -180,7 +181,7 @@ export default class FillRuleHelper {
      * i.e If the tangent angle is $\frac{\pi}{2}$, $(-\frac{\pi}{2}, \frac{\pi}{2})$ in positive rotation or $(\frac{\pi}{2}, -\frac{\pi}{2})$ in negative rotation is NRD.
      *
      * What can these things do?
-     * It is mainly used to determine whether there is a fill for `ag`=advanced geometries in the PRD or the NRD of the segment.
+     * It is mainly used to determine whether there is a fill for `gg`=general geometries in the PRD or the NRD of the segment.
      * The way to determine fill here is still using the fill rule, but we make an assumption.
      * We can assume that we have a point very close to the selected point in the PRD, if it is inside `ag`,
      * it means that the PRD of the segment is filled for `ag`.
@@ -191,26 +192,23 @@ export default class FillRuleHelper {
      * they can also be combined as a line to improve the efficiency of intersection.
      */
 
-    private _rayAngleAndCoordinates(segment: LineSegment | Arc | Bezier | QuadraticBezier) {
+    private _rayAngleAndCoordinates(segment: BasicSegment) {
         let angle, point;
+        const middle = 0.5;
         if (segment instanceof LineSegment || segment instanceof Bezier || segment instanceof QuadraticBezier) {
-            const mt = 0.5; // middle time
-            angle = segment.getTangentVectorAtTime(mt).angle;
-            point = segment.getPointAtTime(mt).coordinates;
+            angle = segment.getTangentVectorAtTime(middle).angle; // middle time
+            point = segment.getPointAtTime(middle).coordinates;
         } else {
             const [sa, ea] = segment.getStartEndAngles();
             const positive = segment.positive;
-            const ma = Angle.middle(sa, ea, positive); // middle angle
+            const ma = Angle.fraction(sa, ea, positive, middle); // middle angle
             angle = segment.getTangentVectorAtAngle(ma).angle;
             point = segment.getPointAtAngle(ma).coordinates;
         }
         return [angle, point] as [number, [number, number]];
     }
 
-    windingNumbersOfSegment(
-        segment: LineSegment | Arc | Bezier | QuadraticBezier,
-        segments: (LineSegment | Arc | Bezier | QuadraticBezier)[] | { segment: LineSegment | Arc | Bezier | QuadraticBezier }[]
-    ) {
+    windingNumbersOfSegment(segment: BasicSegment, segments: BasicSegment[] | { segment: BasicSegment }[]) {
         const epsilon = optioner.options.epsilon;
         const [angle, coordinates] = this._rayAngleAndCoordinates(segment);
         const pra = angle + Maths.PI / 2; // positive ray angle
@@ -269,10 +267,7 @@ export default class FillRuleHelper {
         return wn;
     }
 
-    crossingNumbersOfSegment(
-        segment: LineSegment | Arc | Bezier | QuadraticBezier,
-        segments: (LineSegment | Arc | Bezier | QuadraticBezier)[] | { segment: LineSegment | Arc | Bezier | QuadraticBezier }[]
-    ) {
+    crossingNumbersOfSegment(segment: BasicSegment, segments: BasicSegment[] | { segment: BasicSegment }[]) {
         const epsilon = optioner.options.epsilon;
         const [angle, coordinates] = this._rayAngleAndCoordinates(segment);
         const pra = angle + Maths.PI / 2; // positive ray angle
