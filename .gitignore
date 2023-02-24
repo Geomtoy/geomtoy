@@ -7,3 +7,4 @@ tree.json
 **/geometries/complex/*
 **/geometries/subset/*
 **/geometries/todo/*
+.vscode/launch.json
