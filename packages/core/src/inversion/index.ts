@@ -1,12 +1,12 @@
 import { Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
-import { validGeometryArguments } from "../misc/decor-valid-geometry";
+import { validGeometryArguments } from "../misc/decor-geometry";
 
 import EventTarget from "../base/EventTarget";
 import Circle from "../geometries/basic/Circle";
 import Line from "../geometries/basic/Line";
 import Point from "../geometries/basic/Point";
 
-import EventObject from "../event/EventObject";
+import EventSourceObject from "../event/EventSourceObject";
 import { optioner } from "../geomtoy";
 import { getCoordinates } from "../misc/point-like";
 
@@ -34,24 +34,22 @@ export default class Inversion extends EventTarget {
         }
     }
 
-    get events() {
-        return {
-            centerXChanged: "centerX" as const,
-            centerYChanged: "centerY" as const,
-            powerChanged: "power" as const
-        };
-    }
+    static override events = {
+        centerXChanged: "centerX" as const,
+        centerYChanged: "centerY" as const,
+        powerChanged: "power" as const
+    };
 
     private _setCenterX(value: number) {
-        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(EventObject.simple(this, this.events.centerXChanged));
+        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(new EventSourceObject(this, Inversion.events.centerXChanged));
         this._centerX = value;
     }
     private _setCenterY(value: number) {
-        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(EventObject.simple(this, this.events.centerYChanged));
+        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(new EventSourceObject(this, Inversion.events.centerYChanged));
         this._centerY = value;
     }
     private _setPower(value: number) {
-        if (!Utility.isEqualTo(this._power, value)) this.trigger_(EventObject.simple(this, this.events.powerChanged));
+        if (!Utility.isEqualTo(this._power, value)) this.trigger_(new EventSourceObject(this, Inversion.events.powerChanged));
         this._power = value;
     }
 
@@ -237,22 +235,14 @@ export default class Inversion extends EventTarget {
             }
         }
     }
-    toString() {
+    override toString() {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
-            `\tcenterCoordinates: {`,
-            `\t\tx: ${this._centerX}`,
-            `\t\ty: ${this._centerY}`,
-            `\t}`,
+            `\tcenterX: ${this._centerX}`,
+            `\tcenterY: ${this._centerY}`,
             `\tpower: ${this.power}`, 
             `}`
         ].join("\n")
-    }
-    toArray() {
-        return [];
-    }
-    toObject() {
-        return {};
     }
 }
