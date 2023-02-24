@@ -1,26 +1,27 @@
 import { Maths, Polynomial, Type } from "@geomtoy/util";
-import BaseRelationship from "../BaseRelationship";
-import Point from "../../geometries/basic/Point";
-import { cached } from "../../misc/decor-cache";
-import LineSegment from "../../geometries/basic/LineSegment";
+import SealedShapeArray from "../../collection/SealedShapeArray";
 import Ellipse from "../../geometries/basic/Ellipse";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
+import LineSegment from "../../geometries/basic/LineSegment";
+import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
-import LineSegmentEllipse from "./LineSegmentEllipse";
 import { optioner } from "../../geomtoy";
+import { cached } from "../../misc/decor-cache";
+import { superPreprocess } from "../../misc/decor-super-preprocess";
+import BaseRelationship from "../BaseRelationship";
+import LineSegmentEllipse from "./LineSegmentEllipse";
 
 export default class QuadraticBezierEllipse extends BaseRelationship {
     constructor(public geometry1: QuadraticBezier, public geometry2: Ellipse) {
         super();
-        const dg1 = geometry1.dimensionallyDegenerate();
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
 
-        if (dg1) {
+        if (dg1 instanceof Point || dg2 instanceof Point || dg2 instanceof SealedShapeArray) {
             this.degeneration.relationship = null;
             return this;
         }
-        const ndg1 = geometry1.nonDimensionallyDegenerate();
-        if (ndg1 instanceof LineSegment) {
-            this.degeneration.relationship = new LineSegmentEllipse(ndg1, geometry2);
+        if (dg1 instanceof LineSegment) {
+            this.degeneration.relationship = new LineSegmentEllipse(dg1, dg2!);
             return this;
         }
     }

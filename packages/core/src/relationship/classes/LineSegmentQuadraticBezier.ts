@@ -1,4 +1,4 @@
-import { Box, Maths } from "@geomtoy/util";
+import { Maths } from "@geomtoy/util";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
@@ -13,16 +13,15 @@ import LineSegmentLineSegment from "./LineSegmentLineSegment";
 export default class LineSegmentQuadraticBezier extends BaseRelationship {
     constructor(public geometry1: LineSegment, public geometry2: QuadraticBezier) {
         super();
-        const dg1 = geometry1.dimensionallyDegenerate();
-        const dg2 = geometry2.dimensionallyDegenerate();
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
 
-        if (dg1 || dg2) {
+        if (dg1 instanceof Point || dg2 instanceof Point) {
             this.degeneration.relationship = null;
             return this;
         }
-        const ndg2 = geometry2.nonDimensionallyDegenerate();
-        if (ndg2 instanceof LineSegment) {
-            this.degeneration.relationship = new LineSegmentLineSegment(geometry1, ndg2);
+        if (dg2 instanceof LineSegment) {
+            this.degeneration.relationship = new LineSegmentLineSegment(geometry1, dg2);
         }
         this.supRelationship = new LineQuadraticBezier(geometry1.toLine(), geometry2);
     }
@@ -36,7 +35,6 @@ export default class LineSegmentQuadraticBezier extends BaseRelationship {
         t2: number; // time of `c` on `quadraticBezier`
         m: number; // multiplicity
     }[] {
-        if (!Box.collide(this.geometry1.getBoundingBox(), this.geometry2.getBoundingBox())) return [];
         const intersection = this.supRelationship?.intersection() ?? [];
         const epsilon = optioner.options.epsilon;
         return intersection

@@ -1,14 +1,20 @@
 import { Coordinates, Maths, Vector2 } from "@geomtoy/util";
-import BaseRelationship from "../BaseRelationship";
 import Circle from "../../geometries/basic/Circle";
 import Point from "../../geometries/basic/Point";
 import { optioner } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { Trilean } from "../../types";
+import BaseRelationship from "../BaseRelationship";
 
 export default class CircleCircle extends BaseRelationship {
     constructor(public geometry1: Circle, public geometry2: Circle) {
         super();
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
+        if (dg1 instanceof Point || dg2 instanceof Point) {
+            this.degeneration.relationship = null;
+            return this;
+        }
     }
 
     @cached

@@ -1,22 +1,27 @@
-import { Angle, Box, Maths } from "@geomtoy/util";
+import { Angle, Maths } from "@geomtoy/util";
+import type Arc from "../../geometries/basic/Arc";
+import LineSegment from "../../geometries/basic/LineSegment";
+import Point from "../../geometries/basic/Point";
+import { optioner } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
-import BaseRelationship from "../BaseRelationship";
-import Point from "../../geometries/basic/Point";
-import LineEllipse from "./LineEllipse";
 import { Trilean } from "../../types";
-import type Arc from "../../geometries/basic/Arc";
-import type LineSegment from "../../geometries/basic/LineSegment";
-import { optioner } from "../../geomtoy";
+import BaseRelationship from "../BaseRelationship";
+import LineEllipse from "./LineEllipse";
+import LineSegmentLineSegment from "./LineSegmentLineSegment";
 
 export default class LineSegmentArc extends BaseRelationship {
     constructor(public geometry1: LineSegment, public geometry2: Arc) {
         super();
 
-        const dg1 = geometry1.dimensionallyDegenerate();
-        const dg2 = geometry2.dimensionallyDegenerate();
-        if (dg1 || dg2) {
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
+        if (dg1 instanceof Point || dg2 instanceof Point) {
             this.degeneration.relationship = null;
+            return this;
+        }
+        if (dg2 instanceof LineSegment) {
+            this.degeneration.relationship = new LineSegmentLineSegment(dg1!, dg2);
             return this;
         }
 
@@ -31,7 +36,6 @@ export default class LineSegmentArc extends BaseRelationship {
         a2: number; // angle of `c` on `arc`
         m: number; // multiplicity
     }[] {
-        if (!Box.collide(this.geometry1.getBoundingBox(), this.geometry2.getBoundingBox())) return [];
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const positive = this.geometry2.positive;
         const epsilon = optioner.options.epsilon;

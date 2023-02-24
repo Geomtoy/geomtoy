@@ -1,4 +1,5 @@
 import { Coordinates } from "@geomtoy/util";
+import SealedShapeArray from "../../collection/SealedShapeArray";
 import Ellipse from "../../geometries/basic/Ellipse";
 import Point from "../../geometries/basic/Point";
 import Ray from "../../geometries/basic/Ray";
@@ -11,16 +12,22 @@ import LineEllipse from "./LineEllipse";
 export default class RayEllipse extends BaseRelationship {
     constructor(public geometry1: Ray, public geometry2: Ellipse) {
         super();
-        this.supRelationship = new LineEllipse(this.geometry1.toLine(), this.geometry2);
+        const dg2 = geometry2.degenerate(false);
+        if (dg2 instanceof Point || dg2 instanceof SealedShapeArray) {
+            this.degeneration.relationship = null;
+            return this;
+        }
+
+        this.supRelationship = new LineEllipse(geometry1.toLine(), geometry2);
     }
-    supRelationship: LineEllipse;
+    supRelationship?: LineEllipse;
 
     @cached
     intersection(): {
         c: [number, number]; // coordinates of intersection
         m: number; // multiplicity
     }[] {
-        const intersection = this.supRelationship.intersection();
+        const intersection = this.supRelationship?.intersection() ?? [];
         return intersection.filter(i => this.geometry1.isPointOn(i.c));
     }
 

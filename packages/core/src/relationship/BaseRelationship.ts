@@ -7,10 +7,6 @@ import { optioner } from "../geomtoy";
 
 //@see https://en.wikipedia.org/wiki/Contact_(mathematics)
 /*
-Transversal vs Tangential: depending on whether the tangents of two curves at the intersection are coincident or not.
-Transversal is 0th degree contact.
-Tangential is 1th degree contact.
-
 When the intersection with `multiplicity` = 1, the intersection is transversal:
 - only "striking".
 When the intersection with `multiplicity` > 1, the intersection is tangential:
@@ -107,6 +103,6 @@ export default abstract class BaseRelationship {
                 result[p as RelationshipPredicate] = this[p]!();
             }
         });
-        return result as RelateResult<typeof this>;
+        return result as RelateResult<this>;
     }
 }

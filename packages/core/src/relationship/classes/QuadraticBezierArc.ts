@@ -1,28 +1,38 @@
 import { Angle, Box, Maths } from "@geomtoy/util";
+import Arc from "../../geometries/basic/Arc";
+import LineSegment from "../../geometries/basic/LineSegment";
+import Point from "../../geometries/basic/Point";
+import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
+import { optioner } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
-import BaseRelationship from "../BaseRelationship";
-import Point from "../../geometries/basic/Point";
 import { Trilean } from "../../types";
-import type Arc from "../../geometries/basic/Arc";
-import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
-import QuadraticBezierEllipse from "./QuadraticBezierEllipse";
-import LineSegment from "../../geometries/basic/LineSegment";
+import BaseRelationship from "../BaseRelationship";
 import LineSegmentArc from "./LineSegmentArc";
-import { optioner } from "../../geomtoy";
+import LineSegmentLineSegment from "./LineSegmentLineSegment";
+import LineSegmentQuadraticBezier from "./LineSegmentQuadraticBezier";
+import QuadraticBezierEllipse from "./QuadraticBezierEllipse";
 
 export default class QuadraticBezierArc extends BaseRelationship {
     constructor(public geometry1: QuadraticBezier, public geometry2: Arc) {
         super();
-        const dg1 = geometry1.dimensionallyDegenerate();
-        const dg2 = geometry2.dimensionallyDegenerate();
-        if (dg1 || dg2) {
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
+        if (dg1 instanceof Point || dg2 instanceof Point) {
             this.degeneration.relationship = null;
             return this;
         }
-        const ndg1 = geometry1.nonDimensionallyDegenerate();
-        if (ndg1 instanceof LineSegment) {
-            this.degeneration.relationship = new LineSegmentArc(ndg1, geometry2);
+        if (dg1 instanceof LineSegment && dg2 instanceof Arc) {
+            this.degeneration.relationship = new LineSegmentArc(dg1, dg2);
+            return this;
+        }
+        if (dg1 instanceof LineSegment && dg2 instanceof LineSegment) {
+            this.degeneration.relationship = new LineSegmentLineSegment(dg1, dg2);
+            return this;
+        }
+        if (dg1 instanceof QuadraticBezier && dg2 instanceof LineSegment) {
+            this.degeneration.relationship = new LineSegmentQuadraticBezier(dg2, dg1);
+            this.degeneration.inverse = true;
             return this;
         }
 

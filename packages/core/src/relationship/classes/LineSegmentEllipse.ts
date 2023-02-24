@@ -1,19 +1,21 @@
 import { Maths } from "@geomtoy/util";
-import { cached } from "../../misc/decor-cache";
-import BaseRelationship from "../BaseRelationship";
+import SealedShapeArray from "../../collection/SealedShapeArray";
 import Ellipse from "../../geometries/basic/Ellipse";
-import Point from "../../geometries/basic/Point";
-import { Trilean } from "../../types";
 import LineSegment from "../../geometries/basic/LineSegment";
-import LineEllipse from "./LineEllipse";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
+import Point from "../../geometries/basic/Point";
 import { optioner } from "../../geomtoy";
+import { cached } from "../../misc/decor-cache";
+import { superPreprocess } from "../../misc/decor-super-preprocess";
+import { Trilean } from "../../types";
+import BaseRelationship from "../BaseRelationship";
+import LineEllipse from "./LineEllipse";
 
 export default class LineSegmentEllipse extends BaseRelationship {
     constructor(public geometry1: LineSegment, public geometry2: Ellipse) {
         super();
-        const dg1 = geometry1.dimensionallyDegenerate();
-        if (dg1) {
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
+        if (dg1 instanceof Point || dg2 instanceof Point || dg2 instanceof SealedShapeArray) {
             this.degeneration.relationship = null;
             return this;
         }

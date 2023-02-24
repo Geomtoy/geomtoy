@@ -1,59 +1,51 @@
 import BaseObject from "../base/BaseObject";
+import { RelationshipPredicate, type RelationshipMethodOverloads } from "../types";
+import { initializedGeometryArguments, validGeometryArguments } from "../misc/decor-geometry";
 
-import CircleCircle from "./classes/CircleCircle";
-import LineSegmentLineSegment from "./classes/LineSegmentLineSegment";
-import LineLine from "./classes/LineLine";
-import LineRay from "./classes/LineRay";
-import BezierBezier from "./classes/BezierBezier";
-import EllipseEllipse from "./classes/EllipseEllipse";
 import ArcArc from "./classes/ArcArc";
-import QuadraticBezierQuadraticBezier from "./classes/QuadraticBezierQuadraticBezier";
+import ArcEllipse from "./classes/ArcEllipse";
+import BezierArc from "./classes/BezierArc";
+import BezierBezier from "./classes/BezierBezier";
+import BezierEllipse from "./classes/BezierEllipse";
+import CircleCircle from "./classes/CircleCircle";
+import EllipseEllipse from "./classes/EllipseEllipse";
+import LineArc from "./classes/LineArc";
 import LineBezier from "./classes/LineBezier";
 import LineCircle from "./classes/LineCircle";
+import LineEllipse from "./classes/LineEllipse";
+import LineLine from "./classes/LineLine";
 import LineLineSegment from "./classes/LineLineSegment";
 import LineQuadraticBezier from "./classes/LineQuadraticBezier";
-import LineEllipse from "./classes/LineEllipse";
-import LineArc from "./classes/LineArc";
-import RayLineSegment from "./classes/RayLineSegment";
-import RayQuadraticBezier from "./classes/RayQuadraticBezier";
-import RayBezier from "./classes/RayBezier";
-import RayArc from "./classes/RayArc";
-import LineSegmentBezier from "./classes/LineSegmentBezier";
-import LineSegmentQuadraticBezier from "./classes/LineSegmentQuadraticBezier";
+import LineRay from "./classes/LineRay";
 import LineSegmentArc from "./classes/LineSegmentArc";
-
-import { RelationshipPredicate, type RelationshipMethodOverloads } from "../types";
-import LinePolygon from "./classes/LinePolygon";
-import RayRay from "./classes/RayRay";
+import LineSegmentBezier from "./classes/LineSegmentBezier";
+import LineSegmentEllipse from "./classes/LineSegmentEllipse";
+import LineSegmentLineSegment from "./classes/LineSegmentLineSegment";
+import LineSegmentQuadraticBezier from "./classes/LineSegmentQuadraticBezier";
+import QuadraticBezierArc from "./classes/QuadraticBezierArc";
+import QuadraticBezierBezier from "./classes/QuadraticBezierBezier";
+import QuadraticBezierEllipse from "./classes/QuadraticBezierEllipse";
+import QuadraticBezierQuadraticBezier from "./classes/QuadraticBezierQuadraticBezier";
+import RayArc from "./classes/RayArc";
+import RayBezier from "./classes/RayBezier";
 import RayCircle from "./classes/RayCircle";
 import RayEllipse from "./classes/RayEllipse";
-import LineSegmentEllipse from "./classes/LineSegmentEllipse";
-import RayPolygon from "./classes/RayPolygon";
-import QuadraticBezierEllipse from "./classes/QuadraticBezierEllipse";
-import BezierEllipse from "./classes/BezierEllipse";
-import ArcEllipse from "./classes/ArcEllipse";
-// import PolygonEllipse from "./classes/PolygonEllipse";
-import QuadraticBezierBezier from "./classes/QuadraticBezierBezier";
-import QuadraticBezierArc from "./classes/QuadraticBezierArc";
-import BezierArc from "./classes/BezierArc";
-// import LineSegmentPolygon from "./classes/LineSegmentPolygon";
-// import QuadraticBezierPolygon from "./classes/QuadraticBezierPolygon";
-// import BezierPolygon from "./classes/BezierPolygon";
-// import ArcPolygon from "./classes/ArcPolygon";
-import PolygonPolygon from "./classes/PolygonPolygon";
+import RayLineSegment from "./classes/RayLineSegment";
+import RayQuadraticBezier from "./classes/RayQuadraticBezier";
+import RayRay from "./classes/RayRay";
 
 const relationships = {
-    // line/ray
+    // line&ray
     LineLine,
     LineRay,
     RayRay,
 
-    // circle with line/ray
+    // circle with line&ray
     CircleCircle,
     LineCircle,
     RayCircle,
 
-    // ellipse with line/ray
+    // ellipse with line&ray
     EllipseEllipse, // sup of ArcArc
     LineEllipse, // sup of LineArc, RayArc, LineSegmentArc
     RayEllipse,
@@ -63,21 +55,18 @@ const relationships = {
     LineQuadraticBezier, // sup of RayQuadraticBezier, LineSegmentQuadraticBezier
     LineBezier, // sup of RayBezier, LineSegmentBezier
     LineArc, // sup of RayArc, LineSegmentArc
-    LinePolygon, // why is? QuadraticBezier and Bezier can degenerate to Polygon
 
     // ray vs basic path segment
     RayLineSegment,
     RayQuadraticBezier,
     RayBezier,
     RayArc,
-    RayPolygon, // why is? QuadraticBezier and Bezier can degenerate to Polygon
 
     // ellipse vs basic path segment
     LineSegmentEllipse,
-    QuadraticBezierEllipse,
-    BezierEllipse,
+    QuadraticBezierEllipse, // sup of QuadraticBezierArc
+    BezierEllipse, //sup of BezierArc
     ArcEllipse,
-    // PolygonEllipse, //why is? QuadraticBezier and Bezier can degenerate to Polygon
 
     // basic path segment each other
     LineSegmentLineSegment,
@@ -89,28 +78,13 @@ const relationships = {
     QuadraticBezierArc,
     BezierBezier,
     BezierArc,
-    ArcArc,
-
-    // basic path segment vs polygon, why is? QuadraticBezier and Bezier can degenerate to Polygon
-    // LineSegmentPolygon,
-    // QuadraticBezierPolygon,
-    // BezierPolygon,
-    // ArcPolygon,
-
-    // path and polygon with line/ray
-    // LinePolygon // already in the list
-    // RayPolygon // already in the list
-    // LinePath,
-    // RayPath,
-    PolygonPolygon
-    // PathPath,
-    // PolygonPath
+    ArcArc
 };
 
 class Relationship extends BaseObject {
     // If we use Typescript to dynamically generate the overload signatures of methods, we must use properties
     // (There is currently no implementation for the function `implements` overload signature, @see https://github.com/microsoft/TypeScript/issues/34319),
-    // but properties are defined on the instance not on the prototype according to the ES6 standard, so the `validAndWithSameOwner` will not be able to work.
+    // but properties are defined on the instance not on the prototype according to the ES6 standard.
     // To solve this, we define properties on the prototype and use `declare` to tell Typescript what happened.
     // But note that this is a type hack(workaround), since Typescript will think these methods on the prototype are properties on the instance.
 
@@ -131,16 +105,6 @@ class Relationship extends BaseObject {
     declare blockedBy: RelationshipMethodOverloads<RelationshipPredicate.BlockedBy, typeof relationships>;
     declare connect: RelationshipMethodOverloads<RelationshipPredicate.Connect, typeof relationships>;
     declare coincide: RelationshipMethodOverloads<RelationshipPredicate.Coincide, typeof relationships>;
-
-    toString(): string {
-        return `${this.name}(${this.uuid})`;
-    }
-    toArray() {
-        return [];
-    }
-    toObject() {
-        return {};
-    }
 }
 
 Object.defineProperty(Relationship.prototype, "relate", {
@@ -154,6 +118,7 @@ Object.defineProperty(Relationship.prototype, "relate", {
     enumerable: false,
     writable: true
 });
+initializedGeometryArguments(Relationship.prototype, "relate", Object.getOwnPropertyDescriptor(Relationship.prototype, "relate") as TypedPropertyDescriptor<(...args: any[]) => any>);
 
 Object.values(RelationshipPredicate).forEach(methodName => {
     Object.defineProperty(Relationship.prototype, methodName, {
@@ -167,6 +132,7 @@ Object.values(RelationshipPredicate).forEach(methodName => {
         enumerable: false,
         writable: true
     });
+    initializedGeometryArguments(Relationship.prototype, methodName, Object.getOwnPropertyDescriptor(Relationship.prototype, methodName) as TypedPropertyDescriptor<(...args: any[]) => any>);
 });
 
 export default Relationship;

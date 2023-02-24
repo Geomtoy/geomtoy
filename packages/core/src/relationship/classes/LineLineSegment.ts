@@ -1,18 +1,18 @@
 import { Maths, Vector2 } from "@geomtoy/util";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
-import { cached } from "../../misc/decor-cache";
-import BaseRelationship from "../BaseRelationship";
-import Point from "../../geometries/basic/Point";
 import type Line from "../../geometries/basic/Line";
 import type LineSegment from "../../geometries/basic/LineSegment";
-import { type Trilean } from "../../types";
+import Point from "../../geometries/basic/Point";
 import { optioner } from "../../geomtoy";
+import { cached } from "../../misc/decor-cache";
+import { superPreprocess } from "../../misc/decor-super-preprocess";
+import { type Trilean } from "../../types";
+import BaseRelationship from "../BaseRelationship";
 
 export default class LineLineSegment extends BaseRelationship {
     constructor(public geometry1: Line, public geometry2: LineSegment) {
         super();
-        const dg2 = geometry2.dimensionallyDegenerate();
-        if (dg2) {
+        const dg2 = geometry2.degenerate(false);
+        if (dg2 instanceof Point) {
             this.degeneration.relationship = null;
             return this;
         }

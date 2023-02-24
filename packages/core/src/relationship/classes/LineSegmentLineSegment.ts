@@ -1,18 +1,18 @@
-import { Box, Maths, Vector2 } from "@geomtoy/util";
-import BaseRelationship from "../BaseRelationship";
+import { Maths, Vector2 } from "@geomtoy/util";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
+import { optioner } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
-import { optioner } from "../../geomtoy";
+import BaseRelationship from "../BaseRelationship";
 
 export default class LineSegmentLineSegment extends BaseRelationship {
     constructor(public geometry1: LineSegment, public geometry2: LineSegment) {
         super();
-        const dg1 = geometry1.dimensionallyDegenerate();
-        const dg2 = geometry2.dimensionallyDegenerate();
-        if (dg1 || dg2) {
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
+        if (dg1 instanceof Point || dg2 instanceof Point) {
             this.degeneration.relationship = null;
             return this;
         }
@@ -38,7 +38,6 @@ export default class LineSegmentLineSegment extends BaseRelationship {
         t1: number; // time of `c` on `lineSegment1`
         t2: number; // time of `c` on `lineSegment2`
     }[] {
-        if (!Box.collide(this.geometry1.getBoundingBox(), this.geometry2.getBoundingBox())) return [];
         const { point1Coordinates: c1, point2Coordinates: c2 } = this.geometry1;
         const { point1Coordinates: c3, point2Coordinates: c4 } = this.geometry2;
         const epsilon = optioner.options.epsilon;

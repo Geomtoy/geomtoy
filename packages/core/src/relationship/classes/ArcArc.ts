@@ -1,23 +1,34 @@
 import { Angle, Box, Maths } from "@geomtoy/util";
-import BaseRelationship from "../BaseRelationship";
 import Arc from "../../geometries/basic/Arc";
+import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
-import EllipseEllipse from "./EllipseEllipse";
-import { cached } from "../../misc/decor-cache";
-import { Trilean } from "../../types";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { optioner } from "../../geomtoy";
+import { cached } from "../../misc/decor-cache";
+import { superPreprocess } from "../../misc/decor-super-preprocess";
+import { Trilean } from "../../types";
+import BaseRelationship from "../BaseRelationship";
+import EllipseEllipse from "./EllipseEllipse";
+import LineSegmentArc from "./LineSegmentArc";
 
 export default class ArcArc extends BaseRelationship {
     constructor(public geometry1: Arc, public geometry2: Arc) {
         super();
-        const dg1 = geometry1.dimensionallyDegenerate();
-        const dg2 = geometry2.dimensionallyDegenerate();
-        if (dg1 || dg2) {
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
+        if (dg1 instanceof Point || dg2 instanceof Point) {
             this.degeneration.relationship = null;
             return this;
         }
-        this.supRelationship = new EllipseEllipse(this.geometry1.toEllipse(), this.geometry2.toEllipse());
+        if (dg1 instanceof LineSegment && dg2 instanceof Arc) {
+            this.degeneration.relationship = new LineSegmentArc(dg1, dg2);
+            return this;
+        }
+        if (dg1 instanceof Arc && dg2 instanceof LineSegment) {
+            this.degeneration.relationship = new LineSegmentArc(dg2, dg1);
+            this.degeneration.inverse = true;
+            return this;
+        }
+        this.supRelationship = new EllipseEllipse(geometry1.toEllipse(), geometry2.toEllipse());
     }
 
     supRelationship?: EllipseEllipse;

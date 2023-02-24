@@ -1,34 +1,34 @@
 import { Maths, Polynomial, Type } from "@geomtoy/util";
-import BaseRelationship from "../BaseRelationship";
+import SealedShapeArray from "../../collection/SealedShapeArray";
 import Bezier from "../../geometries/basic/Bezier";
-import Point from "../../geometries/basic/Point";
-import { cached } from "../../misc/decor-cache";
-import { optioner } from "../../geomtoy";
-import LineSegment from "../../geometries/basic/LineSegment";
 import Ellipse from "../../geometries/basic/Ellipse";
+import LineSegment from "../../geometries/basic/LineSegment";
+import Point from "../../geometries/basic/Point";
+import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
+import { optioner } from "../../geomtoy";
+import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
+import BaseRelationship from "../BaseRelationship";
 import LineSegmentEllipse from "./LineSegmentEllipse";
-import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import QuadraticBezierEllipse from "./QuadraticBezierEllipse";
 
 export default class BezierEllipse extends BaseRelationship {
     constructor(public geometry1: Bezier, public geometry2: Ellipse) {
         super();
-        const dg1 = geometry1.dimensionallyDegenerate();
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
 
-        if (dg1) {
+        if (dg1 instanceof Point || dg2 instanceof Point || dg2 instanceof SealedShapeArray) {
             this.degeneration.relationship = null;
             return this;
         }
-        const ndg1 = geometry1.nonDimensionallyDegenerate();
-
-        if (ndg1 instanceof QuadraticBezier) {
-            this.degeneration.relationship = new QuadraticBezierEllipse(ndg1, geometry2);
+        if (dg1 instanceof QuadraticBezier) {
+            this.degeneration.relationship = new QuadraticBezierEllipse(dg1, geometry2);
             return this;
         }
-        if (ndg1 instanceof LineSegment) {
-            this.degeneration.relationship = new LineSegmentEllipse(ndg1, geometry2);
+        if (dg1 instanceof LineSegment) {
+            this.degeneration.relationship = new LineSegmentEllipse(dg1, geometry2);
             return this;
         }
     }

@@ -1,31 +1,32 @@
 import { Coordinates, Maths } from "@geomtoy/util";
-import { cached } from "../../misc/decor-cache";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
+import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
-import BaseRelationship from "../BaseRelationship";
-import Bezier from "../../geometries/basic/Bezier";
+import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import Ray from "../../geometries/basic/Ray";
+import { optioner } from "../../geomtoy";
+import { cached } from "../../misc/decor-cache";
+import { superPreprocess } from "../../misc/decor-super-preprocess";
+import BaseRelationship from "../BaseRelationship";
 import LineBezier from "./LineBezier";
 import RayLineSegment from "./RayLineSegment";
-import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import RayQuadraticBezier from "./RayQuadraticBezier";
-import { optioner } from "../../geomtoy";
 
 export default class RayBezier extends BaseRelationship {
     constructor(public geometry1: Ray, public geometry2: Bezier) {
         super();
-        const dg2 = geometry2.dimensionallyDegenerate();
-        if (dg2) {
+        const dg2 = geometry2.degenerate(false);
+        if (dg2 instanceof Point) {
             this.degeneration.relationship = null;
             return this;
         }
-        const ndg2 = geometry2.nonDimensionallyDegenerate();
-        if (ndg2 instanceof QuadraticBezier) {
-            this.degeneration.relationship = new RayQuadraticBezier(geometry1, ndg2);
+        if (dg2 instanceof QuadraticBezier) {
+            this.degeneration.relationship = new RayQuadraticBezier(geometry1, dg2);
+            return this;
         }
-        if (ndg2 instanceof LineSegment) {
-            this.degeneration.relationship = new RayLineSegment(geometry1, ndg2);
+        if (dg2 instanceof LineSegment) {
+            this.degeneration.relationship = new RayLineSegment(geometry1, dg2);
+            return this;
         }
 
         this.supRelationship = new LineBezier(geometry1.toLine(), geometry2);

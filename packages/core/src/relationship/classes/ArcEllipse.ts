@@ -1,20 +1,28 @@
 import { Angle } from "@geomtoy/util";
-import BaseRelationship from "../BaseRelationship";
+import SealedShapeArray from "../../collection/SealedShapeArray";
 import Arc from "../../geometries/basic/Arc";
 import Ellipse from "../../geometries/basic/Ellipse";
+import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
-import EllipseEllipse from "./EllipseEllipse";
+import { optioner } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
-import { optioner } from "../../geomtoy";
+import BaseRelationship from "../BaseRelationship";
+import EllipseEllipse from "./EllipseEllipse";
+import LineSegmentEllipse from "./LineSegmentEllipse";
 
 export default class ArcEllipse extends BaseRelationship {
     constructor(public geometry1: Arc, public geometry2: Ellipse) {
         super();
-        const dg1 = geometry1.dimensionallyDegenerate();
-        if (dg1) {
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
+        if (dg1 instanceof Point || dg2 instanceof Point || dg2 instanceof SealedShapeArray) {
             this.degeneration.relationship = null;
+            return this;
+        }
+        if (dg1 instanceof LineSegment) {
+            this.degeneration.relationship = new LineSegmentEllipse(dg1, geometry2);
             return this;
         }
 

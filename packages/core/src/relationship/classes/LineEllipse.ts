@@ -1,15 +1,21 @@
-import { Angle, Maths, Polynomial, Type } from "@geomtoy/util";
-import { cached } from "../../misc/decor-cache";
-import BaseRelationship from "../BaseRelationship";
+import { Angle, Complex, Maths, Polynomial, RootMultiplicity, Type } from "@geomtoy/util";
+import SealedShapeArray from "../../collection/SealedShapeArray";
 import Ellipse from "../../geometries/basic/Ellipse";
 import Line from "../../geometries/basic/Line";
 import Point from "../../geometries/basic/Point";
-import { Trilean } from "../../types";
 import { optioner } from "../../geomtoy";
+import { cached } from "../../misc/decor-cache";
+import { Trilean } from "../../types";
+import BaseRelationship from "../BaseRelationship";
 
 export default class LineEllipse extends BaseRelationship {
     constructor(public geometry1: Line, public geometry2: Ellipse) {
         super();
+        const dg2 = geometry2.degenerate(false);
+        if (dg2 instanceof Point || dg2 instanceof SealedShapeArray) {
+            this.degeneration.relationship = null;
+            return this;
+        }
     }
 
     @cached
@@ -31,27 +37,50 @@ export default class LineEllipse extends BaseRelationship {
             2* (a* px2 + b* py2),
             c + a *(px1 + px3) + b* (py1 + py3)
         ]
-        // Handle coefficient calculation underflow.
-        if (tPoly[0] === 0) tPoly[0] = Number.EPSILON;
-        tPoly = Polynomial.monic(tPoly);
-        tPoly = tPoly.map(coef => (Maths.abs(coef) < Number.EPSILON ? Number.EPSILON : coef));
-
+        //@see https://en.wikipedia.org/wiki/Tangent_half-angle_substitution#Geometry
+        let intersectionAtPi: undefined | RootMultiplicity<[number, number]> = undefined;
+        if (tPoly[0] === 0) {
+            intersectionAtPi = {
+                multiplicity: 1,
+                root: [Maths.cos(Maths.PI), Maths.sin(Maths.PI)]
+            };
+            if (tPoly[1] === 0) {
+                intersectionAtPi.multiplicity++;
+            }
+        }
         const curveEpsilon = optioner.options.curveEpsilon;
         const intersection: ReturnType<typeof this.intersection> = [];
 
-        let tRoots = Polynomial.roots(tPoly);
-        const cosAndSins = tRoots.filter(Type.isNumber).map(t => {
+        // We need to check the complex roots(particularly in touch situation) for the arctangent of a complex number may approximately to be a real number(with every small imaginary part).
+        const tRoots = Polynomial.roots(tPoly)
+            .map(r => {
+                if (Complex.is(r)) {
+                    const atan = Complex.atan(r);
+                    if (Maths.equalTo(Complex.imag(atan), 0, curveEpsilon)) return Maths.tan(Complex.real(atan));
+                    return r;
+                }
+                return r;
+            })
+            .filter((r): r is number => {
+                return Type.isRealNumber(r);
+            }); //filter the `±Infinity` and complex
+
+        const cosAndSins = tRoots.map(t => {
             const cosTheta = (1 - t ** 2) / (1 + t ** 2);
             const sinTheta = (2 * t) / (1 + t ** 2);
             return [cosTheta, sinTheta] as [number, number];
         });
         // We use `Polynomial.rootsMultiplicity` to do the tricky here to find out the multiplicity of `cosTheta` and `sinTheta`.
         const cosAndSinsM = Polynomial.rootsMultiplicity(cosAndSins, curveEpsilon);
+        if (intersectionAtPi !== undefined) cosAndSinsM.push(intersectionAtPi);
 
         for (let i = 0, l = cosAndSinsM.length; i < l; i++) {
             const [cosTheta, sinTheta] = cosAndSinsM[i].root;
-            const x = px1 * cosTheta + px2 * sinTheta + px3;
-            const y = py1 * cosTheta + py2 * sinTheta + py3;
+            let x = px1 * cosTheta + px2 * sinTheta + px3;
+            let y = py1 * cosTheta + py2 * sinTheta + py3;
+            //lower the calculation error
+            [x, y] = this.geometry1.getClosestPointFrom([x, y]).coordinates;
+
             const a = Angle.simplify(Maths.atan2(sinTheta, cosTheta));
 
             intersection.push({

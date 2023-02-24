@@ -10,6 +10,11 @@ import BaseRelationship from "../BaseRelationship";
 export default class LineCircle extends BaseRelationship {
     constructor(public geometry1: Line, public geometry2: Circle) {
         super();
+        const dg2 = geometry2.degenerate(false);
+        if (dg2 instanceof Point) {
+            this.degeneration.relationship = null;
+            return this;
+        }
     }
 
     @cached

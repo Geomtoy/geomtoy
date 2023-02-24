@@ -1,10 +1,10 @@
 import { Maths } from "@geomtoy/util";
-import BaseRelationship from "../BaseRelationship";
 import Line from "../../geometries/basic/Line";
 import Point from "../../geometries/basic/Point";
-import { cached } from "../../misc/decor-cache";
 import { optioner } from "../../geomtoy";
+import { cached } from "../../misc/decor-cache";
 import { Trilean } from "../../types";
+import BaseRelationship from "../BaseRelationship";
 
 export default class LineLine extends BaseRelationship {
     constructor(public geometry1: Line, public geometry2: Line) {

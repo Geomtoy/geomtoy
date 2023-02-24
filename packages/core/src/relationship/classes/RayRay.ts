@@ -1,12 +1,12 @@
-import { Angle, Coordinates, Maths, Vector2 } from "@geomtoy/util";
-import BaseRelationship from "../BaseRelationship";
-import Ray from "../../geometries/basic/Ray";
-import Point from "../../geometries/basic/Point";
-import LineLine from "./LineLine";
-import { cached } from "../../misc/decor-cache";
-import { optioner } from "../../geomtoy";
+import { Coordinates, Vector2 } from "@geomtoy/util";
 import LineSegment from "../../geometries/basic/LineSegment";
+import Point from "../../geometries/basic/Point";
+import Ray from "../../geometries/basic/Ray";
+import { optioner } from "../../geomtoy";
+import { cached } from "../../misc/decor-cache";
 import { Trilean } from "../../types";
+import BaseRelationship from "../BaseRelationship";
+import LineLine from "./LineLine";
 
 export default class RayRay extends BaseRelationship {
     constructor(public geometry1: Ray, public geometry2: Ray) {

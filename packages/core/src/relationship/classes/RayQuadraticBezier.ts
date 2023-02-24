@@ -1,30 +1,27 @@
 import { Coordinates, Maths } from "@geomtoy/util";
+import LineSegment from "../../geometries/basic/LineSegment";
+import Point from "../../geometries/basic/Point";
+import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
+import Ray from "../../geometries/basic/Ray";
+import { optioner } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
-import LineSegment from "../../geometries/basic/LineSegment";
-import Polygon from "../../geometries/advanced/Polygon";
-import Point from "../../geometries/basic/Point";
-import BaseRelationship from "../BaseRelationship";
-import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
-import type Geomtoy from "../../geomtoy";
 import { Trilean } from "../../types";
-import Ray from "../../geometries/basic/Ray";
+import BaseRelationship from "../BaseRelationship";
 import LineQuadraticBezier from "./LineQuadraticBezier";
 import RayLineSegment from "./RayLineSegment";
-import RayPolygon from "./RayPolygon";
-import { optioner } from "../../geomtoy";
 
 export default class RayQuadraticBezier extends BaseRelationship {
     constructor(public geometry1: Ray, public geometry2: QuadraticBezier) {
         super();
-        const dg2 = geometry2.dimensionallyDegenerate();
-        if (dg2) {
+        const dg2 = geometry2.degenerate(false);
+        if (dg2 instanceof Point) {
             this.degeneration.relationship = null;
             return this;
         }
-        const ndg2 = geometry2.nonDimensionallyDegenerate();
-        if (ndg2 instanceof LineSegment) {
-            this.degeneration.relationship = new RayLineSegment(geometry1, ndg2);
+        if (dg2 instanceof LineSegment) {
+            this.degeneration.relationship = new RayLineSegment(geometry1, dg2);
+            return this;
         }
         this.supRelationship = new LineQuadraticBezier(geometry1.toLine(), geometry2);
     }

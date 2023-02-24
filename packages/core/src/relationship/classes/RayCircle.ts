@@ -11,9 +11,15 @@ import LineCircle from "./LineCircle";
 export default class RayCircle extends BaseRelationship {
     constructor(public geometry1: Ray, public geometry2: Circle) {
         super();
-        this.supRelationship = new LineCircle(this.geometry1.toLine(), this.geometry2);
+        const dg2 = geometry2.degenerate(false);
+        if (dg2 instanceof Point) {
+            this.degeneration.relationship = null;
+            return this;
+        }
+
+        this.supRelationship = new LineCircle(geometry1.toLine(), geometry2);
     }
-    supRelationship: LineCircle;
+    supRelationship?: LineCircle;
 
     @cached
     intersection(): {

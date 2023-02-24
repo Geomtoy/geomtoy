@@ -4,17 +4,17 @@ import Point from "../../geometries/basic/Point";
 import Ray from "../../geometries/basic/Ray";
 import { cached } from "../../misc/decor-cache";
 
+import { optioner } from "../../geomtoy";
+import { superPreprocess } from "../../misc/decor-super-preprocess";
+import { Trilean } from "../../types";
 import BaseRelationship from "../BaseRelationship";
 import LineLineSegment from "./LineLineSegment";
-import { Trilean } from "../../types";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
-import { optioner } from "../../geomtoy";
 
 export default class RayLineSegment extends BaseRelationship {
     constructor(public geometry1: Ray, public geometry2: LineSegment) {
         super();
-        const dg2 = geometry2.dimensionallyDegenerate();
-        if (dg2) {
+        const dg2 = geometry2.degenerate(false);
+        if (dg2 instanceof Point) {
             this.degeneration.relationship = null;
             return this;
         }

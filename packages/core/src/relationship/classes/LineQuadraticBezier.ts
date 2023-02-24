@@ -13,14 +13,13 @@ import LineLineSegment from "./LineLineSegment";
 export default class LineQuadraticBezier extends BaseRelationship {
     constructor(public geometry1: Line, public geometry2: QuadraticBezier) {
         super();
-        const dg2 = this.geometry2.dimensionallyDegenerate();
-        if (dg2) {
+        const dg2 = this.geometry2.degenerate(false);
+        if (dg2 instanceof Point) {
             this.degeneration.relationship = null;
+            return this;
         }
-        const ndg2 = this.geometry2.nonDimensionallyDegenerate();
-
-        if (ndg2 instanceof LineSegment) {
-            this.degeneration.relationship = new LineLineSegment(geometry1, ndg2);
+        if (dg2 instanceof LineSegment) {
+            this.degeneration.relationship = new LineLineSegment(geometry1, dg2);
             return this;
         }
     }
