@@ -10,8 +10,9 @@ import EventTarget from "./base/EventTarget";
 import Shape from "./base/Shape";
 import Geometry from "./base/Geometry";
 import EventObject from "./event/EventObject";
+import EventSourceObject from "./event/EventSourceObject";
 /** @category Base */
-export { BaseObject, EventTarget, Shape, Geometry, EventObject };
+export { BaseObject, EventTarget, Shape, Geometry, EventObject, EventSourceObject };
 
 import Arc from "./geometries/basic/Arc";
 import Bezier from "./geometries/basic/Bezier";
@@ -27,9 +28,9 @@ import RegularPolygon from "./geometries/basic/RegularPolygon";
 import Triangle from "./geometries/basic/Triangle";
 import Vector from "./geometries/basic/Vector";
 
-import Path from "./geometries/advanced/Path";
-import Polygon from "./geometries/advanced/Polygon";
-import Compound from "./geometries/advanced/Compound";
+import Path from "./geometries/general/Path";
+import Polygon from "./geometries/general/Polygon";
+import Compound from "./geometries/general/Compound";
 
 import Image from "./non-geometries/Image";
 import Text from "./non-geometries/Text";
@@ -56,11 +57,9 @@ import BooleanOperation from "./boolean-operation";
 /** @category Tool */
 export { Dynamic, Inversion, Relationship, Transformation, BooleanOperation };
 
-import GeometryGraphics from "./graphics/GeometryGraphics";
-import ImageGraphics from "./graphics/ImageGraphics";
-import TextGraphics from "./graphics/TextGraphics";
+import Graphics from "./graphics";
+import GeometryGraphic from "./graphics/GeometryGraphic";
+import ImageGraphic from "./graphics/ImageGraphic";
+import TextGraphic from "./graphics/TextGraphic";
 /** @category Graphics */
-export { GeometryGraphics, ImageGraphics, TextGraphics };
-
-import EndpointIntersection from "./helper/EndpointIntersection";
-export { EndpointIntersection };
+export { Graphics, GeometryGraphic, ImageGraphic, TextGraphic };
