@@ -1,9 +1,10 @@
 import { Utility } from "@geomtoy/util";
-import EventTarget from "../base/EventTarget";
 import Shape from "../base/Shape";
-import EventObject from "../event/EventObject";
+import EventSourceObject from "../event/EventSourceObject";
+import Graphics from "../graphics";
+import { ViewportDescriptor } from "../types";
 
-export default class SealedShapeObject<T extends { [key: string]: Shape }> extends EventTarget {
+export default class SealedShapeObject<T extends { [key: string]: Shape }> extends Shape {
     private _shapes: T;
     private _shapesProxy!: typeof this._shapes;
 
@@ -12,11 +13,10 @@ export default class SealedShapeObject<T extends { [key: string]: Shape }> exten
         this._shapes = { ...shapes };
         this._initProxy();
     }
-    get events() {
-        return {
-            shapeChanged: "shapeChange"
-        };
-    }
+    static override events = {
+        shapeChanged: "shapeChange"
+    };
+
     get shapes() {
         return this._shapesProxy;
     }
@@ -30,7 +30,8 @@ export default class SealedShapeObject<T extends { [key: string]: Shape }> exten
                         console.warn(`[G]You could not define the property \`${prop.toString()}\` of \`shapes\` as an accessor.`);
                         return true;
                     }
-                    if (!Utility.isEqualTo(target[String(prop)], descriptor.value)) this.trigger_(EventObject.collection(this, this.events.shapeChanged, String(prop), ""));
+                    if (!Utility.isEqualTo(target[String(prop)], descriptor.value))
+                        this.trigger_(new EventSourceObject(this, SealedShapeObject.events.shapeChanged, target[String(prop)], String(prop)));
                     return Reflect.defineProperty(target, prop, {
                         configurable: true,
                         enumerable: true,
@@ -54,20 +55,32 @@ export default class SealedShapeObject<T extends { [key: string]: Shape }> exten
             }
         });
     }
-    toString() {
+
+    move(deltaX: number, deltaY: number) {
+        for (const shape of Object.values(this._shapes)) {
+            shape.move(deltaX, deltaY);
+        }
+        return this;
+    }
+    clone() {
+        return new SealedShapeObject(this._shapes);
+    }
+    getGraphics(viewport: ViewportDescriptor) {
+        const g = new Graphics();
+        for (const shape of Object.values(this._shapes)) {
+            g.concat(shape.getGraphics(viewport));
+        }
+        return g;
+    }
+
+    override toString() {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
             `\tshapes: {`,
-            Object.entries(this._shapes).map(([key,value])=> `\t${key}: ${value}`),
+            ...Object.entries(this._shapes).map(([key,shape])=> `\t\t${key}: ${shape.name}(${shape.uuid})`),
             `\t}`,
             `}`
         ].join("\n")
-    }
-    toArray() {
-        return Object.values(this._shapes).map(shape => shape.toArray());
-    }
-    toObject() {
-        return { ...this.shapes };
     }
 }

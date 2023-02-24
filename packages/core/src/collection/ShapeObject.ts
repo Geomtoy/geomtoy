@@ -1,29 +1,28 @@
 import { Utility } from "@geomtoy/util";
-import EventTarget from "../base/EventTarget";
 import Shape from "../base/Shape";
-import EventObject from "../event/EventObject";
+import EventSourceObject from "../event/EventSourceObject";
+import Graphics from "../graphics";
+import { ViewportDescriptor } from "../types";
 
-export default class ShapeObject extends EventTarget {
-    private _shapes: { [key: string]: Shape } = {};
+export default class ShapeObject<T extends Shape> extends Shape {
+    private _shapes: { [key: string]: T } = {};
     private _shapesProxy!: typeof this._shapes;
 
-    constructor(shapes: { [key: string]: Shape } = {}) {
+    constructor(shapes: { [key: string]: T } = {}) {
         super();
         Object.assign(this, { shapes });
         this._initProxy();
     }
-    get events() {
-        return {
-            shapesReset: "reset",
-            shapeChanged: "shapeChange",
-            shapeAdded: "shapeAdd",
-            shapeRemoved: "shapeRemove"
-        };
-    }
-    private _setShapes(value: { [key: string]: Shape }) {
-        if (!Utility.isEqualTo(this._shapes, value)) this.trigger_(EventObject.simple(this, this.events.shapesReset));
-        for (let p in this._shapes) delete this._shapes[p];
-        for (let q in value) this._shapes[q] = value[q];
+    static override events = {
+        shapesReset: "reset",
+        shapeChanged: "shapeChange",
+        shapeAdded: "shapeAdd",
+        shapeRemoved: "shapeRemove"
+    };
+    private _setShapes(value: { [key: string]: T }) {
+        if (!Utility.isEqualTo(this._shapes, value)) this.trigger_(new EventSourceObject(this, ShapeObject.events.shapesReset));
+        for (const k of Object.keys(this._shapes)) delete this._shapes[k];
+        for (const [k, v] of Object.entries(value)) this._shapes[k] = v;
     }
     get shapes() {
         return this._shapesProxy;
@@ -39,7 +38,7 @@ export default class ShapeObject extends EventTarget {
                         console.warn(`[G]You could not define the property \`${prop.toString()}\` of \`shapes\` as an accessor.`);
                         return true;
                     }
-                    if (!Utility.isEqualTo(target[String(prop)], descriptor.value)) this.trigger_(EventObject.collection(this, this.events.shapeChanged, String(prop), ""));
+                    if (!Utility.isEqualTo(target[String(prop)], descriptor.value)) this.trigger_(new EventSourceObject(this, ShapeObject.events.shapeChanged, String(prop)));
                     return Reflect.defineProperty(target, prop, {
                         configurable: true,
                         enumerable: true,
@@ -47,7 +46,7 @@ export default class ShapeObject extends EventTarget {
                         value: descriptor.value
                     });
                 }
-                this.trigger_(EventObject.collection(this, this.events.shapeAdded, String(prop), ""));
+                this.trigger_(new EventSourceObject(this, ShapeObject.events.shapeAdded, String(prop)));
                 return Reflect.defineProperty(target, prop, {
                     configurable: true,
                     enumerable: true,
@@ -57,7 +56,7 @@ export default class ShapeObject extends EventTarget {
             },
             deleteProperty: (target, prop) => {
                 if (Reflect.ownKeys(target).includes(prop)) {
-                    this.trigger_(EventObject.collection(this, this.events.shapeRemoved, String(prop), ""));
+                    this.trigger_(new EventSourceObject(this, ShapeObject.events.shapeRemoved, String(prop)));
                     return Reflect.deleteProperty(target, prop);
                 }
                 return true; // `prop` do not existed, `Reflect.deleteProperty` always return `true`
@@ -72,20 +71,30 @@ export default class ShapeObject extends EventTarget {
             }
         });
     }
-    toString() {
+    move(deltaX: number, deltaY: number) {
+        for (const shape of Object.values(this._shapes)) {
+            shape.move(deltaX, deltaY);
+        }
+        return this;
+    }
+    clone() {
+        return new ShapeObject(this._shapes);
+    }
+    getGraphics(viewport: ViewportDescriptor) {
+        const g = new Graphics();
+        for (const shape of Object.values(this._shapes)) {
+            g.concat(shape.getGraphics(viewport));
+        }
+        return g;
+    }
+    override toString() {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
             `\tshapes: {`,
-            Object.entries(this._shapes).map(([key,value])=> `\t${key}: ${value}`),
+            ...Object.entries(this._shapes).map(([key,shape])=> `\t\t${key}: ${shape.name}(${shape.uuid})`),
             `\t}`,
             `}`
         ].join("\n")
-    }
-    toArray() {
-        return Object.values(this._shapes).map(shape => shape.toArray());
-    }
-    toObject() {
-        return { ...this.shapes };
     }
 }
