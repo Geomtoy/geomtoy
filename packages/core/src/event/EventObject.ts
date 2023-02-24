@@ -1,55 +1,35 @@
-import type EventTarget from "../base/EventTarget";
+import EventTarget from "../base/EventTarget";
+import EventSourceObject from "./EventSourceObject";
 
-class EventObject<T extends EventTarget> {
-    timestamp = Date.now();
+export default class EventObject<T extends EventTarget> {
     target: T;
-    event?: string;
-    indexOrKey?: number | string;
-    uuid?: string;
-    original?: EventObject<T> | EventObject<T>[];
+    type: "empty" | "standard" | "composed" = "empty";
+    event: string | undefined;
+    trace: EventSourceObject<T>[] | null;
+    original: (EventObject<T> & { trace: EventSourceObject<T>[] })[] | null;
 
-    constructor(target: T) {
+    constructor(target: T, type: "empty" | "standard" | "composed") {
         this.target = target;
+        this.type = type;
+        this.event = undefined;
+        this.trace = null;
+        this.original = null;
     }
 
     static empty<ST extends EventTarget>(target: ST) {
-        return new EventObject(target);
-    }
-    static simple<ST extends EventTarget>(target: ST, eventName: string) {
-        const ret = new EventObject(target);
-        ret.event = eventName;
+        const ret = new EventObject(target, "empty");
         return ret;
     }
-    static collection<ST extends EventTarget>(target: ST, eventName: string, indexOrKey: number | string, uuid: string) {
-        const ret = new EventObject(target);
-        ret.event = eventName;
-        ret.indexOrKey = indexOrKey;
-        ret.uuid = uuid;
-        return ret;
+    static standard<ST extends EventTarget>(target: ST, event: string) {
+        const ret = new EventObject(target, "standard");
+        ret.event = event;
+        ret.trace = [];
+        return ret as EventObject<ST> & { event: string; trace: EventSourceObject<ST>[] };
     }
-    static composedAny<ST extends EventTarget>(target: ST, eventPattern: string, originalEventObject: EventObject<ST>) {
-        const ret = new EventObject(target);
-        ret.event = eventPattern;
-        ret.original = originalEventObject;
-        return ret;
-    }
-
-    static composedAll<ST extends EventTarget>(target: ST, eventPattern: string, originalEventObjects: EventObject<ST>[]) {
-        const ret = new EventObject(target);
-        ret.event = eventPattern;
-        ret.original = originalEventObjects;
-        return ret;
+    static composed<ST extends EventTarget>(target: ST, event: string) {
+        const ret = new EventObject(target, "composed");
+        ret.event = event;
+        ret.original = [];
+        return ret as EventObject<ST> & { event: string; original: (EventObject<ST> & { trace: EventSourceObject<ST>[] })[] };
     }
 }
-
-function isSameEventObject<T extends EventTarget>(eventObject1: EventObject<T>, eventObject2: EventObject<T>) {
-    if (eventObject1.target !== eventObject2.target) return false;
-    if (eventObject1.event !== eventObject2.event) return false;
-    if (eventObject1.indexOrKey !== eventObject2.indexOrKey) return false;
-    if (eventObject1.uuid !== eventObject2.uuid) return false;
-    if (eventObject1.original !== eventObject2.original) return false;
-    return true;
-}
-
-export default EventObject;
-export { isSameEventObject };

@@ -1,24 +1,17 @@
-import { Assert, Utility, Type } from "@geomtoy/util";
-import BaseObject from "./BaseObject";
+import { Assert, Type, Utility } from "@geomtoy/util";
 import EventCache from "../event/EventCache";
 import EventHandler from "../event/EventHandler";
 import EventObject from "../event/EventObject";
+import EventSourceObject from "../event/EventSourceObject";
 import { scheduler } from "../geomtoy";
+import BaseObject from "./BaseObject";
 
-import type { EventTargetEventsPair, EventObjectFromPair } from "../types";
+import { EVENT_ALL, EVENT_ANY, EVENT_PATTERN_ALL_REG, EVENT_PATTERN_ALL_SPLITTER, EVENT_PATTERN_ANY_REG, EVENT_PATTERN_ANY_SPLITTER } from "../event/EventConst";
 import { STATE_IDENTIFIER } from "../misc/decor-cache";
+import type { BindOptions, BindParameters, EventObjectsFromPairs, EventPair, OnOptions } from "../types";
 
-const eventsSplitterReg = /\s+/;
-const eventPatternAnyReg = /^(\w+\|){1,}\w+$/i;
-const eventPatternAnySplitter = "|";
-const eventNameForAny = "any";
-
-const eventPatternAllReg = /^(\w+\&){1,}\w+$/i;
-const eventPatternAllSplitter = "&";
-const eventNameForAll = "all";
-
-const onEventHandlerDefaultPriority = 1;
-const bindEventHandlerDefaultPriority = 1000;
+const ON_EVENT_HANDLER_DEFAULT_PRIORITY = 1;
+const BIND_EVENT_HANDLER_DEFAULT_PRIORITY = 1000;
 
 export default abstract class EventTarget extends BaseObject {
     private _muted = false;
@@ -26,16 +19,32 @@ export default abstract class EventTarget extends BaseObject {
     get muted() {
         return this._muted;
     }
-    abstract get events(): { [key: string]: string };
 
+    static readonly events: { [key: string]: string };
+    static readonly eventAny = EVENT_ANY;
+    static readonly eventAll = EVENT_ALL;
+
+    /**
+     * Disable the event triggering of EventTarget `this`.
+     */
     mute() {
         this._muted = true;
     }
+    /**
+     * Enable the event triggering of EventTarget `this`.(default behavior)
+     */
     unmute() {
         this._muted = false;
     }
 
-    // event name-handlers map
+    static composeAny(...eventNames: string[]) {
+        return eventNames.join(EVENT_PATTERN_ANY_SPLITTER);
+    }
+    static composeAll(...eventNames: string[]) {
+        return eventNames.join(EVENT_PATTERN_ALL_SPLITTER);
+    }
+
+    // event-handlers map
     private _eventMap: EventHandler[] = [];
 
     // event names holder to collect the event names triggered in each loop and automatically remove duplicates
@@ -44,137 +53,119 @@ export default abstract class EventTarget extends BaseObject {
     can visit the values newly added during the `forEach`. This is a significant and few people mentioned difference between `Set` and `Array`.
     @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/forEach
     */
-    private _eventCache: EventCache<typeof this> = new EventCache();
+    private _eventCache: EventCache<this> = new EventCache(this);
 
     // event scheduled flag to mark if we have told the scheduler ready to go(put the event handlers of triggered events of this `EventTarget` in its queue)
-    private _eventScheduled: boolean = false;
+    private _eventScheduled = false;
 
-    private _addHandler(eventPattern: string, callback: (...args: any[]) => void, context: EventTarget, relatedTargets: undefined | EventTarget[], priority: number, hasRecursiveEffect: boolean) {
-        const hs = this._eventMap;
-        const handler = new EventHandler(eventPattern, callback, context, relatedTargets, priority, hasRecursiveEffect);
-        hs.push(handler);
+    private _addHandler(event: string, callback: (...args: any) => void, context: EventTarget, relatedTargets: null | EventTarget[], priority: number, debounce: number = 0) {
+        const handler = new EventHandler(event, callback, context, relatedTargets, priority, debounce);
+        this._eventMap.push(handler);
         // From max to min according to priority.
-        hs.sort((a, b) => b.priority - a.priority);
+        this._eventMap.sort((a, b) => b.priority - a.priority);
     }
-    private _removeHandler(eventPattern: string, callback: (...args: any[]) => void, context: EventTarget) {
-        const hs = this._eventMap;
-        const index = hs.findIndex(h => h.eventPattern === eventPattern && h.callback === callback && h.context === context);
-        if (index != -1) hs.splice(index, 1);
+    private _removeHandler(event: string, callback: (...args: any) => void, context: EventTarget) {
+        const index = this._eventMap.findIndex(h => h.event === event && h.callback === callback && h.context === context);
+        if (index !== -1) this._eventMap.splice(index, 1);
     }
-    private _hasHandler(eventPattern: string, callback: (...args: any[]) => void, context: EventTarget) {
-        const hs = this._eventMap;
-        return hs.findIndex(h => h.eventPattern === eventPattern && h.callback === callback && h.context === context) != -1;
-    }
-    private _hasEvent(eventName: string) {
-        if (eventName === eventNameForAll) return true;
-        if (eventName === eventNameForAny) return true;
-        return Object.values(this.events).includes(eventName);
+    private _hasHandler(event: string, callback: (...args: any) => void, context: EventTarget) {
+        return this._eventMap.findIndex(h => h.event === event && h.callback === callback && h.context === context) !== -1;
     }
 
-    // events: a string joint some event patterns like: "x|y radius"
-    // eventPattern: a pure event name or a pattern of event name like: "x|y"
-    // eventName: a pure event name like: "x"
+    private _parseEvent(event: string) {
+        event = event.trim();
 
-    private _getEventObjectsFromCache(eventPattern: string) {
-        if (eventPatternAnyReg.test(eventPattern)) {
-            let origin: EventObject<typeof this> = undefined as unknown as EventObject<typeof this>;
-            return eventPattern.split(eventPatternAnySplitter).some(n => {
-                const objects = this._eventCache.filter(n);
-                if (objects.length > 0) {
-                    origin = Utility.head(objects)!;
-                    return true;
-                }
+        const definedEventNames = Object.values((this.constructor as typeof EventTarget).events);
+
+        // parse keyword "any" and "all"
+        if (event === EVENT_ANY) return definedEventNames.join(EVENT_PATTERN_ANY_SPLITTER);
+        if (event === EVENT_ALL) return definedEventNames.join(EVENT_PATTERN_ALL_SPLITTER);
+
+        // parse logical pattern "any", and reorder the event names
+        if (EVENT_PATTERN_ANY_REG.test(event)) {
+            const eventNames = event.split(EVENT_PATTERN_ANY_SPLITTER);
+            if (
+                eventNames.some(n => {
+                    return !definedEventNames.includes(n)
+                        ? (console.warn(`[G]There is no event named \`${n}\` in \`${this.name}\` which is contained in \`${event}\`, so it will be ignored.`), true)
+                        : false;
+                })
+            )
                 return false;
-            })
-                ? [EventObject.composedAny(this, eventPattern, origin)]
-                : null;
-        }
-        if (eventPatternAllReg.test(eventPattern)) {
-            let origins: EventObject<typeof this>[] = [];
-            return eventPattern.split(eventPatternAllSplitter).every(n => {
-                const objects = this._eventCache.filter(n);
-                if (objects.length > 0) {
-                    origins.push(Utility.head(objects)!);
-                    return true;
-                }
-                return false;
-            })
-                ? [EventObject.composedAll(this, eventPattern, origins)]
-                : null;
+            eventNames.sort((a, b) => definedEventNames.indexOf(a) - definedEventNames.indexOf(b));
+            return eventNames.join(EVENT_PATTERN_ANY_SPLITTER);
         }
 
-        const objects = this._eventCache.filter(eventPattern);
-        return objects.length > 0 ? objects : null;
+        // parse logical pattern "all", and reorder the event names
+        if (EVENT_PATTERN_ALL_REG.test(event)) {
+            const eventNames = event.split(EVENT_PATTERN_ALL_SPLITTER);
+            if (
+                eventNames.some(n => {
+                    return !definedEventNames.includes(n)
+                        ? (console.warn(`[G]There is no event named \`${n}\` in \`${this.name}\` which is contained in \`${event}\`, so it will be ignored.`), true)
+                        : false;
+                })
+            )
+                return false;
+            eventNames.sort((a, b) => definedEventNames.indexOf(a) - definedEventNames.indexOf(b));
+            return eventNames.join(EVENT_PATTERN_ALL_SPLITTER);
+        }
+
+        return !definedEventNames.includes(event) ? (console.warn(`[G]There is no event named \`${event}\` in \`${this.name}\` , so it will be ignored.`), false) : event;
     }
 
-    private _parseEvents(events: string) {
-        const patterns = events.trim().split(eventsSplitterReg);
+    on(onOptions: OnOptions, event: string, callback: (this: this, arg: EventObject<this>) => void): this;
+    on(event: string, callback: (this: this, arg: EventObject<this>) => void): this;
+    on(arg0: any, arg1: any, arg2?: any) {
+        let priority = ON_EVENT_HANDLER_DEFAULT_PRIORITY;
+        let debounce = 0;
 
-        return patterns.filter(p => {
-            if (eventPatternAnyReg.test(p)) {
-                return p.split(eventPatternAnySplitter).some(n => {
-                    return !this._hasEvent(n) ? (console.warn(`[G]There is no event named \`${n}\` in \`${this.name}\` which is contained in \`${p}\`, so it will be ignored.`), true) : false;
-                })
-                    ? false
-                    : true;
+        let event: string;
+        let callback: (this: this, arg: EventObject<this>) => void;
+
+        if (Type.isPlainObject(arg0)) {
+            if (arg0.priority !== undefined) {
+                priority = arg0.priority;
+                Assert.isRealNumber(priority, "priority");
+            }
+            if (arg0.debounce !== undefined) {
+                debounce = arg0.debounce;
+                Assert.isRealNumber(debounce, "debounce");
             }
 
-            if (eventPatternAllReg.test(p)) {
-                return p.split(eventPatternAllSplitter).some(n => {
-                    return !this._hasEvent(n) ? (console.warn(`[G]There is no event named \`${n}\` in \`${this.name}\` which is contained in \`${p}\`, so it will be ignored.`), true) : false;
-                })
-                    ? false
-                    : true;
-            }
-            return !this._hasEvent(p) ? (console.warn(`[G]There is no event named \`${p}\` in \`${this.name}\` , so it will be ignored.`), false) : true;
-        });
-    }
+            event = arg1;
+            callback = arg2;
+        } else {
+            event = arg0;
+            callback = arg1;
+        }
 
-    on(
-        events: string,
-        callback: (this: this, arg: EventObject<typeof this>) => void,
-        {
-            priority = onEventHandlerDefaultPriority,
-            hasRecursiveEffect = false
-        }: Partial<{
-            priority: number;
-            hasRecursiveEffect: boolean;
-        }> = {}
-    ) {
-        Assert.isRealNumber(priority, "priority");
+        const parsedEvent = this._parseEvent(event);
+        if (!parsedEvent) return this;
+        if (this._hasHandler(parsedEvent, callback, this))
+            return console.warn(`[G]An event handler with the same event \`${parsedEvent}\`, callback and context \`${this}\` already exists in \`${this}\`, so it will be ignored.`), this;
 
-        this._parseEvents(events).forEach(p => {
-            if (this._hasHandler(p, callback, this))
-                return console.warn(`[G]An event handler with the same event pattern \`${p}\`, callback and context \`${this}\` already exists in \`${this}\`, so it will be ignored.`);
-            this._addHandler(p, callback, this, undefined, priority, hasRecursiveEffect);
-        });
+        this._addHandler(parsedEvent, callback, this, null, priority, debounce);
         return this;
     }
-    off(events: string, callback: (...args: any[]) => void) {
-        this._parseEvents(events).forEach(p => {
-            this._removeHandler(p, callback, this);
-        });
+    off(event: string, callback: (...args: any) => void) {
+        const parsedEvent = this._parseEvent(event);
+        if (!parsedEvent) return this;
+
+        this._removeHandler(parsedEvent, callback, this);
         return this;
     }
-    clear(events?: string) {
-        if (events === undefined) {
+    clear(event?: string) {
+        if (event === undefined) {
             this._eventMap = [];
             return this;
         }
+        const parsedEvent = this._parseEvent(event);
 
         const hs = this._eventMap;
-        this._parseEvents(events).forEach(p => {
-            const index = hs.findIndex(h => h.eventPattern === p);
-            if (index != -1) hs.splice(index, 1);
-        });
+        const index = hs.findIndex(h => h.event === parsedEvent);
+        if (index != -1) hs.splice(index, 1);
         return this;
-    }
-
-    private _translateAny() {
-        return Object.values(this.events).join(eventPatternAnySplitter);
-    }
-    private _translateAll() {
-        return Object.values(this.events).join(eventPatternAllSplitter);
     }
 
     private _schedule() {
@@ -242,26 +233,18 @@ export default abstract class EventTarget extends BaseObject {
             //Copy the event handlers in order to make it unchangeable during the event handling.
             const handlingCopy = [...this._eventMap];
             handlingCopy.forEach(h => {
-                const pattern = h.eventPattern === eventNameForAny ? this._translateAny() : h.eventPattern === eventNameForAll ? this._translateAll() : h.eventPattern;
+                const eventObject = this._eventCache.query(h.event);
+                if (eventObject !== null) {
+                    // Handler with will only be invoked once during one loop!
+                    if (scheduler.isMarked(h.callbackToInvoke, h.context)) return;
 
-                let result = this._getEventObjectsFromCache(pattern);
-                if (result !== null) {
-                    // Handler with recursive effect will only be invoked once!
-                    if (scheduler.isMarked(h.callback, h.context) && h.hasRecursiveEffect) return;
-
-                    result.forEach(eo => {
-                        if (h.relatedTargets !== undefined) {
-                            h.callback.call(
-                                h.context,
-                                h.relatedTargets.map(target => (target === this ? eo : EventObject.empty(target)))
-                            );
-                        } else {
-                            h.callback.call(h.context, eo);
-                        }
-                    });
-
+                    if (h.relatedTargets !== null) {
+                        h.callbackToInvoke.call(h.context, ...h.relatedTargets.map(target => (target === this ? eventObject : EventObject.empty(target))));
+                    } else {
+                        h.callbackToInvoke.call(h.context, eventObject);
+                    }
                     // So the same callback(such as in the `bind` method) bound to multiple events of multiple objects will not be invoked multiple times.
-                    scheduler.mark(h.callback, h.context);
+                    scheduler.mark(h.callbackToInvoke, h.context);
                 }
             });
 
@@ -272,17 +255,18 @@ export default abstract class EventTarget extends BaseObject {
 
     protected [STATE_IDENTIFIER] = Utility.now();
 
-    protected trigger_<T extends EventTarget>(this: T, eventObject: EventObject<T>) {
+    protected trigger_<T extends EventTarget>(this: T, eso: EventSourceObject<T>) {
+        // change the state when event happens
+        this[STATE_IDENTIFIER] = eso.timestamp;
+
+        // We are muted, so do nothing
         if (this._muted) return this;
-        this[STATE_IDENTIFIER] = eventObject.timestamp;
 
         // Here we put the triggering event name in to the `_eventCache` instead of directly invoking the event handlers in the event.
         // Doing so to avoid repeatedly invoking the event handlers in one loop.
         // No matter how many times an event of `EventTarget` is triggered,
         // we only need to record here, the event has been triggered, and the event handlers of it need to be invoked.
-        if (!this._eventCache.has(eventObject)) {
-            this._eventCache.add(eventObject);
-        }
+        this._eventCache.record(eso);
         // If the event handling of this `EventTarget` is in progress,
         // only uncached events can have their callbacks unmarked.
         // We can't change the invoking status of the callbacks of cached event.
@@ -292,63 +276,79 @@ export default abstract class EventTarget extends BaseObject {
         return this;
     }
 
-    private _parsePairs(pairs: EventTargetEventsPair[]) {
+    private _parsePairs(pairs: EventPair[]) {
         const ret = {
             targets: [] as EventTarget[],
             pairs: [] as [EventTarget, string][]
         };
         pairs.forEach(pair => {
-            if (pair[0] instanceof EventTarget && Type.isString(pair[1])) {
-                ret.targets.push(pair[0]);
-                ret.pairs.push(pair);
-            } else {
-                console.warn(`[G]The \`eventTargetEventsPair\` contains a pair: \`${pair}\` which is not valid, so it will be ignored.`);
-            }
+            ret.targets.push(pair[0]);
+            ret.pairs.push(pair);
         });
         return ret;
     }
 
-    bind<T extends EventTargetEventsPair[]>(
-        eventTargetEventsPairs: [...T],
-        callback: (this: this, arg: [...EventObjectFromPair<T>]) => void,
-        {
-            immediately = true,
-            priority = bindEventHandlerDefaultPriority,
-            hasRecursiveEffect = false
-        }: Partial<{
-            immediately: boolean;
-            priority: number;
-            hasRecursiveEffect: boolean;
-        }> = {}
-    ) {
-        Assert.isRealNumber(priority, "priority");
+    bind<T extends EventPair[]>(bindOptions: BindOptions, ...bindParameters: BindParameters<T, this>): this;
+    bind<T extends EventPair[]>(...bindParameters: BindParameters<T, this>): this;
+    bind<T extends EventPair[]>(...args: any) {
+        let immediately = true;
+        let priority = BIND_EVENT_HANDLER_DEFAULT_PRIORITY;
+        let debounce = 0;
+
+        let bindParameters: BindParameters<T, this>;
+
+        if (Type.isPlainObject(args[0])) {
+            const arg0 = Utility.head(args)! as BindOptions;
+            if (arg0.priority !== undefined) {
+                priority = arg0.priority;
+                Assert.isRealNumber(priority, "priority");
+            }
+            if (arg0.debounce !== undefined) {
+                debounce = arg0.debounce;
+                Assert.isRealNumber(debounce, "debounce");
+            }
+            if (arg0.immediately !== undefined) {
+                immediately = arg0.immediately;
+            }
+
+            bindParameters = Utility.tail(args) as BindParameters<T, this>;
+        } else {
+            bindParameters = args as BindParameters<T, this>;
+        }
+
+        const eventPairs = Utility.initial(bindParameters) as T;
+        const callback = Utility.last(bindParameters)! as (this: this, ...args: EventObjectsFromPairs<T>) => void;
 
         let immediatelyCalled = false;
-        const { targets, pairs } = this._parsePairs(eventTargetEventsPairs);
-        pairs.forEach(te => {
-            const [target, events] = te;
-            target._parseEvents(events).forEach(p => {
-                if (target._hasHandler(p, callback, this)) {
-                    return console.warn(`[G]An event handler with the same event pattern \`${p}\`, callback and context \`${this}\` already exists in \`${target}\`, so it will be ignored.`);
-                }
-                target._addHandler(p, callback, this, targets, priority, hasRecursiveEffect);
+        const { targets, pairs } = this._parsePairs(eventPairs);
 
-                if (immediately && !immediatelyCalled) {
-                    callback.call(this, targets.map(target => EventObject.empty(target)) as [...EventObjectFromPair<T>]);
-                    immediatelyCalled = true;
-                }
-            });
+        pairs.forEach(te => {
+            const [target, event] = te;
+            const parsedEvent = target._parseEvent(event);
+
+            if (!parsedEvent) return;
+
+            if (target._hasHandler(parsedEvent, callback, this)) {
+                return console.warn(`[G]An event handler with the same event \`${parsedEvent}\`, callback and context \`${this}\` already exists in \`${target}\`, so it will be ignored.`);
+            }
+            target._addHandler(parsedEvent, callback, this, targets, priority, debounce);
+
+            if (immediately && !immediatelyCalled) {
+                callback.call(this, ...(targets.map(target => EventObject.empty(target)) as EventObjectsFromPairs<T>));
+                immediatelyCalled = true;
+            }
         });
         return this;
     }
 
-    unbind(eventTargetEventsPairs: EventTargetEventsPair[], callback: (...args: any[]) => void) {
-        const { pairs } = this._parsePairs(eventTargetEventsPairs);
+    unbind(eventPair: EventPair[], callback: (...args: any) => void) {
+        const { pairs } = this._parsePairs(eventPair);
         pairs.forEach(te => {
-            const [target, events] = te;
-            target._parseEvents(events).forEach(p => {
-                target._removeHandler(p, callback, this);
-            });
+            const [target, event] = te;
+            const parsedEvent = target._parseEvent(event);
+            if (!parsedEvent) return;
+
+            target._removeHandler(parsedEvent, callback, this);
         });
         return this;
     }
