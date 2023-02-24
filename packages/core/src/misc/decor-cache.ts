@@ -35,7 +35,7 @@ export function cachedWithBoolean(...defaultValues: (boolean | undefined)[]) {
             if (valueKey in this[CACHE_KEY][propertyKey]) {
                 return this[CACHE_KEY][propertyKey][valueKey];
             }
-            return (this[CACHE_KEY][propertyKey][valueKey] = method.call(this, arguments));
+            return (this[CACHE_KEY][propertyKey][valueKey] = method.call(this, ...arguments));
         };
     };
 }
@@ -93,7 +93,7 @@ export function statedWithBoolean(...defaultValues: (boolean | undefined)[]) {
             if (valueKey in this[CACHE_KEY][propertyKey]) {
                 return this[CACHE_KEY][propertyKey][valueKey];
             }
-            return (this[CACHE_KEY][propertyKey][valueKey] = method.call(this, arguments));
+            return (this[CACHE_KEY][propertyKey][valueKey] = method.call(this, ...arguments));
         };
     };
 }

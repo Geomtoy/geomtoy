@@ -8,11 +8,10 @@ function article(name: string, adj?: string) {
 }
 
 const alwaysAvailableInstanceMethods = [
-    "dimensionallyDegenerate",
+    "initialized",
+    "degenerate",
     "isValid",
     "toString",
-    "toArray",
-    "toObject",
     "copyFrom",
     "getGraphics",
     "appendVertex",
@@ -24,13 +23,11 @@ const alwaysAvailableInstanceMethods = [
 function geometryInvalidText(geometryInstance: Geometry) {
     const name = geometryInstance.name;
     const uuid = geometryInstance.uuid;
-    const formingCondition = (geometryInstance.constructor as any).formingCondition;
 
     return `
-        \nPlease check whether the essential properties of the \`${name}\`(${uuid}) have been initialized, and meet the forming conditions. \
-        ${formingCondition ? `\nThe forming conditions of ${article(name)} are: ${formingCondition}` : ""} \
-        \nWhen \`${article(name)}\`(inherited from \`Geometry\`) is invalid, all of its instance methods cannot be accessed except the following: \
-        \`${alwaysAvailableInstanceMethods.join("`, `")}\`, nor can it be passed as an argument to other instance or static methods\`.
+        \nPlease check whether the essential properties of the \`${name}\`(${uuid}) have been initialized and set proper values. \
+        \nIf \`Geometry\` falls into a degenerate condition, it will also be considered invalid. You can access \`degenerate\` method to determine what happened.
+        \nWhen a \`Geometry\` is invalid, all of its instance methods cannot be accessed except the following: \`${alwaysAvailableInstanceMethods.join("`, `")}\`, nor can it be passed as an argument to other instance or static methods\`.
     `;
 }
 
@@ -44,7 +41,7 @@ export function validGeometry(constructor: new (...args: any[]) => any) {
             memberName !== "constructor" /* excluding `constructor` */ &&
             !alwaysAvailableInstanceMethods.includes(memberName) /* excluding the always-available methods when invalid*/ &&
             !memberName.startsWith("_") /* excluding the private method start with `_`*/ &&
-            !memberName.endsWith("_") /* excluding the protected method start with `_`*/
+            !memberName.endsWith("_") /* excluding the protected method end with `_`*/
         ) {
             const method = descriptor.value;
             descriptor.value = function (this: Geometry) {
@@ -70,6 +67,23 @@ export function validGeometryArguments(target: any, propertyKey: string, descrip
             if (arg instanceof Geometry && !arg.isValid()) {
                 throw new Error(
                     `[G]Calling \`${propertyKey}\` of \`${this.name}\` with ${article(arg.name, "invalid")}: \
+                    \n${arg}. \
+                    \n${geometryInvalidText(arg)}`
+                );
+            }
+        }
+        return method.call(this, ...arguments);
+    };
+}
+
+export function initializedGeometryArguments(target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<(...args: any[]) => any>) {
+    const method = descriptor.value!;
+
+    descriptor.value = function (this: typeof target) {
+        for (const arg of arguments) {
+            if (arg instanceof Geometry && !arg.initialized()) {
+                throw new Error(
+                    `[G]Calling \`${propertyKey}\` of \`${this.name}\` with ${article(arg.name, "uninitialized")}: \
                     \n${arg}. \
                     \n${geometryInvalidText(arg)}`
                 );
