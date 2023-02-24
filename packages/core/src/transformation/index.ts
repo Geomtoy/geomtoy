@@ -1,6 +1,6 @@
 import { Assert, TransformationMatrix, Type, Utility } from "@geomtoy/util";
-import { validGeometryArguments } from "../misc/decor-valid-geometry";
-import EventObject from "../event/EventObject";
+import { validGeometryArguments } from "../misc/decor-geometry";
+import EventSourceObject from "../event/EventSourceObject";
 import EventTarget from "../base/EventTarget";
 import type Point from "../geometries/basic/Point";
 import type Line from "../geometries/basic/Line";
@@ -15,19 +15,18 @@ export default class Transformation extends EventTarget {
             this.matrix = matrix;
         }
     }
-    get events() {
-        return {
-            matrixChanged: "matrix" as const
-        };
-    }
+    static override events = {
+        matrixChanged: "matrix" as const
+    };
+
     private _setMatrix(value: [number, number, number, number, number, number]) {
-        if (!Utility.isEqualTo(this._matrix, value)) this.trigger_(EventObject.simple(this, this.events.matrixChanged));
+        if (!Utility.isEqualTo(this._matrix, value)) this.trigger_(new EventSourceObject(this, Transformation.events.matrixChanged));
         Object.assign(this._matrix, value);
     }
     get matrix() {
         return [...this._matrix] as [a: number, b: number, c: number, d: number, e: number, f: number];
     }
-    set matrix(value: [a: number, b: number, c: number, d: number, e: number, f: number]) {
+    set matrix(value) {
         const [a, b, c, d, e, f] = value;
         Assert.isRealNumber(a, "a");
         Assert.isRealNumber(b, "b");
@@ -343,18 +342,12 @@ export default class Transformation extends EventTarget {
         return this;
     }
 
-    toString() {
+    override toString() {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
-            `\tmatrix: [${this._matrix.join(" , ")}]`,
+            `\tmatrix: ${JSON.stringify(this._matrix)}`, 
             `}`
         ].join("\n")
-    }
-    toArray() {
-        return [this.matrix] as [[a: number, b: number, c: number, d: number, e: number, f: number]];
-    }
-    toObject() {
-        return { matrix: this.matrix };
     }
 }
