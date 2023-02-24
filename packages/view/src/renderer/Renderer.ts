@@ -1,25 +1,22 @@
-import { Assert, Type } from "@geomtoy/util";
-
-import ImageSourceManager from "./ImageSourceManager";
-import Display from "./Display";
-import Interface from "./Interface";
-import type View from "../frontend/View";
-import type { ContainerElement, StrokeLineCapType, StrokeLineJoinType, PathLike, Style, PaintOrderType } from "../types";
 import type { Shape } from "@geomtoy/core";
+import { Assert, Type } from "@geomtoy/util";
+import type View from "../frontend/View";
+import type { ContainerElement, PaintOrderType, PathInfo, StrokeLineCapType, StrokeLineJoinType, Style } from "../types";
+import Display from "./Display";
+import ImageSourceManager from "./ImageSourceManager";
+import Interface from "./Interface";
 
 const DATA_KEY_RENDERER_INITIALIZED = "data-renderer-initialized";
 
 export default abstract class Renderer {
     protected style_: Partial<Style> = {};
-
-    constantImage = false;
-
     view?: View;
 
     abstract get container(): ContainerElement;
     abstract get interface(): Interface;
     abstract get display(): Display;
     abstract get imageSourceManager(): ImageSourceManager;
+    abstract get uuid(): string;
 
     protected manageRendererInitialized_() {
         if (this.container.getAttribute(DATA_KEY_RENDERER_INITIALIZED) !== null) {
@@ -31,8 +28,8 @@ export default abstract class Renderer {
     // abstract clear()
     // abstract autoRedraw()
     // abstract autoRedrawBatch()
-    abstract draw(shape: Shape, onTop: boolean): PathLike;
-    abstract drawBatch(shapes: Shape[], onTop: boolean): PathLike[];
+    abstract draw(shape: Shape, onTop: boolean): PathInfo[];
+    abstract drawBatch(shapes: Shape[], onTop: boolean): PathInfo[][];
 
     paintOrder(order: PaintOrderType) {
         this.style_.paintOrder = order;
@@ -51,7 +48,7 @@ export default abstract class Renderer {
     }
     strokeWidth(strokeWidth: number) {
         Assert.isPositiveNumber(strokeWidth, "strokeWidth");
-        const scale = this.display.density * this.display.zoom;
+        const scale = this.display.scale;
         this.style_.strokeWidth = strokeWidth / scale;
     }
     strokeDash(strokeDash: number[]) {
@@ -59,12 +56,12 @@ export default abstract class Renderer {
             strokeDash.every(n => Type.isRealNumber(n)),
             "[G]The `strokeDash` should be an array of real numbers."
         );
-        const scale = this.display.density * this.display.zoom;
+        const scale = this.display.scale;
         this.style_.strokeDash = strokeDash.map(n => n / scale);
     }
     strokeDashOffset(strokeDashOffset: number) {
         Assert.isRealNumber(strokeDashOffset, "strokeDashOffset");
-        const scale = this.display.density * this.display.zoom;
+        const scale = this.display.scale;
         this.style_.strokeDashOffset = strokeDashOffset / scale;
     }
     strokeLineJoin(strokeLineJoin: StrokeLineJoinType) {

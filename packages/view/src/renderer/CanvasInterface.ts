@@ -1,7 +1,6 @@
-import Interface from "./Interface";
-
-import type CanvasRenderer from "./CanvasRenderer";
 import type { InterfaceSettings } from "../types";
+import type CanvasRenderer from "./CanvasRenderer";
+import Interface from "./Interface";
 
 export default class CanvasInterface extends Interface {
     private _interfaceBuffer = document.createElement("canvas").getContext("2d")!;

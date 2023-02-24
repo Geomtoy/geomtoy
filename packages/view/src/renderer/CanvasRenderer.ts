@@ -1,15 +1,15 @@
-import { Box, TransformationMatrix } from "@geomtoy/util";
+import type { FillRule, GeometryGraphicCommand, ImageGraphicCommand, Shape, TextGraphicCommand } from "@geomtoy/core";
+import { GeometryGraphic, ImageGraphic, TextGraphic } from "@geomtoy/core";
+import { Box, TransformationMatrix, Utility } from "@geomtoy/util";
 import TextMeasurer from "../helper/TextMeasurer";
-import Renderer from "./Renderer";
+import type { DisplaySettings, InterfaceSettings, PathInfo } from "../types";
+import CanvasImageSourceManager from "./CanvasImageSourceManager";
 import CanvasInterface from "./CanvasInterface";
 import Display from "./Display";
-import CanvasImageSourceManager from "./CanvasImageSourceManager";
-
-import type { DisplaySettings, InterfaceSettings } from "../types";
-import { GeometryGraphics, GeometryGraphicsCommand, ImageGraphicsCommand, TextGraphicsCommand, ImageGraphics, TextGraphics, FillRule } from "@geomtoy/core";
-import type { Shape } from "@geomtoy/core";
+import Renderer from "./Renderer";
 
 export default class CanvasRenderer extends Renderer {
+    private _uuid = Utility.uuid();
     private _surface: CanvasRenderingContext2D;
     private _interfaceSurface: CanvasRenderingContext2D;
     private _buffer = document.createElement("canvas").getContext("2d")!;
@@ -41,6 +41,9 @@ export default class CanvasRenderer extends Renderer {
         throw new Error("[G]Unable to initialize, the container` is not a `HTMLCanvasElement`.");
     }
 
+    get uuid() {
+        return this._uuid;
+    }
     get container() {
         return this._container;
     }
@@ -64,14 +67,13 @@ export default class CanvasRenderer extends Renderer {
         this.style_.strokeMiterLimit && (this._buffer.miterLimit = this.style_.strokeMiterLimit);
         this.style_.strokeLineCap && (this._buffer.lineCap = this.style_.strokeLineCap);
     }
-    private _drawImage(cmd: ImageGraphicsCommand, path: Path2D, onTop: boolean) {
+    private _drawImage(cmd: ImageGraphicCommand, path: Path2D, onTop: boolean) {
         const { imageSource, x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight } = cmd;
         const [tx, ty] = TransformationMatrix.transformCoordinates(this.display.globalTransformation, [x, y]);
-        const scale = this.display.density * this.display.zoom;
-        const imageScale = this.constantImage ? this.display.density : this.display.density * this.display.zoom;
-        const [imageWidth, imageHeight] = [width * imageScale, height * imageScale];
-        const [atImageWidth, atImageHeight] = [imageWidth / scale, imageHeight / scale];
-        const [offsetX, offsetY] = [this.display.xAxisPositiveOnRight ? 0 : imageWidth, this.display.yAxisPositiveOnBottom ? 0 : imageHeight];
+        const scale = this.display.scale;
+        const [imageWidth, imageHeight] = [width * scale, height * scale];
+        const [atImageWidth, atImageHeight] = [width, height];
+        const [adjustX, adjustY] = [this.display.xAxisPositiveOnRight ? 0 : imageWidth, this.display.yAxisPositiveOnBottom ? 0 : imageHeight];
 
         const obtained = this.imageSourceManager.successful(imageSource);
         const image = obtained ? this.imageSourceManager.take(imageSource)! : this.imageSourceManager.placeholder(imageWidth, imageHeight);
@@ -89,9 +91,9 @@ export default class CanvasRenderer extends Renderer {
             this._buffer.globalCompositeOperation = "source-over";
             this._buffer.resetTransform();
             if (obtained && !isNaN(sourceX) && !isNaN(sourceY) && !isNaN(sourceWidth) && !isNaN(sourceHeight)) {
-                this._buffer.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, tx - offsetX, ty - offsetY, imageWidth, imageHeight);
+                this._buffer.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, tx - adjustX, ty - adjustY, imageWidth, imageHeight);
             } else {
-                this._buffer.drawImage(image, tx - offsetX, ty - offsetY, imageWidth, imageHeight);
+                this._buffer.drawImage(image, tx - adjustX, ty - adjustY, imageWidth, imageHeight);
             }
             this._buffer.setTransform(...this.display.globalTransformation);
             this.style_.noFill || this._buffer.fill(path);
@@ -102,21 +104,23 @@ export default class CanvasRenderer extends Renderer {
             this.style_.noStroke || this._buffer.stroke(path);
             this._buffer.resetTransform();
             if (obtained && !isNaN(sourceX) && !isNaN(sourceY) && !isNaN(sourceWidth) && !isNaN(sourceHeight)) {
-                this._buffer.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, tx - offsetX, ty - offsetY, imageWidth, imageHeight);
+                this._buffer.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, tx - adjustX, ty - adjustY, imageWidth, imageHeight);
             } else {
-                this._buffer.drawImage(image, tx - offsetX, ty - offsetY, imageWidth, imageHeight);
+                this._buffer.drawImage(image, tx - adjustX, ty - adjustY, imageWidth, imageHeight);
             }
         }
         this._buffer.restore();
     }
-    private _drawText(cmd: TextGraphicsCommand, path: Path2D, onTop: boolean) {
-        const { x, y, text, fontSize, fontFamily, fontBold, fontItalic } = cmd;
+    private _drawText(cmd: TextGraphicCommand, path: Path2D, onTop: boolean) {
+        const { x, y, offsetX, offsetY, text, fontSize, fontFamily, fontBold, fontItalic } = cmd;
 
         const [tx, ty] = TransformationMatrix.transformCoordinates(this.display.globalTransformation, [x, y]);
-        const scale = this.display.density * this.display.zoom;
+        const scale = this.display.scale;
         const [textWidth, textHeight] = TextMeasurer.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", text);
         const [atTextWidth, atTextHeight] = [textWidth / scale, textHeight / scale];
-        const [offsetX, offsetY] = [this.display.xAxisPositiveOnRight ? 0 : textWidth, this.display.yAxisPositiveOnBottom ? 0 : textHeight];
+        const [atTextOffsetX, atTextOffsetY] = [offsetX / scale, offsetY / scale];
+        const [adjustX, adjustY] = [this.display.xAxisPositiveOnRight ? 0 : textWidth, this.display.yAxisPositiveOnBottom ? 0 : textHeight];
+        const [textOffsetX, textOffsetY] = [this.display.xAxisPositiveOnRight ? offsetX : -offsetX, this.display.yAxisPositiveOnBottom ? offsetY : -offsetY];
 
         this._buffer.save();
         this._buffer.textBaseline = "hanging";
@@ -129,19 +133,19 @@ export default class CanvasRenderer extends Renderer {
         this._buffer.globalCompositeOperation = onTop ? "source-over" : "destination-over";
         this._buffer.resetTransform();
         this._setStyle();
-        this.style_.noFill || this._buffer.fillText(text, tx - offsetX, ty - offsetY);
-        this.style_.noStroke || this._buffer.strokeText(text, tx - offsetX, ty - offsetY);
+        this.style_.noFill || this._buffer.fillText(text, tx - adjustX + textOffsetX, ty - adjustY + textOffsetY);
+        this.style_.noStroke || this._buffer.strokeText(text, tx - adjustX + textOffsetX, ty - adjustY + textOffsetY);
         this._buffer.restore();
 
         // implicit bounding box
-        const b: [number, number, number, number] = [x, y, atTextWidth, atTextHeight];
+        const b: [number, number, number, number] = [x + atTextOffsetX, y + atTextOffsetY, atTextWidth, atTextHeight];
         path.moveTo(...Box.nn(b));
         path.lineTo(...Box.mn(b));
         path.lineTo(...Box.mm(b));
         path.lineTo(...Box.nm(b));
         path.closePath();
     }
-    private _drawGeometry(cmds: GeometryGraphicsCommand[], fillRule: FillRule, path: Path2D, onTop: boolean) {
+    private _drawGeometry(cmds: GeometryGraphicCommand[], fillRule: FillRule, path: Path2D, onTop: boolean) {
         cmds.forEach(cmd => {
             if (cmd.type === "moveTo") path.moveTo(cmd.x, cmd.y);
             if (cmd.type === "lineTo") path.lineTo(cmd.x, cmd.y);
@@ -187,20 +191,27 @@ export default class CanvasRenderer extends Renderer {
 
     draw(shape: Shape, onTop = false) {
         this._initBuffer();
+        const graphics = shape.getGraphics(this.display).graphics;
+        const ret: PathInfo[] = [];
+        for (const g of graphics) {
+            const path = new Path2D();
 
-        const path = new Path2D();
-        const g = shape.getGraphics(this.display);
-        if (g instanceof TextGraphics) {
-            g.command && this._drawText(g.command, path, onTop);
+            if (g instanceof TextGraphic) {
+                g.command && this._drawText(g.command, path, onTop);
+                ret.push([path, "nonzero"]);
+            }
+            if (g instanceof ImageGraphic) {
+                g.command && this._drawImage(g.command, path, onTop);
+                ret.push([path, "nonzero"]);
+            }
+            if (g instanceof GeometryGraphic) {
+                g.commands.length && this._drawGeometry(g.commands, g.fillRule, path, onTop);
+                ret.push([path, g.fillRule]);
+            }
         }
-        if (g instanceof ImageGraphics) {
-            g.command && this._drawImage(g.command, path, onTop);
-        }
-        if (g instanceof GeometryGraphics) {
-            g.commands.length && this._drawGeometry(g.commands, g.fillRule, path, onTop);
-        }
+
         this._flushBuffer();
-        return path;
+        return ret;
     }
     drawBatch(shapes: Shape[], onTop = false) {
         return shapes.map(shape => this.draw(shape, onTop));

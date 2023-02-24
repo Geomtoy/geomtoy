@@ -1,19 +1,18 @@
-import { Box, Angle, TransformationMatrix } from "@geomtoy/util";
+import type { FillRule, GeometryGraphicCommand, ImageGraphicCommand, Shape, TextGraphicCommand } from "@geomtoy/core";
+import { GeometryGraphic, ImageGraphic, TextGraphic } from "@geomtoy/core";
+import { Angle, Box, TransformationMatrix, Utility } from "@geomtoy/util";
 import TextMeasurer from "../helper/TextMeasurer";
-import Renderer from "./Renderer";
-import SvgInterface from "./SvgInterface";
+import type { DisplaySettings, InterfaceSettings, PathInfo } from "../types";
 import Display from "./Display";
+import Renderer from "./Renderer";
 import SvgImageSourceManager from "./SvgImageSourceManager";
-
-import type { DisplaySettings, InterfaceSettings } from "../types";
-
-import { FillRule, GeometryGraphics, GeometryGraphicsCommand, ImageGraphics, ImageGraphicsCommand, TextGraphics, TextGraphicsCommand } from "@geomtoy/core";
-import type { Shape } from "@geomtoy/core";
+import SvgInterface from "./SvgInterface";
 
 /**
  * @category Renderer
  */
 export default class SvgRenderer extends Renderer {
+    private _uuid = Utility.uuid();
     private _surface: SVGGElement;
     private _interfaceSurface: SVGGElement;
     private _buffer = document.createDocumentFragment();
@@ -40,24 +39,27 @@ export default class SvgRenderer extends Renderer {
 
             this.container.innerHTML = `
                 <style>
-                    #geomtoyInterface, #geomtoy, #geomtoy *{
+                    .geomtoy-svg-interface, .geomtoy-svg, .geomtoy-svg *{
                         pointer-events: none;
                     }
-                    #geomtoy text {
+                    .geomtoy-svg text {
                         user-select: none;
                     }
                 </style>
-                <g id="geomtoyInterface"></g>
-                <g id="geomtoy"></g>
+                <g class="geomtoy-svg-interface" id="geomtoySvgInterface-${this.uuid}"></g>
+                <g class="geomtoy-svg" id="geomtoySvg-${this.uuid}"></g>
             `;
-            this._surface = this.container.querySelector("#geomtoy")!;
-            this._interfaceSurface = this.container.querySelector("#geomtoyInterface")!;
+            this._surface = this.container.querySelector(`#geomtoySvg-${this.uuid}`)!;
+            this._interfaceSurface = this.container.querySelector(`#geomtoySvgInterface-${this.uuid}`)!;
 
             return this;
         }
         throw new Error("[G]Unable to initialize, the container` is not a `SVGSVGElement`.");
     }
 
+    get uuid() {
+        return this._uuid;
+    }
     get container() {
         return this._container;
     }
@@ -81,14 +83,13 @@ export default class SvgRenderer extends Renderer {
         this.style_.strokeMiterLimit && path.setAttribute("stroke-miterlimit", `${this.style_.strokeMiterLimit}`);
         this.style_.strokeLineCap && path.setAttribute("stroke-linecap", this.style_.strokeLineCap);
     }
-    private _drawImage(cmd: ImageGraphicsCommand, path: SVGPathElement, onTop: boolean) {
+    private _drawImage(cmd: ImageGraphicCommand, path: SVGPathElement, onTop: boolean) {
         const { imageSource, x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight } = cmd;
         const [tx, ty] = TransformationMatrix.transformCoordinates(this.display.globalTransformation, [x, y]);
-        const scale = this.display.density * this.display.zoom;
-        const imageScale = this.constantImage ? this.display.density : this.display.density * this.display.zoom;
-        const [imageWidth, imageHeight] = [width * imageScale, height * imageScale];
-        const [atImageWidth, atImageHeight] = [imageWidth / scale, imageHeight / scale];
-        const [offsetX, offsetY] = [this.display.xAxisPositiveOnRight ? 0 : imageWidth, this.display.yAxisPositiveOnBottom ? 0 : imageHeight];
+        const scale = this.display.scale;
+        const [imageWidth, imageHeight] = [width * scale, height * scale];
+        const [atImageWidth, atImageHeight] = [width, height];
+        const [adjustX, adjustY] = [this.display.xAxisPositiveOnRight ? 0 : imageWidth, this.display.yAxisPositiveOnBottom ? 0 : imageHeight];
 
         const obtained = this.imageSourceManager.successful(imageSource);
         const imageEl = obtained ? this.imageSourceManager.take(imageSource)! : this.imageSourceManager.placeholder(imageWidth, imageHeight);
@@ -106,16 +107,16 @@ export default class SvgRenderer extends Renderer {
             const imageClipper = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             imageClipper.append(imageEl);
             imageWrapper.append(imageClipper);
-            imageClipper.setAttribute("x", `${tx - offsetX}`);
-            imageClipper.setAttribute("y", `${ty - offsetY}`);
+            imageClipper.setAttribute("x", `${tx - adjustX}`);
+            imageClipper.setAttribute("y", `${ty - adjustY}`);
             imageClipper.setAttribute("width", `${imageWidth}`);
             imageClipper.setAttribute("height", `${imageHeight}`);
             imageClipper.setAttribute("preserveAspectRatio", "none");
             imageClipper.setAttribute("viewBox", `${sourceX} ${sourceY} ${sourceWidth} ${sourceHeight}`);
         } else {
             imageWrapper.append(imageEl);
-            imageEl.setAttribute("x", `${tx - offsetX}`);
-            imageEl.setAttribute("y", `${ty - offsetY}`);
+            imageEl.setAttribute("x", `${tx - adjustX}`);
+            imageEl.setAttribute("y", `${ty - adjustY}`);
             imageEl.setAttribute("width", `${imageWidth}`);
             imageEl.setAttribute("height", `${imageHeight}`);
             imageEl.setAttribute("preserveAspectRatio", "none");
@@ -129,15 +130,17 @@ export default class SvgRenderer extends Renderer {
             this._buffer.prepend(imageWrapper);
         }
     }
-    private _drawText(cmd: TextGraphicsCommand, path: SVGPathElement, onTop: boolean) {
-        const { x, y, text, fontSize, fontFamily, fontBold, fontItalic } = cmd;
+    private _drawText(cmd: TextGraphicCommand, path: SVGPathElement, onTop: boolean) {
+        const { x, y, offsetX, offsetY, text, fontSize, fontFamily, fontBold, fontItalic } = cmd;
         const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
 
         const [tx, ty] = TransformationMatrix.transformCoordinates(this.display.globalTransformation, [x, y]);
-        const scale = this.display.density * this.display.zoom;
+        const scale = this.display.scale;
         const [textWidth, textHeight] = TextMeasurer.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", text);
         const [atTextWidth, atTextHeight] = [textWidth / scale, textHeight / scale];
-        const [offsetX, offsetY] = [this.display.xAxisPositiveOnRight ? 0 : textWidth, this.display.yAxisPositiveOnBottom ? 0 : textHeight];
+        const [atTextOffsetX, atTextOffsetY] = [offsetX / scale, offsetY / scale];
+        const [adjustX, adjustY] = [this.display.xAxisPositiveOnRight ? 0 : textWidth, this.display.yAxisPositiveOnBottom ? 0 : textHeight];
+        const [textOffsetX, textOffsetY] = [this.display.xAxisPositiveOnRight ? offsetX : -offsetX, this.display.yAxisPositiveOnBottom ? offsetY : -offsetY];
 
         textEl.setAttribute("dominant-baseline", "hanging");
         textEl.setAttribute("font-size", `${fontSize}`);
@@ -145,8 +148,8 @@ export default class SvgRenderer extends Renderer {
         fontBold && textEl.setAttribute("font-weight", "bold");
         fontItalic && textEl.setAttribute("font-style", "italic");
         textEl.setAttribute("transform", `matrix(${TransformationMatrix.invert(this.display.globalTransformation).join(" ")})`);
-        textEl.setAttribute("x", `${tx - offsetX}`);
-        textEl.setAttribute("y", `${ty - offsetY}`);
+        textEl.setAttribute("x", `${tx - adjustX + textOffsetX}`);
+        textEl.setAttribute("y", `${ty - adjustY + textOffsetY}`);
         this._setStyle(textEl);
         this.style_.noFill && textEl.setAttribute("fill", "none");
         this.style_.noStroke && textEl.setAttribute("stroke", "none");
@@ -155,10 +158,10 @@ export default class SvgRenderer extends Renderer {
         onTop ? this._buffer.append(textEl) : this._buffer.prepend(textEl);
 
         // implicit bounding box
-        const b: [number, number, number, number] = [x, y, atTextWidth, atTextHeight];
+        const b: [number, number, number, number] = [x + atTextOffsetX, y + atTextOffsetY, atTextWidth, atTextHeight];
         path.setAttribute("d", `M${Box.nn(b).join(",")}L${Box.mn(b).join(",")}L${Box.mm(b).join(",")}L${Box.nm(b).join(",")}Z`);
     }
-    private _drawGeometry(cmds: GeometryGraphicsCommand[], fillRule: FillRule, path: SVGPathElement, onTop: boolean) {
+    private _drawGeometry(cmds: GeometryGraphicCommand[], fillRule: FillRule, path: SVGPathElement, onTop: boolean) {
         let d = "";
         cmds.forEach(cmd => {
             if (cmd.type === "moveTo") d += `M${cmd.x},${cmd.y}`;
@@ -195,21 +198,27 @@ export default class SvgRenderer extends Renderer {
     draw(shape: Shape, onTop = false) {
         this._initBuffer();
 
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const graphics = shape.getGraphics(this.display).graphics;
+        const ret: PathInfo[] = [];
+        for (const g of graphics) {
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 
-        const g = shape.getGraphics(this.display);
-        if (g instanceof TextGraphics) {
-            g.command && this._drawText(g.command, path, onTop);
-        }
-        if (g instanceof ImageGraphics) {
-            g.command && this._drawImage(g.command, path, onTop);
-        }
-        if (g instanceof GeometryGraphics) {
-            g.commands.length && this._drawGeometry(g.commands, g.fillRule, path, onTop);
+            if (g instanceof TextGraphic) {
+                g.command && this._drawText(g.command, path, onTop);
+                ret.push([path, "nonzero"]);
+            }
+            if (g instanceof ImageGraphic) {
+                g.command && this._drawImage(g.command, path, onTop);
+                ret.push([path, "nonzero"]);
+            }
+            if (g instanceof GeometryGraphic) {
+                g.commands.length && this._drawGeometry(g.commands, g.fillRule, path, onTop);
+                ret.push([path, g.fillRule]);
+            }
         }
 
         this._flushBuffer();
-        return path;
+        return ret;
     }
     drawBatch(shapes: Shape[], onTop = false) {
         return shapes.map(shape => this.draw(shape, onTop));

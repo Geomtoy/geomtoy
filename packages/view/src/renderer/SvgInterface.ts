@@ -1,7 +1,6 @@
-import Interface from "./Interface";
-
-import type SvgRenderer from "./SvgRenderer";
 import type { InterfaceSettings } from "../types";
+import Interface from "./Interface";
+import type SvgRenderer from "./SvgRenderer";
 
 export default class SvgInterface extends Interface {
     private _interfaceBuffer = document.createDocumentFragment();
@@ -40,11 +39,11 @@ export default class SvgInterface extends Interface {
         rect.setAttribute("y", "0");
         rect.setAttribute("width", `${this.renderer.display.width}`);
         rect.setAttribute("height", `${this.renderer.display.height}`);
-        rect.setAttribute("fill", "url(#gridPattern)");
+        rect.setAttribute("fill", `url(#gridPattern-${this.renderer.uuid})`);
         const [promise, img] = this.gridPatternImage_();
         return promise.then(() => {
             defs.innerHTML = ` 
-                <pattern id='gridPattern' x='0' y='0' patternUnits='userSpaceOnUse' width='${img.getAttribute("width")}' height='${img.getAttribute("height")}'>
+                <pattern id='gridPattern-${this.renderer.uuid}' x='0' y='0' patternUnits='userSpaceOnUse' width='${img.getAttribute("width")}' height='${img.getAttribute("height")}'>
                     ${img.outerHTML}
                 </pattern> 
             `;
