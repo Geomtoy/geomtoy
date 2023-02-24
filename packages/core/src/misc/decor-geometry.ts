@@ -6,17 +6,17 @@ function article(name: string, adj?: string) {
     const a = adj !== undefined ? (vowels.includes(adj[0].toUpperCase()) ? `an ${adj}` : `a ${adj}`) : vowels.includes(name[0].toUpperCase()) ? "an" : "a";
     return `${a} \`${name}\``;
 }
-
+// prettier-ignore
 const alwaysAvailableInstanceMethods = [
-    "initialized",
-    "degenerate",
-    "isValid",
-    "toString",
-    "copyFrom",
-    "getGraphics",
-    "appendVertex",
-    "prependVertex",
-    "appendCommand",
+    "initialized", 
+    "degenerate", 
+    "isValid", 
+    "toString", 
+    "copyFrom", 
+    "getGraphics", 
+    "appendVertex", 
+    "prependVertex", 
+    "appendCommand", 
     "prependCommand"
 ];
 
@@ -27,7 +27,9 @@ function geometryInvalidText(geometryInstance: Geometry) {
     return `
         \nPlease check whether the essential properties of the \`${name}\`(${uuid}) have been initialized and set proper values. \
         \nIf \`Geometry\` falls into a degenerate condition, it will also be considered invalid. You can access \`degenerate\` method to determine what happened.
-        \nWhen a \`Geometry\` is invalid, all of its instance methods cannot be accessed except the following: \`${alwaysAvailableInstanceMethods.join("`, `")}\`, nor can it be passed as an argument to other instance or static methods\`.
+        \nWhen a \`Geometry\` is invalid, all of its instance methods cannot be accessed except the following: \`${alwaysAvailableInstanceMethods.join(
+            "`, `"
+        )}\`, nor can it be passed as an argument to other instance or static methods\`.
     `;
 }
 
