@@ -250,7 +250,10 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
      * @param t
      */
     static fromThreePointsAndTime(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point, t: number) {
-        QuadraticBezier.prototype._clampTime(t, "t");
+        if (Maths.equalTo((1 - t) * t, 0, optioner.options.timeEpsilon)) {
+            return null;
+        }
+
         const c1 = getCoordinates(point1, "point1");
         const c2 = getCoordinates(point2, "point2");
         const c3 = getCoordinates(point3, "point3");

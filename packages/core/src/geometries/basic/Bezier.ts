@@ -301,20 +301,29 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * @param ts
      */
     static fromFourPointsAndTimes(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point, point4: [number, number] | Point, ts: [number, number]) {
-        ts = ts.map(t => Bezier.prototype._clampTime(t, "element of ts")) as typeof ts;
+        // t1!==t2!==0 or 1
+        const [t1, t2] = ts;
+        // prettier-ignore
+        if (
+            Maths.equalTo(t1, t2, optioner.options.timeEpsilon) || 
+            Maths.equalTo((1 - t1) * t1, 0, optioner.options.timeEpsilon) || 
+            Maths.equalTo((1 - t2) * t2, 0, optioner.options.timeEpsilon)) 
+        {
+            return null;
+        }
+
         const c1 = getCoordinates(point1, "point1");
         const c2 = getCoordinates(point2, "point2");
         const c3 = getCoordinates(point3, "point3");
         const c4 = getCoordinates(point4, "point4");
-        const [t1, t2] = ts;
 
         const ct1 = Vector2.subtract(c2, Vector2.add(Vector2.scalarMultiply(c1, (1 - t1) ** 3), Vector2.scalarMultiply(c4, t1 ** 3)));
         const ct2 = Vector2.subtract(c3, Vector2.add(Vector2.scalarMultiply(c1, (1 - t2) ** 3), Vector2.scalarMultiply(c4, t2 ** 3)));
-        const m = [3 * (1 - t1) ** 2 * t1, 3 * (1 - t1) * t1 ** 2, 3 * (1 - t2) ** 2 * t2, 3 * (1 - t2) * t2 ** 2] as [number, number, number, number];
-        const im = Matrix2.invert(m);
-        if (im === undefined) return null;
-        const [cp1x, cp2x] = Matrix2.dotVector2(im, [Coordinates.x(ct1), Coordinates.x(ct2)] as [number, number]);
-        const [cp1y, cp2y] = Matrix2.dotVector2(im, [Coordinates.y(ct1), Coordinates.y(ct2)] as [number, number]);
+        const m = [3 * (1 - t1) ** 2 * t1, 3 * (1 - t1) * t1 ** 2, 3 * (1 - t2) ** 2 * t2, 3 * (1 - t2) * t2 ** 2] as Parameters<typeof Matrix2.invert>[0];
+        const im = Matrix2.invert(m)!; // always  invertible
+
+        const [cp1x, cp2x] = Matrix2.dotVector2(im, [Coordinates.x(ct1), Coordinates.x(ct2)]);
+        const [cp1y, cp2y] = Matrix2.dotVector2(im, [Coordinates.y(ct1), Coordinates.y(ct2)]);
         return new Bezier(c1, c4, [cp1x, cp1y], [cp2x, cp2y]);
     }
     /**
