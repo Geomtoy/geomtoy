@@ -54,7 +54,7 @@ class Polynomial {
      * @param value
      */
     static coef(p: number[], degree: number, value?: number) {
-        let index = p.length - 1 - degree;
+        const index = p.length - 1 - degree;
         if (index < 0 || degree < 0) {
             console.warn("[G]Getting or setting coefficient failed, `NaN` will be returned.");
             return NaN;
@@ -91,7 +91,7 @@ class Polynomial {
      * @param roots
      */
     static from(roots: (number | [number, number])[]) {
-        let pc: [number, number][] = [[1, 0]];
+        const pc: [number, number][] = [[1, 0]];
         const complexRoots = Utility.sortBy(
             roots.filter((r): r is [number, number] => Complex.is(r) && Complex.imag(r) !== 0),
             [Complex.real, Complex.imag]

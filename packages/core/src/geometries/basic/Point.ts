@@ -23,7 +23,8 @@ export default class Point extends Geometry {
 
     constructor(x: number, y: number, appearance?: PointAppearance);
     constructor(coordinates: [number, number], appearance?: PointAppearance);
-    constructor();
+    constructor(coordinates: [number, number], appearance?: PointAppearance);
+    constructor(appearance?: PointAppearance);
     constructor(a0?: any, a1?: any, a2?: any) {
         super();
         if (Type.isNumber(a0)) {
@@ -31,6 +32,9 @@ export default class Point extends Geometry {
         }
         if (Type.isArray(a0)) {
             Object.assign(this, { coordinates: a0, appearance: a1 ?? this.appearance });
+        }
+        if (Type.isString(a0)) {
+            Object.assign(this, { appearance: a0 ?? this.appearance });
         }
     }
 

@@ -42,7 +42,7 @@ export default class ShapeArray<T extends Shape> extends Shape {
                     // setting `length` alone to less number will not trigger `deleteProperty`
                     if (prop === "length") {
                         let i = this._shapesProxy.length - 1;
-                        let newI = Number(descriptor.value) - 1;
+                        const newI = Number(descriptor.value) - 1;
                         while (i > newI) {
                             this.trigger_(new EventSourceObject(this, ShapeArray.events.shapeRemoved, i));
                             i--;

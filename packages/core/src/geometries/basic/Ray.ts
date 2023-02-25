@@ -144,11 +144,11 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
             console.warn("[G]The endpoints of the two rays do not coincide. `null` will be returned.");
             return null;
         }
-        let a1 = ray1.angle,
-            a2 = ray2.angle,
-            c = ray1.coordinates,
-            d = (a2 - a1) / n,
-            ret: Ray[] = [];
+        const a1 = ray1.angle;
+        const a2 = ray2.angle;
+        const c = ray1.coordinates;
+        const d = (a2 - a1) / n;
+        const ret: Ray[] = [];
         Utility.range(1, n).forEach(index => {
             ret.push(new Ray(c, a1 + d * index));
         });

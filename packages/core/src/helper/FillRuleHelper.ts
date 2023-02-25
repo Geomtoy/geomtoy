@@ -94,7 +94,7 @@ export default class FillRuleHelper {
                 // exclude touching point
                 if (m % 2 === 0) continue;
 
-                let v = seg instanceof Arc ? seg.getTangentVectorAtAngle(a2).coordinates : seg.getTangentVectorAtTime(t2).coordinates;
+                const v = seg instanceof Arc ? seg.getTangentVectorAtAngle(a2).coordinates : seg.getTangentVectorAtTime(t2).coordinates;
                 let cp = Vector2.cross(rv, v);
                 // Since we have ruled out the case of touching, why is `cp` still 0 here?
                 // Because the determination of crossing is odd multiplicity, but the odd multiplicity greater than 3 is both transversal and tangential.
@@ -193,7 +193,8 @@ export default class FillRuleHelper {
      */
 
     private _rayAngleAndCoordinates(segment: BasicSegment) {
-        let angle, point;
+        let angle;
+        let point;
         const middle = 0.5;
         if (segment instanceof LineSegment || segment instanceof Bezier || segment instanceof QuadraticBezier) {
             angle = segment.getTangentVectorAtTime(middle).angle; // middle time
@@ -239,7 +240,7 @@ export default class FillRuleHelper {
 
                 const onWhichRay = Vector2.dot(prv, Vector2.from(coordinates, c)) > 0 ? "positive" : "negative";
 
-                let v = seg instanceof Arc ? seg.getTangentVectorAtAngle(a2).coordinates : seg.getTangentVectorAtTime(t2).coordinates;
+                const v = seg instanceof Arc ? seg.getTangentVectorAtAngle(a2).coordinates : seg.getTangentVectorAtTime(t2).coordinates;
                 let cp = Vector2.cross(prv, v);
                 // Since we have ruled out the case of touching, why is `cp` still 0 here?
                 // Because the determination of crossing is odd multiplicity, but the odd multiplicity greater than 3 is both transversal and tangential.

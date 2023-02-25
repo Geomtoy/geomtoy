@@ -318,39 +318,6 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
         const y = (c1 * a2 - c2 * a1) / m;
         return new Point(x, y);
     }
-
-    /**
-     * Whether line `this` is intersected with circle `circle`.
-     * @param circle
-     */
-    isIntersectedWithCircle(circle: Circle): boolean {
-        let epsilon = optioner.options.epsilon;
-        return Maths.lessThan(circle.centerPoint.getSquaredDistanceBetweenLine(this), circle.radius ** 2, epsilon);
-    }
-    /**
-     * Whether line `this` is tangent to circle `circle`.
-     * @param circle
-     */
-    isTangentToCircle(circle: Circle): boolean {
-        let epsilon = optioner.options.epsilon;
-        return Maths.equalTo(circle.centerPoint.getSquaredDistanceBetweenLine(this), circle.radius ** 2, epsilon);
-    }
-    /**
-     * Get the tangency point of line `this` and circle `circle`.
-     * @param circle
-     */
-    getTangencyPointToCircle(circle: Circle): null | Point {
-        if (!this.isTangentToCircle(circle)) return null;
-        return this.getClosestPointFrom(circle.centerPoint);
-    }
-    /**
-     * Whether line `this` is separated from circle `circle`.
-     * @param circle
-     */
-    isSeparatedFromCircle(circle: Circle): boolean {
-        let epsilon = optioner.options.epsilon;
-        return Maths.greaterThan(circle.centerPoint.getSquaredDistanceBetweenLine(this), circle.radius ** 2, epsilon);
-    }
     /**
      * Whether line `this` is parallel to line segment `lineSegment`.
      * @param {LineSegment} lineSegment

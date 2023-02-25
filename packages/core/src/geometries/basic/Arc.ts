@@ -145,7 +145,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
                 return;
             }
 
-            let [rx, ry] = flexCorrectRadii(_point1X, _point1Y, _point2X, _point2Y, _inputRadiusX, _inputRadiusY, _rotation);
+            const [rx, ry] = flexCorrectRadii(_point1X, _point1Y, _point2X, _point2Y, _inputRadiusX, _inputRadiusY, _rotation);
             if (!Utility.isEqualTo(this._radiusX, rx)) {
                 this._radiusX = rx;
                 this.trigger_(new EventSourceObject(this, Arc.events.radiusXChanged));
@@ -339,9 +339,9 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const cosPhi = Maths.cos(phi);
         const sinPhi = Maths.sin(phi);
         // find the root of derivative of parametric equation
-        let atanX = Maths.atan((-ry * sinPhi) / (rx * cosPhi));
+        const atanX = Maths.atan((-ry * sinPhi) / (rx * cosPhi));
         const xRoots = [Angle.simplify(atanX), Angle.simplify(atanX + Maths.PI)];
-        let atanY = Maths.atan((ry * cosPhi) / (rx * sinPhi));
+        const atanY = Maths.atan((ry * cosPhi) / (rx * sinPhi));
         const yRoots = [Angle.simplify(atanY), Angle.simplify(atanY + Maths.PI)];
 
         const epsilon = optioner.options.epsilon;

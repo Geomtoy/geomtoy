@@ -74,27 +74,27 @@ class Utility {
         return Array.from({ length: Maths.ceil((stop - start) / step) }, (_, i) => start + i * step);
     }
     static head<T>(arr: ArrayLike<T>): T | undefined {
-        let l = arr.length;
+        const l = arr.length;
         if (!l) return undefined;
         return arr[0];
     }
     static tail<T>(arr: ArrayLike<T>): T[] {
-        let l = arr.length;
+        const l = arr.length;
         if (!l) return [];
         return Array.prototype.slice.call(arr, 1, l);
     }
     static initial<T>(arr: ArrayLike<T>): T[] {
-        let l = arr.length;
+        const l = arr.length;
         if (!l) return [];
         return Array.prototype.slice.call(arr, 0, l - 1);
     }
     static last<T>(arr: ArrayLike<T>): T | undefined {
-        let l = arr.length;
+        const l = arr.length;
         if (!l) return undefined;
         return arr[l - 1];
     }
     static nth<T>(arr: ArrayLike<T>, n: number): T | undefined {
-        let l = arr.length;
+        const l = arr.length;
         if (!l) return undefined;
         n += n < 0 ? l : 0;
         return n < 0 || n >= l ? undefined : arr[n];

@@ -260,7 +260,7 @@ class Complex {
      * @param c
      */
     static atan(c: [number, number]) {
-        let s = Complex.log(Complex.divide(Complex.subtract(Complex.i(), c), Complex.add(Complex.i(), c)));
+        const s = Complex.log(Complex.divide(Complex.subtract(Complex.i(), c), Complex.add(Complex.i(), c)));
         return Complex.multiply(s, [0, -0.5]);
     }
     /**
@@ -297,7 +297,7 @@ class Complex {
      * @param c
      */
     static asinh(c: [number, number]) {
-        let s = Complex.sqrt(Complex.add(Complex.multiply(c, c), Complex.one()));
+        const s = Complex.sqrt(Complex.add(Complex.multiply(c, c), Complex.one()));
         return Complex.log(Complex.add(c, s));
     }
     /**
@@ -308,7 +308,7 @@ class Complex {
      * @param c
      */
     static acosh(c: [number, number]) {
-        let s = Complex.multiply(Complex.sqrt(Complex.add(c, Complex.one())), Complex.sqrt(Complex.subtract(c, Complex.one())));
+        const s = Complex.multiply(Complex.sqrt(Complex.add(c, Complex.one())), Complex.sqrt(Complex.subtract(c, Complex.one())));
         return Complex.log(Complex.add(c, s));
     }
     /**
@@ -319,7 +319,7 @@ class Complex {
      * @param c
      */
     static atanh(c: [number, number]) {
-        let s = Complex.log(Complex.divide(Complex.add(Complex.one(), c), Complex.subtract(Complex.one(), c)));
+        const s = Complex.log(Complex.divide(Complex.add(Complex.one(), c), Complex.subtract(Complex.one(), c)));
         return Complex.multiply(s, [0.5, 0]);
     }
     // #endregion

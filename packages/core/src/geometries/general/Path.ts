@@ -490,7 +490,7 @@ export default class Path extends Geometry {
     private _correctAndSetRadii<T extends PathArcToCommand | Required<PathArcToCommand>>(command: T, prevCommand: PathCommand) {
         const { x: x1, y: y1 } = prevCommand;
         const { x: x2, y: y2, radiusX, radiusY, rotation } = command;
-        let [rx, ry] = correctRadii(x1, y1, x2, y2, radiusX, radiusY, rotation);
+        const [rx, ry] = correctRadii(x1, y1, x2, y2, radiusX, radiusY, rotation);
         return { ...command, radiusX: rx, radiusY: ry } as T;
     }
 
@@ -716,7 +716,7 @@ export default class Path extends Geometry {
                 }
                 case PathCommandType.ArcTo: {
                     const { x: x0, y: y0 } = cmdCurr;
-                    let { x: x1, y: y1, radiusX, radiusY, rotation, largeArc, positive } = cmdNext;
+                    const { x: x1, y: y1, radiusX, radiusY, rotation, largeArc, positive } = cmdNext;
                     const acp = endpointToCenterParameterization({
                         point1X: x0,
                         point1Y: y0,

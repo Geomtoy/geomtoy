@@ -16,8 +16,8 @@ export function parseSvgPolygon(points: string, closed = true) {
         return Number(params![index]);
     }
     function getCoordinates(index: number) {
-        let x = getParam(index);
-        let y = getParam(index + 1);
+        const x = getParam(index);
+        const y = getParam(index + 1);
         return [x, y] as [number, number];
     }
 

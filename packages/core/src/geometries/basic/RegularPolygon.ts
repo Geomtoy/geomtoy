@@ -144,8 +144,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         return (2 * Maths.PI) / this.sideCount;
     }
     get diagonalCount() {
-        let n = this.sideCount;
-        return (n * (n - 3)) / 2;
+        return (this.sideCount * (this.sideCount - 3)) / 2;
     }
 
     initialized() {
@@ -236,7 +235,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         return this.sideCount * this.sideLength;
     }
     getArea(): number {
-        let p = this.getPerimeter();
+        const p = this.getPerimeter();
         return (p * this.apothem) / 2;
     }
 

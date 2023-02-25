@@ -446,9 +446,8 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
         const [x3, y3] = this.point3Coordinates;
-        let a = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2); //cross product shorthand
-        a = a / 2;
-        return Maths.abs(a);
+        const a = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2); //cross product shorthand
+        return Maths.abs(a / 2);
     }
     // #region using trilinear
     /**
