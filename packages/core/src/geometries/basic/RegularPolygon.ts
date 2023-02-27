@@ -219,8 +219,8 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
     }
     getSideLineSegments() {
         const ps = this.getVertices();
-        return Utility.range(0, this.sideCount).forEach(index => {
-            new LineSegment(Utility.nth(ps, index - this.sideCount)!, Utility.nth(ps, index - this.sideCount + 1)!);
+        return Utility.range(0, this.sideCount).map(index => {
+            return new LineSegment(Utility.nth(ps, index - this.sideCount)!, Utility.nth(ps, index - this.sideCount + 1)!);
         });
     }
 
