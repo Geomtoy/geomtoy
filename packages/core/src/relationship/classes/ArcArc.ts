@@ -180,21 +180,21 @@ export default class ArcArc extends BaseRelationship {
 
         if (dt) {
             // overlap
-            if (ili && tbw) coincide.push(ellipse.getArcBetweenAngle(a1i, a2t, true)!);
+            if (ili && tbw) coincide.push(ellipse.getArcBetweenAngles(a1i, a2t, true)!);
             // overlap
-            if (tgt && ibw) coincide.push(ellipse.getArcBetweenAngle(a2i, a1t, true)!);
+            if (tgt && ibw) coincide.push(ellipse.getArcBetweenAngles(a2i, a1t, true)!);
             // contained by
             if (tgt && ili) coincide.push(this.geometry1.clone());
             // contain or equal
             if (ibw && tbw) coincide.push(this.geometry2.clone());
         } else {
             // overlap
-            if (ili && tbw) coincide.push(ellipse.getArcBetweenAngle(a1i, a2t, true)!);
+            if (ili && tbw) coincide.push(ellipse.getArcBetweenAngles(a1i, a2t, true)!);
             // overlap
-            if (tgt && ibw) coincide.push(ellipse.getArcBetweenAngle(a2i, a1t, true)!);
+            if (tgt && ibw) coincide.push(ellipse.getArcBetweenAngles(a2i, a1t, true)!);
             // if (tgt && ili) {/* not overlap */}
             // double overlap
-            if (ibw && tbw) coincide.push(ellipse.getArcBetweenAngle(a1i, a2t)!, ellipse.getArcBetweenAngle(a2i, a1t)!);
+            if (ibw && tbw) coincide.push(ellipse.getArcBetweenAngles(a1i, a2t)!, ellipse.getArcBetweenAngles(a2i, a1t)!);
         }
         return coincide;
     }
