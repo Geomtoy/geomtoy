@@ -6,10 +6,6 @@ import EventSourceObject from "../../event/EventSourceObject";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { centerToEndpointParameterization, endpointParameterizationTransform, endpointToCenterParameterization, flexCorrectRadii } from "../../misc/arc";
-import Circle from "./Circle";
-import Ellipse from "./Ellipse";
-import Point from "./Point";
-
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
 import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { completeEllipticIntegralOfSecondKind, incompleteEllipticIntegralOfSecondKind } from "../../misc/elliptic-integral";
@@ -17,8 +13,10 @@ import { getCoordinates } from "../../misc/point-like";
 import Transformation from "../../transformation";
 import type { FiniteOpenGeometry, ViewportDescriptor } from "../../types";
 import Path from "../general/Path";
+import Circle from "./Circle";
+import Ellipse from "./Ellipse";
 import LineSegment from "./LineSegment";
-import Vector from "./Vector";
+import Point from "./Point";
 
 @validGeometry
 export default class Arc extends Geometry implements FiniteOpenGeometry {
@@ -288,6 +286,10 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         Assert.isRealNumber(startAngle, "startAngle");
         Assert.isRealNumber(endAngle, "endAngle");
         Assert.isRealNumber(rotation, "rotation");
+        // This must be done to prevent a full arc(ellipse).
+        startAngle = Angle.simplify(startAngle);
+        endAngle = Angle.simplify(endAngle);
+
         const [cx, cy] = getCoordinates(centerPoint, "centerPoint");
         const ep = centerToEndpointParameterization({
             centerX: cx,
@@ -318,7 +320,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const f = x3 ** 2 + y3 ** 2 - x2 ** 2 - y2 ** 2;
         const cx = (b * f - e * c) / (b * d - e * a);
         const cy = (d * c - a * f) / (b * d - e * a);
-        const r = Maths.sqrt((cx - x1) ** 2 + (cy - y1) ** 2);
+        const r = Maths.hypot(cx - x1, cy - y1);
 
         const v12 = Vector2.from([x1, y1], [x2, y2]);
         const v13 = Vector2.from([x1, y1], [x3, y3]);
@@ -473,19 +475,20 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         return Angle.clamp(a, sa, ea, positive);
     }
 
-    getTangentVectorAtAngle(a: number, normalized = false): Vector {
+    getTangentVectorAtAngle(a: number, normalized = false) {
         a = this._clampAngle(a, "a");
         const tv = this.toEllipse().getTangentVectorAtAngle(a, normalized);
         return this.positive ? tv : tv.negative();
     }
-    getNormalVectorAtAngle(a: number, normalized = false): Vector {
+    getNormalVectorAtAngle(a: number, normalized = false) {
         a = this._clampAngle(a, "a");
-        return this.toEllipse().getNormalVectorAtAngle(a, normalized);
+        const nv = this.toEllipse().getNormalVectorAtAngle(a, normalized);
+        return this.positive ? nv : nv.negative();
     }
     getCurvatureAtAngle(a: number) {
         a = this._clampAngle(a, "a");
         const c = this.toEllipse().getCurvatureAtAngle(a);
-        return this.positive ? c : -c;
+        return this.positive ? c : -c; // ellipse is defined with positive rotation but arc may not
     }
     getOsculatingCircleAtAngle(a: number) {
         a = this._clampAngle(a, "a");
