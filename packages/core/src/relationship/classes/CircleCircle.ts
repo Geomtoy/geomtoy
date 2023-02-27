@@ -41,8 +41,10 @@ export default class CircleCircle extends BaseRelationship {
         const epsilon = optioner.options.epsilon;
         const intersection: ReturnType<typeof this.intersection> = [];
         if (Maths.lessThan(sd, ssr, epsilon) && Maths.greaterThan(sd, sdr, epsilon)) {
-            const angle = Maths.acos(r1 ** 2 + sd - r2 ** 2) / (2 * r1 * Maths.sqrt(sd));
+            const cosTheta = (sd + r1 ** 2 - r2 ** 2) / (2 * Maths.sqrt(sd)) / r1;
+            const angle = Maths.acos(cosTheta);
             const baseAngle = Vector2.angle(v);
+
             intersection.push(
                 {
                     c: this.geometry1.getPointAtAngle(baseAngle + angle).coordinates,
