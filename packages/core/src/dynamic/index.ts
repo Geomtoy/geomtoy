@@ -56,9 +56,7 @@ export default class Dynamic extends BaseObject {
 
             constructor(object?: DynamicObject<T>) {
                 super();
-                filteredKeys.forEach(key => {
-                    this._object[key] = object?.[key] ?? templateObject[key];
-                });
+                Object.assign(this, { ...templateObject, ...object });
                 return Object.seal(this);
             }
 
