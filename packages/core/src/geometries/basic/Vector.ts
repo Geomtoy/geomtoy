@@ -210,29 +210,25 @@ export default class Vector extends Geometry {
     static fromAngleAndMagnitude(angle: number, magnitude: number) {
         return new Vector(Vector2.from2(angle, magnitude));
     }
-
     static fromTwoPoints(point1: [number, number] | Point, point2: [number, number] | Point) {
         const c1 = getCoordinates(point1, "point1");
         const c2 = getCoordinates(point2, "point2");
         return new Vector(c1, Vector2.from(c1, c2));
     }
-
     /**
      * Angle from vector `this` to vector `vector`, in the interval `(-math.PI, math.PI]`
-     * @param {Vector} vector
-     * @returns {number}
+     * @param vector
+     * @returns
      */
     getAngleToVector(vector: Vector): number {
-        return Angle.simplify2(this.angle - vector.angle);
+        return Vector2.angleTo(this.coordinates, vector.coordinates);
     }
-
+    /**
+     * Set `point1` of vector `this` to the origin.
+     */
     standardize() {
-        return this.clone().standardizeSelf();
-    }
-    standardizeSelf() {
         this.point1Coordinates = [0, 0];
     }
-
     /**
      * Get the proportion of the vector `this` of point `point`.
      * @description
@@ -277,50 +273,70 @@ export default class Vector extends Geometry {
         const c = Vector2.scalarMultiply(Vector2.add(c1, Vector2.scalarMultiply(c2, lambda)), 1 / (1 + lambda));
         return new Point(c);
     }
-
+    /**
+     * To point by `coordinates` of vector `this`.
+     */
     toPoint() {
         return new Point(this.coordinates);
     }
-
+    /**
+     * To point by `point2Coordinates` of vector `this`.
+     */
+    toPoint2() {
+        return new Point(this.point2Coordinates);
+    }
+    /**
+     * To line.
+     */
     toLine() {
-        const epsilon = optioner.options.epsilon;
-        if (Coordinates.isEqualTo(this.coordinates, [0, 0], epsilon)) return null;
         return Line.fromTwoPoints(this.point1Coordinates, this.point2Coordinates)!;
     }
     toRay() {
-        const epsilon = optioner.options.epsilon;
-        if (Coordinates.isEqualTo(this.coordinates, [0, 0], epsilon)) return null;
         return new Ray(this.point1Coordinates, this.angle);
     }
     toLineSegment() {
-        const epsilon = optioner.options.epsilon;
-        if (Coordinates.isEqualTo(this.coordinates, [0, 0], epsilon)) return null;
         return new LineSegment(this.point1Coordinates, this.point2Coordinates);
     }
 
-    dotProduct(vector: Vector): number {
+    dotProduct(vector: Vector) {
         return Vector2.dot(this.coordinates, vector.coordinates);
     }
-    crossProduct(vector: Vector): number {
+    crossProduct(vector: Vector) {
         return Vector2.cross(this.coordinates, vector.coordinates);
     }
-    normalize(): Vector {
-        return new Vector(this.point1Coordinates, Vector2.normalize(this.coordinates));
+
+    normalize() {
+        this.coordinates = Vector2.normalize(this.coordinates);
+        return this;
     }
-    add(vector: Vector): Vector {
-        return new Vector(this.point1Coordinates, Vector2.add(this.coordinates, vector.coordinates));
+    add(vector: Vector) {
+        this.coordinates = Vector2.add(this.coordinates, vector.coordinates);
+        return this;
     }
-    subtract(vector: Vector): Vector {
-        return new Vector(this.point1Coordinates, Vector2.subtract(this.coordinates, vector.coordinates));
+    subtract(vector: Vector) {
+        this.coordinates = Vector2.subtract(this.coordinates, vector.coordinates);
+        return this;
     }
-    scalarMultiply(scalar: number): Vector {
-        return new Vector(this.point1Coordinates, Vector2.scalarMultiply(this.coordinates, scalar));
+    scalarMultiply(scalar: number) {
+        this.coordinates = Vector2.scalarMultiply(this.coordinates, scalar);
+        return this;
     }
     negative() {
-        return new Vector(this.point1Coordinates, Vector2.negative(this.coordinates));
+        this.coordinates = Vector2.negative(this.coordinates);
+        return this;
     }
+
     rotate(angle: number): Vector {
-        return new Vector(this.point1Coordinates, Vector2.rotate(this.coordinates, angle));
+        this.coordinates = Vector2.rotate(this.coordinates, angle);
+        return this;
+    }
+    skew(angleX: number, angleY: number) {
+        this.coordinates = Vector2.skew(this.coordinates, angleX, angleY);
+        return this;
+    }
+    scale(scaleX: number, scaleY: number) {
+        this.coordinates = Vector2.scale(this.coordinates, scaleX, scaleY);
+        return this;
     }
 
     apply(transformation: Transformation) {
@@ -344,7 +360,7 @@ export default class Vector extends Geometry {
         return g;
     }
     clone() {
-        return new Vector(this.point1X, this.point1Y, this.point2X, this.point2Y);
+        return new Vector(this._point1X, this._point1Y, this._x, this._y);
     }
     copyFrom(shape: Vector | null) {
         if (shape === null) shape = new Vector();
