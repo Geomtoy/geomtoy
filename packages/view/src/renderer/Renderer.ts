@@ -24,10 +24,8 @@ export default abstract class Renderer {
         }
         this.container.setAttribute(DATA_KEY_RENDERER_INITIALIZED, "");
     }
-    //todo
-    // abstract clear()
-    // abstract autoRedraw()
-    // abstract autoRedrawBatch()
+
+    abstract clear(): void;
     abstract draw(shape: Shape, onTop: boolean): PathInfo[];
     abstract drawBatch(shapes: Shape[], onTop: boolean): PathInfo[][];
 

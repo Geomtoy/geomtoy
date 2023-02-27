@@ -189,6 +189,10 @@ export default class CanvasRenderer extends Renderer {
         }
     }
 
+    clear() {
+        this._initBuffer();
+        this._flushBuffer();
+    }
     draw(shape: Shape, onTop = false) {
         this._initBuffer();
         const graphics = shape.getGraphics(this.display).graphics;

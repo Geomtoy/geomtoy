@@ -652,6 +652,8 @@ export default class View {
 
     private _renderFunc() {
         const renderer = this.renderer;
+        if (this._elements.length === 0) renderer.clear();
+
         this._elements.forEach(el => {
             if (el.shape instanceof Image) {
                 const imageSource = el.shape.imageSource;
