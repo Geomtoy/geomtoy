@@ -1,19 +1,17 @@
 import { Assert, Box, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
-import { optioner } from "../../geomtoy";
-import { validGeometry } from "../../misc/decor-geometry";
-
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
+import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
+import { Cartesian } from "../../helper/CoordinateSystem";
 import PointGraphics from "../../helper/PointGraphics";
 import { stated } from "../../misc/decor-cache";
+import { validGeometry } from "../../misc/decor-geometry";
 import { getCoordinates } from "../../misc/point-like";
 import Transformation from "../../transformation";
 import type { PointAppearance, ViewportDescriptor } from "../../types";
-import Line from "./Line";
-import LineSegment from "./LineSegment";
-import Ray from "./Ray";
-import Vector from "./Vector";
+import type Line from "./Line";
+import type LineSegment from "./LineSegment";
 
 @validGeometry
 export default class Point extends Geometry {
@@ -83,40 +81,32 @@ export default class Point extends Geometry {
             !Number.isNaN(this._y)
         );
     }
-
     move(deltaX: number, deltaY: number) {
         this.coordinates = Vector2.add(this.coordinates, [deltaX, deltaY]);
         return this;
     }
-    moveAlongAngle(angle: number, distance: number) {
-        this.coordinates = Vector2.add(this.coordinates, Vector2.from2(angle, distance));
-        return this;
-    }
     /**
-     * Returns a point of `origin` of the coordinate system.
+     * Returns a point of origin([0, 0]) of the coordinate system.
      */
     static origin() {
         return new Point(0, 0);
     }
-
+    /**
+     * Returns a random point in the box `box`.
+     * @param box
+     */
     static random(box: [number, number, number, number]) {
         const x = Box.x(box) + Maths.random() * Box.width(box);
         const y = Box.y(box) + Maths.random() * Box.height(box);
         return new Point(x, y);
     }
-    equalTo(point: [number, number] | Point) {
-        const c = getCoordinates(point, "point");
-        return Coordinates.isEqualTo(this.coordinates, c, optioner.options.epsilon);
-    }
-
     /**
      * Whether points `point1`, `point2`, `point3` are collinear.
      * @note
-     * If any two of these three point are the same, they will also be considered collinear.
+     * If any two of these three points are the same, they will also be considered collinear.
      * @param point1
      * @param point2
      * @param point3
-     * @returns
      */
     static isThreePointsCollinear(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point) {
         const c1 = getCoordinates(point1, "point1");
@@ -124,63 +114,59 @@ export default class Point extends Geometry {
         const c3 = getCoordinates(point3, "point3");
         const v1 = Vector2.from(c1, c2);
         const v2 = Vector2.from(c1, c3);
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(Vector2.cross(v1, v2), 0, epsilon);
+        return Maths.equalTo(Vector2.cross(v1, v2), 0, optioner.options.vectorEpsilon);
     }
-    static isFourPointsCollinear(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point, point4: [number, number] | Point) {
+    /**
+     * Whether points `point1`, `point2`, `point3`, `point4` are concyclic.
+     * @note
+     * If any two of these four points are the same, they will also be considered concyclic.
+     * @param point1
+     * @param point2
+     * @param point3
+     * @param point4
+     */
+    static isFourPointsConcyclic(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point, point4: [number, number] | Point) {
         const c1 = getCoordinates(point1, "point1");
         const c2 = getCoordinates(point2, "point2");
         const c3 = getCoordinates(point3, "point3");
         const c4 = getCoordinates(point4, "point4");
-        const v1 = Vector2.from(c1, c2);
-        const v2 = Vector2.from(c1, c3);
-        const v3 = Vector2.from(c1, c4);
-        const epsilon = optioner.options.epsilon;
-        const cp1 = Vector2.cross(v1, v2);
-        const cp2 = Vector2.cross(v1, v3);
-        const cp3 = Vector2.cross(v2, v3); // in case when v1 is zero vector.
-        return Maths.equalTo(cp1, 0, epsilon) && Maths.equalTo(cp2, 0, epsilon) && Maths.equalTo(cp3, 0, epsilon);
-    }
 
-    /**
-     * Get the `n` equally dividing rays of the angle which is formed by points `vertex`, `leg1` and `leg2`.
-     * @description
-     * The angle is generated from `leg1` to `leg2` taking `vertex` as the center of rotation.
-     * If `n` is not an integer, return `null`.
-     * If any two in `vertex`, `leg1`, `leg2` are the same, return `[]`.
-     * @param n
-     * @param vertex
-     * @param leg1
-     * @param leg2
-     */
-    static getAngleNEquallyDividingRaysFromThreePoints(n: number, vertex: Point, leg1: Point, leg2: Point): Ray[] | null {
-        if (!Type.isInteger(n) || n < 2) {
-            throw new Error(`[G]\`n\` should be an integer and not less than 2, but we got \`${n}\`.`);
+        const cart = new Cartesian(Coordinates.x(c4), Coordinates.y(c4));
+        const tri = cart.toTrilinear(c1, c2, c3);
+        if (!(Type.isRealNumber(tri.lambda1) && Type.isRealNumber(tri.lambda2) && Type.isRealNumber(tri.lambda3))) {
+            return true; // c1,c2,c3 have some coincidence
         }
-
-        const [c0, c1, c2] = [vertex.coordinates, leg1.coordinates, leg2.coordinates];
-        const epsilon = optioner.options.epsilon;
-        if (Coordinates.isEqualTo(c0, c1, epsilon) || Coordinates.isEqualTo(c0, c2, epsilon) || Coordinates.isEqualTo(c1, c2, epsilon)) {
-            console.warn("[G]The points `vertex`, `leg1`, `leg2` are the same, there is no angle formed by them.");
-            return null;
+        if (tri.lambda1 >= 0 || tri.lambda2 >= 0 || tri.lambda3 >= 0) {
+            return false; // c4 is inside or on the triangle(except the vertex and even triangle is not formed)
         }
-        const a1 = Vector2.angle(Vector2.from(c0, c1));
-        const a2 = Vector2.angle(Vector2.from(c0, c1));
-        const d = (a2 - a1) / n;
-        return Utility.range(1, n).map(i => new Ray(vertex.coordinates, a1 + d * i));
-    }
+        let loop: [[number, number], [number, number], [number, number], [number, number]];
+        if (tri.lambda1 < 0) /* outside c2-c3 */ loop = [c1, c2, c4, c3];
+        else if (tri.lambda2 < 0) /* outside c3-c1 */ loop = [c1, c2, c3, c4];
+        else if (tri.lambda3 < 0) /* outside c1-c2 */ loop = [c1, c4, c2, c3];
+        else throw new Error("[G]Impossible.");
 
-    //todo
-    static isFourPointsConcyclic(point1: Point, point2: Point, point3: Point, point4: Point) {}
+        // use Ptolemy's theorem
+        // @see  https://en.wikipedia.org/wiki/Ptolemy's_theorem
+        const ac = Vector2.magnitude(Vector2.from(loop[0], loop[2]));
+        const bd = Vector2.magnitude(Vector2.from(loop[1], loop[3]));
+        const ab = Vector2.magnitude(Vector2.from(loop[0], loop[1]));
+        const cd = Vector2.magnitude(Vector2.from(loop[2], loop[3]));
+        const bc = Vector2.magnitude(Vector2.from(loop[1], loop[2]));
+        const da = Vector2.magnitude(Vector2.from(loop[3], loop[0]));
+
+        if (Maths.equalTo(ac * bd, ab * cd + bc * da, optioner.options.vectorEpsilon)) {
+            return true;
+        }
+        return false;
+    }
     /**
-     * Determine a point from vector `vector`.
-     * @param vector
-     * @returns
+     * Whether point `this` equal to point `point`.
+     * @param point
      */
-    static fromVector(vector: Vector) {
-        return new Point(vector.point2Coordinates);
+    equalTo(point: [number, number] | Point) {
+        const c = getCoordinates(point, "point");
+        return Coordinates.isEqualTo(this.coordinates, c, optioner.options.epsilon);
     }
-
     /**
      * Get the distance between point `this` and point `point`.
      */
@@ -195,16 +181,14 @@ export default class Point extends Geometry {
     }
     /**
      * Get the distance between point `this` and line `line`.
-     * @param {Line} line
-     * @returns {number}
+     * @param line
      */
     getDistanceBetweenLine(line: Line): number {
         return Maths.abs(this.getSignedDistanceBetweenLine(line));
     }
     /**
      * Get the signed distance between point `this` and line `line`.
-     * @param {Line} line
-     * @returns {number}
+     * @param line
      */
     getSignedDistanceBetweenLine(line: Line): number {
         const [a, b, c] = line.getImplicitFunctionCoefs();
@@ -213,8 +197,7 @@ export default class Point extends Geometry {
     }
     /**
      * Get the distance square between point `this` and line `line`.
-     * @param {Line} line
-     * @returns {number}
+     * @param line
      */
     getSquaredDistanceBetweenLine(line: Line): number {
         const [a, b, c] = line.getImplicitFunctionCoefs();
@@ -223,17 +206,14 @@ export default class Point extends Geometry {
     }
     /**
      * Get the distance between point `this` and line segment `lineSegment`.
-     * @param {LineSegment} lineSegment
-     * @returns {number}
+     * @param lineSegment
      */
     getDistanceBetweenLineSegment(lineSegment: LineSegment): number {
         return Maths.abs(this.getSignedDistanceBetweenLineSegment(lineSegment));
     }
     /**
      * Get the signed distance between point `this` and line segment `lineSegment`.
-     * @summary [[include:Matrix.md]]
-     * @param {LineSegment} lineSegment
-     * @returns {number}
+     * @param lineSegment
      */
     getSignedDistanceBetweenLineSegment(lineSegment: LineSegment): number {
         const c = this.coordinates;
@@ -244,8 +224,7 @@ export default class Point extends Geometry {
     }
     /**
      * Get the distance square between point `this` and line segment `lineSegment`
-     * @param {LineSegment} lineSegment
-     * @returns {number}
+     * @param lineSegment
      */
     getSquaredDistanceBetweenLineSegment(lineSegment: LineSegment): number {
         const c = this.coordinates;
@@ -254,35 +233,6 @@ export default class Point extends Geometry {
         const v10 = Vector2.from(c1, c);
         return Vector2.cross(v12, v10) ** 2 / Vector2.squaredMagnitude(Vector2.from(c1, c2));
     }
-
-    /**
-     * Whether point `this` is on the same line determined by points `point1` and `point2`,
-     * and point `this` is between points `point1` and `point2`
-     * @param point1
-     * @param point2
-     * @param allowEqual Allow point `this` to be equal to point `point1` or `point2`
-     * @returns
-     */
-    isBetweenPoints(point1: [number, number] | Point, point2: [number, number] | Point, allowEqual = true) {
-        const c0 = this.coordinates;
-        const c1 = getCoordinates(point1, "point1");
-        const c2 = getCoordinates(point2, "point2");
-        const epsilon = optioner.options.epsilon;
-        if (Coordinates.isEqualTo(c1, c2, epsilon)) {
-            console.warn("[G]`point1` and `point2` are the same. `false` will be returned");
-            return false;
-        }
-        const v12 = Vector2.from(c1, c2);
-        const v10 = Vector2.from(c1, c0);
-        const cp = Vector2.cross(v10, v12);
-        const dp = Vector2.dot(v10, v12);
-        const sm = Vector2.squaredMagnitude(v12);
-        if (allowEqual) {
-            return Maths.equalTo(cp, 0, epsilon) && !Maths.lessThan(dp, 0, epsilon) && !Maths.greaterThan(dp, sm, epsilon);
-        }
-        return Maths.equalTo(cp, 0, epsilon) && Maths.greaterThan(dp, 0, epsilon) && Maths.lessThan(dp, sm, epsilon);
-    }
-
     getGraphics(viewport: ViewportDescriptor) {
         if (!this.initialized()) return new Graphics();
 
@@ -290,7 +240,6 @@ export default class Point extends Geometry {
         g.concat(new PointGraphics(this.coordinates, this.appearance).getGraphics(viewport));
         return g;
     }
-
     apply(transformation: Transformation) {
         const nc = transformation.transformCoordinates(this.coordinates);
         return new Point(nc);
@@ -308,8 +257,8 @@ export default class Point extends Geometry {
         // prettier-ignore
         return [
             `${this.name}(${this.uuid}){`,
-            `\tx: ${this.x}`,
-            `\ty: ${this.y}`,
+            `\tx: ${this._x}`,
+            `\ty: ${this._y}`,
             `}`
         ].join("\n")
     }
