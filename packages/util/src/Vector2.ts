@@ -36,6 +36,8 @@ class Vector2 {
     }
     /**
      * Returns the angle of vector2 `v`.
+     * @note
+     * The angle of zero vector is 0, according to `Math.atan2`.
      * @param v
      */
     static angle(v: [number, number]) {
