@@ -756,6 +756,23 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         }
         return Maths.clamp(t, 0, 1);
     }
+
+    @stated
+    private _d1() {
+        const [polyX, polyY] = this.getPolynomial();
+        const [polyXD1, polyYD1] = [Polynomial.derivative(polyX, 1), Polynomial.derivative(polyY, 1)];
+        return function (t: number) {
+            return [Polynomial.evaluate(polyXD1, t), Polynomial.evaluate(polyYD1, t)] as [number, number];
+        };
+    }
+    @stated
+    private _d2() {
+        const [polyX, polyY] = this.getPolynomial();
+        const [polyXD2, polyYD2] = [Polynomial.derivative(polyX, 2), Polynomial.derivative(polyY, 2)];
+        return function (t: number) {
+            return [Polynomial.evaluate(polyXD2, t), Polynomial.evaluate(polyYD2, t)] as [number, number];
+        };
+    }
     /**
      * Get the tangent vector of bezier `this` at time `t`.
      * @param t
@@ -763,10 +780,9 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      */
     getTangentVectorAtTime(t: number, normalized = false) {
         t = this._clampTime(t, "t");
-        const [polyX, polyY] = this.getPolynomial();
-        const [polyXD, polyYD] = [Polynomial.derivative(polyX), Polynomial.derivative(polyY)];
+        const [d1x, d1y] = this._d1()(t);
+        const tv = [d1x, d1y] as [number, number];
         const c = this.getParametricEquation()(t);
-        const tv = [Polynomial.evaluate(polyXD, t), Polynomial.evaluate(polyYD, t)] as [number, number];
         return normalized ? new Vector(c, Vector2.normalize(tv)) : new Vector(c, tv);
     }
     /**
@@ -776,17 +792,12 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      */
     getNormalVectorAtTime(t: number, normalized = false) {
         t = this._clampTime(t, "t");
-        const [polyX, polyY] = this.getPolynomial();
-        const [polyXD, polyYD] = [Polynomial.derivative(polyX), Polynomial.derivative(polyY)];
-        const tv = [Polynomial.evaluate(polyXD, t), Polynomial.evaluate(polyYD, t)] as [number, number];
-        const ntv = Vector2.normalize(tv);
+        const [d1x, d1y] = this._d1()(t);
+        const nv = [-d1y, d1x] as [number, number];
         const c = this.getParametricEquation()(t);
-        const cvt = this.getCurvatureAtTime(t); // handle -0/0?
-        const sign = Maths.sign(cvt);
-        const value = Maths.abs(cvt);
-        const nv = Vector2.scalarMultiply(Vector2.rotate(ntv, (sign * Maths.PI) / 2), value);
         return normalized ? new Vector(c, Vector2.normalize(nv)) : new Vector(c, nv);
     }
+
     /**
      * Get the curvature of quadratic bezier `this` at time `t`.
      * @note
@@ -795,13 +806,8 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      */
     getCurvatureAtTime(t: number) {
         t = this._clampTime(t, "t");
-        const [polyX, polyY] = this.getPolynomial();
-        const [polyXD1, polyYD1] = [Polynomial.derivative(polyX, 1), Polynomial.derivative(polyY, 1)];
-        const [polyXD2, polyYD2] = [Polynomial.derivative(polyX, 2), Polynomial.derivative(polyY, 2)];
-        const d1x = Polynomial.evaluate(polyXD1, t);
-        const d1y = Polynomial.evaluate(polyYD1, t);
-        const d2x = Polynomial.evaluate(polyXD2, t);
-        const d2y = Polynomial.evaluate(polyYD2, t);
+        const [d1x, d1y] = this._d1()(t);
+        const [d2x, d2y] = this._d2()(t);
         const num = Vector2.cross([d1x, d1y], [d2x, d2y]);
         const den = Maths.pow(d1x ** 2 + d1y ** 2, 3 / 2);
         // When degenerating, at the cusp of quadratic bezier `num` and `den` will be all equal to 0, but 0/0 = NaN, so modify it.
@@ -819,15 +825,14 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
     getOsculatingCircleAtTime(t: number) {
         t = this._clampTime(t, "t");
         const cvt = this.getCurvatureAtTime(t);
-        const { coordinates } = this.getPointAtTime(t);
-
         if (cvt === Infinity || cvt === -Infinity) return null; // the circle is a line
         if (cvt === 0) return null; // the circle is a point
 
-        const r = Maths.abs(1 / cvt);
+        const r = 1 / cvt;
+        const c = this.getParametricEquation()(t);
         const angle = this.getNormalVectorAtTime(t).angle;
-        const cc = Vector2.add(coordinates, Vector2.from2(angle, r));
-        return new Circle(cc, r);
+        const cc = Vector2.add(c, Vector2.from2(angle, r));
+        return new Circle(cc, Maths.abs(r));
     }
     splitAtTime(t: number) {
         t = this._clampTime(t, "t");

@@ -545,19 +545,32 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
     // #endregion
 
     // #region Tangent and normal
+
+    @stated
+    private _d1() {
+        const [polyX, polyY] = this.getPolynomial();
+        const [polyXD1, polyYD1] = [Polynomial.derivative(polyX, 1), Polynomial.derivative(polyY, 1)];
+        return function (t: number) {
+            return [Polynomial.evaluate(polyXD1, t), Polynomial.evaluate(polyYD1, t)] as [number, number];
+        };
+    }
+    @stated
+    private _d2() {
+        const [polyX, polyY] = this.getPolynomial();
+        const [polyXD2, polyYD2] = [Polynomial.derivative(polyX, 2), Polynomial.derivative(polyY, 2)];
+        return function (t: number) {
+            return [Polynomial.evaluate(polyXD2, t), Polynomial.evaluate(polyYD2, t)] as [number, number];
+        };
+    }
     /**
      * Get the tangent vector of quadratic bezier `this` at time `t`.
      * @param t
      */
     getTangentVectorAtTime(t: number, normalized = false) {
         t = this._clampTime(t, "t");
-        // `polyX` and `polyY` may be constant polygon(all end/control points lie on a horizontal/vertical line).
-        // `Polynomial.derivative` will handle the above case well, it will return a zero polynomial and zero polynomial can be evaluated.
-        // If there is a cusp, the tangent vector will be zero there.
-        const [polyX, polyY] = this.getPolynomial();
-        const [polyXD, polyYD] = [Polynomial.derivative(polyX), Polynomial.derivative(polyY)];
+        const [d1x, d1y] = this._d1()(t);
+        const tv = [d1x, d1y] as [number, number];
         const c = this.getParametricEquation()(t);
-        const tv = [Polynomial.evaluate(polyXD, t), Polynomial.evaluate(polyYD, t)] as [number, number];
         return normalized ? new Vector(c, Vector2.normalize(tv)) : new Vector(c, tv);
     }
     /**
@@ -566,11 +579,9 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
      */
     getNormalVectorAtTime(t: number, normalized = false) {
         t = this._clampTime(t, "t");
-        const [polyX, polyY] = this.getPolynomial();
-        const [polyXD, polyYD] = [Polynomial.derivative(polyX), Polynomial.derivative(polyY)];
+        const [d1x, d1y] = this._d1()(t);
+        const nv = [-d1y, d1x] as [number, number];
         const c = this.getParametricEquation()(t);
-        const tv = [Polynomial.evaluate(polyXD, t), Polynomial.evaluate(polyYD, t)] as [number, number];
-        const nv = Maths.sign(this.getCurvatureAtTime(t)) < 0 ? Vector2.rotate(tv, -Maths.PI / 2) : Vector2.rotate(tv, Maths.PI / 2);
         return normalized ? new Vector(c, Vector2.normalize(nv)) : new Vector(c, nv);
     }
     /**
@@ -581,13 +592,8 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
      */
     getCurvatureAtTime(t: number) {
         t = this._clampTime(t, "t");
-        const [polyX, polyY] = this.getPolynomial();
-        const [polyXD1, polyYD1] = [Polynomial.derivative(polyX, 1), Polynomial.derivative(polyY, 1)];
-        const [polyXD2, polyYD2] = [Polynomial.derivative(polyX, 2), Polynomial.derivative(polyY, 2)];
-        const d1x = Polynomial.evaluate(polyXD1, t);
-        const d1y = Polynomial.evaluate(polyYD1, t);
-        const d2x = Polynomial.evaluate(polyXD2, t);
-        const d2y = Polynomial.evaluate(polyYD2, t);
+        const [d1x, d1y] = this._d1()(t);
+        const [d2x, d2y] = this._d2()(t);
         const num = Vector2.cross([d1x, d1y], [d2x, d2y]);
         const den = Maths.pow(d1x ** 2 + d1y ** 2, 3 / 2);
         // When degenerating, at the cusp of quadratic bezier `num` and `den` will be all equal to 0, but 0/0 = NaN, so modify it.

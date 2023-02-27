@@ -376,51 +376,65 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         return Box.from(this.point1Coordinates, this.point2Coordinates);
     }
 
+    private _clampTime(t: number, p: string) {
+        Assert.isRealNumber(t, p);
+        if (t < 0 || t > 1) {
+            console.warn(`[G]The \`${p}\` with value \`${t}\` is not between \`0\`(including) and \`1\`(including). It will be clamped.`);
+        }
+        return Maths.clamp(t, 0, 1);
+    }
+
+    @stated
+    private _d1() {
+        const [polyX, polyY] = this.getPolynomial();
+        const [polyXD1, polyYD1] = [Polynomial.derivative(polyX, 1), Polynomial.derivative(polyY, 1)];
+        return function (t: number) {
+            return [Polynomial.evaluate(polyXD1, t), Polynomial.evaluate(polyYD1, t)] as [number, number];
+        };
+    }
+
     /**
-     * Get the tangent unit vector of quadratic bezier `this` at time `t`.
+     * Get the tangent vector of line segment `this` at time `t`.
      * @param t
+     * @param normalized
      */
     getTangentVectorAtTime(t: number, normalized = false) {
-        Assert.condition(t >= 0 && t <= 1, "[G]The `t` must be between 0(including) and 1(including).");
-        const [polyX, polyY] = this.getPolynomial();
-        const [polyXD, polyYD] = [Polynomial.derivative(polyX), Polynomial.derivative(polyY)];
+        t = this._clampTime(t, "t");
+        const [d1x, d1y] = this._d1()(t);
+        const tv = [d1x, d1y] as [number, number];
         const c = this.getParametricEquation()(t);
-        const tv = [Polynomial.evaluate(polyXD, t), Polynomial.evaluate(polyYD, t)] as [number, number];
         return normalized ? new Vector(c, Vector2.normalize(tv)) : new Vector(c, tv);
     }
     /**
-     * Get the normal unit vector of quadratic bezier `this` at time `t`.
+     * Get the normal vector of line segment `this` at time `t`.
      * @param t
+     * @param normalized
      */
     getNormalVectorAtTime(t: number, normalized = false) {
-        Assert.condition(t >= 0 && t <= 1, "[G]The `t` must be between 0(including) and 1(including).");
-        const [polyX, polyY] = this.getPolynomial();
-        const [polyXD, polyYD] = [Polynomial.derivative(polyX), Polynomial.derivative(polyY)];
-        const tv = [Polynomial.evaluate(polyXD, t), Polynomial.evaluate(polyYD, t)] as [number, number];
+        t = this._clampTime(t, "t");
+        const [d1x, d1y] = this._d1()(t);
+        const nv = [-d1y, d1x] as [number, number];
         const c = this.getParametricEquation()(t);
-        const nv = Vector2.rotate(tv, Maths.PI / 2);
         return normalized ? new Vector(c, Vector2.normalize(nv)) : new Vector(c, nv);
     }
     /**
-     * Get the curvature of quadratic bezier `this` at time `t`.
+     * Get the curvature of line segment `this` at time `t`.
      * @note
-     * A curvature is signed and it is in $[-\infty,\infty]$.
+     * This method always returns 0.
      * @param t
      */
     getCurvatureAtTime(t: number) {
-        Assert.condition(t >= 0 && t <= 1, "[G]The `t` must be between 0(including) and 1(including).");
+        t = this._clampTime(t, "t");
         return 0;
     }
     /**
-     * Get the osculating circle of quadratic bezier `this` at time `t`.
-     * @description
-     * - If the curvature at `t` is $\pm\infty$, `null` will be returned(the circle degenerates to a line).
-     * - If the curvature at `t` is 0, `null` will be returned(the circle degenerates to a point).
-     * - Else a circle is returned.
+     * Get the osculating circle of line segment `this` at time `t`.
+     * @note
+     * This method always returns null.
      * @param t
      */
     getOsculatingCircleAtTime(t: number) {
-        Assert.condition(t >= 0 && t <= 1, "[G]The `t` must be between 0(including) and 1(including).");
+        t = this._clampTime(t, "t");
         return null;
     }
 
@@ -434,7 +448,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
      * @param t
      */
     getPointAtTime(t: number) {
-        Assert.condition(t >= 0 && t <= 1, "[G]The `t` must be between 0(including) and 1(including).");
+        t = this._clampTime(t, "t");
         const [x, y] = this.getParametricEquation()(t);
         return new Point(x, y);
     }

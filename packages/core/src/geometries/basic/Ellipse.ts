@@ -426,15 +426,9 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         this._windingDirection = direction;
     }
 
-    getArcBetweenAngle(startAngle: number, endAngle: number, positive = true): null | Arc {
-        const epsilon = optioner.options.epsilon;
+    getArcBetweenAngles(startAngle: number, endAngle: number, positive = true): null | Arc {
         const sa = Angle.simplify(startAngle);
         const ea = Angle.simplify(endAngle);
-
-        if (Maths.equalTo(sa, ea, epsilon)) {
-            console.warn("[G]The start angle and end angle are the same, `null` will be returned.");
-            return null;
-        }
         return Arc.fromCenterPointAndStartEndAnglesEtc(this.centerCoordinates, this.radiusX, this.radiusY, sa, ea, positive, this.rotation);
     }
 
@@ -444,14 +438,19 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     //https://zhuanlan.zhihu.com/p/64550850
     static findTangentLineOfEllipseAndParabola() {}
 
+    @stated
     getParametricEquation() {
-        const { centerX: cx, centerY: cy, rotation: phi, radiusX: rx, radiusY: ry } = this;
+        const { _centerX: cx, _centerY: cy, _rotation: phi, _radiusX: rx, _radiusY: ry } = this;
         const cosPhi = Maths.cos(phi);
         const sinPhi = Maths.sin(phi);
         return function (a: number) {
-            const x = rx * Maths.cos(a) * cosPhi - ry * Maths.sin(a) * sinPhi + cx;
-            const y = rx * Maths.cos(a) * sinPhi + ry * Maths.sin(a) * cosPhi + cy;
-            return [x, y] as [number, number];
+            const cosA = Maths.cos(a);
+            const sinA = Maths.sin(a);
+            // prettier-ignore
+            return [
+                rx * cosA * cosPhi - ry * sinA * sinPhi + cx, 
+                rx * cosA * sinPhi + ry * sinA * cosPhi + cy
+            ] as [number, number];
         };
     }
 
@@ -488,6 +487,36 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const y = cy - hh;
         return [x, y, w, h] as [number, number, number, number];
     }
+    @stated
+    private _d1() {
+        const { _radiusX: rx, _radiusY: ry, _rotation: phi } = this;
+        const cosPhi = Maths.cos(phi);
+        const sinPhi = Maths.sin(phi);
+        return function (a: number) {
+            const sinA = Maths.sin(a);
+            const cosA = Maths.cos(a);
+            // prettier-ignore
+            return [
+                -rx * sinA * cosPhi - ry * cosA * sinPhi, 
+                -rx * sinA * sinPhi + ry * cosA * cosPhi
+            ] as [number, number];
+        };
+    }
+    @stated
+    private _d2() {
+        const { _radiusX: rx, _radiusY: ry, _rotation: phi } = this;
+        const cosPhi = Maths.cos(phi);
+        const sinPhi = Maths.sin(phi);
+        return function (a: number) {
+            const sinA = Maths.sin(a);
+            const cosA = Maths.cos(a);
+            // prettier-ignore
+            return [
+                -rx * cosA * cosPhi + ry * sinA * sinPhi, 
+                -rx * cosA * sinPhi - ry * sinA * cosPhi
+            ] as [number, number];
+        };
+    }
 
     /**
      * Get the tangent vector of ellipse `this` at angle `a`.
@@ -495,58 +524,34 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
      * @param normalized
      */
     getTangentVectorAtAngle(a: number, normalized = false) {
-        a = Angle.simplify(a);
-        const { rotation: phi, radiusX: rx, radiusY: ry } = this;
-        const cosPhi = Maths.cos(phi);
-        const sinPhi = Maths.sin(phi);
-        // derivative of parametric equation
-        const pxD = -rx * Maths.sin(a) * cosPhi - ry * Maths.cos(a) * sinPhi;
-        const pyD = -rx * Maths.sin(a) * sinPhi + ry * Maths.cos(a) * cosPhi;
-        const tv = [pxD, pyD] as [number, number];
+        const [d1x, d1y] = this._d1()(a);
+        const tv = [d1x, d1y] as [number, number];
         const c = this.getParametricEquation()(a);
         return normalized ? new Vector(c, Vector2.normalize(tv)) : new Vector(c, tv);
     }
     getNormalVectorAtAngle(a: number, normalized = false) {
-        a = Angle.simplify(a);
-        const { rotation: phi, radiusX: rx, radiusY: ry } = this;
-        const cosPhi = Maths.cos(phi);
-        const sinPhi = Maths.sin(phi);
-        // derivative of parametric equation
-        const pxD = -rx * Maths.sin(a) * cosPhi - ry * Maths.cos(a) * sinPhi;
-        const pyD = -rx * Maths.sin(a) * sinPhi + ry * Maths.cos(a) * cosPhi;
-        const tv = [pxD, pyD] as [number, number];
+        const [d1x, d1y] = this._d1()(a);
+        const nv = [-d1y, d1x] as [number, number]; // rotate positively 90 degree, vector rotation shorthand
         const c = this.getParametricEquation()(a);
-        const cvt = this.getCurvatureAtAngle(a);
-        const sign = Maths.sign(cvt);
-        const nv = Object.is(sign, -1) || Object.is(sign, -0) ? Vector2.rotate(tv, -Maths.PI / 2) : Vector2.rotate(tv, Maths.PI / 2);
         return normalized ? new Vector(c, Vector2.normalize(nv)) : new Vector(c, nv);
     }
     getCurvatureAtAngle(a: number) {
-        a = Angle.simplify(a);
-        const { rotation: phi, radiusX: rx, radiusY: ry } = this;
-        const cosPhi = Maths.cos(phi);
-        const sinPhi = Maths.sin(phi);
-        // 1th order derivative of parametric equation
-        const pxD1 = -rx * Maths.sin(a) * cosPhi - ry * Maths.cos(a) * sinPhi;
-        const pyD1 = -rx * Maths.sin(a) * sinPhi + ry * Maths.cos(a) * cosPhi;
-        // 2th order derivative of parametric equation
-        const pxD2 = -rx * Maths.cos(a) * cosPhi + ry * Maths.sin(a) * sinPhi;
-        const pyD2 = -rx * Maths.cos(a) * sinPhi - ry * Maths.sin(a) * cosPhi;
-        const num = pxD1 * pyD2 - pyD1 * pxD2;
-        const den = Maths.pow(pxD1 ** 2 + pyD1 ** 2, 3 / 2);
+        const [d1x, d1y] = this._d1()(a);
+        const [d2x, d2y] = this._d2()(a);
+        const num = Vector2.cross([d1x, d1y], [d2x, d2y]);
+        const den = Maths.pow(d1x ** 2 + d1y ** 2, 3 / 2);
         return num / den;
     }
     getOsculatingCircleAtAngle(a: number) {
         const cvt = this.getCurvatureAtAngle(a);
-        const { coordinates } = this.getPointAtAngle(a);
-
         if (cvt === Infinity || cvt === -Infinity) return null; // the circle is a line
         if (cvt === 0) return null; // the circle is a point
 
-        const r = Maths.abs(1 / cvt);
+        const r = 1 / cvt;
+        const c = this.getParametricEquation()(a);
         const angle = this.getNormalVectorAtAngle(a).angle;
-        const cc = Vector2.add(coordinates, Vector2.from2(angle, r));
-        return new Circle(cc, r);
+        const cc = Vector2.add(c, Vector2.from2(angle, r));
+        return new Circle(cc, Maths.abs(r));
     }
 
     /**
