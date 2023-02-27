@@ -103,15 +103,27 @@ class Angle {
         if (epsilon === undefined) return a === b;
         return Maths.equalTo(a, b, epsilon);
     }
-
+    /**
+     * Clamp angle `a` into the `positive`(or not) sweep interval between start angle `s` and end angle `e`.
+     * @param a
+     * @param s
+     * @param e
+     * @param positive
+     */
     static clamp(a: number, s: number, e: number, positive: boolean) {
         a = Angle.simplify(a);
         s = Angle.simplify(s);
         e = Angle.simplify(e);
         if (!positive) [s, e] = [e, s];
-        if (a < s) return s;
-        if (a > e) return e;
-        return a;
+        if (s > e) {
+            if (a > s || a < e) return a;
+            return 2 * a > e + s ? s : e;
+        } else {
+            if (a > s && a < e) return a;
+            // todo improve this
+            // prettier-ignore
+            return a <= s ? (2 * a + 2 * Maths.PI > e + s ? s : e) : (2 * a - 2 * Maths.PI > e + s ? s : e);
+        }
     }
 
     static between(a: number, s: number, e: number, positive: boolean, startOpen: boolean, endOpen: boolean, epsilon?: number) {
