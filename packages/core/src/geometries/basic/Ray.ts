@@ -129,13 +129,15 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
      * Get the `n` section(equal) rays of the angle which is formed by rays `ray1` and `ray2`.
      * @description
      * If `n` is not integer, return `null`.
-     * If `ray1` and `ray2` have different endpoint, return `null`.
+     * If `ray1` and `ray2` have different endpoint(`coordinates`), return `null`.
      * @param n
      * @param ray1
      * @param ray2
      */
     static getAngleNSectionRaysFromTwoRays(n: number, ray1: Ray, ray2: Ray): Ray[] | null {
-        Assert.condition(Type.isInteger(n) && n > 2, `[G]Got invalid \`n\`:\`${n}\`, which should be an integer and greater than 2.`);
+        Assert.isInteger(n, "n");
+        Assert.comparison(n, "n", "gt", 1);
+
         const { coordinates: c1 } = ray1;
         const { coordinates: c2 } = ray2;
         const epsilon = optioner.options.epsilon;
