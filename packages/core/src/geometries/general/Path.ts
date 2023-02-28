@@ -22,15 +22,14 @@ import { getCoordinates } from "../../misc/point-like";
 import { parseSvgPath } from "../../misc/svg-path";
 import Transformation from "../../transformation";
 import {
-    FillRule,
+    type FillRule,
     PathCommandType,
-    PolygonVertexWithUuid,
-    ViewportDescriptor,
-    WindingDirection,
+    type PolygonVertex,
+    type ViewportDescriptor,
+    type WindingDirection,
     type PathArcToCommand,
     type PathBezierToCommand,
     type PathCommand,
-    type PathCommandWithUuid,
     type PathLineToCommand,
     type PathMoveToCommand,
     type PathQuadraticBezierToCommand
@@ -40,7 +39,7 @@ const PATH_MIN_COMMAND_COUNT = 2;
 
 @validGeometry
 export default class Path extends Geometry {
-    private _commands: PathCommandWithUuid[] = [];
+    private _commands: Required<PathCommand>[] = [];
     private _closed: boolean = true;
     private _fillRule: FillRule = "nonzero";
 
@@ -126,7 +125,7 @@ export default class Path extends Geometry {
         this._fillRule = value;
     }
 
-    get commands(): PathCommandWithUuid[] {
+    get commands(): Required<PathCommand>[] {
         return this._commands.map(cmd => ({ ...cmd }));
     }
     set commands(value: PathCommand[]) {
@@ -190,27 +189,25 @@ export default class Path extends Geometry {
 
     static moveTo(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
-        const ret: PathMoveToCommand = {
+        return {
             type: PathCommandType.MoveTo,
             x,
             y
-        };
-        return ret;
+        } as PathMoveToCommand;
     }
     static lineTo(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
-        const ret: PathLineToCommand = {
+        return {
             type: PathCommandType.LineTo,
             x,
             y
-        };
-        return ret;
+        } as PathLineToCommand;
     }
     static bezierTo(controlPoint1: [number, number] | Point, controlPoint2: [number, number] | Point, point: [number, number] | Point) {
         const [controlPoint1X, controlPoint1Y] = getCoordinates(controlPoint1, "controlPoint1");
         const [controlPoint2X, controlPoint2Y] = getCoordinates(controlPoint2, "controlPoint2");
         const [x, y] = getCoordinates(point, "point");
-        const ret: PathBezierToCommand = {
+        return {
             type: PathCommandType.BezierTo,
             x,
             y,
@@ -218,27 +215,25 @@ export default class Path extends Geometry {
             controlPoint1Y,
             controlPoint2X,
             controlPoint2Y
-        };
-        return ret;
+        } as PathBezierToCommand;
     }
     static quadraticBezierTo(controlPoint: [number, number] | Point, point: [number, number] | Point) {
         const [controlPointX, controlPointY] = getCoordinates(controlPoint, "controlPoint");
         const [x, y] = getCoordinates(point, "point");
-        const ret: PathQuadraticBezierToCommand = {
+        return {
             type: PathCommandType.QuadraticBezierTo,
             x,
             y,
             controlPointX,
             controlPointY
-        };
-        return ret;
+        } as PathQuadraticBezierToCommand;
     }
     static arcTo(radiusX: number, radiusY: number, rotation: number, largeArc: boolean, positive: boolean, point: [number, number] | Point) {
         Assert.isPositiveNumber(radiusX, "radiusX");
         Assert.isPositiveNumber(radiusY, "radiusY");
         Assert.isRealNumber(rotation, "rotation");
         const [x, y] = getCoordinates(point, "point");
-        const ret: PathArcToCommand = {
+        return {
             type: PathCommandType.ArcTo,
             x,
             y,
@@ -247,8 +242,7 @@ export default class Path extends Geometry {
             rotation,
             largeArc,
             positive
-        };
-        return ret;
+        } as PathArcToCommand;
     }
 
     move(deltaX: number, deltaY: number) {
@@ -400,9 +394,8 @@ export default class Path extends Geometry {
         for (let i = 0; i < cl; i++) {
             const segment = this.getSegment(i, assumeClosed)!;
             if (clean) {
-                if (!(segment.degenerate(false) instanceof Point)) {
-                    ret.push(segment);
-                }
+                const dg = segment.degenerate(false);
+                if (dg !== null && !(dg instanceof Point)) ret.push(segment);
             } else {
                 ret.push(segment);
             }
@@ -487,6 +480,16 @@ export default class Path extends Geometry {
         }
     }
 
+    private _handleNextArcTo(index: number) {
+        if (this._commands[index + 1]?.type === PathCommandType.ArcTo) {
+            let cmd = this._commands[index + 1] as Required<PathArcToCommand>;
+            cmd = this._correctAndSetRadii(cmd, this._commands[index]);
+            if (!Utility.isEqualTo(this._commands[index + 1], cmd)) {
+                this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index + 1, cmd.uuid));
+                this._commands[index + 1] = cmd;
+            }
+        }
+    }
     private _correctAndSetRadii<T extends PathArcToCommand | Required<PathArcToCommand>>(command: T, prevCommand: PathCommand) {
         const { x: x1, y: y1 } = prevCommand;
         const { x: x2, y: y2, radiusX, radiusY, rotation } = command;
@@ -498,40 +501,31 @@ export default class Path extends Geometry {
         const index = this._indexAt(indexOrUuid);
         if (index === -1) return null;
         const { x, y, uuid } = this._commands[index];
-        return { x, y, uuid } as PolygonVertexWithUuid;
+        return { x, y, uuid } as Required<PolygonVertex>;
     }
 
     // #region Command
     getCommand(indexOrUuid: number | string) {
         const index = this._indexAt(indexOrUuid);
         if (index === -1) return null;
-        const { uuid, ...rest } = this._commands[index];
-        return rest as PathCommand;
+        return { ...this._commands[index] } as Required<PathCommand>;
     }
-    private _handleNextArcTo(index: number) {
-        if (this._commands[index + 1]?.type === PathCommandType.ArcTo) {
-            let cmd = this._commands[index + 1] as Required<PathArcToCommand>;
-            cmd = this._correctAndSetRadii(cmd, this._commands[index]);
-            if (!Utility.isEqualTo(this._commands[index + 1], cmd)) {
-                this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index + 1, cmd.uuid));
-                this._commands[index + 1] = cmd;
-            }
-        }
-    }
+
     setCommand(indexOrUuid: number | string, command: PathCommand) {
         this._assertIsPathCommand(command, "command");
         const index = this._indexAt(indexOrUuid);
         if (index === -1) return false;
         const uuid = this._commands[index].uuid;
 
-        let cmd: PathCommandWithUuid = { ...command, uuid };
         // handle `moveTo`
-        if (index === 0 && cmd.type !== PathCommandType.MoveTo) {
-            cmd = { ...Path.moveTo([cmd.x, cmd.y]), uuid };
-        }
-        if (index !== 0 && cmd.type === PathCommandType.MoveTo) {
-            cmd = { ...Path.lineTo([cmd.x, cmd.y]), uuid };
-        }
+        // prettier-ignore
+        let cmd =
+                index === 0 && command.type !== PathCommandType.MoveTo
+                ? { ...Path.moveTo([command.x, command.y]), uuid }
+                : index !== 0 && command.type === PathCommandType.MoveTo
+                ? { ...Path.lineTo([command.x, command.y]), uuid }
+                : { ...command, uuid };
+
         // handle `arcTo`
         if (cmd.type === PathCommandType.ArcTo) {
             cmd = this._correctAndSetRadii(cmd, this._commands[index - 1]);
@@ -541,7 +535,6 @@ export default class Path extends Geometry {
             this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index, uuid));
             this._commands[index] = cmd;
         }
-
         this._handleNextArcTo(index);
         return true;
     }
@@ -552,17 +545,17 @@ export default class Path extends Geometry {
         const uuid = Utility.uuid();
 
         if (index === 0) return this.prependCommand(command);
-        if (index === this._commands.length - 1) return this.appendCommand(command);
-
-        let cmd: PathCommandWithUuid = { ...command, uuid };
 
         // handle `moveTo`
-        if (cmd.type === PathCommandType.MoveTo) {
-            cmd = { ...Path.lineTo([cmd.x, cmd.y]), uuid };
-        }
+        // prettier-ignore
+        let cmd = 
+            command.type === PathCommandType.MoveTo 
+            ? { ...Path.lineTo([command.x, command.y]), uuid } 
+            : { ...command, uuid };
+
         // handle `arcTo`
         if (cmd.type === PathCommandType.ArcTo) {
-            cmd = this._correctAndSetRadii(cmd, this._commands[index - 1]);
+            cmd = this._correctAndSetRadii(cmd, this._commands[index - 1]); // splice insert new element `before`(or replace) index
         }
 
         this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, uuid));
@@ -585,7 +578,6 @@ export default class Path extends Geometry {
 
         this.trigger_(new EventSourceObject(this, Path.events.commandRemoved, index, uuid));
         this._commands.splice(index, 1);
-
         this._handleNextArcTo(index);
         return true;
     }
@@ -594,21 +586,20 @@ export default class Path extends Geometry {
         const index = this.commandCount;
         const uuid = Utility.uuid();
 
-        let cmd: PathCommandWithUuid = { ...command, uuid };
+        // handle `moveTo`
+        // prettier-ignore
+        let cmd =
+                this._commands.length === 0 && command.type !== PathCommandType.MoveTo
+                ? { ...Path.moveTo([command.x, command.y]), uuid }
+                : this._commands.length !== 0 && command.type === PathCommandType.MoveTo
+                ? { ...Path.lineTo([command.x, command.y]), uuid }
+                : { ...command, uuid };
 
-        // handle first append
-        if (this._commands.length === 0) {
-            cmd = { ...Path.moveTo([cmd.x, cmd.y]), uuid };
-        } else {
-            // handle `moveTo`
-            if (cmd.type === PathCommandType.MoveTo) {
-                cmd = { ...Path.lineTo([cmd.x, cmd.y]), uuid };
-            }
-            // handle `arcTo`
-            if (cmd.type === PathCommandType.ArcTo) {
-                cmd = this._correctAndSetRadii(cmd, this._commands[index - 1]);
-            }
+        // handle `arcTo`
+        if (cmd.type === PathCommandType.ArcTo) {
+            cmd = this._correctAndSetRadii(cmd, this._commands[index - 1]);
         }
+
         this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, uuid));
         this._commands.push(cmd);
         return [index, uuid] as [number, string];
@@ -618,23 +609,21 @@ export default class Path extends Geometry {
         const index = 0;
         const uuid = Utility.uuid();
 
-        let cmd: PathCommandWithUuid = { ...command, uuid };
+        const cmd = { ...Path.moveTo([command.x, command.y]), uuid };
 
-        // handle first prepend
-        if (this._commands.length === 0) {
-            cmd = { ...Path.moveTo([cmd.x, cmd.y]), uuid };
-        } else {
-            // handle `moveTo`
-            if (command.type !== PathCommandType.MoveTo) {
-                const { x: x0, y: y0, uuid: uuid0 } = this._commands[0];
+        if (this.commands.length !== 0) {
+            const { x: x0, y: y0, uuid: uuid0 } = this._commands[0];
+            let cmd0 = this._reverseCommand({ ...command, type: command.type === PathCommandType.MoveTo ? PathCommandType.LineTo : command.type, uuid: uuid0 } as Required<PathCommand>, x0, y0);
 
-                cmd = { ...Path.moveTo([cmd.x, cmd.y]), uuid };
-                const cmd0 = { ...this._reverseCommand(command, x0, y0), uuid: uuid0 };
-
-                this.trigger_(new EventSourceObject(this, Path.events.commandChanged, 1, uuid0));
-                this._commands[0] = cmd0;
+            // handle `arcTo`
+            if (cmd0.type === PathCommandType.ArcTo) {
+                cmd0 = this._correctAndSetRadii(cmd0, command);
             }
+
+            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, 0, uuid0));
+            this._commands[0] = cmd0;
         }
+
         this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, uuid));
         this._commands.unshift(cmd);
         return [index, uuid] as [number, string];
@@ -652,14 +641,31 @@ export default class Path extends Geometry {
 
         retCommands.push(this._commands[0]);
         for (let i = 1; i < cl; i++) {
-            if (!(this.getSegment(i - 1)!.degenerate(false) instanceof Point)) {
+            const dg = this.getSegment(i - 1)!.degenerate(false);
+            if (dg !== null && !(dg instanceof Point)) {
                 retCommands.push(this._commands[i]);
             }
         }
         retPath.commands = retCommands;
         return retPath;
     }
+    reverse() {
+        const copy = this._commands.map(cmd => ({ ...cmd }));
+        copy.reverse();
+        this._commands = copy;
+        return this;
+    }
 
+    randomPointInside() {
+        const epsilon = optioner.options.epsilon;
+        if (Maths.equalTo(this.getArea(), 0, epsilon)) return null;
+        const [x, y, w, h] = this.getBoundingBox();
+        let rnd: [number, number];
+        do {
+            rnd = [x + w * Maths.random(), y + h * Maths.random()];
+        } while (!this.isPointInside(rnd));
+        return new Point(rnd);
+    }
     getBoundingBox() {
         let bbox = [Infinity, Infinity, -Infinity, -Infinity] as [number, number, number, number];
 

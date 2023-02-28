@@ -285,9 +285,7 @@ export type FontConfig = {
 
 // #region Path
 export type PathCommand = PathMoveToCommand | PathLineToCommand | PathBezierToCommand | PathQuadraticBezierToCommand | PathArcToCommand;
-
-export type PathCommandWithUuid = Required<PathCommand>;
-
+ 
 export const enum PathCommandType {
     MoveTo = "M",
     LineTo = "L",
@@ -345,8 +343,7 @@ export type PolygonVertex = {
     x: number;
     y: number;
 };
-
-export type PolygonVertexWithUuid = Required<PolygonVertex>;
+ 
 
 // #endregion
 

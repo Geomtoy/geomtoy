@@ -1,29 +1,27 @@
 import { Assert, Box, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
-import GeometryGraphic from "../../graphics/GeometryGraphic";
-import { stated, statedWithBoolean } from "../../misc/decor-cache";
-import { validGeometry } from "../../misc/decor-geometry";
-import LineSegment from "../basic/LineSegment";
-import Point from "../basic/Point";
-
 import { optioner } from "../../geomtoy";
+import Graphics from "../../graphics";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import ArrowGraphics from "../../helper/ArrowGraphics";
 import FillRuleHelper from "../../helper/FillRuleHelper";
-import IntersectionDescriptor from "../../helper/IntersectionDescriptor";
 import { lineSegmentPathIntegral } from "../../misc/area-integrate";
-import { next, prev } from "../../misc/loop";
+import { stated, statedWithBoolean } from "../../misc/decor-cache";
+import { validGeometry } from "../../misc/decor-geometry";
+import { next } from "../../misc/loop";
 import { getCoordinates } from "../../misc/point-like";
 import LineSegmentLineSegment from "../../relationship/classes/LineSegmentLineSegment";
 import type Transformation from "../../transformation";
-import type { FillRule, PolygonVertex, PolygonVertexWithUuid, ViewportDescriptor, WindingDirection } from "../../types";
-import Graphics from "../../graphics";
+import type { FillRule, PolygonVertex, ViewportDescriptor, WindingDirection } from "../../types";
+import LineSegment from "../basic/LineSegment";
+import Point from "../basic/Point";
 
 const POLYGON_MIN_VERTEX_COUNT = 2;
 
 @validGeometry
 export default class Polygon extends Geometry {
-    private _vertices: PolygonVertexWithUuid[] = [];
+    private _vertices: Required<PolygonVertex>[] = [];
     private _closed: boolean = true;
     private _fillRule: FillRule = "nonzero";
 
@@ -66,7 +64,7 @@ export default class Polygon extends Geometry {
         this._fillRule = value;
     }
 
-    get vertices(): PolygonVertexWithUuid[] {
+    get vertices(): Required<PolygonVertex>[] {
         return this._vertices.map(vtx => ({ ...vtx }));
     }
     set vertices(value: PolygonVertex[]) {
@@ -156,8 +154,7 @@ export default class Polygon extends Geometry {
 
     static vertex(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
-        const ret: PolygonVertex = { x, y };
-        return ret;
+        return { x, y } as PolygonVertex;
     }
 
     move(deltaX: number, deltaY: number) {
@@ -245,35 +242,33 @@ export default class Polygon extends Geometry {
     getVertex(indexOrUuid: number | string) {
         const index = this._indexAt(indexOrUuid);
         if (index === -1) return null;
-        return { ...this._vertices[index] };
+        return { ...this._vertices[index] } as Required<PolygonVertex>;
     }
     setVertex(indexOrUuid: number | string, vertex: PolygonVertex) {
         this._assertIsPolygonVertex(vertex, "vertex");
-
         const index = this._indexAt(indexOrUuid);
         if (index === -1) return false;
         const uuid = this._vertices[index].uuid;
 
-        const oldVtx = this._vertices[index];
-        const newVtx = { ...vertex, uuid: oldVtx.uuid };
+        const vtx = { ...vertex, uuid };
 
-        if (!Utility.isEqualTo(oldVtx, newVtx)) {
+        if (!Utility.isEqualTo(this._vertices[index], vtx)) {
             this.trigger_(new EventSourceObject(this, Polygon.events.vertexChanged, index, uuid));
-            this._vertices[index] = newVtx;
+            this._vertices[index] = vtx;
         }
         return true;
     }
     insertVertex(indexOrUuid: number | string, vertex: PolygonVertex) {
         this._assertIsPolygonVertex(vertex, "vertex");
-
         const index = this._indexAt(indexOrUuid);
         if (index === -1) return false;
         const uuid = Utility.uuid();
+
         const vtx = { ...vertex, uuid };
 
-        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index + 1, uuid));
+        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, uuid));
         this._vertices.splice(index, 0, vtx);
-        return [index + 1, uuid] as [number, string];
+        return [index, uuid] as [number, string];
     }
     removeVertex(indexOrUuid: number | string) {
         const index = this._indexAt(indexOrUuid);
@@ -286,10 +281,10 @@ export default class Polygon extends Geometry {
     }
     appendVertex(vertex: PolygonVertex) {
         this._assertIsPolygonVertex(vertex, "vertex");
-
-        const uuid = Utility.uuid();
-        const vtx = { ...vertex, uuid };
         const index = this.vertexCount;
+        const uuid = Utility.uuid();
+
+        const vtx = { ...vertex, uuid };
 
         this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, uuid));
         this._vertices.push(vtx);
@@ -297,10 +292,11 @@ export default class Polygon extends Geometry {
     }
     prependVertex(vertex: PolygonVertex): [number, string] {
         this._assertIsPolygonVertex(vertex, "vertex");
-
-        const uuid = Utility.uuid();
-        const vtx = { ...vertex, uuid };
         const index = 0;
+        const uuid = Utility.uuid();
+
+        const vtx = { ...vertex, uuid };
+
         this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, uuid));
         this._vertices.unshift(vtx);
         return [index, uuid] as [number, string];
@@ -434,25 +430,6 @@ export default class Polygon extends Geometry {
         return false;
     }
 
-    /**
-     * Returns a new polygon with all segments degenerating to point of polygon `this` cleaned.
-     */
-    clean() {
-        const retPolygon = new Polygon(this._closed, this._fillRule);
-
-        const l = this.vertexCount;
-        const cl = this.closed ? l : l - 1;
-        const retVertices: PolygonVertex[] = [];
-        retVertices.push(this._vertices[0]);
-        for (let i = 1; i < cl; i++) {
-            if (!(this.getSegment(i - 1)!.degenerate(false) instanceof Point)) {
-                retVertices.push(this._vertices[i]);
-            }
-        }
-        retPolygon.vertices = retVertices;
-        return retPolygon;
-    }
-
     // #region Length, area, winding direction
     @stated
     getLength() {
@@ -485,17 +462,32 @@ export default class Polygon extends Geometry {
         return Maths.sign(this.getArea()) as WindingDirection;
     }
     // #endregion
+    /**
+     * Returns a new polygon with all segments degenerating to point of polygon `this` cleaned.
+     */
+    clean() {
+        const retPolygon = new Polygon(this._closed, this._fillRule);
+        const l = this.vertexCount;
+        const cl = this.closed ? l : l - 1;
+        const retVertices: PolygonVertex[] = [];
 
+        retVertices.push(this._vertices[0]);
+        for (let i = 1; i < cl; i++) {
+            const dg = this.getSegment(i - 1)!.degenerate(false);
+            if (dg !== null && !(dg instanceof Point)) {
+                retVertices.push(this._vertices[i]);
+            }
+        }
+        retPolygon.vertices = retVertices;
+        return retPolygon;
+    }
     reverse() {
-        const copy = [...this._vertices].map(vtxWu => {
-            const { uuid, ...vtx } = vtxWu;
-            return vtx;
-        });
+        const copy = this._vertices.map(vtx => ({ ...vtx }));
         copy.reverse();
         this.vertices = copy;
+        return this;
     }
 
-    @stated
     randomPointInside() {
         const epsilon = optioner.options.epsilon;
         if (Maths.equalTo(this.getArea(), 0, epsilon)) return null;
