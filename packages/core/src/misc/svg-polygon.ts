@@ -1,10 +1,9 @@
 import Polygon from "../geometries/general/Polygon";
 import { PolygonVertex } from "../types";
 
-export function parseSvgPolygon(points: string, closed = true) {
+export function parseSvgPolygon(points: string) {
     const polygon = {
-        vertices: [] as PolygonVertex[],
-        closed
+        vertices: [] as PolygonVertex[]
     };
 
     if (points === "") return polygon;

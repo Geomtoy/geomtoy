@@ -11,6 +11,7 @@ import { stated, statedWithBoolean } from "../../misc/decor-cache";
 import { validGeometry } from "../../misc/decor-geometry";
 import { next } from "../../misc/loop";
 import { getCoordinates } from "../../misc/point-like";
+import { parseSvgPolygon } from "../../misc/svg-polygon";
 import LineSegmentLineSegment from "../../relationship/classes/LineSegmentLineSegment";
 import type Transformation from "../../transformation";
 import type { FillRule, PolygonVertex, ViewportDescriptor, WindingDirection } from "../../types";
@@ -111,13 +112,18 @@ export default class Polygon extends Geometry {
         return check ? true : new Point(x0, y0);
     }
 
+    static fromSVGString(data: string, closed = true) {
+        const polygon = parseSvgPolygon(data);
+        return new Polygon(polygon.vertices, closed);
+    }
+
     static fromPoints(points: ([number, number] | Point)[]) {
         return new Polygon(points.map(p => Polygon.vertex(p)));
     }
     /**
      * @see https://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain
      */
-    static convexHullFromPoints(points: ([number, number] | Point)[]) {
+    static fromPointsConvexHull(points: ([number, number] | Point)[]) {
         if (points.length < POLYGON_MIN_VERTEX_COUNT) return null;
         if (points.length === POLYGON_MIN_VERTEX_COUNT) return new Polygon([Polygon.vertex(points[0]), Polygon.vertex(points[1])], true);
 
