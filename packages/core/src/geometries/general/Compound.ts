@@ -241,9 +241,9 @@ export default class Compound extends Geometry {
     override toString() {
         // prettier-ignore
         return [
-            `${this.name}(${this.uuid}){`, 
+            `${this.name}(${this.id}){`, 
             `\titems: [`,
-            ...this.items.map(item => `\t\t${item.name}(${item.uuid})`),
+            ...this.items.map(item => `\t\t${item.name}(${item.id})`),
             `\t]`,
             `}`
         ].join("\n");

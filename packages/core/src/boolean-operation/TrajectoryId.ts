@@ -1,17 +1,17 @@
 export default class TrajectoryId {
-    constructor(public uuid: string) {}
+    constructor(public id: string) {}
 
     negotiate(that: TrajectoryId) {
-        if (this.uuid > that.uuid) {
-            that.uuid = this.uuid;
+        if (this.id > that.id) {
+            that.id = this.id;
         } else {
-            this.uuid = that.uuid;
+            this.id = that.id;
         }
     }
     equalTo(that: TrajectoryId) {
-        return this.uuid === that.uuid;
+        return this.id === that.id;
     }
     clone() {
-        return new TrajectoryId(this.uuid);
+        return new TrajectoryId(this.id);
     }
 }

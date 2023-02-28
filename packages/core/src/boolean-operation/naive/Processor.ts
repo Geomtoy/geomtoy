@@ -36,7 +36,7 @@ export default class Processor {
         return [
             new ChipSegment({
                 segment: lineSegment,
-                trajectoryId: new TrajectoryId(lineSegment.uuid)
+                trajectoryId: new TrajectoryId(lineSegment.id)
             })
         ];
     }
@@ -63,7 +63,7 @@ export default class Processor {
         return [
             new ChipSegment({
                 segment: quadraticBezier,
-                trajectoryId: new TrajectoryId(quadraticBezier.uuid)
+                trajectoryId: new TrajectoryId(quadraticBezier.id)
             })
         ];
     }
@@ -82,7 +82,7 @@ export default class Processor {
         const tsi = bezier.selfIntersection().filter(t => Maths.between(t, 0, 1, true, true, epsilon));
         if (tsi.length !== 0) {
             const chips = bezier.splitAtTimes(tsi).map(bezier => {
-                return new ChipSegment({ segment: bezier, trajectoryId: new TrajectoryId(bezier.uuid) });
+                return new ChipSegment({ segment: bezier, trajectoryId: new TrajectoryId(bezier.id) });
             });
             return chips;
         }
@@ -102,7 +102,7 @@ export default class Processor {
         return [
             new ChipSegment({
                 segment: bezier,
-                trajectoryId: new TrajectoryId(bezier.uuid)
+                trajectoryId: new TrajectoryId(bezier.id)
             })
         ];
     }
@@ -114,7 +114,7 @@ export default class Processor {
         return [
             new ChipSegment({
                 segment: arc,
-                trajectoryId: new TrajectoryId(arc.uuid)
+                trajectoryId: new TrajectoryId(arc.id)
             })
         ];
     }

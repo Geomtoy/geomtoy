@@ -80,9 +80,9 @@ export default class SealedShapeArray<T extends Shape[]> extends Shape {
     override toString() {
         // prettier-ignore
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tshapes: [`,
-            ...this._shapes.map(shape=> `\t\t${shape.name}(${shape.uuid})`),
+            ...this._shapes.map(shape=> `\t\t${shape.name}(${shape.id})`),
             `\t]`,
             `}`
         ].join("\n")

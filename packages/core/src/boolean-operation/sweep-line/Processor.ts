@@ -38,7 +38,7 @@ export default class Processor {
                 segment: lineSegment,
                 isPrimary,
                 origin: lineSegment,
-                trajectoryId: new TrajectoryId(lineSegment.uuid)
+                trajectoryId: new TrajectoryId(lineSegment.id)
             })
         ];
     }
@@ -63,7 +63,7 @@ export default class Processor {
                     segment: arc,
                     isPrimary,
                     origin: arc,
-                    trajectoryId: new TrajectoryId(arc.uuid)
+                    trajectoryId: new TrajectoryId(arc.id)
                 })
             ];
         }
@@ -87,7 +87,7 @@ export default class Processor {
                     segment: arc.portionOf(angles[i], angles[i + 1]),
                     isPrimary,
                     origin: arc,
-                    trajectoryId: new TrajectoryId(arc.uuid)
+                    trajectoryId: new TrajectoryId(arc.id)
                 })
             );
         }
@@ -125,7 +125,7 @@ export default class Processor {
                     segment: quadraticBezier,
                     isPrimary,
                     origin: quadraticBezier,
-                    trajectoryId: new TrajectoryId(quadraticBezier.uuid)
+                    trajectoryId: new TrajectoryId(quadraticBezier.id)
                 })
             ];
         }
@@ -138,7 +138,7 @@ export default class Processor {
                     segment: quadraticBezier.portionOf(times[i], times[i + 1]),
                     isPrimary,
                     origin: quadraticBezier,
-                    trajectoryId: new TrajectoryId(quadraticBezier.uuid)
+                    trajectoryId: new TrajectoryId(quadraticBezier.id)
                 })
             );
         }
@@ -188,7 +188,7 @@ export default class Processor {
                     segment: bezier,
                     isPrimary,
                     origin: bezier,
-                    trajectoryId: new TrajectoryId(bezier.uuid)
+                    trajectoryId: new TrajectoryId(bezier.id)
                 })
             ];
         }
@@ -204,7 +204,7 @@ export default class Processor {
                     segment: bezier.portionOf(times[i], times[i + 1]),
                     isPrimary,
                     origin: bezier,
-                    trajectoryId: new TrajectoryId(bezier.uuid)
+                    trajectoryId: new TrajectoryId(bezier.id)
                 })
             );
         }

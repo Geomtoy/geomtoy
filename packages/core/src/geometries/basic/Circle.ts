@@ -569,7 +569,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
     override toString() {
         // prettier-ignore
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tcenterX: ${this.centerX}`,
             `\tcenterY: ${this.centerY}`,
             `\tradius: ${this.radius}`,

@@ -22,10 +22,10 @@ const alwaysAvailableInstanceMethods = [
 
 function geometryInvalidText(geometryInstance: Geometry) {
     const name = geometryInstance.name;
-    const uuid = geometryInstance.uuid;
+    const id = geometryInstance.id;
 
     return `
-        \nPlease check whether the essential properties of the \`${name}\`(${uuid}) have been initialized and set proper values. \
+        \nPlease check whether the essential properties of the \`${name}\`(${id}) have been initialized and set proper values. \
         \nIf \`Geometry\` falls into a degenerate condition, it will also be considered invalid. You can access \`degenerate\` method to determine what happened.
         \nWhen a \`Geometry\` is invalid, all of its instance methods cannot be accessed except the following: \`${alwaysAvailableInstanceMethods.join(
             "`, `"

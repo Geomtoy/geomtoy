@@ -71,7 +71,7 @@ export default class Path extends Geometry {
 
     private _setCommands(value: PathCommand[]) {
         const commands: Required<PathCommand>[] = value.map(cmd => {
-            return { ...cmd, uuid: Utility.uuid() };
+            return { ...cmd, id: Utility.id("PathCommand") };
         });
 
         let firstMoveToIndex = commands.findIndex(cmd => cmd.type === PathCommandType.MoveTo);
@@ -83,7 +83,7 @@ export default class Path extends Geometry {
             if (i < firstMoveToIndex) {
                 if (temp === null) {
                     // this is the first command if we have `moveTo` but not first
-                    commands[i] = { ...Path.moveTo([cmd.x, cmd.y]), uuid: cmd.uuid };
+                    commands[i] = { ...Path.moveTo([cmd.x, cmd.y]), id: cmd.id };
                     temp = cmd;
                 } else {
                     commands[i] = this._reverseCommand(temp, cmd.x, cmd.y);
@@ -100,11 +100,11 @@ export default class Path extends Geometry {
             if (i > firstMoveToIndex) {
                 if (firstMoveToIndex === -1) {
                     // this is the first command if we do not have `moveTo
-                    commands[i] = { ...Path.moveTo([cmd.x, cmd.y]), uuid: cmd.uuid };
+                    commands[i] = { ...Path.moveTo([cmd.x, cmd.y]), id: cmd.id };
                     firstMoveToIndex = 0;
                 } else {
                     if (cmd.type === PathCommandType.MoveTo) {
-                        commands[i] = { ...Path.lineTo([cmd.x, cmd.y]), uuid: cmd.uuid };
+                        commands[i] = { ...Path.lineTo([cmd.x, cmd.y]), id: cmd.id };
                     }
                 }
             }
@@ -276,7 +276,7 @@ export default class Path extends Geometry {
                     break;
                 }
             }
-            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, i, cmd.uuid));
+            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, i, cmd.id));
         });
         return this;
     }
@@ -329,28 +329,28 @@ export default class Path extends Geometry {
     private _assertIsPathCommand(value: PathCommand, p: string) {
         Assert.condition(this._isPathCommand(value), `[G]The \`${p}\` should be a \`PathCommand\`.`);
     }
-    private _indexAt(indexOrUuid: number | string): number {
-        return Type.isString(indexOrUuid) ? this._commands.findIndex(cmd => cmd.uuid === indexOrUuid) : this._commands[indexOrUuid] !== undefined ? indexOrUuid : -1;
+    private _indexAt(indexOrId: number | string): number {
+        return Type.isString(indexOrId) ? this._commands.findIndex(cmd => cmd.id === indexOrId) : this._commands[indexOrId] !== undefined ? indexOrId : -1;
     }
 
-    getUuids() {
-        return this._commands.map(cmd => cmd.uuid);
+    getIds() {
+        return this._commands.map(cmd => cmd.id);
     }
-    getIndexOfUuid(uuid: string) {
-        return this._commands.findIndex(cmd => cmd.uuid === uuid);
+    getIndexOfId(id: string) {
+        return this._commands.findIndex(cmd => cmd.id === id);
     }
-    getUuidOfIndex(index: number) {
-        return this._commands[index]?.uuid ?? "";
+    getIdOfIndex(index: number) {
+        return this._commands[index]?.id ?? "";
     }
 
     // #region Segment
     /**
-     * Get segment by `indexOrUuid`.
-     * @param indexOrUuid
+     * Get segment by `indexOrId`.
+     * @param indexOrId
      * @param assumeClosed
      */
-    getSegment(indexOrUuid: number | string, assumeClosed = false) {
-        const index = this._indexAt(indexOrUuid);
+    getSegment(indexOrId: number | string, assumeClosed = false) {
+        const index = this._indexAt(indexOrId);
         if (index === -1) return null;
         const closed = assumeClosed ? true : this.closed;
         const nextIndex = next(index, this.commandCount, closed);
@@ -485,7 +485,7 @@ export default class Path extends Geometry {
             let cmd = this._commands[index + 1] as Required<PathArcToCommand>;
             cmd = this._correctAndSetRadii(cmd, this._commands[index]);
             if (!Utility.isEqualTo(this._commands[index + 1], cmd)) {
-                this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index + 1, cmd.uuid));
+                this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index + 1, cmd.id));
                 this._commands[index + 1] = cmd;
             }
         }
@@ -497,34 +497,34 @@ export default class Path extends Geometry {
         return { ...command, radiusX: rx, radiusY: ry } as T;
     }
 
-    getVertex(indexOrUuid: number | string) {
-        const index = this._indexAt(indexOrUuid);
+    getVertex(indexOrId: number | string) {
+        const index = this._indexAt(indexOrId);
         if (index === -1) return null;
-        const { x, y, uuid } = this._commands[index];
-        return { x, y, uuid } as Required<PolygonVertex>;
+        const { x, y, id } = this._commands[index];
+        return { x, y, id } as Required<PolygonVertex>;
     }
 
     // #region Command
-    getCommand(indexOrUuid: number | string) {
-        const index = this._indexAt(indexOrUuid);
+    getCommand(indexOrId: number | string) {
+        const index = this._indexAt(indexOrId);
         if (index === -1) return null;
         return { ...this._commands[index] } as Required<PathCommand>;
     }
 
-    setCommand(indexOrUuid: number | string, command: PathCommand) {
+    setCommand(indexOrId: number | string, command: PathCommand) {
         this._assertIsPathCommand(command, "command");
-        const index = this._indexAt(indexOrUuid);
+        const index = this._indexAt(indexOrId);
         if (index === -1) return false;
-        const uuid = this._commands[index].uuid;
+        const id = this._commands[index].id;
 
         // handle `moveTo`
         // prettier-ignore
         let cmd =
                 index === 0 && command.type !== PathCommandType.MoveTo
-                ? { ...Path.moveTo([command.x, command.y]), uuid }
+                ? { ...Path.moveTo([command.x, command.y]), id }
                 : index !== 0 && command.type === PathCommandType.MoveTo
-                ? { ...Path.lineTo([command.x, command.y]), uuid }
-                : { ...command, uuid };
+                ? { ...Path.lineTo([command.x, command.y]), id }
+                : { ...command, id };
 
         // handle `arcTo`
         if (cmd.type === PathCommandType.ArcTo) {
@@ -532,17 +532,17 @@ export default class Path extends Geometry {
         }
 
         if (!Utility.isEqualTo(this._commands[index], cmd)) {
-            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index, uuid));
+            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index, id));
             this._commands[index] = cmd;
         }
         this._handleNextArcTo(index);
         return true;
     }
-    insertCommand(indexOrUuid: number | string, command: PathCommand) {
+    insertCommand(indexOrId: number | string, command: PathCommand) {
         this._assertIsPathCommand(command, "command");
-        const index = this._indexAt(indexOrUuid);
+        const index = this._indexAt(indexOrId);
         if (index === -1) return false;
-        const uuid = Utility.uuid();
+        const id = Utility.id("PathCommand");
 
         if (index === 0) return this.prependCommand(command);
 
@@ -550,33 +550,33 @@ export default class Path extends Geometry {
         // prettier-ignore
         let cmd = 
             command.type === PathCommandType.MoveTo 
-            ? { ...Path.lineTo([command.x, command.y]), uuid } 
-            : { ...command, uuid };
+            ? { ...Path.lineTo([command.x, command.y]), id } 
+            : { ...command, id };
 
         // handle `arcTo`
         if (cmd.type === PathCommandType.ArcTo) {
             cmd = this._correctAndSetRadii(cmd, this._commands[index - 1]); // splice insert new element `before`(or replace) index
         }
 
-        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, uuid));
+        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, id));
         this._commands.splice(index, 0, cmd);
         this._handleNextArcTo(index);
-        return [index, uuid] as [number, string];
+        return [index, id] as [number, string];
     }
-    removeCommand(indexOrUuid: number | string) {
-        const index = this._indexAt(indexOrUuid);
+    removeCommand(indexOrId: number | string) {
+        const index = this._indexAt(indexOrId);
         if (index === -1) return false;
-        const uuid = this._commands[index].uuid;
+        const id = this._commands[index].id;
 
         // handle `moveTo`
         if (index === 0 && this._commands[1] !== undefined) {
-            const { x: x1, y: y1, uuid: uuid1 } = this._commands[1];
-            const cmd1 = { ...Path.moveTo([x1, y1]), uuid: uuid1 };
-            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, 1, uuid1));
+            const { x: x1, y: y1, id: id1 } = this._commands[1];
+            const cmd1 = { ...Path.moveTo([x1, y1]), id: id1 };
+            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, 1, id1));
             this._commands[1] = cmd1;
         }
 
-        this.trigger_(new EventSourceObject(this, Path.events.commandRemoved, index, uuid));
+        this.trigger_(new EventSourceObject(this, Path.events.commandRemoved, index, id));
         this._commands.splice(index, 1);
         this._handleNextArcTo(index);
         return true;
@@ -584,49 +584,49 @@ export default class Path extends Geometry {
     appendCommand(command: PathCommand) {
         this._assertIsPathCommand(command, "command");
         const index = this.commandCount;
-        const uuid = Utility.uuid();
+        const id = Utility.id("PathCommand");
 
         // handle `moveTo`
         // prettier-ignore
         let cmd =
                 this._commands.length === 0 && command.type !== PathCommandType.MoveTo
-                ? { ...Path.moveTo([command.x, command.y]), uuid }
+                ? { ...Path.moveTo([command.x, command.y]), id }
                 : this._commands.length !== 0 && command.type === PathCommandType.MoveTo
-                ? { ...Path.lineTo([command.x, command.y]), uuid }
-                : { ...command, uuid };
+                ? { ...Path.lineTo([command.x, command.y]), id }
+                : { ...command, id };
 
         // handle `arcTo`
         if (cmd.type === PathCommandType.ArcTo) {
             cmd = this._correctAndSetRadii(cmd, this._commands[index - 1]);
         }
 
-        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, uuid));
+        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, id));
         this._commands.push(cmd);
-        return [index, uuid] as [number, string];
+        return [index, id] as [number, string];
     }
     prependCommand(command: PathCommand) {
         this._assertIsPathCommand(command, "command");
         const index = 0;
-        const uuid = Utility.uuid();
+        const id = Utility.id("PathCommand");
 
-        const cmd = { ...Path.moveTo([command.x, command.y]), uuid };
+        const cmd = { ...Path.moveTo([command.x, command.y]), id };
 
         if (this.commands.length !== 0) {
-            const { x: x0, y: y0, uuid: uuid0 } = this._commands[0];
-            let cmd0 = this._reverseCommand({ ...command, type: command.type === PathCommandType.MoveTo ? PathCommandType.LineTo : command.type, uuid: uuid0 } as Required<PathCommand>, x0, y0);
+            const { x: x0, y: y0, id: id0 } = this._commands[0];
+            let cmd0 = this._reverseCommand({ ...command, type: command.type === PathCommandType.MoveTo ? PathCommandType.LineTo : command.type, id: id0 } as Required<PathCommand>, x0, y0);
 
             // handle `arcTo`
             if (cmd0.type === PathCommandType.ArcTo) {
                 cmd0 = this._correctAndSetRadii(cmd0, command);
             }
 
-            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, 0, uuid0));
+            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, 0, id0));
             this._commands[0] = cmd0;
         }
 
-        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, uuid));
+        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, id));
         this._commands.unshift(cmd);
-        return [index, uuid] as [number, string];
+        return [index, id] as [number, string];
     }
     // #endregion
 
@@ -867,7 +867,7 @@ export default class Path extends Geometry {
     override toString() {
         // prettier-ignore
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tclosed: ${this.closed},`,
             `\tfillRule: ${this.fillRule}`,
             `\tcommands: ${JSON.stringify(this._commands)}`, 

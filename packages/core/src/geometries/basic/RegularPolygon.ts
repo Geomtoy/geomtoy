@@ -297,7 +297,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
     }
     override toString() {
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tcenterX: ${this.centerX}`,
             `\tcenterY: ${this.centerY}`,
             `\tradius: ${this.radius}`,

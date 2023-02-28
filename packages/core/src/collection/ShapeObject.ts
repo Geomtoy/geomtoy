@@ -90,9 +90,9 @@ export default class ShapeObject<T extends Shape> extends Shape {
     override toString() {
         // prettier-ignore
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tshapes: {`,
-            ...Object.entries(this._shapes).map(([key,shape])=> `\t\t${key}: ${shape.name}(${shape.uuid})`),
+            ...Object.entries(this._shapes).map(([key,shape])=> `\t\t${key}: ${shape.name}(${shape.id})`),
             `\t}`,
             `}`
         ].join("\n")

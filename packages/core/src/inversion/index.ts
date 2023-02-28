@@ -238,7 +238,7 @@ export default class Inversion extends EventTarget {
     override toString() {
         // prettier-ignore
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tcenterX: ${this._centerX}`,
             `\tcenterY: ${this._centerY}`,
             `\tpower: ${this.power}`, 

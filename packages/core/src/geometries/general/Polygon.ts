@@ -53,7 +53,7 @@ export default class Polygon extends Geometry {
 
     private _setVertices(value: PolygonVertex[]) {
         this.trigger_(new EventSourceObject(this, Polygon.events.verticesReset));
-        this._vertices = value.map(vtx => ({ ...vtx, uuid: Utility.uuid() }));
+        this._vertices = value.map(vtx => ({ ...vtx, id: Utility.id("PolygonVertex") }));
     }
     private _setClosed(value: boolean) {
         if (!Utility.isEqualTo(this._closed, value)) this.trigger_(new EventSourceObject(this, Polygon.events.closedChanged));
@@ -164,7 +164,7 @@ export default class Polygon extends Geometry {
 
         this._vertices.forEach((vtx, i) => {
             [vtx.x, vtx.y] = Vector2.add([vtx.x, vtx.y], [deltaX, deltaY]);
-            this.trigger_(new EventSourceObject(this, Polygon.events.vertexChanged, i, vtx.uuid));
+            this.trigger_(new EventSourceObject(this, Polygon.events.vertexChanged, i, vtx.id));
         });
         return this;
     }
@@ -179,28 +179,28 @@ export default class Polygon extends Geometry {
         Assert.condition(this._isPolygonVertex(value), `[G]The \`${p}\` should be a \`PolygonVertex\`.`);
     }
 
-    private _indexAt(indexOrUuid: number | string) {
-        return Type.isString(indexOrUuid) ? this._vertices.findIndex(vtx => vtx.uuid === indexOrUuid) : this._vertices[indexOrUuid] !== undefined ? indexOrUuid : -1;
+    private _indexAt(indexOrId: number | string) {
+        return Type.isString(indexOrId) ? this._vertices.findIndex(vtx => vtx.id === indexOrId) : this._vertices[indexOrId] !== undefined ? indexOrId : -1;
     }
 
-    getUuids() {
-        return this._vertices.map(vtx => vtx.uuid);
+    getIds() {
+        return this._vertices.map(vtx => vtx.id);
     }
-    getIndexOfUuid(uuid: string) {
-        return this._vertices.findIndex(vtx => vtx.uuid === uuid);
+    getIndexOfId(id: string) {
+        return this._vertices.findIndex(vtx => vtx.id === id);
     }
-    getUuidOfIndex(index: number) {
-        return this._vertices[index]?.uuid ?? "";
+    getIdOfIndex(index: number) {
+        return this._vertices[index]?.id ?? "";
     }
 
     // #region Segment
     /**
-     * Get segment by `indexOrUuid`.
-     * @param indexOrUuid
+     * Get segment by `indexOrId`.
+     * @param indexOrId
      * @param assumeClosed
      */
-    getSegment(indexOrUuid: number | string, assumeClosed = false) {
-        const index = this._indexAt(indexOrUuid);
+    getSegment(indexOrId: number | string, assumeClosed = false) {
+        const index = this._indexAt(indexOrId);
         if (index === -1) return null;
         const closed = assumeClosed ? true : this.closed;
         const nextIndex = next(index, this.vertexCount, closed);
@@ -236,70 +236,70 @@ export default class Polygon extends Geometry {
 
     // #region Vertex
     /**
-     * Get vertex by `indexOrUuid`.
-     * @param indexOrUuid
+     * Get vertex by `indexOrId`.
+     * @param indexOrId
      */
-    getVertex(indexOrUuid: number | string) {
-        const index = this._indexAt(indexOrUuid);
+    getVertex(indexOrId: number | string) {
+        const index = this._indexAt(indexOrId);
         if (index === -1) return null;
         return { ...this._vertices[index] } as Required<PolygonVertex>;
     }
-    setVertex(indexOrUuid: number | string, vertex: PolygonVertex) {
+    setVertex(indexOrId: number | string, vertex: PolygonVertex) {
         this._assertIsPolygonVertex(vertex, "vertex");
-        const index = this._indexAt(indexOrUuid);
+        const index = this._indexAt(indexOrId);
         if (index === -1) return false;
-        const uuid = this._vertices[index].uuid;
+        const id = this._vertices[index].id;
 
-        const vtx = { ...vertex, uuid };
+        const vtx = { ...vertex, id };
 
         if (!Utility.isEqualTo(this._vertices[index], vtx)) {
-            this.trigger_(new EventSourceObject(this, Polygon.events.vertexChanged, index, uuid));
+            this.trigger_(new EventSourceObject(this, Polygon.events.vertexChanged, index, id));
             this._vertices[index] = vtx;
         }
         return true;
     }
-    insertVertex(indexOrUuid: number | string, vertex: PolygonVertex) {
+    insertVertex(indexOrId: number | string, vertex: PolygonVertex) {
         this._assertIsPolygonVertex(vertex, "vertex");
-        const index = this._indexAt(indexOrUuid);
+        const index = this._indexAt(indexOrId);
         if (index === -1) return false;
-        const uuid = Utility.uuid();
+        const id = Utility.id("PolygonVertex");
 
-        const vtx = { ...vertex, uuid };
+        const vtx = { ...vertex, id };
 
-        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, uuid));
+        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, id));
         this._vertices.splice(index, 0, vtx);
-        return [index, uuid] as [number, string];
+        return [index, id] as [number, string];
     }
-    removeVertex(indexOrUuid: number | string) {
-        const index = this._indexAt(indexOrUuid);
+    removeVertex(indexOrId: number | string) {
+        const index = this._indexAt(indexOrId);
         if (index === -1) return false;
-        const uuid = this._vertices[index].uuid;
+        const id = this._vertices[index].id;
 
-        this.trigger_(new EventSourceObject(this, Polygon.events.vertexRemoved, index, uuid));
+        this.trigger_(new EventSourceObject(this, Polygon.events.vertexRemoved, index, id));
         this._vertices.splice(index, 1);
         return true;
     }
     appendVertex(vertex: PolygonVertex) {
         this._assertIsPolygonVertex(vertex, "vertex");
         const index = this.vertexCount;
-        const uuid = Utility.uuid();
+        const id = Utility.id("PolygonVertex");
 
-        const vtx = { ...vertex, uuid };
+        const vtx = { ...vertex, id };
 
-        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, uuid));
+        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, id));
         this._vertices.push(vtx);
-        return [index, uuid] as [number, string];
+        return [index, id] as [number, string];
     }
     prependVertex(vertex: PolygonVertex): [number, string] {
         this._assertIsPolygonVertex(vertex, "vertex");
         const index = 0;
-        const uuid = Utility.uuid();
+        const id = Utility.id("PolygonVertex");
 
-        const vtx = { ...vertex, uuid };
+        const vtx = { ...vertex, id };
 
-        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, uuid));
+        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, id));
         this._vertices.unshift(vtx);
-        return [index, uuid] as [number, string];
+        return [index, id] as [number, string];
     }
     // #endregion
 
@@ -581,7 +581,7 @@ export default class Polygon extends Geometry {
     override toString() {
         // prettier-ignore
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tclosed: ${this.closed},`,
             `\tfillRule: ${this.fillRule}`,
             `\tvertices: ${JSON.stringify(this._vertices)}`, 

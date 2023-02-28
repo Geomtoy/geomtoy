@@ -8,7 +8,7 @@ function getPublicPropertyNames(object: object) {
     return Object.getOwnPropertyNames(object).filter(name => name !== "constructor" && !name.startsWith("_") && !name.endsWith("_"));
 }
 // "name"
-// "uuid"
+// "id"
 // "data"
 // "toString"
 // "toArray"
@@ -65,7 +65,7 @@ export default class Dynamic extends BaseObject {
             override toString() {
                 // prettier-ignore
                 return [
-                    `${this.name}(${this.uuid}){`,
+                    `${this.name}(${this.id}){`,
                     ...filteredKeys.map(key => `\t${key as string}: ${this._object[key]}`), 
                     `}`
                 ].join("\n");

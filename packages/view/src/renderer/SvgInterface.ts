@@ -39,11 +39,11 @@ export default class SvgInterface extends Interface {
         rect.setAttribute("y", "0");
         rect.setAttribute("width", `${this.renderer.display.width}`);
         rect.setAttribute("height", `${this.renderer.display.height}`);
-        rect.setAttribute("fill", `url(#gridPattern-${this.renderer.uuid})`);
+        rect.setAttribute("fill", `url(#gridPattern-${this.renderer.id})`);
         const [promise, img] = this.gridPatternImage_();
         return promise.then(() => {
             defs.innerHTML = ` 
-                <pattern id='gridPattern-${this.renderer.uuid}' x='0' y='0' patternUnits='userSpaceOnUse' width='${img.getAttribute("width")}' height='${img.getAttribute("height")}'>
+                <pattern id='gridPattern-${this.renderer.id}' x='0' y='0' patternUnits='userSpaceOnUse' width='${img.getAttribute("width")}' height='${img.getAttribute("height")}'>
                     ${img.outerHTML}
                 </pattern> 
             `;

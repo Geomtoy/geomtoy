@@ -16,7 +16,7 @@ export default abstract class Renderer {
     abstract get interface(): Interface;
     abstract get display(): Display;
     abstract get imageSourceManager(): ImageSourceManager;
-    abstract get uuid(): string;
+    abstract get id(): string;
 
     protected manageRendererInitialized_() {
         if (this.container.getAttribute(DATA_KEY_RENDERER_INITIALIZED) !== null) {

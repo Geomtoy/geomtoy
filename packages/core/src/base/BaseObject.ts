@@ -1,7 +1,7 @@
 import { Utility } from "@geomtoy/util";
 
 export default abstract class BaseObject {
-    private _uuid = Utility.uuid();
+    private _id = Utility.id(this.name);
     // user-defined data
     private _data: { [key: string]: any } = {};
     /**
@@ -11,10 +11,10 @@ export default abstract class BaseObject {
         return this.constructor.name;
     }
     /**
-     * Get the `uuid` of this.
+     * Get the `id` of this.
      */
-    get uuid() {
-        return this._uuid;
+    get id() {
+        return this._id;
     }
 
     constructor() {
@@ -41,6 +41,6 @@ export default abstract class BaseObject {
         return this;
     }
     toString() {
-        return `${this.name}(${this.uuid})`;
+        return `${this.name}(${this.id})`;
     }
 }

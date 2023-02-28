@@ -8,12 +8,12 @@ export default class EventSourceObject<T extends EventTarget> {
     // todo check old value is passed by all classes
     oldValue?: any;
     indexOrKey?: number | string;
-    uuid?: string;
-    constructor(target: T, eventName: string, oldValue?: any, indexOrKey?: number | string, uuid?: string) {
+    id?: string;
+    constructor(target: T, eventName: string, oldValue?: any, indexOrKey?: number | string, id?: string) {
         this.target = target;
         this.eventName = eventName;
         this.oldValue = oldValue;
         this.indexOrKey = indexOrKey;
-        this.uuid = uuid;
+        this.id = id;
     }
 }

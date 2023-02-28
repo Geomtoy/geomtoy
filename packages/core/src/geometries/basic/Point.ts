@@ -256,7 +256,7 @@ export default class Point extends Geometry {
     override toString() {
         // prettier-ignore
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tx: ${this._x}`,
             `\ty: ${this._y}`,
             `}`

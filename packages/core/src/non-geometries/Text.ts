@@ -161,7 +161,7 @@ export default class Text extends Shape {
     }
     override toString() {
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tx: ${this.x}`,
             `\ty: ${this.y}`,
             `\toffsetX: ${this.offsetX}`,

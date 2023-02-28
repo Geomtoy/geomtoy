@@ -3,6 +3,10 @@ import Type from "./Type";
 
 import type { StaticClass } from "./types";
 
+const idPool: {
+    [key: string]: number;
+} = {};
+
 interface Utility extends StaticClass {}
 class Utility {
     constructor() {
@@ -172,12 +176,10 @@ class Utility {
     static now() {
         return Date.now();
     }
-    static uuid() {
-        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-            const r = (Maths.random() * 16) | 0;
-            const v = c === "x" ? r : (r & 0x3) | 0x8;
-            return v.toString(16);
-        });
+
+    static id(prefix: string = "Default") {
+        if (!idPool[prefix]) idPool[prefix] = 0;
+        return prefix + "-" + (++idPool[prefix]).toString(16).padStart(16, "0");
     }
 }
 export default Utility;

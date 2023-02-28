@@ -727,7 +727,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     }
     override toString() {
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tpoint1X: ${this.point1X}`,
             `\tpoint1Y: ${this.point1Y}`,
             `\tpoint2X: ${this.point2X}`,

@@ -37,13 +37,13 @@ export default class MonoSegment extends SegmentWithFill {
     // The right coordinates to leave.
     readonly leaveCoordinates: [number, number];
 
-    get ancestorUuidList() {
+    get ancestorIdList() {
         const ret: string[] = [];
         let curr: MonoSegment = this;
-        ret.unshift(curr.segment.uuid); //unshift so the first element will be the most top parent, and it's more likely to have done some relation calculations.
+        ret.unshift(curr.segment.id); //unshift so the first element will be the most top parent, and it's more likely to have done some relation calculations.
         let parent = this.parent;
         while (parent !== null) {
-            ret.unshift(parent.segment.uuid);
+            ret.unshift(parent.segment.id);
             parent = parent.parent;
         }
         return ret;

@@ -285,7 +285,7 @@ export type FontConfig = {
 
 // #region Path
 export type PathCommand = PathMoveToCommand | PathLineToCommand | PathBezierToCommand | PathQuadraticBezierToCommand | PathArcToCommand;
- 
+
 export const enum PathCommandType {
     MoveTo = "M",
     LineTo = "L",
@@ -295,19 +295,19 @@ export const enum PathCommandType {
 }
 
 export type PathMoveToCommand = {
-    uuid?: string;
+    id?: string;
     type: PathCommandType.MoveTo;
     x: number;
     y: number;
 };
 export type PathLineToCommand = {
-    uuid?: string;
+    id?: string;
     type: PathCommandType.LineTo;
     x: number;
     y: number;
 };
 export type PathBezierToCommand = {
-    uuid?: string;
+    id?: string;
     type: PathCommandType.BezierTo;
     x: number;
     y: number;
@@ -317,7 +317,7 @@ export type PathBezierToCommand = {
     controlPoint2Y: number;
 };
 export type PathQuadraticBezierToCommand = {
-    uuid?: string;
+    id?: string;
     type: PathCommandType.QuadraticBezierTo;
     x: number;
     y: number;
@@ -325,7 +325,7 @@ export type PathQuadraticBezierToCommand = {
     controlPointY: number;
 };
 export type PathArcToCommand = {
-    uuid?: string;
+    id?: string;
     type: PathCommandType.ArcTo;
     x: number;
     y: number;
@@ -339,11 +339,10 @@ export type PathArcToCommand = {
 
 // #region Polygon
 export type PolygonVertex = {
-    uuid?: string;
+    id?: string;
     x: number;
     y: number;
 };
- 
 
 // #endregion
 

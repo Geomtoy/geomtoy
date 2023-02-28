@@ -376,7 +376,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
     override toString() {
         // prettier-ignore
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tx: ${this.x}`,
             `\ty: ${this.y}`,
             `\twidth: ${this.width}`,

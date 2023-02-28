@@ -682,7 +682,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     }
     override toString() {
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tcenterX: ${this.centerX}`,
             `\tcenterY: ${this.centerY}`,
             `\tradiusX: ${this.radiusX}`,

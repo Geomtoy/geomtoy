@@ -373,7 +373,7 @@ export default class Vector extends Geometry {
     override toString() {
         // prettier-ignore
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tx: ${this.x}`,
             `\ty: ${this.y}`,
             `\tpoint1X: ${this.point1X}`,

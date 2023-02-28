@@ -9,7 +9,7 @@ import Display from "./Display";
 import Renderer from "./Renderer";
 
 export default class CanvasRenderer extends Renderer {
-    private _uuid = Utility.uuid();
+    private _id = Utility.id("CanvasRenderer");
     private _surface: CanvasRenderingContext2D;
     private _interfaceSurface: CanvasRenderingContext2D;
     private _buffer = document.createElement("canvas").getContext("2d")!;
@@ -41,8 +41,8 @@ export default class CanvasRenderer extends Renderer {
         throw new Error("[G]Unable to initialize, the container` is not a `HTMLCanvasElement`.");
     }
 
-    get uuid() {
-        return this._uuid;
+    get id() {
+        return this._id;
     }
     get container() {
         return this._container;

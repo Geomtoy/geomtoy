@@ -245,21 +245,21 @@ export default class SweepLine {
             this.addSegmentEvents(ms!);
         }
     }
-    relationId(uuidA: string, uuidB: string) {
-        return uuidA > uuidB ? uuidA + "-" + uuidB : uuidB + "-" + uuidA;
+    relationId(idA: string, idB: string) {
+        return idA > idB ? idA + "-" + idB : idB + "-" + idA;
     }
 
     calculateRelation(eventA: SweepEvent, eventB: SweepEvent) {
         // Check if their parents/or parents of parents... have already be relation-calculated, this is very important.
         // Do this to avoid redundant calculation to speed up.
-        const aList = eventA.mono.ancestorUuidList;
-        const bList = eventB.mono.ancestorUuidList;
+        const aList = eventA.mono.ancestorIdList;
+        const bList = eventB.mono.ancestorIdList;
         for (const a of aList) {
             for (const b of bList) {
                 if (this.relationSet.has(this.relationId(a, b))) return null;
             }
         }
-        const id = this.relationId(eventA.mono.segment.uuid, eventB.mono.segment.uuid);
+        const id = this.relationId(eventA.mono.segment.id, eventB.mono.segment.id);
         const result = relationResult(eventA.mono, eventB.mono);
         this.relationSet.add(id);
         return result;

@@ -345,7 +345,7 @@ export default class Transformation extends EventTarget {
     override toString() {
         // prettier-ignore
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tmatrix: ${JSON.stringify(this._matrix)}`, 
             `}`
         ].join("\n")

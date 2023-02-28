@@ -12,7 +12,7 @@ import SvgInterface from "./SvgInterface";
  * @category Renderer
  */
 export default class SvgRenderer extends Renderer {
-    private _uuid = Utility.uuid();
+    private _id = Utility.id("SvgRenderer");
     private _surface: SVGGElement;
     private _interfaceSurface: SVGGElement;
     private _buffer = document.createDocumentFragment();
@@ -46,19 +46,19 @@ export default class SvgRenderer extends Renderer {
                         user-select: none;
                     }
                 </style>
-                <g class="geomtoy-svg-interface" id="geomtoySvgInterface-${this.uuid}"></g>
-                <g class="geomtoy-svg" id="geomtoySvg-${this.uuid}"></g>
+                <g class="geomtoy-svg-interface" id="svgInterface-${this.id}"></g>
+                <g class="geomtoy-svg" id="svg-${this.id}"></g>
             `;
-            this._surface = this.container.querySelector(`#geomtoySvg-${this.uuid}`)!;
-            this._interfaceSurface = this.container.querySelector(`#geomtoySvgInterface-${this.uuid}`)!;
+            this._surface = this.container.querySelector(`#svg-${this.id}`)!;
+            this._interfaceSurface = this.container.querySelector(`#svgInterface-${this.id}`)!;
 
             return this;
         }
         throw new Error("[G]Unable to initialize, the container` is not a `SVGSVGElement`.");
     }
 
-    get uuid() {
-        return this._uuid;
+    get id() {
+        return this._id;
     }
     get container() {
         return this._container;

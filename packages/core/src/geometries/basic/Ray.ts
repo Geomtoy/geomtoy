@@ -220,7 +220,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
     override toString() {
         // prettier-ignore
         return [
-            `${this.name}(${this.uuid}){`,
+            `${this.name}(${this.id}){`,
             `\tx: ${this.x}`,
             `\ty: ${this.y}`,
             `\tangle: ${this.angle}`,

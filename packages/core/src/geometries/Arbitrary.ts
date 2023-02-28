@@ -66,8 +66,8 @@ export default class Arbitrary extends Geometry {
     toString() {
         // prettier-ignore
         return [
-            `${this.name}(${this.uuid}){`,
-             `\tgeometry: ${this.geometry}(${this.geometry?.uuid})`, 
+            `${this.name}(${this.id}){`,
+             `\tgeometry: ${this.geometry}(${this.geometry?.id})`, 
              `}`
         ].join("\n");
     }
