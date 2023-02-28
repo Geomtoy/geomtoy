@@ -428,6 +428,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         this.trigger_(new EventSourceObject(this, Arc.events.point1YChanged));
         this.trigger_(new EventSourceObject(this, Arc.events.point2XChanged));
         this.trigger_(new EventSourceObject(this, Arc.events.point2YChanged));
+        return this;
     }
 
     isPointOn(point: [number, number] | Point) {

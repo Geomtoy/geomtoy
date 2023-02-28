@@ -337,6 +337,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
     reverse() {
         [this.point1Coordinates, this.point2Coordinates] = [this.point2Coordinates, this.point1Coordinates];
         [this.controlPoint1Coordinates, this.controlPoint2Coordinates] = [this.controlPoint2Coordinates, this.controlPoint1Coordinates];
+        return this;
     }
     /**
      * Returns the length of bezier `this`.

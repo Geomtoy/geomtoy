@@ -264,6 +264,7 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
 
     reverse() {
         [this.point1Coordinates, this.point2Coordinates] = [this.point2Coordinates, this.point1Coordinates];
+        return this;
     }
     /**
      * Whether point `point` is on quadratic bezier `this`.

@@ -197,6 +197,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
     }
     reverse() {
         [this.point1Coordinates, this.point2Coordinates] = [this.point2Coordinates, this.point1Coordinates];
+        return this;
     }
     /**
      * Get the length of line segment `this`.
