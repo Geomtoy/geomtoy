@@ -565,8 +565,8 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
 
         const fn = this.getParametricEquation();
 
-        if (cx === x && cy === y && rx2 === ry2) {
-            return new Point(fn(sa)); // circle and at centerPoint
+        if (cx === x && cy === y && rx === ry) {
+            return [new Point(fn(sa)), rx] as [point: Point, distance: number]; // circle and at centerPoint
         }
 
         let tPoly = [
@@ -595,7 +595,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
                 minA = a;
             }
         });
-        return new Point(fn(minA));
+        return [new Point(fn(minA)), Maths.sqrt(minSd)] as [point: Point, distance: number];
     }
 
     /**

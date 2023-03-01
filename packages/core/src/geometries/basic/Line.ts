@@ -410,8 +410,11 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
     getClosestPointFrom(point: [number, number] | Point) {
         const [a, b, c] = this.getImplicitFunctionCoefs();
         const [x, y] = getCoordinates(point, "point");
-        const d = -(a * x + b * y + c) / (a ** 2 + b ** 2);
-        return new Point(d * a + x, d * b + y);
+        const num = -(a * x + b * y + c);
+        const den = a ** 2 + b ** 2;
+        const r = num / den;
+        const dist = Maths.abs(num) / Maths.sqrt(den);
+        return [new Point(r * a + x, r * b + y), dist] as [point: Point, distance: number];
     }
     /**
      * 若`直线this`与`直线line`平行，则返回它们之间的距离，否则返回NaN

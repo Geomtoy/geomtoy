@@ -385,8 +385,8 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
 
         const fn = this.getParametricEquation();
 
-        if (cx === x && cy === y && rx2 === ry2) {
-            return new Point(fn(0)); // circle and at centerPoint
+        if (cx === x && cy === y && rx === ry) {
+            return [new Point(fn(0)), rx] as [point: Point, distance: number]; // circle and at centerPoint
         }
         let tPoly = [
             ry * (sinPhi * (cx - x) - cosPhi * (cy - y)),
@@ -411,7 +411,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
                 minA = a;
             }
         });
-        return new Point(fn(minA));
+        return [new Point(fn(minA)), Maths.sqrt(minSd)] as [point: Point, distance: number];
     }
 
     move(deltaX: number, deltaY: number) {

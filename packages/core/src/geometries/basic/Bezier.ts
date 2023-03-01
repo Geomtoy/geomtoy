@@ -607,6 +607,8 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
     getClosestPointFrom(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         const [polyX, polyY] = this.getPolynomial();
+        const fn = this.getParametricEquation();
+
         let polyXM = Polynomial.add(polyX, [-x]);
         let polyYM = Polynomial.add(polyY, [-y]);
         polyXM = Polynomial.multiply(polyXM, polyXM);
@@ -627,7 +629,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
                 minT = t;
             }
         });
-        return new Point(Polynomial.evaluate(polyX, minT), Polynomial.evaluate(polyY, minT));
+        return [new Point(fn(minT)), Maths.sqrt(minSd)] as [point: Point, distance: number];
     }
 
     // #region Time and point
