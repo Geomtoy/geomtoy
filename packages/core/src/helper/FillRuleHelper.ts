@@ -19,7 +19,7 @@ import RayQuadraticBezier from "../relationship/classes/RayQuadraticBezier";
 import { BasicSegment } from "../types";
 
 export default class FillRuleHelper {
-    // line touch box is also consider colliding.
+    // line touching box vertex is also consider colliding.
     private _lineCollideBox(line: Line, box: [number, number, number, number]) {
         const epsilon = optioner.options.epsilon;
         const [a, b, c] = line.getImplicitFunctionCoefs();
@@ -37,9 +37,8 @@ export default class FillRuleHelper {
         }
         return true;
     }
-    // ray touch box is also consider colliding.
+    // ray touching box vertex is also consider colliding.
     private _rayCollideBox(ray: Ray, box: [number, number, number, number]) {
-        const epsilon = optioner.options.epsilon;
         const [dx, dy] = Vector2.from2(ray.angle, 1);
         const [x, y] = ray.coordinates;
 
@@ -62,10 +61,10 @@ export default class FillRuleHelper {
 
         const tMin = Maths.max(Maths.min(tMinX, tMaxX), Maths.min(tMinY, tMaxY));
         const tMax = Maths.min(Maths.max(tMinX, tMaxX), Maths.max(tMinY, tMaxY));
-        return !Maths.lessThan(tMax, Maths.max(tMin, 0), epsilon);
+        return tMax >= Maths.max(tMin, 0);
     }
 
-    windingNumberOfPoint(point: [number, number] | Point, angle: number, segments: BasicSegment[], preventOn = true) {
+    windingNumberOfPoint(point: [number, number] | Point, angle: number, segments: BasicSegment[]) {
         const epsilon = optioner.options.epsilon;
         const coordinates = getCoordinates(point, "point");
 
@@ -87,10 +86,8 @@ export default class FillRuleHelper {
 
             for (const inter of intersection) {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
-                if (Coordinates.isEqualTo(c, coordinates)) {
-                    if (preventOn) return undefined;
-                    continue;
-                }
+                // point is on
+                if (Coordinates.isEqualTo(c, coordinates)) return undefined;
                 // exclude touching point
                 if (m % 2 === 0) continue;
 
@@ -108,20 +105,22 @@ export default class FillRuleHelper {
 
                 if (seg instanceof Arc) {
                     const [sa, ea] = seg.getStartEndAngles();
-                    // If `ray` happens to cross the vertex, count as a half(there must be another half).
+                    // If `ray` happens to cross the vertex, count as a half.
                     if (Angle.equalTo(a2, sa, epsilon) || Angle.equalTo(a2, ea, epsilon)) wn += positiveWinding ? 0.5 : -0.5;
                     else wn += positiveWinding ? 1 : -1;
                 } else {
-                    // If `ray` happens to cross the vertex, count as a half(there must be another half).
+                    // If `ray` happens to cross the vertex, count as a half.
                     if (Maths.equalTo(t2, 0, epsilon) || Maths.equalTo(t2, 1, epsilon)) wn += positiveWinding ? 0.5 : -0.5;
                     else wn += positiveWinding ? 1 : -1;
                 }
             }
         }
+        // floor towards 0, ray happened to coincident with one of `segments`, point is on
+        if ((wn | 0) !== wn) return undefined;
         return wn;
     }
 
-    crossingNumberOfPoint(point: [number, number] | Point, angle: number, segments: BasicSegment[], preventOn = true) {
+    crossingNumberOfPoint(point: [number, number] | Point, angle: number, segments: BasicSegment[]) {
         const epsilon = optioner.options.epsilon;
         const coordinates = getCoordinates(point, "point");
 
@@ -142,25 +141,25 @@ export default class FillRuleHelper {
 
             for (const inter of intersection) {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
-                if (Coordinates.isEqualTo(c, coordinates)) {
-                    if (preventOn) return undefined;
-                    continue;
-                }
+                // point is on
+                if (Coordinates.isEqualTo(c, coordinates)) return undefined;
                 // exclude touching point
                 if (m % 2 === 0) continue;
 
                 if (seg instanceof Arc) {
                     const [sa, ea] = seg.getStartEndAngles();
-                    // If `ray` happens to cross the vertex, count as a half(there must be another half).
+                    // If `ray` happens to cross the vertex, count as a half.
                     if (Angle.equalTo(a2, sa, epsilon) || Angle.equalTo(a2, ea, epsilon)) cn += 0.5;
                     else cn += 1;
                 } else {
-                    // If `ray` happens to cross the vertex, count as a half(there must be another half).
+                    // If `ray` happens to cross the vertex, count as a half.
                     if (Maths.equalTo(t2, 0, epsilon) || Maths.equalTo(t2, 1, epsilon)) cn += 0.5;
                     else cn += 1;
                 }
             }
         }
+        // floor towards 0, ray happened to coincident with one of `segments`, point is on
+        if ((cn | 0) !== cn) return undefined;
         return cn;
     }
 
@@ -264,7 +263,6 @@ export default class FillRuleHelper {
                 }
             }
         }
-
         return wn;
     }
 
@@ -313,7 +311,6 @@ export default class FillRuleHelper {
                 }
             }
         }
-
         return cn;
     }
     // #endregion

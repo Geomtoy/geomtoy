@@ -436,7 +436,7 @@ export default class Path extends Geometry {
             if (wn === undefined) return false;
             return wn === 0 ? false : true;
         } else {
-            const cn = helper.windingNumberOfPoint(c, 0, this.getSegments(true, true));
+            const cn = helper.crossingNumberOfPoint(c, 0, this.getSegments(true, true));
             if (cn === undefined) return false;
             return cn % 2 === 0 ? false : true;
         }
@@ -455,7 +455,7 @@ export default class Path extends Geometry {
             if (wn === undefined) return false;
             return wn === 0 ? true : false;
         } else {
-            const cn = helper.windingNumberOfPoint(c, 0, this.getSegments(true, true));
+            const cn = helper.crossingNumberOfPoint(c, 0, this.getSegments(true, true));
             if (cn === undefined) return false;
             return cn % 2 === 0 ? true : false;
         }
