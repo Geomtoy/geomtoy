@@ -27,7 +27,7 @@ export default class Text extends Shape {
     constructor(coordinates: [number, number], offsetX: number, offsetY: number, text: string, font?: FontConfig);
     constructor(point: Point, offsetX: number, offsetY: number, text: string, font?: FontConfig);
     constructor(text: string, font?: FontConfig);
-    constructor();
+    constructor(font?: FontConfig);
     constructor(a0?: any, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any) {
         super();
         if (Type.isNumber(a0)) {
@@ -41,6 +41,9 @@ export default class Text extends Shape {
         }
         if (Type.isString(a0)) {
             Object.assign(this, { text: a0, font: a1 ?? this._font });
+        }
+        if (Type.isPlainObject(a0)) {
+            Object.assign(this, { font: a0 ?? this._font });
         }
     }
 
