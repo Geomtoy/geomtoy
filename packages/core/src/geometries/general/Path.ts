@@ -343,6 +343,9 @@ export default class Path extends Geometry {
         return this._commands[index]?.id ?? "";
     }
 
+    // todo
+    // getClosestPointFrom()
+
     // #region Segment
     /**
      * Get segment by `indexOrId`.

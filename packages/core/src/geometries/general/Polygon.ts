@@ -199,6 +199,9 @@ export default class Polygon extends Geometry {
         return this._vertices[index]?.id ?? "";
     }
 
+    // todo
+    // getClosestPointFrom()
+
     // #region Segment
     /**
      * Get segment by `indexOrId`.

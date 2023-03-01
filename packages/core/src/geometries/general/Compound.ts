@@ -90,6 +90,9 @@ export default class Compound extends Geometry {
         return this;
     }
 
+    // todo
+    // getClosestPointFrom()
+
     @statedWithBoolean(false, false)
     getSegments(clean = false, assumeClosed = false) {
         return this._items.reduce((acc, item) => {
