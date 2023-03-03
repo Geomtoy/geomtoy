@@ -1,8 +1,7 @@
 import { Angle, Assert, Coordinates, Maths, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
-import { optioner } from "../../geomtoy";
-
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
+import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { centerToEndpointParameterization, endpointParameterizationTransform, endpointToCenterParameterization, flexCorrectRadii } from "../../misc/arc";
@@ -10,13 +9,14 @@ import { stated, statedWithBoolean } from "../../misc/decor-cache";
 import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { completeEllipticIntegralOfSecondKind, incompleteEllipticIntegralOfSecondKind } from "../../misc/elliptic-integral";
 import { getCoordinates } from "../../misc/point-like";
-import Transformation from "../../transformation";
+import type Transformation from "../../transformation";
 import type { FiniteOpenGeometry, ViewportDescriptor } from "../../types";
 import Path from "../general/Path";
 import Circle from "./Circle";
 import Ellipse from "./Ellipse";
 import LineSegment from "./LineSegment";
 import Point from "./Point";
+import type Vector from "./Vector";
 
 @validGeometry
 export default class Arc extends Geometry implements FiniteOpenGeometry {
@@ -479,12 +479,12 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     getTangentVectorAtAngle(a: number, normalized = false) {
         a = this._clampAngle(a, "a");
         const tv = this.toEllipse().getTangentVectorAtAngle(a, normalized);
-        return this.positive ? tv : tv.negative();
+        return (this.positive ? tv : tv.negative()) as Vector; // help for dts-bundle-generator
     }
     getNormalVectorAtAngle(a: number, normalized = false) {
         a = this._clampAngle(a, "a");
         const nv = this.toEllipse().getNormalVectorAtAngle(a, normalized);
-        return this.positive ? nv : nv.negative();
+        return (this.positive ? nv : nv.negative()) as Vector; // help for dts-bundle-generator
     }
     getCurvatureAtAngle(a: number) {
         a = this._clampAngle(a, "a");
