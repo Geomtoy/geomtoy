@@ -784,7 +784,7 @@ export default class Path extends Geometry {
         const gg = new GeometryGraphic();
         g.append(gg);
         gg.fillRule = this.fillRule;
-        this._commands.forEach(cmd => {
+        this._commands.forEach((cmd, index) => {
             if (cmd.type === PathCommandType.MoveTo) {
                 gg.moveTo(cmd.x, cmd.y);
             }
@@ -798,7 +798,11 @@ export default class Path extends Geometry {
                 gg.quadraticBezierTo(cmd.controlPointX, cmd.controlPointY, cmd.x, cmd.y);
             }
             if (cmd.type === PathCommandType.ArcTo) {
-                gg.endpointArcTo(cmd.radiusX, cmd.radiusY, cmd.rotation, cmd.largeArc, cmd.positive, cmd.x, cmd.y);
+                // correctRadii
+                const { x: px, y: py } = this._commands[index - 1];
+                const { x, y, radiusX, radiusY, rotation, largeArc, positive } = cmd;
+                const [rx, ry] = correctRadii(px, py, x, y, radiusX, radiusY, rotation);
+                gg.endpointArcTo(rx, ry, rotation, largeArc, positive, x, y);
             }
         });
         if (this.closed) gg.close();

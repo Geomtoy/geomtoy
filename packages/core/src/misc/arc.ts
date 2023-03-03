@@ -169,7 +169,6 @@ export function endpointToCenterParameterization({
 }: ArcEndpointParameterization): ArcCenterParameterization {
     // Correction of radii must be done before calling this method.
     // The logic of this radii correction should belong to the internal property processing of a class.
-    // [rx, ry] = flexCorrectRadii(x1, y1, x2, y2, rx, ry, phi);
 
     const [x1P, y1P] = Vector2.rotate(Vector2.scalarMultiply([x1 - x2, y1 - y2], 0.5), -phi);
     const sign = la !== pos ? 1 : -1;
