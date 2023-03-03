@@ -1,39 +1,37 @@
 import { Angle, Assert, Box, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-geometry";
-
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
-import GeometryGraphic from "../../graphics/GeometryGraphic";
-import Arc from "../basic/Arc";
-import Bezier from "../basic/Bezier";
-import LineSegment from "../basic/LineSegment";
-import Point from "../basic/Point";
-import QuadraticBezier from "../basic/QuadraticBezier";
-
 import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import ArrowGraphics from "../../helper/ArrowGraphics";
 import FillRuleHelper from "../../helper/FillRuleHelper";
 import { correctRadii, endpointParameterizationTransform, endpointToCenterParameterization } from "../../misc/arc";
 import { arcPathIntegral, bezierPathIntegral, lineSegmentPathIntegral, quadraticBezierPathIntegral } from "../../misc/area-integrate";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
-import { next, prev } from "../../misc/loop";
+import { validGeometry } from "../../misc/decor-geometry";
+import { next } from "../../misc/loop";
 import { getCoordinates } from "../../misc/point-like";
 import { parseSvgPath } from "../../misc/svg-path";
-import Transformation from "../../transformation";
+import type Transformation from "../../transformation";
 import {
-    type FillRule,
     PathCommandType,
-    type PolygonVertex,
-    type ViewportDescriptor,
-    type WindingDirection,
+    type FillRule,
     type PathArcToCommand,
     type PathBezierToCommand,
     type PathCommand,
     type PathLineToCommand,
     type PathMoveToCommand,
-    type PathQuadraticBezierToCommand
+    type PathQuadraticBezierToCommand,
+    type PolygonVertex,
+    type ViewportDescriptor,
+    type WindingDirection
 } from "../../types";
+import Arc from "../basic/Arc";
+import Bezier from "../basic/Bezier";
+import LineSegment from "../basic/LineSegment";
+import Point from "../basic/Point";
+import QuadraticBezier from "../basic/QuadraticBezier";
 
 const PATH_MIN_COMMAND_COUNT = 2;
 
@@ -107,10 +105,6 @@ export default class Path extends Geometry {
                         commands[i] = { ...Path.lineTo([cmd.x, cmd.y]), id: cmd.id };
                     }
                 }
-            }
-
-            if (commands[i].type === PathCommandType.ArcTo) {
-                commands[i] = this._correctAndSetRadii(commands[i] as Required<PathArcToCommand>, commands[i - 1]);
             }
         }
         this.trigger_(new EventSourceObject(this, Path.events.commandsReset));
@@ -314,8 +308,8 @@ export default class Path extends Geometry {
             case PathCommandType.ArcTo: {
                 if (!Type.isRealNumber(v.x)) return false;
                 if (!Type.isRealNumber(v.y)) return false;
-                if (!Type.isPositiveNumber(v.radiusX)) return false;
-                if (!Type.isPositiveNumber(v.radiusY)) return false;
+                if (!Type.isNonNegativeNumber(v.radiusX)) return false;
+                if (!Type.isNonNegativeNumber(v.radiusY)) return false;
                 if (!Type.isRealNumber(v.rotation)) return false;
                 // if (!Type.isBoolean(v.largeArc)) return false;
                 // if (!Type.isBoolean(v.positive)) return false;
@@ -377,7 +371,11 @@ export default class Path extends Geometry {
                 return new QuadraticBezier(cmdCurr.x, cmdCurr.y, cmdNext.x, cmdNext.y, cmdNext.controlPointX, cmdNext.controlPointY);
             }
             case PathCommandType.ArcTo: {
-                return new Arc(cmdCurr.x, cmdCurr.y, cmdNext.x, cmdNext.y, cmdNext.radiusX, cmdNext.radiusY, cmdNext.largeArc, cmdNext.positive, cmdNext.rotation);
+                // correctRadii
+                const { x: x1, y: y1 } = cmdCurr;
+                const { x: x2, y: y2, radiusX, radiusY, rotation } = cmdNext;
+                const [rx, ry] = correctRadii(x1, y1, x2, y2, radiusX, radiusY, rotation);
+                return new Arc(cmdCurr.x, cmdCurr.y, cmdNext.x, cmdNext.y, rx, ry, cmdNext.largeArc, cmdNext.positive, cmdNext.rotation);
             }
             default: {
                 throw new Error("[G]This should never happen.");
@@ -483,23 +481,6 @@ export default class Path extends Geometry {
         }
     }
 
-    private _handleNextArcTo(index: number) {
-        if (this._commands[index + 1]?.type === PathCommandType.ArcTo) {
-            let cmd = this._commands[index + 1] as Required<PathArcToCommand>;
-            cmd = this._correctAndSetRadii(cmd, this._commands[index]);
-            if (!Utility.isEqualTo(this._commands[index + 1], cmd)) {
-                this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index + 1, cmd.id));
-                this._commands[index + 1] = cmd;
-            }
-        }
-    }
-    private _correctAndSetRadii<T extends PathArcToCommand | Required<PathArcToCommand>>(command: T, prevCommand: PathCommand) {
-        const { x: x1, y: y1 } = prevCommand;
-        const { x: x2, y: y2, radiusX, radiusY, rotation } = command;
-        const [rx, ry] = correctRadii(x1, y1, x2, y2, radiusX, radiusY, rotation);
-        return { ...command, radiusX: rx, radiusY: ry } as T;
-    }
-
     getVertex(indexOrId: number | string) {
         const index = this._indexAt(indexOrId);
         if (index === -1) return null;
@@ -529,16 +510,10 @@ export default class Path extends Geometry {
                 ? { ...Path.lineTo([command.x, command.y]), id }
                 : { ...command, id };
 
-        // handle `arcTo`
-        if (cmd.type === PathCommandType.ArcTo) {
-            cmd = this._correctAndSetRadii(cmd, this._commands[index - 1]);
-        }
-
         if (!Utility.isEqualTo(this._commands[index], cmd)) {
             this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index, id));
             this._commands[index] = cmd;
         }
-        this._handleNextArcTo(index);
         return true;
     }
     insertCommand(indexOrId: number | string, command: PathCommand) {
@@ -556,14 +531,8 @@ export default class Path extends Geometry {
             ? { ...Path.lineTo([command.x, command.y]), id } 
             : { ...command, id };
 
-        // handle `arcTo`
-        if (cmd.type === PathCommandType.ArcTo) {
-            cmd = this._correctAndSetRadii(cmd, this._commands[index - 1]); // splice insert new element `before`(or replace) index
-        }
-
         this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, id));
         this._commands.splice(index, 0, cmd);
-        this._handleNextArcTo(index);
         return [index, id] as [number, string];
     }
     removeCommand(indexOrId: number | string) {
@@ -581,7 +550,6 @@ export default class Path extends Geometry {
 
         this.trigger_(new EventSourceObject(this, Path.events.commandRemoved, index, id));
         this._commands.splice(index, 1);
-        this._handleNextArcTo(index);
         return true;
     }
     appendCommand(command: PathCommand) {
@@ -598,11 +566,6 @@ export default class Path extends Geometry {
                 ? { ...Path.lineTo([command.x, command.y]), id }
                 : { ...command, id };
 
-        // handle `arcTo`
-        if (cmd.type === PathCommandType.ArcTo) {
-            cmd = this._correctAndSetRadii(cmd, this._commands[index - 1]);
-        }
-
         this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, id));
         this._commands.push(cmd);
         return [index, id] as [number, string];
@@ -617,11 +580,6 @@ export default class Path extends Geometry {
         if (this.commands.length !== 0) {
             const { x: x0, y: y0, id: id0 } = this._commands[0];
             let cmd0 = this._reverseCommand({ ...command, type: command.type === PathCommandType.MoveTo ? PathCommandType.LineTo : command.type, id: id0 } as Required<PathCommand>, x0, y0);
-
-            // handle `arcTo`
-            if (cmd0.type === PathCommandType.ArcTo) {
-                cmd0 = this._correctAndSetRadii(cmd0, command);
-            }
 
             this.trigger_(new EventSourceObject(this, Path.events.commandChanged, 0, id0));
             this._commands[0] = cmd0;
