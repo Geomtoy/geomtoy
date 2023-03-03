@@ -3,7 +3,21 @@ import { Assert, Maths, TransformationMatrix } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import type Renderer from "../renderer/Renderer";
 import type ViewElement from "./ViewElement";
-import { ViewEventType } from "./ViewEvents";
+import {
+    viewActiveHoverEvent,
+    ViewActiveHoverEvent,
+    viewDragEvent,
+    ViewDragEvent,
+    viewEvent,
+    ViewEvent,
+    ViewEventType,
+    viewPanEvent,
+    ViewPanEvent,
+    viewPointerEvent,
+    ViewPointerEvent,
+    viewZoomEvent,
+    ViewZoomEvent
+} from "./ViewEvents";
 
 const VIEW_DEFAULTS = {
     hoverForemost: true,
@@ -190,112 +204,131 @@ export default class View {
         this._touchPointers = [];
     }
 
-    private _eventHandler: { [key: string]: ((...args: any[]) => any)[] } = {};
+    private _eventHandler: { [key: string]: { cb: (e: ViewEvent) => void; wait: boolean }[] } = {};
 
-    on(eventType: ViewEventType, handler: (...args: any[]) => any) {
+    on(
+        eventType:
+            | ViewEventType.PointerEnter
+            | ViewEventType.PointerLeave
+            | ViewEventType.PointerMove
+            | ViewEventType.PointerUp
+            | ViewEventType.PointerDown
+            | ViewEventType.PointerCancel
+            | ViewEventType.Wheel,
+
+        callback: (e: ViewPointerEvent) => void
+    ): this;
+    on(eventType: ViewEventType.DragStart | ViewEventType.Dragging | ViewEventType.DragEnd, callback: (e: ViewDragEvent) => void, waitViewUpdate?: boolean): this;
+    on(eventType: ViewEventType.PanStart | ViewEventType.Panning | ViewEventType.PanEnd, callback: (e: ViewPanEvent) => void, waitViewUpdate?: boolean): this;
+    on(eventType: ViewEventType.ZoomStart | ViewEventType.Zooming | ViewEventType.ZoomEnd, callback: (e: ViewZoomEvent) => void, waitViewUpdate?: boolean): this;
+    on(
+        eventType: ViewEventType.Activating | ViewEventType.Deactivating | ViewEventType.Hovering | ViewEventType.Unhovering,
+        callback: (e: ViewActiveHoverEvent) => void,
+        waitViewUpdate?: boolean
+    ): this;
+    on(eventType: ViewEventType, callback: (e: any) => void, waitViewUpdate = true) {
         if (this._eventHandler[eventType] === undefined) this._eventHandler[eventType] = [];
-        this._eventHandler[eventType].push(handler);
+        this._eventHandler[eventType].push({
+            cb: callback,
+            wait: waitViewUpdate
+        });
+        return this;
     }
-    off(eventType: ViewEventType, handler: (...args: any[]) => any) {
-        const index = this._eventHandler[eventType].findIndex(h => h === handler);
+    off(eventType: ViewEventType, callback: (e: ViewEvent) => void) {
+        if (this._eventHandler[eventType] === undefined) return this;
+        const index = this._eventHandler[eventType].findIndex(h => h.cb === callback);
         this._eventHandler[eventType].splice(index, 1);
+        return this;
     }
     clear(eventType?: ViewEventType) {
         if (eventType === undefined) {
             this._eventHandler = {};
         } else {
-            this._eventHandler[eventType] = [];
+            delete this._eventHandler[eventType];
         }
+        return this;
+    }
+
+    private _waitQueue: [cb: (e: any) => void, event: ViewEvent][] = [];
+    private _waitEventScheduled = false;
+    private _flushEvents() {
+        if (this._waitEventScheduled) return;
+        this._waitEventScheduled = true;
+        Geomtoy.nextTick(() => {
+            for (const [cb, object] of this._waitQueue) cb(object);
+            this._waitEventScheduled = false;
+            this._waitQueue = [];
+        });
+    }
+
+    trigger(
+        eventType:
+            | ViewEventType.PointerEnter
+            | ViewEventType.PointerLeave
+            | ViewEventType.PointerMove
+            | ViewEventType.PointerUp
+            | ViewEventType.PointerDown
+            | ViewEventType.PointerCancel
+            | ViewEventType.Wheel,
+        object: ViewPointerEvent
+    ): this;
+    trigger(eventType: ViewEventType.DragStart | ViewEventType.Dragging | ViewEventType.DragEnd, object: ViewDragEvent): this;
+    trigger(eventType: ViewEventType.PanStart | ViewEventType.Panning | ViewEventType.PanEnd, object: ViewPanEvent): this;
+    trigger(eventType: ViewEventType.ZoomStart | ViewEventType.Zooming | ViewEventType.ZoomEnd, object: ViewZoomEvent): this;
+    trigger(eventType: ViewEventType.Activating | ViewEventType.Deactivating | ViewEventType.Hovering | ViewEventType.Unhovering, object: ViewActiveHoverEvent): this;
+    trigger(eventType: ViewEventType, object: ViewEvent) {
+        if (this._eventHandler[eventType] === undefined) return this;
+        for (const { cb, wait } of this._eventHandler[eventType]) {
+            if (wait) {
+                this._waitQueue.push([cb, object]);
+                this._flushEvents();
+            } else {
+                cb(object);
+            }
+        }
+        return this;
     }
 
     cursor(type: "default" | "pointer" | "move" | "grab" | "grabbing" | "zoom-in" | "zoom-out") {
         this.renderer.container.style.cursor = type;
     }
 
-    // todo view will still need emit some event.
-    private readonly _pointerDownHandler = function (this: View, e: PointerEvent) {
-        const isMouse = e.pointerType === "mouse";
+    private _getAntiOffset(offset: [x: number, y: number]) {
+        return TransformationMatrix.antitransformCoordinates(this.renderer.display.globalTransformation, offset);
+    }
+    private _getOffset(antiOffset: [x: number, y: number]) {
+        return TransformationMatrix.transformCoordinates(this.renderer.display.globalTransformation, antiOffset);
+    }
+
+    private readonly _pointerEnterHandler = function (this: View, e: PointerEvent) {
         const isTouch = e.pointerType === "touch";
-
-        const pointerOffset = [e.offsetX, e.offsetY] as [number, number];
-        isTouch && this._addTouch(e.pointerId, pointerOffset);
-        // only allow the primary button of mouse
-        if (isMouse && e.buttons !== 1) return;
-
-        if (isMouse) {
-            const atOffset = TransformationMatrix.antitransformCoordinates(this.renderer.display.globalTransformation, pointerOffset);
-            const foundIndex = this._interactables.findIndex(el => this._isPointInElement(el, ...atOffset));
-            if (foundIndex !== -1) {
-                this.cursor("pointer");
-                if (!this._activeElements.includes(this._interactables[foundIndex])) {
-                    this._activeElements.push(this._interactables[foundIndex]);
-                    this.requestRender();
-                } else {
-                    this._deactivatingElement = this._interactables[foundIndex];
-                }
-                this._draggingOffset = atOffset;
-                this._preparingDragging = true;
-            } else {
-                this.cursor("grab");
-                this._preparingPanning = true;
-                this._panningOffset = pointerOffset;
-                this._activeElements.length > 0 && this.requestRender();
-                this._activeElements = [];
-            }
-        }
-        if (isTouch) {
-            if (this._touchPointers.length === 1) {
-                const atOffset = TransformationMatrix.antitransformCoordinates(this.renderer.display.globalTransformation, pointerOffset);
-                const foundIndex = this._interactables.findIndex(el => this._isPointInElement(el, ...atOffset));
-                if (foundIndex !== -1) {
-                    this.cursor("pointer");
-                    if (!this._activeElements.includes(this._interactables[foundIndex])) {
-                        this._activeElements.push(this._interactables[foundIndex]);
-                        this.requestRender();
-                    } else {
-                        this._deactivatingElement = this._interactables[foundIndex];
-                    }
-                    this._draggingOffset = atOffset;
-                    this._preparingDragging = true;
-                } else {
-                    this.cursor("grab");
-                    this._activeElements.length > 0 && this.requestRender();
-                    this._activeElements = [];
-                }
-            } else if (this._touchPointers.length === 2) {
-                this.cursor("default");
-
-                const [offset1, offset2] = [this._touchPointers[0].offset, this._touchPointers[1].offset];
-                const distance = Maths.hypot(offset2[0] - offset1[0], offset2[1] - offset1[1]);
-                const centerOffset = [(offset2[0] + offset1[0]) / 2, (offset2[1] + offset1[1]) / 2] as [number, number];
-
-                this._zoomingDistance = distance;
-                this._panningOffset = centerOffset;
-
-                this._preparingDragging = false;
-                this._isDragging = false;
-                this._activeElements.length > 0 && this.requestRender();
-                this._activeElements = [];
-
-                this._preparingPanning = true;
-                this._preparingZooming = true;
-            }
-        }
-        if (this._eventHandler[ViewEventType.PointerDown]?.length) {
-            Geomtoy.nextTick(() => this._eventHandler[ViewEventType.PointerDown].forEach(cb => cb()));
-        }
-    }.bind(this);
-    private readonly _pointerUpHandler = function (this: View, e: PointerEvent) {
-        const isMouse = e.pointerType === "mouse";
-        const isTouch = e.pointerType === "touch";
-
+        // this touch is not our touch
         if (isTouch && !this._hasTouch(e.pointerId)) return;
+        const pointerOffset = [e.offsetX, e.offsetY] as [number, number];
+
+        const atOffset = this._getAntiOffset(pointerOffset);
+        const ve = viewEvent(isTouch, ...pointerOffset, ...atOffset);
+        this.trigger(ViewEventType.PointerEnter, viewPointerEvent(ve, e));
+    }.bind(this);
+
+    private readonly _pointerLeaveHandler = function (this: View, e: PointerEvent) {
+        const isMouse = e.pointerType === "mouse";
+        const isTouch = e.pointerType === "touch";
+
+        // this touch is not our touch
+        if (isTouch && !this._hasTouch(e.pointerId)) return;
+        const pointerOffset = [e.offsetX, e.offsetY] as [number, number];
         isTouch && this._removeTouch(e.pointerId);
+
+        const atOffset = this._getAntiOffset(pointerOffset);
+        const ve = viewEvent(isTouch, ...pointerOffset, ...atOffset);
+        this.trigger(ViewEventType.PointerLeave, viewPointerEvent(ve, e));
 
         if (isMouse) {
             if (this._isDragging) {
                 this.cursor("default");
                 this._isDragging = false;
+                this.trigger(ViewEventType.DragEnd, viewDragEvent(ve, this._activeElements));
             } else if (this._preparingDragging) {
                 this.cursor("default");
                 this._preparingDragging = false;
@@ -303,12 +336,14 @@ export default class View {
                 if (this._deactivatingElement !== null) {
                     const index = this._activeElements.indexOf(this._deactivatingElement);
                     index !== -1 && this._activeElements.splice(index, 1);
+                    this.trigger(ViewEventType.Deactivating, viewActiveHoverEvent(ve, this._deactivatingElement));
                     this.requestRender();
                     this._deactivatingElement = null;
                 }
             } else if (this._isPanning) {
                 this.cursor("default");
                 this._isPanning = false;
+                this.trigger(ViewEventType.PanEnd, viewPanEvent(ve, ...this.renderer.display.pan));
             } else if (this._preparingPanning) {
                 this.cursor("default");
                 this._preparingPanning = false;
@@ -318,12 +353,14 @@ export default class View {
             if (this._isDragging) {
                 this.cursor("default");
                 this._isDragging = false;
+                this.trigger(ViewEventType.DragEnd, viewDragEvent(ve, this._activeElements));
             } else if (this._preparingDragging) {
                 this.cursor("default");
                 this._preparingDragging = false;
                 if (this._deactivatingElement !== null) {
                     const index = this._activeElements.indexOf(this._deactivatingElement);
                     index !== -1 && this._activeElements.splice(index, 1);
+                    this.trigger(ViewEventType.Deactivating, viewActiveHoverEvent(ve, this._deactivatingElement));
                     this.requestRender();
                     this._deactivatingElement = null;
                 }
@@ -333,22 +370,183 @@ export default class View {
                 this._preparingPanning = false;
                 this._isZooming = false;
                 this._preparingZooming = false;
+                this.trigger(ViewEventType.PanEnd, viewPanEvent(ve, ...this.renderer.display.pan));
+                this.trigger(ViewEventType.ZoomEnd, viewZoomEvent(ve, this.renderer.display.zoom));
                 this._clearTouch();
             }
         }
     }.bind(this);
-    private readonly _pointerLeaveHandler = this._pointerUpHandler;
+
+    private readonly _pointerCancelHandler = function (this: View, e: PointerEvent) {
+        const isTouch = e.pointerType === "touch";
+        // this touch is not our touch
+        if (isTouch && !this._hasTouch(e.pointerId)) return;
+        const pointerOffset = [e.offsetX, e.offsetY] as [number, number];
+
+        const atOffset = this._getAntiOffset(pointerOffset);
+        const ve = viewEvent(isTouch, ...pointerOffset, ...atOffset);
+        this.trigger(ViewEventType.PointerCancel, viewPointerEvent(ve, e));
+    }.bind(this);
+
+    private readonly _pointerDownHandler = function (this: View, e: PointerEvent) {
+        const isMouse = e.pointerType === "mouse";
+        const isTouch = e.pointerType === "touch";
+
+        const pointerOffset = [e.offsetX, e.offsetY] as [number, number];
+        isTouch && this._addTouch(e.pointerId, pointerOffset);
+        // only allow the primary button of mouse
+        if (isMouse && !e.isPrimary) return;
+
+        const atOffset = this._getAntiOffset(pointerOffset);
+        const ve = viewEvent(isTouch, ...pointerOffset, ...atOffset);
+        this.trigger(ViewEventType.PointerDown, viewPointerEvent(ve, e));
+
+        if (isMouse) {
+            const foundIndex = this._interactables.findIndex(el => this._isPointInElement(el, ...atOffset));
+            if (foundIndex !== -1) {
+                this.cursor("pointer");
+                if (!this._activeElements.includes(this._interactables[foundIndex])) {
+                    this._activeElements.push(this._interactables[foundIndex]);
+                    this.trigger(ViewEventType.Activating, viewActiveHoverEvent(ve, this._interactables[foundIndex]));
+                    this.requestRender();
+                } else {
+                    this._deactivatingElement = this._interactables[foundIndex];
+                }
+                this.trigger(ViewEventType.DragStart, viewDragEvent(ve, this._activeElements));
+                this._draggingOffset = atOffset;
+                this._preparingDragging = true;
+            } else {
+                this.cursor("grab");
+                this._preparingPanning = true;
+                this._panningOffset = pointerOffset;
+                this.trigger(ViewEventType.PanStart, viewPanEvent(ve, this.renderer.display.pan[0], this.renderer.display.pan[1]));
+                this._activeElements.length > 0 && this.requestRender();
+                this._activeElements = [];
+            }
+        }
+        if (isTouch) {
+            if (this._touchPointers.length === 1) {
+                const foundIndex = this._interactables.findIndex(el => this._isPointInElement(el, ...atOffset));
+                if (foundIndex !== -1) {
+                    this.cursor("pointer");
+                    if (!this._activeElements.includes(this._interactables[foundIndex])) {
+                        this._activeElements.push(this._interactables[foundIndex]);
+                        this.trigger(ViewEventType.Activating, viewActiveHoverEvent(ve, this._interactables[foundIndex]));
+                        this.requestRender();
+                    } else {
+                        this._deactivatingElement = this._interactables[foundIndex];
+                    }
+                    this.trigger(ViewEventType.DragStart, viewDragEvent(ve, this._activeElements));
+                    this._draggingOffset = atOffset;
+                    this._preparingDragging = true;
+                } else {
+                    this.cursor("grab");
+                    this._activeElements.length > 0 && this.requestRender();
+                    this._activeElements = [];
+                }
+            } else if (this._touchPointers.length === 2) {
+                this.cursor("default");
+                const [offset1, offset2] = [this._touchPointers[0].offset, this._touchPointers[1].offset];
+                const distance = Maths.hypot(offset2[0] - offset1[0], offset2[1] - offset1[1]);
+                const centerOffset = [(offset2[0] + offset1[0]) / 2, (offset2[1] + offset1[1]) / 2] as [number, number];
+
+                this._zoomingDistance = distance;
+                this._panningOffset = centerOffset;
+
+                this._preparingDragging = false;
+                this._isDragging = false;
+                this.trigger(ViewEventType.PanStart, viewPanEvent(ve, ...this.renderer.display.pan));
+                this.trigger(ViewEventType.ZoomStart, viewZoomEvent(ve, this.renderer.display.zoom));
+                this._activeElements.length > 0 && this.requestRender();
+                this._activeElements = [];
+
+                this._preparingPanning = true;
+                this._preparingZooming = true;
+            }
+        }
+    }.bind(this);
+
+    private readonly _pointerUpHandler = function (this: View, e: PointerEvent) {
+        const isMouse = e.pointerType === "mouse";
+        const isTouch = e.pointerType === "touch";
+
+        // this touch is not our touch
+        if (isTouch && !this._hasTouch(e.pointerId)) return;
+        const pointerOffset = [e.offsetX, e.offsetY] as [number, number];
+        isTouch && this._removeTouch(e.pointerId);
+
+        const atOffset = this._getAntiOffset(pointerOffset);
+        const ve = viewEvent(isTouch, ...pointerOffset, ...atOffset);
+        this.trigger(ViewEventType.PointerUp, viewPointerEvent(ve, e));
+
+        if (isMouse) {
+            if (this._isDragging) {
+                this.cursor("default");
+                this._isDragging = false;
+                this.trigger(ViewEventType.DragEnd, viewDragEvent(ve, this._activeElements));
+            } else if (this._preparingDragging) {
+                this.cursor("default");
+                this._preparingDragging = false;
+
+                if (this._deactivatingElement !== null) {
+                    const index = this._activeElements.indexOf(this._deactivatingElement);
+                    index !== -1 && this._activeElements.splice(index, 1);
+                    this.trigger(ViewEventType.Deactivating, viewActiveHoverEvent(ve, this._deactivatingElement));
+                    this.requestRender();
+                    this._deactivatingElement = null;
+                }
+            } else if (this._isPanning) {
+                this.cursor("default");
+                this._isPanning = false;
+                this.trigger(ViewEventType.PanEnd, viewPanEvent(ve, ...this.renderer.display.pan));
+            } else if (this._preparingPanning) {
+                this.cursor("default");
+                this._preparingPanning = false;
+            }
+        }
+        if (isTouch) {
+            if (this._isDragging) {
+                this.cursor("default");
+                this._isDragging = false;
+                this.trigger(ViewEventType.DragEnd, viewDragEvent(ve, this._activeElements));
+            } else if (this._preparingDragging) {
+                this.cursor("default");
+                this._preparingDragging = false;
+                if (this._deactivatingElement !== null) {
+                    const index = this._activeElements.indexOf(this._deactivatingElement);
+                    index !== -1 && this._activeElements.splice(index, 1);
+                    this.trigger(ViewEventType.Deactivating, viewActiveHoverEvent(ve, this._deactivatingElement));
+                    this.requestRender();
+                    this._deactivatingElement = null;
+                }
+            } else if (this._isPanning || this._preparingPanning || this._isZooming || this._preparingZooming) {
+                this.cursor("default");
+                this._isPanning = false;
+                this._preparingPanning = false;
+                this._isZooming = false;
+                this._preparingZooming = false;
+                this.trigger(ViewEventType.PanEnd, viewPanEvent(ve, ...this.renderer.display.pan));
+                this.trigger(ViewEventType.ZoomEnd, viewZoomEvent(ve, this.renderer.display.zoom));
+                this._clearTouch();
+            }
+        }
+    }.bind(this);
+
     private readonly _pointerMoveHandler = function (this: View, e: PointerEvent) {
         const isMouse = e.pointerType === "mouse";
         const isTouch = e.pointerType === "touch";
 
         if (isTouch && !this._hasTouch(e.pointerId)) return;
-        const pointerOffset = [e.offsetX, e.offsetY] as [number, number];
-        isTouch && this._updateTouch(e.pointerId, pointerOffset);
 
-        if (isMouse) {
-            this._rafTick(() => {
-                const atOffset = TransformationMatrix.antitransformCoordinates(this.renderer.display.globalTransformation, pointerOffset);
+        this._rafTick(() => {
+            const pointerOffset = [e.offsetX, e.offsetY] as [number, number];
+            isTouch && this._updateTouch(e.pointerId, pointerOffset);
+
+            const atOffset = this._getAntiOffset(pointerOffset);
+            const ve = viewEvent(isTouch, ...pointerOffset, ...atOffset);
+            this.trigger(ViewEventType.PointerMove, viewPointerEvent(ve, e));
+
+            if (isMouse) {
                 if (this._preparingDragging) {
                     const scale = this.renderer.display.density * this.renderer.display.zoom;
                     const dragDistance = Maths.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
@@ -363,6 +561,7 @@ export default class View {
                     const [deltaX, deltaY] = [atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]];
                     this._draggingOffset = atOffset;
                     this._activeElements.forEach(el => el.move(deltaX, deltaY));
+                    this.trigger(ViewEventType.Dragging, viewDragEvent(ve, this._activeElements));
                     // this.requestRender();
                 } else if (this._preparingPanning || this._isPanning) {
                     this.cursor("grabbing");
@@ -372,16 +571,19 @@ export default class View {
                     const [deltaX, deltaY] = [pointerOffset[0] - this._panningOffset[0], pointerOffset[1] - this._panningOffset[1]];
                     this._panningOffset = pointerOffset;
                     this.renderer.display.pan = [this.renderer.display.pan[0] + deltaX, this.renderer.display.pan[1] + deltaY];
+                    this.trigger(ViewEventType.Panning, viewPanEvent(ve, ...this.renderer.display.pan));
                     this.requestRender();
                 } else {
                     const foundIndex = this._interactables.findIndex(el => this._isPointInElement(el, ...atOffset));
                     if (foundIndex !== -1) {
                         this.cursor("pointer");
+                        this.trigger(ViewEventType.Hovering, viewActiveHoverEvent(ve, this._interactables[foundIndex]));
                         this._hoverElement = this._interactables[foundIndex];
                         this.requestRender();
                     } else {
                         if (this._hoverElement !== null) {
                             this.cursor("default");
+                            this.trigger(ViewEventType.Hovering, viewActiveHoverEvent(ve, this._hoverElement));
                             this._hoverElement = null;
                             this.requestRender();
                         } else {
@@ -389,11 +591,9 @@ export default class View {
                         }
                     }
                 }
-            });
-        }
+            }
 
-        if (isTouch) {
-            this._rafTick(() => {
+            if (isTouch) {
                 const atOffset = TransformationMatrix.antitransformCoordinates(this.renderer.display.globalTransformation, pointerOffset);
                 if (this._preparingDragging) {
                     const scale = this.renderer.display.density * this.renderer.display.zoom;
@@ -409,6 +609,7 @@ export default class View {
                     const [deltaX, deltaY] = [atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]];
                     this._draggingOffset = atOffset;
                     this._activeElements.forEach(el => el.move(deltaX, deltaY));
+                    this.trigger(ViewEventType.Dragging, viewDragEvent(ve, this._activeElements));
                     // this.requestRender();
                 } else if (this._preparingZooming || this._isZooming || this._preparingPanning || this._isPanning) {
                     this.cursor("default");
@@ -431,21 +632,24 @@ export default class View {
                     let zoom = display.zoom * deltaZoom;
                     zoom = zoom < this.minZoom ? this.minZoom : zoom > this.maxZoom ? this.maxZoom : zoom;
 
-                    const [atOffsetX, atOffsetY] = TransformationMatrix.antitransformCoordinates(display.globalTransformation, centerOffset);
+                    const atOffset = this._getAntiOffset(centerOffset);
                     display.zoom = zoom;
-                    const [scaledOffsetX, scaledOffsetY] = TransformationMatrix.transformCoordinates(display.globalTransformation, [atOffsetX, atOffsetY]);
+                    const [scaledOffsetX, scaledOffsetY] = this._getOffset(atOffset);
                     const [zoomOffsetX, zoomOffsetY] = [centerOffset[0] - scaledOffsetX, centerOffset[1] - scaledOffsetY];
                     display.pan = [display.pan[0] + deltaX + zoomOffsetX, display.pan[1] + deltaY + zoomOffsetY];
+                    this.trigger(ViewEventType.Zooming, viewZoomEvent(ve, display.zoom));
+                    this.trigger(ViewEventType.Panning, viewPanEvent(ve, ...display.pan));
                     this.requestRender();
                 }
-            });
-        }
+            }
+        });
     }.bind(this);
+
     private readonly _wheelHandler = function (this: View, e: WheelEvent) {
         e.preventDefault();
-        const mouseOffset = [e.offsetX, e.offsetY] as [number, number];
-        const deltaY = e.deltaY;
         this._rafTick(() => {
+            const mouseOffset = [e.offsetX, e.offsetY] as [number, number];
+            const deltaY = e.deltaY;
             const display = this.renderer.display;
             let zoom: number;
             if (this.inverseWheelZoom) {
@@ -453,14 +657,19 @@ export default class View {
             } else {
                 zoom = deltaY > 0 ? display.zoom / this.wheelZoomDeltaRate : deltaY < 0 ? display.zoom * this.wheelZoomDeltaRate : display.zoom;
             }
-            zoom = zoom < this.minZoom ? this.minZoom : zoom > this.maxZoom ? this.maxZoom : zoom;
+            zoom = Maths.clamp(zoom, this.minZoom, this.maxZoom);
 
-            const [atOffsetX, atOffsetY] = TransformationMatrix.antitransformCoordinates(display.globalTransformation, mouseOffset);
+            const atOffset = this._getAntiOffset(mouseOffset);
+            const ve = viewEvent(false, ...mouseOffset, ...atOffset);
+            this.trigger(ViewEventType.Wheel, viewPointerEvent(ve, e));
+
             display.zoom = zoom;
-            const [scaledOffsetX, scaledOffsetY] = TransformationMatrix.transformCoordinates(display.globalTransformation, [atOffsetX, atOffsetY]);
+            const [scaledOffsetX, scaledOffsetY] = this._getOffset(atOffset);
             const [zoomOffsetX, zoomOffsetY] = [mouseOffset[0] - scaledOffsetX, mouseOffset[1] - scaledOffsetY];
             display.pan = [display.pan[0] + zoomOffsetX, display.pan[1] + zoomOffsetY];
 
+            this.trigger(ViewEventType.Zooming, viewZoomEvent(ve, display.zoom));
+            this.trigger(ViewEventType.Panning, viewPanEvent(ve, ...display.pan));
             this.requestRender();
         });
     }.bind(this);
@@ -468,15 +677,19 @@ export default class View {
     startInteractive() {
         this.renderer.container.addEventListener("pointerdown", this._pointerDownHandler as EventListener);
         this.renderer.container.addEventListener("pointerup", this._pointerUpHandler as EventListener);
-        this.renderer.container.addEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
         this.renderer.container.addEventListener("pointermove", this._pointerMoveHandler as EventListener);
+        this.renderer.container.addEventListener("pointerenter", this._pointerEnterHandler as EventListener);
+        this.renderer.container.addEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
+        this.renderer.container.addEventListener("pointercancel", this._pointerCancelHandler as EventListener);
         this.renderer.container.addEventListener("wheel", this._wheelHandler as EventListener);
     }
     stopInteractive() {
         this.renderer.container.removeEventListener("pointerdown", this._pointerDownHandler as EventListener);
         this.renderer.container.removeEventListener("pointerup", this._pointerUpHandler as EventListener);
-        this.renderer.container.addEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
         this.renderer.container.removeEventListener("pointermove", this._pointerMoveHandler as EventListener);
+        this.renderer.container.removeEventListener("pointerenter", this._pointerEnterHandler as EventListener);
+        this.renderer.container.removeEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
+        this.renderer.container.removeEventListener("pointercancel", this._pointerCancelHandler as EventListener);
         this.renderer.container.removeEventListener("wheel", this._wheelHandler as EventListener);
     }
     startResponsive(callback: (width: number, height: number) => void) {

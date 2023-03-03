@@ -23,14 +23,14 @@ const DEFAULT_INTERACTIVE_STYLE: InteractiveStyle = {
     strokeWidth: 1
 };
 
-export default class ViewElement {
+export default class ViewElement<T extends Shape = Shape> {
     private _interactable: boolean;
     private _zIndex: number;
     private _style = Utility.cloneDeep(DEFAULT_STYLE);
     private _hoverStyle = Utility.cloneDeep(DEFAULT_INTERACTIVE_STYLE);
     private _activeStyle = Utility.cloneDeep(DEFAULT_INTERACTIVE_STYLE);
 
-    shape: Shape;
+    shape: T;
 
     paths: PathInfo[] = [];
 
@@ -43,7 +43,7 @@ export default class ViewElement {
     subView: SubView | null = null;
 
     constructor(
-        shape: Shape,
+        shape: T,
         { interactable = false, zIndex = 0, style, hoverStyle, activeStyle } = {} as Partial<{
             interactable: boolean;
             zIndex: number;

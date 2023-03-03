@@ -1,6 +1,14 @@
 import ViewElement from "./ViewElement";
 
 export const enum ViewEventType {
+    PointerEnter = "pointerEnter",
+    PointerLeave = "pointerLeave",
+    PointerMove = "pointerMove",
+    PointerDown = "pointerDown",
+    PointerUp = "pointerUp",
+    PointerCancel = "pointerCancel",
+    Wheel = "wheel",
+
     DragStart = "dragStart",
     Dragging = "dragging",
     DragEnd = "dragEnd",
@@ -11,16 +19,11 @@ export const enum ViewEventType {
     Zooming = "zooming",
     ZoomEnd = "zoomEnd",
 
-    PointerEnter = "pointerEnter",
-    PointerMove = "pointerMove",
-    PointerDown = "pointerDown",
-    PointerUp = "pointerUp",
-    PointerLeave = "pointerLeave",
-
     Activating = "activating",
-    Deactivating = "deactivating"
+    Deactivating = "deactivating",
+    Hovering = "hovering",
+    Unhovering = "unhovering"
 }
-
 export interface ViewEvent {
     isTouch: boolean;
     viewportX: number;
@@ -28,43 +31,43 @@ export interface ViewEvent {
     x: number;
     y: number;
 }
-
-export interface ViewDragStartEvent extends ViewEvent {
-    elements: ViewElement;
+export function viewEvent(isTouch: boolean, viewportX: number, viewportY: number, x: number, y: number) {
+    return { isTouch, viewportX, viewportY, x, y } as ViewEvent;
 }
-export interface ViewDraggingEvent {
+
+export interface ViewPointerEvent extends ViewEvent {
+    original: PointerEvent | WheelEvent;
+}
+export function viewPointerEvent(viewEvent: ViewEvent, original: PointerEvent | WheelEvent) {
+    return { ...viewEvent, original } as ViewPointerEvent;
+}
+
+// DragStart / Dragging / DragEnd
+export interface ViewDragEvent extends ViewEvent {
     elements: ViewElement[];
 }
-export interface ViewDragEndEvent extends ViewEvent {
-    elements: ViewElement[];
+export function viewDragEvent(viewEvent: ViewEvent, elements: ViewElement[]) {
+    return { ...viewEvent, elements } as ViewDragEvent;
 }
 
-export interface ViewPanStartEvent extends ViewEvent {}
-export interface ViewPanningEvent extends ViewEvent {}
-export interface ViewPanEndEvent extends ViewEvent {
-    oldValue: number;
-    newValue: number;
+export interface ViewPanEvent extends ViewEvent {
+    panX: number;
+    panY: number;
+}
+export function viewPanEvent(viewEvent: ViewEvent, panX: number, panY: number) {
+    return { ...viewEvent, panX, panY } as ViewPanEvent;
 }
 
-export interface ViewZoomStartEvent extends ViewEvent {}
-export interface ViewZoomingEvent extends ViewEvent {}
-export interface ViewZoomEndEvent extends ViewEvent {
-    oldValue: number;
-    newValue: number;
+export interface ViewZoomEvent extends ViewEvent {
+    zoom: number;
+}
+export function viewZoomEvent(viewEvent: ViewEvent, zoom: number) {
+    return { ...viewEvent, zoom } as ViewZoomEvent;
 }
 
-export interface ViewPointerEnterEvent extends ViewEvent {}
-
-export interface ViewPointerDownEvent extends ViewEvent {
-    element: null | ViewElement;
+export interface ViewActiveHoverEvent extends ViewEvent {
+    element: ViewElement;
 }
-
-export interface ViewPointerMoveEvent extends ViewEvent {
-    element: null | ViewElement;
+export function viewActiveHoverEvent(viewEvent: ViewEvent, element: ViewElement) {
+    return { ...viewEvent, element } as ViewActiveHoverEvent;
 }
-
-export interface ViewPointerUpEvent extends ViewEvent {
-    element: null | ViewElement;
-}
-
-export interface ViewPointerLeaveEvent extends ViewEvent {}
