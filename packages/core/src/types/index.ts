@@ -209,6 +209,7 @@ export type TextGraphicCommand = {
     fontFamily: string;
     fontBold: boolean;
     fontItalic: boolean;
+    anchor: TextAnchor;
 };
 
 export type GeometryGraphicCommand =
@@ -281,6 +282,18 @@ export type FontConfig = {
     fontBold: boolean;
     fontItalic: boolean;
 };
+export const enum TextAnchor {
+    LeftTop = "leftTop",
+    LeftCenter = "leftCenter",
+    LeftBottom = "leftBottom",
+    CenterTop = "centerTop",
+    CenterCenter = "centerCenter",
+    CenterBottom = "centerBottom",
+    RightTop = "rightTop",
+    RightCenter = "rightCenter",
+    RightBottom = "rightBottom"
+}
+
 // #endregion
 
 // #region Path

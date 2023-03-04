@@ -1,5 +1,4 @@
-import type { FillRule, GeometryGraphicCommand, ImageGraphicCommand, Shape, TextGraphicCommand } from "@geomtoy/core";
-import { GeometryGraphic, ImageGraphic, TextGraphic } from "@geomtoy/core";
+import { GeometryGraphic, ImageGraphic, TextAnchor, TextGraphic, type FillRule, type GeometryGraphicCommand, type ImageGraphicCommand, type Shape, type TextGraphicCommand } from "@geomtoy/core";
 import { Box, TransformationMatrix, Utility } from "@geomtoy/util";
 import TextMeasurer from "../helper/TextMeasurer";
 import type { DisplaySettings, InterfaceSettings, PathInfo } from "../types";
@@ -112,15 +111,42 @@ export default class CanvasRenderer extends Renderer {
         this._buffer.restore();
     }
     private _drawText(cmd: TextGraphicCommand, path: Path2D, onTop: boolean) {
-        const { x, y, offsetX, offsetY, text, fontSize, fontFamily, fontBold, fontItalic } = cmd;
+        const { x, y, offsetX, offsetY, text, fontSize, fontFamily, fontBold, fontItalic, anchor } = cmd;
 
         const [tx, ty] = TransformationMatrix.transformCoordinates(this.display.globalTransformation, [x, y]);
         const scale = this.display.scale;
         const [textWidth, textHeight] = TextMeasurer.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", text);
         const [atTextWidth, atTextHeight] = [textWidth / scale, textHeight / scale];
-        const [atTextOffsetX, atTextOffsetY] = [offsetX / scale, offsetY / scale];
-        const [adjustX, adjustY] = [this.display.xAxisPositiveOnRight ? 0 : textWidth, this.display.yAxisPositiveOnBottom ? 0 : textHeight];
-        const [textOffsetX, textOffsetY] = [this.display.xAxisPositiveOnRight ? offsetX : -offsetX, this.display.yAxisPositiveOnBottom ? offsetY : -offsetY];
+        const [atOffsetX, atOffsetY] = [offsetX / scale, offsetY / scale];
+
+        let [tAdjX, tAdjY] = [NaN, NaN];
+        let [atAdjX, atAdjY] = [NaN, NaN];
+
+        if (anchor === TextAnchor.LeftTop || anchor === TextAnchor.LeftCenter || anchor === TextAnchor.LeftBottom) {
+            tAdjX = tx;
+            atAdjX = this.display.xAxisPositiveOnRight ? x : x - 2 * atOffsetX - atTextWidth;
+        }
+        if (anchor === TextAnchor.CenterTop || anchor === TextAnchor.CenterCenter || anchor === TextAnchor.CenterBottom) {
+            tAdjX = tx - textWidth / 2;
+            atAdjX = this.display.xAxisPositiveOnRight ? x - atTextWidth / 2 : x - 2 * atOffsetX - atTextWidth / 2;
+        }
+        if (anchor === TextAnchor.RightTop || anchor === TextAnchor.RightCenter || anchor === TextAnchor.RightBottom) {
+            tAdjX = tx - textWidth;
+            atAdjX = this.display.xAxisPositiveOnRight ? x - atTextWidth : x - 2 * atOffsetX;
+        }
+        //
+        if (anchor === TextAnchor.LeftTop || anchor === TextAnchor.CenterTop || anchor === TextAnchor.RightTop) {
+            tAdjY = ty;
+            atAdjY = this.display.yAxisPositiveOnBottom ? y : y - 2 * atOffsetY - atTextHeight;
+        }
+        if (anchor === TextAnchor.LeftCenter || anchor === TextAnchor.CenterCenter || anchor === TextAnchor.RightCenter) {
+            tAdjY = ty - textHeight / 2;
+            atAdjY = this.display.yAxisPositiveOnBottom ? y - atTextHeight / 2 : y - 2 * atOffsetY - atTextHeight / 2;
+        }
+        if (anchor === TextAnchor.LeftBottom || anchor === TextAnchor.CenterBottom || anchor === TextAnchor.RightBottom) {
+            tAdjY = ty - textHeight;
+            atAdjY = this.display.yAxisPositiveOnBottom ? y - atTextHeight : y - 2 * atOffsetY;
+        }
 
         this._buffer.save();
         this._buffer.textBaseline = "hanging";
@@ -133,12 +159,12 @@ export default class CanvasRenderer extends Renderer {
         this._buffer.globalCompositeOperation = onTop ? "source-over" : "destination-over";
         this._buffer.resetTransform();
         this._setStyle();
-        this.style_.noFill || this._buffer.fillText(text, tx - adjustX + textOffsetX, ty - adjustY + textOffsetY);
-        this.style_.noStroke || this._buffer.strokeText(text, tx - adjustX + textOffsetX, ty - adjustY + textOffsetY);
+        this.style_.noFill || this._buffer.fillText(text, tAdjX + offsetX, tAdjY + offsetY);
+        this.style_.noStroke || this._buffer.strokeText(text, tAdjX + offsetX, tAdjY + offsetY);
         this._buffer.restore();
 
         // implicit bounding box
-        const b: [number, number, number, number] = [x + atTextOffsetX, y + atTextOffsetY, atTextWidth, atTextHeight];
+        const b: [number, number, number, number] = [atAdjX + atOffsetX, atAdjY + atOffsetY, atTextWidth, atTextHeight];
         path.moveTo(...Box.nn(b));
         path.lineTo(...Box.mn(b));
         path.lineTo(...Box.mm(b));

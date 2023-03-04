@@ -1,12 +1,10 @@
 import { Assert, Coordinates, Type, Utility, Vector2 } from "@geomtoy/util";
-
 import Shape from "../base/Shape";
 import EventSourceObject from "../event/EventSourceObject";
 import Point from "../geometries/basic/Point";
 import Graphics from "../graphics";
 import TextGraphic from "../graphics/TextGraphic";
-
-import type { FontConfig } from "../types";
+import { TextAnchor, type FontConfig } from "../types";
 
 const FONT_DEFAULT_CONFIG: FontConfig = {
     fontSize: 16,
@@ -14,6 +12,7 @@ const FONT_DEFAULT_CONFIG: FontConfig = {
     fontBold: false,
     fontItalic: false
 };
+const TEXT_DEFAULT_ANCHOR = TextAnchor.LeftTop;
 
 export default class Text extends Shape {
     private _x = 0;
@@ -21,29 +20,30 @@ export default class Text extends Shape {
     private _offsetX = 0;
     private _offsetY = 0;
     private _text = "";
-    private _font: FontConfig = Utility.cloneDeep(FONT_DEFAULT_CONFIG);
+    private _font: FontConfig = { ...FONT_DEFAULT_CONFIG };
+    private _anchor = TEXT_DEFAULT_ANCHOR;
 
-    constructor(x: number, y: number, offsetX: number, offsetY: number, text: string, font?: FontConfig);
-    constructor(coordinates: [number, number], offsetX: number, offsetY: number, text: string, font?: FontConfig);
-    constructor(point: Point, offsetX: number, offsetY: number, text: string, font?: FontConfig);
-    constructor(text: string, font?: FontConfig);
-    constructor(font?: FontConfig);
-    constructor(a0?: any, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any) {
+    constructor(x: number, y: number, offsetX: number, offsetY: number, text: string, font?: FontConfig, anchor?: TextAnchor);
+    constructor(coordinates: [number, number], offsetX: number, offsetY: number, text: string, font?: FontConfig, anchor?: TextAnchor);
+    constructor(point: Point, offsetX: number, offsetY: number, text: string, font?: FontConfig, anchor?: TextAnchor);
+    constructor(text: string, font?: FontConfig, anchor?: TextAnchor);
+    constructor(font?: FontConfig, anchor?: TextAnchor);
+    constructor(a0?: any, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any) {
         super();
         if (Type.isNumber(a0)) {
-            Object.assign(this, { x: a0, y: a1, offsetX: a2, offsetY: a3, text: a4, font: a5 ?? this._font });
+            Object.assign(this, { x: a0, y: a1, offsetX: a2, offsetY: a3, text: a4, font: a5 ?? this._font, anchor: a6 ?? this._anchor });
         }
         if (Type.isArray(a0)) {
-            Object.assign(this, { coordinates: a0, offsetX: a1, offsetY: a2, text: a3, font: a4 ?? this._font });
+            Object.assign(this, { coordinates: a0, offsetX: a1, offsetY: a2, text: a3, font: a4 ?? this._font, anchor: a5 ?? this._anchor });
         }
         if (a0 instanceof Point) {
-            Object.assign(this, { point: a0, offsetX: a1, offsetY: a2, text: a3, font: a4 ?? this._font });
+            Object.assign(this, { point: a0, offsetX: a1, offsetY: a2, text: a3, font: a4 ?? this._font, anchor: a5 ?? this._anchor });
         }
         if (Type.isString(a0)) {
-            Object.assign(this, { text: a0, font: a1 ?? this._font });
+            Object.assign(this, { text: a0, font: a1 ?? this._font, anchor: a2 ?? this._anchor });
         }
         if (Type.isPlainObject(a0)) {
-            Object.assign(this, { font: a0 ?? this._font });
+            Object.assign(this, { font: a0 ?? this._font, anchor: a1 ?? this._anchor });
         }
     }
 
@@ -52,7 +52,9 @@ export default class Text extends Shape {
         yChanged: "y" as const,
         offsetXChanged: "offsetX" as const,
         offsetYChanged: "offsetY" as const,
-        textChanged: "text" as const
+        textChanged: "text" as const,
+        fontChanged: "font" as const,
+        anchorChanged: "anchor" as const
     };
 
     private _setX(value: number) {
@@ -74,6 +76,14 @@ export default class Text extends Shape {
     private _setText(value: string) {
         if (!Utility.isEqualTo(this._text, value)) this.trigger_(new EventSourceObject(this, Text.events.textChanged));
         this._text = value;
+    }
+    private _setFont(value: Partial<FontConfig>) {
+        if (!Utility.isEqualTo(this.font, value)) this.trigger_(new EventSourceObject(this, Text.events.fontChanged));
+        this._font = { ...this._font, ...value };
+    }
+    private _setAnchor(value: TextAnchor) {
+        if (!Utility.isEqualTo(this._anchor, value)) this.trigger_(new EventSourceObject(this, Text.events.anchorChanged));
+        this._anchor = value;
     }
 
     get x() {
@@ -124,10 +134,16 @@ export default class Text extends Shape {
         this._setText(value);
     }
     get font(): FontConfig {
-        return Utility.cloneDeep(this._font);
+        return { ...this._font };
     }
     set font(value: Partial<FontConfig>) {
-        Utility.assignDeep(this._font, value);
+        this._setFont(value);
+    }
+    get anchor() {
+        return this._anchor;
+    }
+    set anchor(value) {
+        this._setAnchor(value);
     }
 
     move(deltaX: number, deltaY: number) {
@@ -144,13 +160,14 @@ export default class Text extends Shape {
             offsetX,
             offsetY,
             text,
-            font: { fontSize, fontFamily, fontBold, fontItalic }
+            font: { fontSize, fontFamily, fontBold, fontItalic },
+            anchor
         } = this;
-        tg.text(x, y, offsetX, offsetY, text, fontSize, fontFamily, fontBold, fontItalic);
+        tg.text(x, y, offsetX, offsetY, text, fontSize, fontFamily, fontBold, fontItalic, anchor);
         return g;
     }
     clone() {
-        return new Text(this.x, this.y, this.offsetX, this.offsetY, this.text, this.font);
+        return new Text(this._x, this._y, this._offsetX, this._offsetY, this._text, this._font, this._anchor);
     }
     copyFrom(shape: Text | null) {
         if (shape === null) shape = new Text();
@@ -159,7 +176,8 @@ export default class Text extends Shape {
         this._setOffsetX(shape._offsetX);
         this._setOffsetY(shape._offsetY);
         this._setText(shape._text);
-        this.font = shape._font;
+        this._setFont(shape._font);
+        this._setAnchor(shape._anchor);
         return this;
     }
     override toString() {
@@ -171,6 +189,7 @@ export default class Text extends Shape {
             `\toffsetY: ${this.offsetY}`,
             `\ttext: ${this.text}`,
             `\tfont: ${JSON.stringify(this._font)}`,
+            `\tanchor: ${this.anchor}`,
             `\t}`,
             `}`
         ].join("\n");

@@ -1,5 +1,5 @@
 import { centerToEndpointParameterization, endpointToCenterParameterization } from "../misc/arc";
-import { type GeometryGraphicCommand, GeometryGraphicCommandType, FillRule } from "../types";
+import { type GeometryGraphicCommand, GeometryGraphicCommandType, type FillRule } from "../types";
 
 export default class GeometryGraphic {
     commands: GeometryGraphicCommand[] = [];

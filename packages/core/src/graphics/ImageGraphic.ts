@@ -1,4 +1,4 @@
-import { ImageGraphicCommand } from "../types";
+import { type ImageGraphicCommand } from "../types";
 
 export default class ImageGraphic {
     command?: ImageGraphicCommand;
