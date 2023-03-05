@@ -326,7 +326,7 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         };
     }
 
-    isDoubleLines() {
+    isDoubleLine() {
         // This means $ax^2+bxy+cy^2+dx+ey+f=0$ can write as $(lx+my+n)^2=0$
         const coefs = this.getImplicitFunctionCoefs();
         const curveEpsilon = optioner.options.curveEpsilon;

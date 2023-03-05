@@ -145,9 +145,9 @@ export default class BezierBezier extends BaseRelationship {
         const tRootsM = Polynomial.rootsMultiplicity(tRoots.filter(Type.isNumber), curveEpsilon);
         const intersection: ReturnType<typeof this.intersection> = [];
 
-        // adjust the multiplicity when bezier1 is triple lines
-        const tripleLines1 = this.geometry1.isTripleLines();
-        if (tripleLines1) {
+        // adjust the multiplicity when bezier1 is a triple line
+        const tripleLine1 = this.geometry1.isTripleLine();
+        if (tripleLine1) {
             tRootsM.forEach((rm, index) => {
                 if (rm.multiplicity === 9) tRootsM[index].multiplicity = 3;
                 if (rm.multiplicity === 6) tRootsM[index].multiplicity = 2;
@@ -183,7 +183,7 @@ export default class BezierBezier extends BaseRelationship {
                 const x = Polynomial.evaluate(polyX2, t2);
                 const y = Polynomial.evaluate(polyY2, t2);
 
-                const t1s = tripleLines1 ? this.geometry1.getTimesOfPointExtend([x, y]) : [this.geometry1.getTimeOfPointExtend([x, y])];
+                const t1s = tripleLine1 ? this.geometry1.getTimesOfPointExtend([x, y]) : [this.geometry1.getTimeOfPointExtend([x, y])];
                 t1s.forEach(t1 => {
                     if (Maths.between(t1, 0, 1, false, false, epsilon)) {
                         intersection.push({
@@ -450,7 +450,7 @@ export default class BezierBezier extends BaseRelationship {
         if (!this.onSameTrajectory()) return [];
 
         // It will be very complicated to tell the coincide in this situation.
-        if (this.geometry1.isTripleLines()) return [];
+        if (this.geometry1.isTripleLine()) return [];
 
         const { t2i, t2t, c1i, c1t } = this.perspective();
         const epsilon = optioner.options.epsilon;

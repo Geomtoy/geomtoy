@@ -382,7 +382,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         return [minX, minY, maxX - minX, maxY - minY] as [number, number, number, number];
     }
 
-    isTripleLines() {
+    isTripleLine() {
         // This means $ax^3+bx^2y+cxy^2+dy^3+ex^2+fxy+gy^2+hx+iy+j=0$ can write as $(lx+my+n)^3=0$
         const coefs = this.getImplicitFunctionCoefs();
         const curveEpsilon = optioner.options.curveEpsilon;

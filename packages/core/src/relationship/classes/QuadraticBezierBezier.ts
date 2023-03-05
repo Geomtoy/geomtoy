@@ -108,9 +108,9 @@ export default class QuadraticBezierBezier extends BaseRelationship {
         const tRootsM = Polynomial.rootsMultiplicity(tRoots.filter(Type.isNumber), curveEpsilon);
         const intersection: ReturnType<typeof this.intersection> = [];
 
-        // adjust the multiplicity when bezier is triple lines
-        const tripleLines2 = this.geometry2.isTripleLines();
-        if (tripleLines2) {
+        // adjust the multiplicity when bezier is a triple line
+        const tripleLine2 = this.geometry2.isTripleLine();
+        if (tripleLine2) {
             tRootsM.forEach((rm, index) => {
                 if (rm.multiplicity === 9) tRootsM[index].multiplicity = 3;
                 if (rm.multiplicity === 6) tRootsM[index].multiplicity = 2;
@@ -146,7 +146,7 @@ export default class QuadraticBezierBezier extends BaseRelationship {
                 const x = Polynomial.evaluate(polyX1, t1);
                 const y = Polynomial.evaluate(polyY1, t1);
 
-                const t2s = tripleLines2 ? this.geometry2.getTimesOfPointExtend([x, y]) : [this.geometry2.getTimeOfPointExtend([x, y])];
+                const t2s = tripleLine2 ? this.geometry2.getTimesOfPointExtend([x, y]) : [this.geometry2.getTimeOfPointExtend([x, y])];
                 t2s.forEach(t2 => {
                     if (Maths.between(t2, 0, 1, false, false, epsilon)) {
                         intersection.push({

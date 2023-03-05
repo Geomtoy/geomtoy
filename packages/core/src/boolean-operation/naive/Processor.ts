@@ -47,8 +47,8 @@ export default class Processor {
         }
 
         const epsilon = optioner.options.epsilon;
-        // handle double lines
-        if (quadraticBezier.isDoubleLines()) {
+        // handle double line
+        if (quadraticBezier.isDoubleLine()) {
             const extrema = quadraticBezier
                 .extrema()
                 .filter(([, t]) => Maths.between(t, 0, 1, true, true, epsilon))
@@ -86,8 +86,8 @@ export default class Processor {
             });
             return chips;
         }
-        // handle bezier triple lines
-        if (bezier.isTripleLines()) {
+        // handle bezier triple line
+        if (bezier.isTripleLine()) {
             const extrema = bezier
                 .extrema()
                 .filter(([, t]) => Maths.between(t, 0, 1, true, true, epsilon))

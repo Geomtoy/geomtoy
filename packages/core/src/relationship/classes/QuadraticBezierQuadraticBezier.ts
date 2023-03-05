@@ -108,9 +108,9 @@ export default class QuadraticBezierQuadraticBezier extends BaseRelationship {
         const tRootsM = Polynomial.rootsMultiplicity(tRoots.filter(Type.isNumber), curveEpsilon);
         const intersection: ReturnType<typeof this.intersection> = [];
 
-        // adjust the multiplicity when quadraticBezier1 is double lines
-        const doubleLines1 = this.geometry1.isDoubleLines();
-        if (doubleLines1) {
+        // adjust the multiplicity when quadraticBezier1 is a double line
+        const doubleLine1 = this.geometry1.isDoubleLine();
+        if (doubleLine1) {
             tRootsM.forEach((rm, index) => {
                 if (rm.multiplicity === 6) tRootsM[index].multiplicity = 3;
                 if (rm.multiplicity === 4) tRootsM[index].multiplicity = 2;
