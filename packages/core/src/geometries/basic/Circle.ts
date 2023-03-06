@@ -5,7 +5,6 @@ import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import Inversion from "../../inversion";
-import { centerToEndpointParameterization } from "../../misc/arc";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
 import { validGeometry } from "../../misc/decor-geometry";
 import { getCoordinates } from "../../misc/point-like";
@@ -469,37 +468,28 @@ export default class Circle extends Geometry implements ClosedGeometry {
     }
 
     /**
-     * To path, using `Path.arcTo` command.
+     * Convert circle `this` to path, using only one `Path.arcTo` command.
      */
     toPath() {
+        const { _radius: radius } = this;
+        const c = this.getParametricEquation()(0);
         const path = new Path();
-        const {
-            centerCoordinates: [cx, cy],
-            radius: r
-        } = this;
-        const {
-            point1X: x1,
-            point1Y: y1,
-            point2X: x2,
-            point2Y: y2,
-            radiusX: rx,
-            radiusY: ry,
-            largeArc,
-            positive,
-            rotation: phi
-        } = centerToEndpointParameterization({
-            centerX: cx,
-            centerY: cy,
-            radiusX: r,
-            radiusY: r,
-            startAngle: 0,
-            endAngle: 2 * Maths.PI,
-            positive: this.getWindingDirection() === 1,
-            rotation: 0
-        });
-
-        path.appendCommand(Path.moveTo([x1, y1]));
-        path.appendCommand(Path.arcTo(rx, ry, phi, largeArc, positive, [x2, y2]));
+        path.appendCommand(Path.moveTo(c));
+        path.appendCommand(Path.arcTo(radius, radius, 0, true, true, c));
+        path.closed = true;
+        return path;
+    }
+    /**
+     * Convert circle `this` to path, using two `Path.arcTo` commands.
+     */
+    toPath3() {
+        const { _radius: radius } = this;
+        const c0 = this.getParametricEquation()(0);
+        const c1 = this.getParametricEquation()(Maths.PI);
+        const path = new Path();
+        path.appendCommand(Path.moveTo(c0));
+        path.appendCommand(Path.arcTo(radius, radius, 0, false, true, c1));
+        path.appendCommand(Path.arcTo(radius, radius, 0, false, true, c0));
         path.closed = true;
         return path;
     }

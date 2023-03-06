@@ -61,6 +61,12 @@ class TransformationMatrix {
     static antitransformCoordinates(m: [number, number, number, number, number, number], coordinates: [number, number]) {
         return TransformationMatrix.transformCoordinates(TransformationMatrix.invert(m), coordinates);
     }
+
+    /**
+     * Decompose transformation `m` via the QR-like decomposition.
+     * @see https://frederic-wang.fr/decomposition-of-2d-transform-matrices.html
+     * @param m
+     */
     static decomposeQr(m: [number, number, number, number, number, number]) {
         const [a, b, c, d, tx, ty] = m;
         const det = TransformationMatrix.determinant(m);
@@ -92,6 +98,12 @@ class TransformationMatrix {
             skew: [kx, ky] as [number, number]
         };
     }
+    /**
+     * Decompose transformation matrix `m` via SVD decomposition.
+     * @see https://scicomp.stackexchange.com/questions/8899/robust-algorithm-for-2-times-2-svd
+     * @see https://math.stackexchange.com/questions/861674/decompose-a-2d-arbitrary-transform-into-only-scaling-and-rotation
+     * @param m
+     */
     static decomposeSvd(m: [number, number, number, number, number, number]) {
         const [a, b, c, d, tx, ty] = m;
 

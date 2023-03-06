@@ -1,26 +1,23 @@
 import { Angle, Assert, Coordinates, EllipticIntegral, Maths, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
-import { centerToEndpointParameterization } from "../../misc/arc";
-import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
-
-import Path from "../general/Path";
-
 import Geometry from "../../base/Geometry";
-import EventSourceObject from "../../event/EventSourceObject";
-import GeometryGraphic from "../../graphics/GeometryGraphic";
-import Arc from "./Arc";
-import Circle from "./Circle";
-import Line from "./Line";
-import Point from "./Point";
-import Vector from "./Vector";
-
 import SealedShapeArray from "../../collection/SealedShapeArray";
+import EventSourceObject from "../../event/EventSourceObject";
 import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
+import { completeEllipticIntegralOfSecondKind } from "../../misc/elliptic-integral";
 import { getCoordinates } from "../../misc/point-like";
 import Transformation from "../../transformation";
 import type { ClosedGeometry, RotationFeaturedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
+import Path from "../general/Path";
+import Arc from "./Arc";
+import Circle from "./Circle";
+import Line from "./Line";
 import LineSegment from "./LineSegment";
+import Point from "./Point";
+import Vector from "./Vector";
 
 @validGeometry
 export default class Ellipse extends Geometry implements ClosedGeometry, RotationFeaturedGeometry {
@@ -30,7 +27,6 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     private _radiusX = NaN;
     private _radiusY = NaN;
     private _rotation = 0;
-    private _windingDirection = 1 as WindingDirection;
 
     constructor(centerX: number, centerY: number, radiusX: number, radiusY: number, rotation?: number);
     constructor(centerCoordinates: [number, number], radiusX: number, radiusY: number, rotation?: number);
@@ -172,17 +168,15 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         if (rx0 && ry0) return new Point(cc);
         return this;
     }
-
     /**
      * @see https://en.wikipedia.org/wiki/Ellipse#Circumference
-     * Use the Ramanujan Approximation II
      */
     getLength() {
         const { radiusX: rx, radiusY: ry } = this;
         const a = Maths.max(rx, ry);
         const b = Maths.min(rx, ry);
         const esq = 1 - b ** 2 / a ** 2;
-        return 4 * a * EllipticIntegral.completeEllipticIntegralOfSecondKind(esq);
+        return 4 * a * completeEllipticIntegralOfSecondKind(esq);
     }
     getArea() {
         const { radiusX: rx, radiusY: ry } = this;
@@ -420,10 +414,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     }
 
     getWindingDirection() {
-        return this._windingDirection;
-    }
-    setWindingDirection(direction: WindingDirection) {
-        this._windingDirection = direction;
+        return 1 as WindingDirection;
     }
 
     getArcBetweenAngles(startAngle: number, endAngle: number, positive = true): null | Arc {
@@ -578,12 +569,16 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     apply(transformation: Transformation) {
         // @see https://math.stackexchange.com/questions/3076317/what-is-the-equation-for-an-ellipse-in-standard-form-after-an-arbitrary-matrix-t
         // @see https://math.stackexchange.com/questions/2627074/finding-the-major-and-minor-axes-lengths-of-an-ellipse-given-parametric-equation
-        if (transformation.span() !== 2) return null;
-
         const { centerX, centerY, radiusX, radiusY, rotation } = this;
-        // consider ellipse `this` is transformed from a unit circle
+        // Consider ellipse `this` is transformed from a unit circle.
+        // Do remember, the transformation is applied from right to left.
+        // *Memo:
+        // A x B x C = M            --- M is composited by A, B, C in the order shown.
+        // M x v = nv               --- apply the composited matrix to v
+        // (A x B x C) v = nv       --- equal to apply the A, B, C sequently in the right to left order.
+        //                          --- Because matrix is a kind of `function`:
+        // A(B(C(v)))= nv
         const te = new Transformation().addTranslate(centerX, centerY).addRotate(rotation).addScale(radiusX, radiusY);
-
         const t = transformation.clone().addMatrix(...te.matrix);
         const {
             translate: [tx, ty],
@@ -592,38 +587,34 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         } = t.decomposeSvd();
         return new Ellipse(tx, ty, Maths.abs(sx), Maths.abs(sy), rotate1);
     }
-
-    toPath2() {
-        const { centerX: cx, centerY: cy, rotation: phi, radiusX: rx, radiusY: ry } = this;
+    /**
+     * Convert ellipse `this` to path, using only one `Path.arcTo` command.
+     */
+    toPath() {
+        const { _rotation: rotation, _radiusX: radiusX, _radiusY: radiusY } = this;
+        const c = this.getParametricEquation()(0);
         const path = new Path();
-
-        const {
-            point1X: x1,
-            point1Y: y1,
-            point2X: x2,
-            point2Y: y2,
-            radiusX,
-            radiusY,
-            largeArc,
-            positive,
-            rotation
-        } = centerToEndpointParameterization({
-            centerX: cx,
-            centerY: cy,
-            radiusX: rx,
-            radiusY: ry,
-            rotation: phi,
-            startAngle: 0,
-            endAngle: 2 * Maths.PI,
-            positive: this.getWindingDirection() === 1
-        });
-        path.appendCommand(Path.moveTo([x1, y1]));
-        path.appendCommand(Path.arcTo(radiusX, radiusY, rotation, largeArc, positive, [x2, y2]));
+        path.appendCommand(Path.moveTo(c));
+        path.appendCommand(Path.arcTo(radiusX, radiusY, rotation, true, true, c));
+        path.closed = true;
+        return path;
+    }
+    /**
+     * Convert ellipse `this` to path, using two `Path.arcTo` commands.
+     */
+    toPath3() {
+        const { _centerX: centerX, _centerY: centerY, _rotation: rotation, _radiusX: radiusX, _radiusY: radiusY } = this;
+        const c0 = this.getParametricEquation()(0);
+        const c1 = this.getParametricEquation()(Maths.PI);
+        const path = new Path();
+        path.appendCommand(Path.moveTo(c0));
+        path.appendCommand(Path.arcTo(radiusX, radiusY, rotation, false, true, c1));
+        path.appendCommand(Path.arcTo(radiusX, radiusY, rotation, false, true, c0));
         path.closed = true;
         return path;
     }
 
-    toPath() {
+    toPath2() {
         const kappa = 0.5522848;
         const { centerX: cx, centerY: cy, rotation: phi, radiusX: rx, radiusY: ry } = this;
 

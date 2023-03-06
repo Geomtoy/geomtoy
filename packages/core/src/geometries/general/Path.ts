@@ -9,7 +9,7 @@ import FillRuleHelper from "../../helper/FillRuleHelper";
 import { correctRadii, endpointParameterizationTransform, endpointToCenterParameterization } from "../../misc/arc";
 import { arcPathIntegral, bezierPathIntegral, lineSegmentPathIntegral, quadraticBezierPathIntegral } from "../../misc/area-integrate";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
-import { validGeometry } from "../../misc/decor-geometry";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { next } from "../../misc/loop";
 import { getCoordinates } from "../../misc/point-like";
 import { parseSvgPath } from "../../misc/svg-path";
@@ -181,6 +181,7 @@ export default class Path extends Geometry {
 
     static fromQuadraticBezierThroughPointsSmoothly(points: Point[] | [number, number][], closed = false) {}
 
+    @validGeometryArguments
     static moveTo(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         return {
@@ -189,6 +190,7 @@ export default class Path extends Geometry {
             y
         } as PathMoveToCommand;
     }
+    @validGeometryArguments
     static lineTo(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         return {
@@ -197,6 +199,7 @@ export default class Path extends Geometry {
             y
         } as PathLineToCommand;
     }
+    @validGeometryArguments
     static bezierTo(controlPoint1: [number, number] | Point, controlPoint2: [number, number] | Point, point: [number, number] | Point) {
         const [controlPoint1X, controlPoint1Y] = getCoordinates(controlPoint1, "controlPoint1");
         const [controlPoint2X, controlPoint2Y] = getCoordinates(controlPoint2, "controlPoint2");
@@ -211,6 +214,7 @@ export default class Path extends Geometry {
             controlPoint2Y
         } as PathBezierToCommand;
     }
+    @validGeometryArguments
     static quadraticBezierTo(controlPoint: [number, number] | Point, point: [number, number] | Point) {
         const [controlPointX, controlPointY] = getCoordinates(controlPoint, "controlPoint");
         const [x, y] = getCoordinates(point, "point");
@@ -222,10 +226,23 @@ export default class Path extends Geometry {
             controlPointY
         } as PathQuadraticBezierToCommand;
     }
+    @validGeometryArguments
     static arcTo(radiusX: number, radiusY: number, rotation: number, largeArc: boolean, positive: boolean, point: [number, number] | Point) {
-        Assert.isPositiveNumber(radiusX, "radiusX");
-        Assert.isPositiveNumber(radiusY, "radiusY");
+        Assert.isNonNegativeNumber(radiusX, "radiusX");
+        Assert.isNonNegativeNumber(radiusY, "radiusY");
         Assert.isRealNumber(rotation, "rotation");
+        /**
+         * SVG supports that `radiusX` and `radiusY` can be 0 at the same time, which is possible from a simple drawing implementation,
+         * but mathematically, it does not conform to the definition of an ellipse. When both radii are 0, the ellipse degenerates into a point, then there will be no arc "with length" on it.
+         * So we can't let this situation(both radii are 0 at the same time) happen, but this situation is acceptable for SVG.
+         * To resolve this dilemma, we can only modify the user input when this situation occurs. Of course, even if one of the radii is modified to a value other than 0,
+         * it will not affect the actual SVG display - arcs will degenerate into a line segment for display,
+         * but for us, this is very meaningful, because such an arc is judged degenerate into a line segment instead of degenerate into null.
+         * That's why here we modify user input instead of complaining about errors.
+         */
+        // Assert.condition(!(radiusX === 0 && radiusY === 0), "[G]The `radiusX` and `radiusY` cannot both be 0.");
+        /* Let's flip a coin */
+        if (radiusX === 0 && radiusY === 0) Maths.random() > 0.5 ? (radiusX = 1) : (radiusY = 1);
         const [x, y] = getCoordinates(point, "point");
         return {
             type: PathCommandType.ArcTo,
@@ -310,6 +327,7 @@ export default class Path extends Geometry {
                 if (!Type.isRealNumber(v.y)) return false;
                 if (!Type.isNonNegativeNumber(v.radiusX)) return false;
                 if (!Type.isNonNegativeNumber(v.radiusY)) return false;
+                if (v.radiusX === 0 && v.radiusY === 0) return false;
                 if (!Type.isRealNumber(v.rotation)) return false;
                 // if (!Type.isBoolean(v.largeArc)) return false;
                 // if (!Type.isBoolean(v.positive)) return false;
@@ -371,11 +389,22 @@ export default class Path extends Geometry {
                 return new QuadraticBezier(cmdCurr.x, cmdCurr.y, cmdNext.x, cmdNext.y, cmdNext.controlPointX, cmdNext.controlPointY);
             }
             case PathCommandType.ArcTo: {
-                // correctRadii
-                const { x: x1, y: y1 } = cmdCurr;
-                const { x: x2, y: y2, radiusX, radiusY, rotation } = cmdNext;
-                const [rx, ry] = correctRadii(x1, y1, x2, y2, radiusX, radiusY, rotation);
-                return new Arc(cmdCurr.x, cmdCurr.y, cmdNext.x, cmdNext.y, rx, ry, cmdNext.largeArc, cmdNext.positive, cmdNext.rotation);
+                if (cmdNext.radiusX === 0 || cmdNext.radiusY === 0) {
+                    // degenerate arc
+                    return new Arc(cmdCurr.x, cmdCurr.y, cmdNext.x, cmdNext.y, cmdNext.radiusX, cmdNext.radiusY, cmdNext.largeArc, cmdNext.positive, cmdNext.rotation);
+                } else {
+                    // we must call `correctRadii` here, `Arc` use a different `flexCorrectRadii`, and they are not the same logic.
+                    return new Arc(
+                        cmdCurr.x,
+                        cmdCurr.y,
+                        cmdNext.x,
+                        cmdNext.y,
+                        ...correctRadii(cmdCurr.x, cmdCurr.y, cmdNext.x, cmdNext.y, cmdNext.radiusX, cmdNext.radiusY, cmdNext.rotation),
+                        cmdNext.largeArc,
+                        cmdNext.positive,
+                        cmdNext.rotation
+                    );
+                }
             }
             default: {
                 throw new Error("[G]This should never happen.");
@@ -684,18 +713,24 @@ export default class Path extends Geometry {
                 case PathCommandType.ArcTo: {
                     const { x: x0, y: y0 } = cmdCurr;
                     const { x: x1, y: y1, radiusX, radiusY, rotation, largeArc, positive } = cmdNext;
-                    const acp = endpointToCenterParameterization({
-                        point1X: x0,
-                        point1Y: y0,
-                        point2X: x1,
-                        point2Y: y1,
-                        radiusX,
-                        radiusY,
-                        largeArc,
-                        positive,
-                        rotation
-                    });
-                    a += arcPathIntegral(acp.centerX, acp.centerY, acp.radiusX, acp.radiusY, acp.rotation, acp.positive, acp.startAngle, acp.endAngle);
+                    if (radiusX === 0 || radiusY === 0) {
+                        // arc degenerate to line segment
+                        a += lineSegmentPathIntegral(x0, y0, x1, y1);
+                    } else {
+                        const [rx, ry] = correctRadii(x0, y0, x1, y1, radiusX, radiusY, rotation);
+                        const cp = endpointToCenterParameterization({
+                            point1X: x0,
+                            point1Y: y0,
+                            point2X: x1,
+                            point2Y: y1,
+                            radiusX: rx,
+                            radiusY: ry,
+                            largeArc,
+                            positive,
+                            rotation
+                        });
+                        a += arcPathIntegral(cp.centerX, cp.centerY, cp.radiusX, cp.radiusY, cp.rotation, cp.positive, cp.startAngle, cp.endAngle);
+                    }
                     break;
                 }
                 default: {
@@ -740,31 +775,23 @@ export default class Path extends Geometry {
                     break;
                 }
                 case PathCommandType.ArcTo: {
-                    const { x: x1, y: y1 } = this._commands[index - 1];
-                    const { x: x2, y: y2, radiusX: rx, radiusY: ry, rotation: phi, largeArc, positive } = cmd;
-                    const {
-                        point2X: nx2,
-                        point2Y: ny2,
-                        radiusX: nrx,
-                        radiusY: nry,
-                        largeArc: nla,
-                        positive: np,
-                        rotation: nr
-                    } = endpointParameterizationTransform(
+                    const { x: x0, y: y0 } = this._commands[index - 1];
+                    const { x: x1, y: y1, radiusX, radiusY, rotation, largeArc, positive } = cmd;
+                    const ep = endpointParameterizationTransform(
                         {
-                            point1X: x1,
-                            point1Y: y1,
-                            point2X: x2,
-                            point2Y: y2,
-                            radiusX: rx,
-                            radiusY: ry,
-                            largeArc: largeArc,
-                            positive: positive,
-                            rotation: phi
+                            point1X: x0,
+                            point1Y: y0,
+                            point2X: x1,
+                            point2Y: y1,
+                            radiusX,
+                            radiusY,
+                            largeArc,
+                            positive,
+                            rotation
                         },
                         transformation.matrix
                     );
-                    path.appendCommand(Path.arcTo(nrx, nry, nr, nla, np, [nx2, ny2]));
+                    path.appendCommand(Path.arcTo(ep.radiusX, ep.radiusY, ep.rotation, ep.largeArc, ep.positive, [ep.point2X, ep.point2Y]));
                     break;
                 }
                 default: {
@@ -798,11 +825,14 @@ export default class Path extends Geometry {
                 gg.quadraticBezierTo(cmd.controlPointX, cmd.controlPointY, cmd.x, cmd.y);
             }
             if (cmd.type === PathCommandType.ArcTo) {
-                // correctRadii
                 const { x: px, y: py } = this._commands[index - 1];
-                const { x, y, radiusX, radiusY, rotation, largeArc, positive } = cmd;
-                const [rx, ry] = correctRadii(px, py, x, y, radiusX, radiusY, rotation);
-                gg.endpointArcTo(rx, ry, rotation, largeArc, positive, x, y);
+                const { x, y, rotation, largeArc, positive, radiusX, radiusY } = cmd;
+                // correct radii, do this for canvas
+                if (radiusX === 0 || radiusY === 0) {
+                    gg.lineTo(x, y);
+                } else {
+                    gg.endpointArcTo(...correctRadii(px, py, x, y, radiusX, radiusY, rotation), rotation, largeArc, positive, x, y);
+                }
             }
         });
         if (this.closed) gg.close();

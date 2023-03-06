@@ -131,19 +131,14 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
             !Number.isNaN(_inputRadiusY)
         )
         if (correctPrecondition) {
-            if (Maths.equalTo(_inputRadiusX, 0, optioner.options.epsilon) || Maths.equalTo(_inputRadiusY, 0, optioner.options.epsilon)) {
-                if (!Utility.isEqualTo(this._radiusX, _inputRadiusX)) {
-                    this._radiusX = _inputRadiusX;
-                    this.trigger_(new EventSourceObject(this, Arc.events.radiusXChanged));
-                }
-                if (!Utility.isEqualTo(this._radiusY, _inputRadiusY)) {
-                    this._radiusY = _inputRadiusY;
-                    this.trigger_(new EventSourceObject(this, Arc.events.radiusYChanged));
-                }
-                return;
+            let rx = NaN;
+            let ry = NaN;
+            const epsilon = optioner.options.epsilon;
+            if (Maths.equalTo(_inputRadiusX, 0, epsilon) || Maths.equalTo(_inputRadiusY, 0, epsilon)) {
+                [rx, ry] = [_inputRadiusX, _inputRadiusY];
+            } else {
+                [rx, ry] = flexCorrectRadii(_point1X, _point1Y, _point2X, _point2Y, _inputRadiusX, _inputRadiusY, _rotation);
             }
-
-            const [rx, ry] = flexCorrectRadii(_point1X, _point1Y, _point2X, _point2Y, _inputRadiusX, _inputRadiusY, _rotation);
             if (!Utility.isEqualTo(this._radiusX, rx)) {
                 this._radiusX = rx;
                 this.trigger_(new EventSourceObject(this, Arc.events.radiusXChanged));
@@ -263,19 +258,16 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     @statedWithBoolean(undefined)
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
-
-        const { radiusX: rx, radiusY: ry, point1Coordinates: c1, point2Coordinates: c2 } = this;
-        const rx0 = Maths.equalTo(rx, 0, optioner.options.epsilon);
-        const ry0 = Maths.equalTo(ry, 0, optioner.options.epsilon);
-        const c12 = Coordinates.isEqualTo(c1, c2, optioner.options.epsilon);
+        const { _radiusX: rx, _radiusY: ry, point1Coordinates: c1, point2Coordinates: c2 } = this;
+        const epsilon = optioner.options.epsilon;
+        const rx0 = Maths.equalTo(rx, 0, epsilon);
+        const ry0 = Maths.equalTo(ry, 0, epsilon);
+        const c12 = Coordinates.isEqualTo(c1, c2, epsilon);
 
         if (check) return rx0 || ry0 || c12;
 
         if (c12) return new Point(c1);
-
-        if ((rx0 && !ry0) || (!rx0 && ry0)) {
-            return new LineSegment(c1, c2);
-        }
+        if ((rx0 && !ry0) || (!rx0 && ry0)) return new LineSegment(c1, c2);
         if (rx0 && ry0) return null;
         return this;
     }
@@ -419,11 +411,15 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
 
     reverse() {
         this.positive = !this.positive;
-        // we need special handling
-        const [ox1, oy1] = [this._point1X, this._point1Y];
-        const [ox2, oy2] = [this._point2X, this._point2Y];
-        [this._point1X, this.point1Y] = [ox2, oy2];
-        [this._point2X, this.point2Y] = [ox1, oy1];
+        // We need special handling, do not use `point1Coordinates`, `point2Coordinates`.
+        // prettier-ignore
+        [
+            [this._point1X, this._point1Y], 
+            [this._point2X, this._point2Y]
+        ] = [
+            [this._point2X, this._point2Y],
+            [this._point1X, this._point1Y]
+        ];
         this.trigger_(new EventSourceObject(this, Arc.events.point1XChanged));
         this.trigger_(new EventSourceObject(this, Arc.events.point1YChanged));
         this.trigger_(new EventSourceObject(this, Arc.events.point2XChanged));
@@ -442,7 +438,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const epsilon = optioner.options.epsilon;
         return Angle.between(a, sa, ea, positive, false, false, epsilon) ? Angle.clamp(a, sa, ea, positive) : NaN;
     }
-
     getPointAtAngle(a: number) {
         a = this._clampAngle(a, "a");
         return this.toEllipse().getPointAtAngle(a);
@@ -670,22 +665,8 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     }
 
     apply(transformation: Transformation) {
-        if (transformation.span() !== 2) return null;
-        const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2, radiusX: rx, radiusY: ry, rotation: phi, largeArc: la, positive: p } = this;
-        const ep = endpointParameterizationTransform(
-            {
-                point1X: x1,
-                point1Y: y1,
-                point2X: x2,
-                point2Y: y2,
-                radiusX: rx,
-                radiusY: ry,
-                largeArc: la,
-                positive: p,
-                rotation: phi
-            },
-            transformation.matrix
-        );
+        const { _point1X: x1, _point1Y: y1, _point2X: x2, _point2Y: y2, _radiusX: rx, _radiusY: ry, _rotation: phi, _largeArc: la, _positive: p } = this;
+        const ep = endpointParameterizationTransform({ point1X: x1, point1Y: y1, point2X: x2, point2Y: y2, radiusX: rx, radiusY: ry, largeArc: la, positive: p, rotation: phi }, transformation.matrix);
         return new Arc(ep.point1X, ep.point1Y, ep.point2X, ep.point2Y, ep.radiusX, ep.radiusY, ep.largeArc, ep.positive, ep.rotation);
     }
 
@@ -704,7 +685,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     }
 
     clone() {
-        return new Arc(this.point1X, this.point1Y, this.point2X, this.point2Y, this.radiusX, this.radiusY, this.largeArc, this.positive, this.rotation);
+        return new Arc(this._point1X, this._point1Y, this._point2X, this._point2Y, this._radiusX, this._radiusY, this._largeArc, this._positive, this._rotation);
     }
 
     copyFrom(shape: Arc | null) {

@@ -53,7 +53,7 @@ export default class GeometryGraphic {
     centerArcTo(centerX: number, centerY: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, positive: boolean = true) {
         const { point1X, point1Y, point2X, point2Y, largeArc } = centerToEndpointParameterization({ centerX, centerY, radiusX, radiusY, startAngle, endAngle, rotation, positive });
 
-        // `Canvas` logic
+        // Canvas logic
         if (this.commands.length === 0) {
             // Move to the starting point of the arc, if this `centerArcTo` will be the first command,
             // like `Canvas` implicitly do. We make it explicitly for `SVG`
@@ -81,16 +81,10 @@ export default class GeometryGraphic {
         return this;
     }
     endpointArcTo(radiusX: number, radiusY: number, rotation: number, largeArc: boolean, positive: boolean, x: number, y: number) {
+        // When calling this graphic method, we must sure `radiusX` and `radiusY` is positive real number and corrected.
         const [point1X, point1Y] = this._currentXY;
         const [point2X, point2Y] = [x, y];
-        // prettier-ignore
-        const {
-            centerX,
-            centerY, 
-            startAngle,
-            endAngle
-        } = endpointToCenterParameterization({ point1X, point1Y, point2X,point2Y, radiusX, radiusY, largeArc, positive, rotation })
-
+        const { centerX, centerY, startAngle, endAngle } = endpointToCenterParameterization({ point1X, point1Y, point2X, point2Y, radiusX, radiusY, largeArc, positive, rotation });
         this.commands.push({
             type: GeometryGraphicCommandType.ArcTo,
             centerX,
@@ -101,10 +95,11 @@ export default class GeometryGraphic {
             endAngle,
             rotation,
             positive,
-            x: point2X,
-            y: point2Y,
+            x,
+            y,
             largeArc
         });
+
         this._currentXY = [point2X, point2Y];
         return this;
     }

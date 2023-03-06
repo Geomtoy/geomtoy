@@ -308,13 +308,12 @@ export default class Transformation extends EventTarget {
      *  .addScale(o.scale[0], o.scale[1])
      *  .addSkew(o.skew[0], o.skew[1])
      * ```
-     * @see https://frederic-wang.fr/decomposition-of-2d-transform-matrices.html
      */
     decomposeQr() {
         return TransformationMatrix.decomposeQr(this._matrix);
     }
     /**
-     * Decompose transformation `this` via SVD-like decomposition.
+     * Decompose transformation `this` via SVD decomposition.
      * @description The return object (if named `o`) means transformation `this` is equal to
      * ```javascript
      * this.reset()
@@ -323,8 +322,6 @@ export default class Transformation extends EventTarget {
      *  .addScale(o.scale[0], o.scale[1])
      *  .addRotate(o.rotate2)
      * ```
-     * @see https://scicomp.stackexchange.com/questions/8899/robust-algorithm-for-2-times-2-svd
-     * @see https://math.stackexchange.com/questions/861674/decompose-a-2d-arbitrary-transform-into-only-scaling-and-rotation
      */
     decomposeSvd() {
         return TransformationMatrix.decomposeSvd(this._matrix);
