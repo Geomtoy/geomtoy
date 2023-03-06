@@ -8,7 +8,7 @@ import ArrowGraphics from "../../helper/ArrowGraphics";
 import FillRuleHelper from "../../helper/FillRuleHelper";
 import { lineSegmentPathIntegral } from "../../misc/area-integrate";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
-import { validGeometry } from "../../misc/decor-geometry";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { next } from "../../misc/loop";
 import { getCoordinates } from "../../misc/point-like";
 import { parseSvgPolygon } from "../../misc/svg-polygon";
@@ -158,6 +158,7 @@ export default class Polygon extends Geometry {
         );
     }
 
+    @validGeometryArguments
     static vertex(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         return { x, y } as PolygonVertex;
@@ -214,7 +215,6 @@ export default class Polygon extends Geometry {
         const closed = assumeClosed ? true : this.closed;
         const nextIndex = next(index, this.vertexCount, closed);
         if (nextIndex === -1) return null;
-
         const vtxCurr = this._vertices[index];
         const vtxNext = this._vertices[nextIndex];
         return new LineSegment(vtxCurr.x, vtxCurr.y, vtxNext.x, vtxNext.y);
