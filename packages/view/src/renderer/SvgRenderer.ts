@@ -215,6 +215,7 @@ export default class SvgRenderer extends Renderer {
         textEl.setAttribute("x", `${tAdjX + offsetX}`);
         textEl.setAttribute("y", `${tAdjY + offsetY}`);
         this._setStyle(textEl);
+        this.style_.paintOrder && textEl.setAttribute("paint-order", this.style_.paintOrder);
         this.style_.noFill && textEl.setAttribute("fill", "none");
         this.style_.noStroke && textEl.setAttribute("stroke", "none");
 

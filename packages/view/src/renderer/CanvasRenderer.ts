@@ -132,12 +132,23 @@ export default class CanvasRenderer extends Renderer {
                 this._buffer.drawImage(image, tAdjX, tAdjY, tImageWidth, tImageHeight);
             }
             this._buffer.setTransform(...this.display.globalTransformation);
-            this.style_.noFill || this._buffer.fill(path);
-            this.style_.noStroke || this._buffer.stroke(path);
+
+            if (this.style_.paintOrder === "fill") {
+                this.style_.noFill || this._buffer.fill(path);
+                this.style_.noStroke || this._buffer.stroke(path);
+            } else {
+                this.style_.noStroke || this._buffer.stroke(path);
+                this.style_.noFill || this._buffer.fill(path);
+            }
         } else {
             this._buffer.globalCompositeOperation = "destination-over";
-            this.style_.noFill || this._buffer.fill(path);
-            this.style_.noStroke || this._buffer.stroke(path);
+            if (this.style_.paintOrder === "fill") {
+                this.style_.noStroke || this._buffer.stroke(path);
+                this.style_.noFill || this._buffer.fill(path);
+            } else {
+                this.style_.noFill || this._buffer.fill(path);
+                this.style_.noStroke || this._buffer.stroke(path);
+            }
             this._buffer.resetTransform();
             if (obtained && !Number.isNaN(sourceX) && !Number.isNaN(sourceY) && !Number.isNaN(sourceWidth) && !Number.isNaN(sourceHeight)) {
                 this._buffer.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, tAdjX, tAdjY, tImageWidth, tImageHeight);
@@ -196,8 +207,13 @@ export default class CanvasRenderer extends Renderer {
         this._buffer.globalCompositeOperation = onTop ? "source-over" : "destination-over";
         this._buffer.resetTransform();
         this._setStyle();
-        this.style_.noFill || this._buffer.fillText(content, tAdjX + offsetX, tAdjY + offsetY);
-        this.style_.noStroke || this._buffer.strokeText(content, tAdjX + offsetX, tAdjY + offsetY);
+        if ((this.style_.paintOrder === "fill") === onTop) {
+            this.style_.noFill || this._buffer.fillText(content, tAdjX + offsetX, tAdjY + offsetY);
+            this.style_.noStroke || this._buffer.strokeText(content, tAdjX + offsetX, tAdjY + offsetY);
+        } else {
+            this.style_.noStroke || this._buffer.strokeText(content, tAdjX + offsetX, tAdjY + offsetY);
+            this.style_.noFill || this._buffer.fillText(content, tAdjX + offsetX, tAdjY + offsetY);
+        }
         this._buffer.restore();
 
         // implicit bounding box
@@ -222,11 +238,11 @@ export default class CanvasRenderer extends Renderer {
         this._buffer.globalCompositeOperation = onTop ? "source-over" : "destination-over";
 
         if ((this.style_.paintOrder === "fill") === onTop) {
-            !this.style_.noFill && this._buffer.fill(path, fillRule);
-            !this.style_.noStroke && this._buffer.stroke(path);
+            this.style_.noFill || this._buffer.fill(path, fillRule);
+            this.style_.noStroke || this._buffer.stroke(path);
         } else {
-            !this.style_.noStroke && this._buffer.stroke(path);
-            !this.style_.noFill && this._buffer.fill(path, fillRule);
+            this.style_.noStroke || this._buffer.stroke(path);
+            this.style_.noFill || this._buffer.fill(path, fillRule);
         }
         this._buffer.restore();
     }
