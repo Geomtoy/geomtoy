@@ -99,7 +99,9 @@ export default class SvgRenderer extends Renderer {
         }
 
         const obtained = this.imageSourceManager.successful(source);
-        const imageEl = obtained ? this.imageSourceManager.take(source)! : this.imageSourceManager.placeholder(tImageWidth, tImageHeight);
+        const image = obtained ? this.imageSourceManager.take(source)! : this.imageSourceManager.placeholder(tImageWidth, tImageHeight);
+        // We should make a copy of this image if it's not a placeholder.
+        const imageEl = image instanceof SVGImageElement ? (image.cloneNode() as SVGImageElement) : image;
 
         let [tAdjX, tAdjY] = [NaN, NaN];
         let [atAdjX, atAdjY] = [NaN, NaN];
