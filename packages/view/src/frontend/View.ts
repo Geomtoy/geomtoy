@@ -576,14 +576,18 @@ export default class View {
                 } else {
                     const foundIndex = this._interactables.findIndex(el => this._isPointInElement(el, ...atOffset));
                     if (foundIndex !== -1) {
-                        this.cursor("pointer");
-                        this.trigger(ViewEventType.Hovering, viewActiveHoverEvent(ve, this._interactables[foundIndex]));
-                        this._hoverElement = this._interactables[foundIndex];
-                        this.requestRender();
+                        if (this._hoverElement !== this._interactables[foundIndex]) {
+                            this.cursor("pointer");
+                            this.trigger(ViewEventType.Hovering, viewActiveHoverEvent(ve, this._interactables[foundIndex]));
+                            this._hoverElement = this._interactables[foundIndex];
+                            this.requestRender();
+                        } else {
+                            // do nothing
+                        }
                     } else {
                         if (this._hoverElement !== null) {
                             this.cursor("default");
-                            this.trigger(ViewEventType.Hovering, viewActiveHoverEvent(ve, this._hoverElement));
+                            this.trigger(ViewEventType.Unhovering, viewActiveHoverEvent(ve, this._hoverElement));
                             this._hoverElement = null;
                             this.requestRender();
                         } else {
