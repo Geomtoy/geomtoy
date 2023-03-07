@@ -1,4 +1,4 @@
-import { GeometryGraphic, ImageGraphic, TextAnchor, TextGraphic, type FillRule, type GeometryGraphicCommand, type ImageGraphicCommand, type Shape, type TextGraphicCommand } from "@geomtoy/core";
+import { GeometryGraphic, ImageGraphic, Anchor, TextGraphic, type FillRule, type GeometryGraphicCommand, type ImageGraphicCommand, type Shape, type TextGraphicCommand } from "@geomtoy/core";
 import { Angle, Box, TransformationMatrix, Utility } from "@geomtoy/util";
 import TextMeasurer from "../helper/TextMeasurer";
 import type { DisplaySettings, InterfaceSettings, PathInfo } from "../types";
@@ -83,41 +83,79 @@ export default class SvgRenderer extends Renderer {
         this.style_.strokeLineCap && path.setAttribute("stroke-linecap", this.style_.strokeLineCap);
     }
     private _drawImage(cmd: ImageGraphicCommand, path: SVGPathElement, onTop: boolean) {
-        const { imageSource, x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight } = cmd;
+        const { source, x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight, consistent, anchor } = cmd;
         const [tx, ty] = TransformationMatrix.transformCoordinates(this.display.globalTransformation, [x, y]);
         const scale = this.display.scale;
-        const [imageWidth, imageHeight] = [width * scale, height * scale];
-        const [atImageWidth, atImageHeight] = [width, height];
-        const [adjustX, adjustY] = [this.display.xAxisPositiveOnRight ? 0 : imageWidth, this.display.yAxisPositiveOnBottom ? 0 : imageHeight];
 
-        const obtained = this.imageSourceManager.successful(imageSource);
-        const imageEl = obtained ? this.imageSourceManager.take(imageSource)! : this.imageSourceManager.placeholder(imageWidth, imageHeight);
+        let [tImageWidth, tImageHeight] = [NaN, NaN];
+        let [atImageWidth, atImageHeight] = [NaN, NaN];
+
+        if (consistent) {
+            [tImageWidth, tImageHeight] = [width, height];
+            [atImageWidth, atImageHeight] = [width / scale, height / scale];
+        } else {
+            [tImageWidth, tImageHeight] = [width * scale, height * scale];
+            [atImageWidth, atImageHeight] = [width, height];
+        }
+
+        const obtained = this.imageSourceManager.successful(source);
+        const imageEl = obtained ? this.imageSourceManager.take(source)! : this.imageSourceManager.placeholder(tImageWidth, tImageHeight);
+
+        let [tAdjX, tAdjY] = [NaN, NaN];
+        let [atAdjX, atAdjY] = [NaN, NaN];
+
+        if (anchor === Anchor.LeftTop || anchor === Anchor.LeftCenter || anchor === Anchor.LeftBottom) {
+            tAdjX = tx;
+            atAdjX = this.display.xAxisPositiveOnRight ? x : x - atImageWidth;
+        }
+        if (anchor === Anchor.CenterTop || anchor === Anchor.CenterCenter || anchor === Anchor.CenterBottom) {
+            tAdjX = tx - tImageWidth / 2;
+            atAdjX = x - atImageWidth / 2;
+        }
+        if (anchor === Anchor.RightTop || anchor === Anchor.RightCenter || anchor === Anchor.RightBottom) {
+            tAdjX = tx - tImageWidth;
+            atAdjX = this.display.xAxisPositiveOnRight ? x - atImageWidth : x;
+        }
+        //
+        if (anchor === Anchor.LeftTop || anchor === Anchor.CenterTop || anchor === Anchor.RightTop) {
+            tAdjY = ty;
+            atAdjY = this.display.yAxisPositiveOnBottom ? y : y - atImageHeight;
+        }
+        if (anchor === Anchor.LeftCenter || anchor === Anchor.CenterCenter || anchor === Anchor.RightCenter) {
+            tAdjY = ty - tImageHeight / 2;
+            atAdjY = y - atImageHeight / 2;
+        }
+        if (anchor === Anchor.LeftBottom || anchor === Anchor.CenterBottom || anchor === Anchor.RightBottom) {
+            tAdjY = ty - tImageHeight;
+            atAdjY = this.display.yAxisPositiveOnBottom ? y - atImageHeight : y;
+        }
+
+        const b: [number, number, number, number] = [atAdjX, atAdjY, atImageWidth, atImageHeight];
+        path.setAttribute("d", `M${Box.nn(b).join(",")}L${Box.mn(b).join(",")}L${Box.mm(b).join(",")}L${Box.nm(b).join(",")}Z`);
+        this._setStyle(path);
+        this.style_.paintOrder && path.setAttribute("paint-order", this.style_.paintOrder);
+        this.style_.noFill && path.setAttribute("fill", "none");
+        this.style_.noStroke && path.setAttribute("stroke", "none");
 
         const imageWrapper = document.createElementNS("http://www.w3.org/2000/svg", "g");
         imageWrapper.setAttribute("transform", `matrix(${TransformationMatrix.invert(this.display.globalTransformation).join(" ")})`);
 
-        const b: [number, number, number, number] = [x, y, atImageWidth, atImageHeight];
-        path.setAttribute("d", `M${Box.nn(b).join(",")}L${Box.mn(b).join(",")}L${Box.mm(b).join(",")}L${Box.nm(b).join(",")}Z`);
-        this._setStyle(path);
-        this.style_.noFill && path.setAttribute("fill", "none");
-        this.style_.noStroke && path.setAttribute("stroke", "none");
-
-        if (obtained && !isNaN(sourceX) && !isNaN(sourceY) && !isNaN(sourceWidth) && !isNaN(sourceHeight)) {
+        if (obtained && !Number.isNaN(sourceX) && !Number.isNaN(sourceY) && !Number.isNaN(sourceWidth) && !Number.isNaN(sourceHeight)) {
             const imageClipper = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             imageClipper.append(imageEl);
             imageWrapper.append(imageClipper);
-            imageClipper.setAttribute("x", `${tx - adjustX}`);
-            imageClipper.setAttribute("y", `${ty - adjustY}`);
-            imageClipper.setAttribute("width", `${imageWidth}`);
-            imageClipper.setAttribute("height", `${imageHeight}`);
+            imageClipper.setAttribute("x", `${tAdjX}`);
+            imageClipper.setAttribute("y", `${tAdjY}`);
+            imageClipper.setAttribute("width", `${tImageWidth}`);
+            imageClipper.setAttribute("height", `${tImageHeight}`);
             imageClipper.setAttribute("preserveAspectRatio", "none");
             imageClipper.setAttribute("viewBox", `${sourceX} ${sourceY} ${sourceWidth} ${sourceHeight}`);
         } else {
             imageWrapper.append(imageEl);
-            imageEl.setAttribute("x", `${tx - adjustX}`);
-            imageEl.setAttribute("y", `${ty - adjustY}`);
-            imageEl.setAttribute("width", `${imageWidth}`);
-            imageEl.setAttribute("height", `${imageHeight}`);
+            imageEl.setAttribute("x", `${tAdjX}`);
+            imageEl.setAttribute("y", `${tAdjY}`);
+            imageEl.setAttribute("width", `${tImageWidth}`);
+            imageEl.setAttribute("height", `${tImageHeight}`);
             imageEl.setAttribute("preserveAspectRatio", "none");
         }
 
@@ -142,28 +180,28 @@ export default class SvgRenderer extends Renderer {
         let [tAdjX, tAdjY] = [NaN, NaN];
         let [atAdjX, atAdjY] = [NaN, NaN];
 
-        if (anchor === TextAnchor.LeftTop || anchor === TextAnchor.LeftCenter || anchor === TextAnchor.LeftBottom) {
+        if (anchor === Anchor.LeftTop || anchor === Anchor.LeftCenter || anchor === Anchor.LeftBottom) {
             tAdjX = tx;
             atAdjX = this.display.xAxisPositiveOnRight ? x : x - 2 * atOffsetX - atTextWidth;
         }
-        if (anchor === TextAnchor.CenterTop || anchor === TextAnchor.CenterCenter || anchor === TextAnchor.CenterBottom) {
+        if (anchor === Anchor.CenterTop || anchor === Anchor.CenterCenter || anchor === Anchor.CenterBottom) {
             tAdjX = tx - textWidth / 2;
             atAdjX = this.display.xAxisPositiveOnRight ? x - atTextWidth / 2 : x - 2 * atOffsetX - atTextWidth / 2;
         }
-        if (anchor === TextAnchor.RightTop || anchor === TextAnchor.RightCenter || anchor === TextAnchor.RightBottom) {
+        if (anchor === Anchor.RightTop || anchor === Anchor.RightCenter || anchor === Anchor.RightBottom) {
             tAdjX = tx - textWidth;
             atAdjX = this.display.xAxisPositiveOnRight ? x - atTextWidth : x - 2 * atOffsetX;
         }
         //
-        if (anchor === TextAnchor.LeftTop || anchor === TextAnchor.CenterTop || anchor === TextAnchor.RightTop) {
+        if (anchor === Anchor.LeftTop || anchor === Anchor.CenterTop || anchor === Anchor.RightTop) {
             tAdjY = ty;
             atAdjY = this.display.yAxisPositiveOnBottom ? y : y - 2 * atOffsetY - atTextHeight;
         }
-        if (anchor === TextAnchor.LeftCenter || anchor === TextAnchor.CenterCenter || anchor === TextAnchor.RightCenter) {
+        if (anchor === Anchor.LeftCenter || anchor === Anchor.CenterCenter || anchor === Anchor.RightCenter) {
             tAdjY = ty - textHeight / 2;
             atAdjY = this.display.yAxisPositiveOnBottom ? y - atTextHeight / 2 : y - 2 * atOffsetY - atTextHeight / 2;
         }
-        if (anchor === TextAnchor.LeftBottom || anchor === TextAnchor.CenterBottom || anchor === TextAnchor.RightBottom) {
+        if (anchor === Anchor.LeftBottom || anchor === Anchor.CenterBottom || anchor === Anchor.RightBottom) {
             tAdjY = ty - textHeight;
             atAdjY = this.display.yAxisPositiveOnBottom ? y - atTextHeight : y - 2 * atOffsetY;
         }

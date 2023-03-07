@@ -197,7 +197,9 @@ export type ImageGraphicCommand = {
     sourceY: number;
     sourceWidth: number;
     sourceHeight: number;
-    imageSource: string;
+    source: string;
+    consistent: boolean;
+    anchor: Anchor;
 };
 export type TextGraphicCommand = {
     x: number;
@@ -209,7 +211,7 @@ export type TextGraphicCommand = {
     fontFamily: string;
     fontBold: boolean;
     fontItalic: boolean;
-    anchor: TextAnchor;
+    anchor: Anchor;
 };
 
 export type GeometryGraphicCommand =
@@ -282,7 +284,7 @@ export type FontConfig = {
     fontBold: boolean;
     fontItalic: boolean;
 };
-export const enum TextAnchor {
+export const enum Anchor {
     LeftTop = "leftTop",
     LeftCenter = "leftCenter",
     LeftBottom = "leftBottom",

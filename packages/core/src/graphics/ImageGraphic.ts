@@ -1,9 +1,9 @@
-import { type ImageGraphicCommand } from "../types";
+import { Anchor, type ImageGraphicCommand } from "../types";
 
 export default class ImageGraphic {
     command?: ImageGraphicCommand;
 
-    image(x: number, y: number, width: number, height: number, sourceX: number, sourceY: number, sourceWidth: number, sourceHeight: number, imageSource: string) {
+    image(x: number, y: number, width: number, height: number, sourceX: number, sourceY: number, sourceWidth: number, sourceHeight: number, source: string, consistent: boolean, anchor: Anchor) {
         this.command = {
             x,
             y,
@@ -13,7 +13,9 @@ export default class ImageGraphic {
             sourceY,
             sourceWidth,
             sourceHeight,
-            imageSource
+            source,
+            consistent,
+            anchor
         };
     }
 }

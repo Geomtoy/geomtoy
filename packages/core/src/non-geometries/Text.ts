@@ -4,7 +4,7 @@ import EventSourceObject from "../event/EventSourceObject";
 import Point from "../geometries/basic/Point";
 import Graphics from "../graphics";
 import TextGraphic from "../graphics/TextGraphic";
-import { TextAnchor, type FontConfig } from "../types";
+import { Anchor, type FontConfig } from "../types";
 
 const FONT_DEFAULT_CONFIG: FontConfig = {
     fontSize: 16,
@@ -12,7 +12,7 @@ const FONT_DEFAULT_CONFIG: FontConfig = {
     fontBold: false,
     fontItalic: false
 };
-const TEXT_DEFAULT_ANCHOR = TextAnchor.LeftTop;
+const TEXT_DEFAULT_ANCHOR = Anchor.LeftTop;
 
 export default class Text extends Shape {
     private _x = 0;
@@ -23,11 +23,11 @@ export default class Text extends Shape {
     private _font: FontConfig = { ...FONT_DEFAULT_CONFIG };
     private _anchor = TEXT_DEFAULT_ANCHOR;
 
-    constructor(x: number, y: number, offsetX: number, offsetY: number, text: string, font?: FontConfig, anchor?: TextAnchor);
-    constructor(coordinates: [number, number], offsetX: number, offsetY: number, text: string, font?: FontConfig, anchor?: TextAnchor);
-    constructor(point: Point, offsetX: number, offsetY: number, text: string, font?: FontConfig, anchor?: TextAnchor);
-    constructor(text: string, font?: FontConfig, anchor?: TextAnchor);
-    constructor(font?: FontConfig, anchor?: TextAnchor);
+    constructor(x: number, y: number, offsetX: number, offsetY: number, text: string, font?: FontConfig, anchor?: Anchor);
+    constructor(coordinates: [number, number], offsetX: number, offsetY: number, text: string, font?: FontConfig, anchor?: Anchor);
+    constructor(point: Point, offsetX: number, offsetY: number, text: string, font?: FontConfig, anchor?: Anchor);
+    constructor(text: string, font?: FontConfig, anchor?: Anchor);
+    constructor(font?: FontConfig, anchor?: Anchor);
     constructor(a0?: any, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any) {
         super();
         if (Type.isNumber(a0)) {
@@ -81,7 +81,7 @@ export default class Text extends Shape {
         if (!Utility.isEqualTo(this.font, value)) this.trigger_(new EventSourceObject(this, Text.events.fontChanged));
         this._font = { ...this._font, ...value };
     }
-    private _setAnchor(value: TextAnchor) {
+    private _setAnchor(value: Anchor) {
         if (!Utility.isEqualTo(this._anchor, value)) this.trigger_(new EventSourceObject(this, Text.events.anchorChanged));
         this._anchor = value;
     }

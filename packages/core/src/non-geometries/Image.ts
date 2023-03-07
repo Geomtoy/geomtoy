@@ -1,13 +1,14 @@
 import { Assert, Coordinates, Size, Type, Utility, Vector2 } from "@geomtoy/util";
-
 import Shape from "../base/Shape";
 import EventSourceObject from "../event/EventSourceObject";
 import Point from "../geometries/basic/Point";
 import Graphics from "../graphics";
 import ImageGraphic from "../graphics/ImageGraphic";
+import { Anchor } from "../types";
 
 const IMAGE_DEFAULT_WIDTH = 100;
 const IMAGE_DEFAULT_HEIGHT = 100;
+const IMAGE_DEFAULT_ANCHOR = Anchor.LeftTop;
 
 export default class Image extends Shape {
     private _x = 0;
@@ -18,81 +19,145 @@ export default class Image extends Shape {
     private _sourceY = NaN;
     private _sourceWidth = NaN;
     private _sourceHeight = NaN;
-    private _imageSource: string = "";
+    private _source = "";
+    private _consistent = false;
+    private _anchor = IMAGE_DEFAULT_ANCHOR;
 
-    constructor(x: number, y: number, width: number, height: number, imageSource: string);
-    constructor(coordinates: [number, number], width: number, height: number, imageSource: string);
-    constructor(point: Point, width: number, height: number, imageSource: string);
-    constructor(x: number, y: number, size: [number, number], imageSource: string);
-    constructor(coordinates: [number, number], size: [number, number], imageSource: string);
-    constructor(point: Point, size: [number, number], imageSource: string);
-    constructor(x: number, y: number, width: number, height: number, sourceX: number, sourceY: number, sourceWidth: number, sourceHeight: number, imageSource: string);
-    constructor(coordinates: [number, number], width: number, height: number, sourceCoordinates: [number, number], sourceWidth: number, sourceHeight: number, imageSource: string);
-    constructor(point: Point, width: number, height: number, sourcePoint: Point, sourceWidth: number, sourceHeight: number, imageSource: string);
-    constructor(x: number, y: number, size: [number, number], sourceX: number, sourceY: number, sourceSize: [number, number], imageSource: string);
-    constructor(coordinates: [number, number], size: [number, number], sourceCoordinates: [number, number], sourceSize: [number, number], imageSource: string);
-    constructor(point: Point, size: [number, number], sourcePoint: Point, sourceSize: [number, number], imageSource: string);
-    constructor(imageSource: string);
-    constructor();
-    constructor(a0?: any, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any, a7?: any, a8?: any) {
+    constructor(x: number, y: number, width: number, height: number, source: string, consistent?: boolean, anchor?: Anchor);
+    constructor(coordinates: [number, number], width: number, height: number, source: string, consistent?: boolean, anchor?: Anchor);
+    constructor(point: Point, width: number, height: number, source: string, consistent?: boolean, anchor?: Anchor);
+    constructor(x: number, y: number, size: [number, number], source: string, consistent?: boolean, anchor?: Anchor);
+    constructor(coordinates: [number, number], size: [number, number], source: string, consistent?: boolean, anchor?: Anchor);
+    constructor(point: Point, size: [number, number], source: string, consistent?: boolean, anchor?: Anchor);
+    constructor(
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        sourceX: number,
+        sourceY: number,
+        sourceWidth: number,
+        sourceHeight: number,
+        source: string,
+        consistent?: boolean,
+        anchor?: Anchor
+    );
+    constructor(
+        coordinates: [number, number],
+        width: number,
+        height: number,
+        sourceCoordinates: [number, number],
+        sourceWidth: number,
+        sourceHeight: number,
+        source: string,
+        consistent?: boolean,
+        anchor?: Anchor
+    );
+    constructor(point: Point, width: number, height: number, sourcePoint: Point, sourceWidth: number, sourceHeight: number, source: string, consistent?: boolean, anchor?: Anchor);
+    constructor(x: number, y: number, size: [number, number], sourceX: number, sourceY: number, sourceSize: [number, number], source: string, consistent?: boolean, anchor?: Anchor);
+    constructor(coordinates: [number, number], size: [number, number], sourceCoordinates: [number, number], sourceSize: [number, number], source: string, consistent?: boolean, anchor?: Anchor);
+    constructor(point: Point, size: [number, number], sourcePoint: Point, sourceSize: [number, number], source: string, consistent?: boolean, anchor?: Anchor);
+    constructor(source: string, consistent?: boolean, anchor?: Anchor);
+    constructor(consistent?: boolean, anchor?: Anchor);
+    constructor(a0?: any, a1?: any, a2?: any, a3?: any, a4?: any, a5?: any, a6?: any, a7?: any, a8?: any, a9?: any, a10?: any) {
         super();
         if (Type.isNumber(a0)) {
             if (Type.isNumber(a2)) {
                 if (Type.isString(a4)) {
-                    Object.assign(this, { x: a0, y: a1, width: a2, height: a3, imageSource: a4 });
+                    Object.assign(this, { x: a0, y: a1, width: a2, height: a3, source: a4, consistent: a5 ?? this._consistent, anchor: a6 ?? this._anchor });
                 }
                 if (Type.isNumber(a4)) {
-                    Object.assign(this, { x: a0, y: a1, width: a2, height: a3, sourceX: a4, sourceY: a5, sourceWidth: a6, sourceHeight: a7, imageSource: a8 });
+                    Object.assign(this, {
+                        x: a0,
+                        y: a1,
+                        width: a2,
+                        height: a3,
+                        sourceX: a4,
+                        sourceY: a5,
+                        sourceWidth: a6,
+                        sourceHeight: a7,
+                        source: a8,
+                        consistent: a9 ?? this._consistent,
+                        anchor: a10 ?? this._anchor
+                    });
                 }
             }
             if (Type.isArray(a2)) {
                 if (Type.isString(a3)) {
-                    Object.assign(this, { x: a0, y: a1, size: a2, imageSource: a3 });
+                    Object.assign(this, { x: a0, y: a1, size: a2, source: a3, consistent: a4 ?? this._consistent, anchor: a5 ?? this._anchor });
                 }
                 if (Type.isNumber(a3)) {
-                    Object.assign(this, { x: a0, y: a1, size: a2, sourceX: a3, sourceY: a4, sourceSize: a5, imageSource: a6 });
+                    Object.assign(this, { x: a0, y: a1, size: a2, sourceX: a3, sourceY: a4, sourceSize: a5, source: a6, consistent: a7 ?? this._consistent, anchor: a8 ?? this._anchor });
                 }
             }
         }
         if (Type.isArray(a0)) {
             if (Type.isNumber(a1)) {
                 if (Type.isString(a3)) {
-                    Object.assign(this, { coordinates: a0, width: a1, height: a2, imageSource: a3 });
+                    Object.assign(this, { coordinates: a0, width: a1, height: a2, source: a3, consistent: a4 ?? this._consistent, anchor: a5 ?? this._anchor });
                 }
                 if (Type.isArray(a3)) {
-                    Object.assign(this, { coordinates: a0, width: a1, height: a2, sourceCoordinates: a3, sourceWidth: a4, sourceHeight: a5, imageSource: a6 });
+                    Object.assign(this, {
+                        coordinates: a0,
+                        width: a1,
+                        height: a2,
+                        sourceCoordinates: a3,
+                        sourceWidth: a4,
+                        sourceHeight: a5,
+                        source: a6,
+                        consistent: a7 ?? this._consistent,
+                        anchor: a8 ?? this._anchor
+                    });
                 }
             }
             if (Type.isArray(a1)) {
                 if (Type.isString(a2)) {
-                    Object.assign(this, { coordinates: a0, size: a1, imageSource: a2 });
+                    Object.assign(this, { coordinates: a0, size: a1, source: a2, consistent: a3 ?? this._consistent, anchor: a4 ?? this._anchor });
                 }
                 if (Type.isArray(a2)) {
-                    Object.assign(this, { coordinates: a0, size: a1, sourceCoordinates: a2, sourceSize: a3, imageSource: a4 });
+                    Object.assign(this, { coordinates: a0, size: a1, sourceCoordinates: a2, sourceSize: a3, source: a4, consistent: a5 ?? this._consistent, anchor: a6 ?? this._anchor });
                 }
             }
         }
         if (a0 instanceof Point) {
             if (Type.isNumber(a1)) {
                 if (Type.isString(a3)) {
-                    Object.assign(this, { point: a0, width: a1, height: a2, imageSource: a3 });
+                    Object.assign(this, { point: a0, width: a1, height: a2, source: a3, consistent: a4 ?? this._consistent, anchor: a5 ?? this._anchor });
                 }
                 if (a3 instanceof Point) {
-                    Object.assign(this, { point: a0, width: a1, height: a2, sourcePoint: a3, sourceWidth: a4, sourceHeight: a5, imageSource: a6 });
+                    Object.assign(this, {
+                        point: a0,
+                        width: a1,
+                        height: a2,
+                        sourcePoint: a3,
+                        sourceWidth: a4,
+                        sourceHeight: a5,
+                        source: a6,
+                        consistent: a7 ?? this._consistent,
+                        anchor: a8 ?? this._anchor
+                    });
                 }
             }
             if (Type.isArray(a1)) {
                 if (Type.isString(a2)) {
-                    Object.assign(this, { point: a0, size: a1, imageSource: a2 });
+                    Object.assign(this, { point: a0, size: a1, source: a2, consistent: a3 ?? this._consistent, anchor: a4 ?? this._anchor });
                 }
                 if (a2 instanceof Point) {
-                    Object.assign(this, { point: a0, size: a1, sourcePoint: a2, sourceSize: a3, imageSource: a4 });
+                    Object.assign(this, { point: a0, size: a1, sourcePoint: a2, sourceSize: a3, source: a4, consistent: a5 ?? this._consistent, anchor: a6 ?? this._anchor });
                 }
             }
         }
         if (Type.isString(a0)) {
             Object.assign(this, {
-                imageSource: a0
+                source: a0,
+                consistent: a1 ?? this._consistent,
+                anchor: a2 ?? this._anchor
+            });
+        }
+        if (Type.isBoolean(a0)) {
+            Object.assign(this, {
+                consistent: a0 ?? this._consistent,
+                anchor: a1 ?? this._anchor
             });
         }
     }
@@ -106,7 +171,9 @@ export default class Image extends Shape {
         heightChanged: "height" as const,
         sourceWidthChanged: "sourceWidth" as const,
         sourceHeightChanged: "sourceHeight" as const,
-        imageSourceChanged: "imageSource" as const
+        sourceChanged: "source" as const,
+        consistentChanged: "consistent" as const,
+        anchorChanged: "anchor" as const
     };
 
     private _setX(value: number) {
@@ -142,8 +209,16 @@ export default class Image extends Shape {
         this._sourceHeight = value;
     }
     private _setImageSource(value: string) {
-        if (!Utility.isEqualTo(this._imageSource, value)) this.trigger_(new EventSourceObject(this, Image.events.imageSourceChanged));
-        this._imageSource = value;
+        if (!Utility.isEqualTo(this._source, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceChanged));
+        this._source = value;
+    }
+    private _setConsistent(value: boolean) {
+        if (!Utility.isEqualTo(this._consistent, value)) this.trigger_(new EventSourceObject(this, Image.events.consistentChanged));
+        this._consistent = value;
+    }
+    private _setAnchor(value: Anchor) {
+        if (!Utility.isEqualTo(this._anchor, value)) this.trigger_(new EventSourceObject(this, Image.events.anchorChanged));
+        this._anchor = value;
     }
 
     get x() {
@@ -249,11 +324,23 @@ export default class Image extends Shape {
         this._setSourceWidth(Size.width(value));
         this._setSourceHeight(Size.height(value));
     }
-    get imageSource() {
-        return this._imageSource;
+    get source() {
+        return this._source;
     }
-    set imageSource(value) {
+    set source(value) {
         this._setImageSource(value);
+    }
+    get consistent() {
+        return this._consistent;
+    }
+    set consistent(value) {
+        this._setConsistent(value);
+    }
+    get anchor() {
+        return this._anchor;
+    }
+    set anchor(value) {
+        this._setAnchor(value);
     }
 
     move(deltaX: number, deltaY: number) {
@@ -264,12 +351,11 @@ export default class Image extends Shape {
     getGraphics() {
         const ig = new ImageGraphic();
         const g = new Graphics(ig);
-        const { x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight, imageSource } = this;
-        ig.image(x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight, imageSource);
+        ig.image(this._x, this._y, this._width, this._height, this._sourceX, this._sourceY, this._sourceWidth, this._sourceHeight, this._source, this._consistent, this._anchor);
         return g;
     }
     clone() {
-        return new Image(this.x, this.y, this.width, this.height, this.sourceX, this.sourceY, this.sourceWidth, this.sourceHeight, this.imageSource);
+        return new Image(this._x, this._y, this._width, this._height, this._sourceX, this._sourceY, this._sourceWidth, this._sourceHeight, this._source, this._consistent, this._anchor);
     }
     copyFrom(shape: Image | null) {
         if (shape === null) shape = new Image();
@@ -281,21 +367,25 @@ export default class Image extends Shape {
         this._setSourceY(shape._sourceY);
         this._setSourceWidth(shape._sourceWidth);
         this._setSourceHeight(shape._sourceHeight);
-        this._setImageSource(shape._imageSource);
+        this._setImageSource(shape._source);
+        this._setConsistent(shape._consistent);
+        this._setAnchor(shape._anchor);
         return this;
     }
     override toString() {
         return [
             `${this.name}(${this.id}){`,
-            `\tx: ${this.x}`,
-            `\ty: ${this.y}`,
-            `\twidth: ${this.width}`,
-            `\theight: ${this.height}`,
-            `\tsourceX: ${this.sourceX}`,
-            `\tsourceY: ${this.sourceY}`,
-            `\tsourceWidth: ${this.sourceWidth}`,
-            `\tsourceHeight: ${this.sourceHeight}`,
-            `\timageSource: ${this.imageSource}`,
+            `\tx: ${this._x}`,
+            `\ty: ${this._y}`,
+            `\twidth: ${this._width}`,
+            `\theight: ${this._height}`,
+            `\tsourceX: ${this._sourceX}`,
+            `\tsourceY: ${this._sourceY}`,
+            `\tsourceWidth: ${this._sourceWidth}`,
+            `\tsourceHeight: ${this._sourceHeight}`,
+            `\tsource: ${this._source}`,
+            `\tconsistent: ${this._consistent}`,
+            `\tanchor: ${this._anchor}`,
             `}`
         ].join("\n");
     }

@@ -1,4 +1,4 @@
-import { GeometryGraphic, ImageGraphic, TextAnchor, TextGraphic, type FillRule, type GeometryGraphicCommand, type ImageGraphicCommand, type Shape, type TextGraphicCommand } from "@geomtoy/core";
+import { GeometryGraphic, ImageGraphic, Anchor, TextGraphic, type FillRule, type GeometryGraphicCommand, type ImageGraphicCommand, type Shape, type TextGraphicCommand } from "@geomtoy/core";
 import { Box, TransformationMatrix, Utility } from "@geomtoy/util";
 import TextMeasurer from "../helper/TextMeasurer";
 import type { DisplaySettings, InterfaceSettings, PathInfo } from "../types";
@@ -67,17 +67,54 @@ export default class CanvasRenderer extends Renderer {
         this.style_.strokeLineCap && (this._buffer.lineCap = this.style_.strokeLineCap);
     }
     private _drawImage(cmd: ImageGraphicCommand, path: Path2D, onTop: boolean) {
-        const { imageSource, x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight } = cmd;
+        const { source, x, y, width, height, sourceX, sourceY, sourceWidth, sourceHeight, consistent, anchor } = cmd;
         const [tx, ty] = TransformationMatrix.transformCoordinates(this.display.globalTransformation, [x, y]);
         const scale = this.display.scale;
-        const [imageWidth, imageHeight] = [width * scale, height * scale];
-        const [atImageWidth, atImageHeight] = [width, height];
-        const [adjustX, adjustY] = [this.display.xAxisPositiveOnRight ? 0 : imageWidth, this.display.yAxisPositiveOnBottom ? 0 : imageHeight];
 
-        const obtained = this.imageSourceManager.successful(imageSource);
-        const image = obtained ? this.imageSourceManager.take(imageSource)! : this.imageSourceManager.placeholder(imageWidth, imageHeight);
+        let [tImageWidth, tImageHeight] = [NaN, NaN];
+        let [atImageWidth, atImageHeight] = [NaN, NaN];
 
-        const b: [number, number, number, number] = [x, y, atImageWidth, atImageHeight];
+        if (consistent) {
+            [tImageWidth, tImageHeight] = [width, height];
+            [atImageWidth, atImageHeight] = [width / scale, height / scale];
+        } else {
+            [tImageWidth, tImageHeight] = [width * scale, height * scale];
+            [atImageWidth, atImageHeight] = [width, height];
+        }
+
+        const obtained = this.imageSourceManager.successful(source);
+        const image = obtained ? this.imageSourceManager.take(source)! : this.imageSourceManager.placeholder(tImageWidth, tImageHeight);
+
+        let [tAdjX, tAdjY] = [NaN, NaN];
+        let [atAdjX, atAdjY] = [NaN, NaN];
+
+        if (anchor === Anchor.LeftTop || anchor === Anchor.LeftCenter || anchor === Anchor.LeftBottom) {
+            tAdjX = tx;
+            atAdjX = this.display.xAxisPositiveOnRight ? x : x - atImageWidth;
+        }
+        if (anchor === Anchor.CenterTop || anchor === Anchor.CenterCenter || anchor === Anchor.CenterBottom) {
+            tAdjX = tx - tImageWidth / 2;
+            atAdjX = x - atImageWidth / 2;
+        }
+        if (anchor === Anchor.RightTop || anchor === Anchor.RightCenter || anchor === Anchor.RightBottom) {
+            tAdjX = tx - tImageWidth;
+            atAdjX = this.display.xAxisPositiveOnRight ? x - atImageWidth : x;
+        }
+        //
+        if (anchor === Anchor.LeftTop || anchor === Anchor.CenterTop || anchor === Anchor.RightTop) {
+            tAdjY = ty;
+            atAdjY = this.display.yAxisPositiveOnBottom ? y : y - atImageHeight;
+        }
+        if (anchor === Anchor.LeftCenter || anchor === Anchor.CenterCenter || anchor === Anchor.RightCenter) {
+            tAdjY = ty - tImageHeight / 2;
+            atAdjY = y - atImageHeight / 2;
+        }
+        if (anchor === Anchor.LeftBottom || anchor === Anchor.CenterBottom || anchor === Anchor.RightBottom) {
+            tAdjY = ty - tImageHeight;
+            atAdjY = this.display.yAxisPositiveOnBottom ? y - atImageHeight : y;
+        }
+
+        const b: [number, number, number, number] = [atAdjX, atAdjY, atImageWidth, atImageHeight];
         path.moveTo(...Box.nn(b));
         path.lineTo(...Box.mn(b));
         path.lineTo(...Box.mm(b));
@@ -89,10 +126,10 @@ export default class CanvasRenderer extends Renderer {
         if (onTop) {
             this._buffer.globalCompositeOperation = "source-over";
             this._buffer.resetTransform();
-            if (obtained && !isNaN(sourceX) && !isNaN(sourceY) && !isNaN(sourceWidth) && !isNaN(sourceHeight)) {
-                this._buffer.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, tx - adjustX, ty - adjustY, imageWidth, imageHeight);
+            if (obtained && !Number.isNaN(sourceX) && !Number.isNaN(sourceY) && !Number.isNaN(sourceWidth) && !Number.isNaN(sourceHeight)) {
+                this._buffer.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, tAdjX, tAdjY, tImageWidth, tImageHeight);
             } else {
-                this._buffer.drawImage(image, tx - adjustX, ty - adjustY, imageWidth, imageHeight);
+                this._buffer.drawImage(image, tAdjX, tAdjY, tImageWidth, tImageHeight);
             }
             this._buffer.setTransform(...this.display.globalTransformation);
             this.style_.noFill || this._buffer.fill(path);
@@ -102,10 +139,10 @@ export default class CanvasRenderer extends Renderer {
             this.style_.noFill || this._buffer.fill(path);
             this.style_.noStroke || this._buffer.stroke(path);
             this._buffer.resetTransform();
-            if (obtained && !isNaN(sourceX) && !isNaN(sourceY) && !isNaN(sourceWidth) && !isNaN(sourceHeight)) {
-                this._buffer.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, tx - adjustX, ty - adjustY, imageWidth, imageHeight);
+            if (obtained && !Number.isNaN(sourceX) && !Number.isNaN(sourceY) && !Number.isNaN(sourceWidth) && !Number.isNaN(sourceHeight)) {
+                this._buffer.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, tAdjX, tAdjY, tImageWidth, tImageHeight);
             } else {
-                this._buffer.drawImage(image, tx - adjustX, ty - adjustY, imageWidth, imageHeight);
+                this._buffer.drawImage(image, tAdjX, tAdjY, tImageWidth, tImageHeight);
             }
         }
         this._buffer.restore();
@@ -122,28 +159,28 @@ export default class CanvasRenderer extends Renderer {
         let [tAdjX, tAdjY] = [NaN, NaN];
         let [atAdjX, atAdjY] = [NaN, NaN];
 
-        if (anchor === TextAnchor.LeftTop || anchor === TextAnchor.LeftCenter || anchor === TextAnchor.LeftBottom) {
+        if (anchor === Anchor.LeftTop || anchor === Anchor.LeftCenter || anchor === Anchor.LeftBottom) {
             tAdjX = tx;
             atAdjX = this.display.xAxisPositiveOnRight ? x : x - 2 * atOffsetX - atTextWidth;
         }
-        if (anchor === TextAnchor.CenterTop || anchor === TextAnchor.CenterCenter || anchor === TextAnchor.CenterBottom) {
+        if (anchor === Anchor.CenterTop || anchor === Anchor.CenterCenter || anchor === Anchor.CenterBottom) {
             tAdjX = tx - textWidth / 2;
             atAdjX = this.display.xAxisPositiveOnRight ? x - atTextWidth / 2 : x - 2 * atOffsetX - atTextWidth / 2;
         }
-        if (anchor === TextAnchor.RightTop || anchor === TextAnchor.RightCenter || anchor === TextAnchor.RightBottom) {
+        if (anchor === Anchor.RightTop || anchor === Anchor.RightCenter || anchor === Anchor.RightBottom) {
             tAdjX = tx - textWidth;
             atAdjX = this.display.xAxisPositiveOnRight ? x - atTextWidth : x - 2 * atOffsetX;
         }
         //
-        if (anchor === TextAnchor.LeftTop || anchor === TextAnchor.CenterTop || anchor === TextAnchor.RightTop) {
+        if (anchor === Anchor.LeftTop || anchor === Anchor.CenterTop || anchor === Anchor.RightTop) {
             tAdjY = ty;
             atAdjY = this.display.yAxisPositiveOnBottom ? y : y - 2 * atOffsetY - atTextHeight;
         }
-        if (anchor === TextAnchor.LeftCenter || anchor === TextAnchor.CenterCenter || anchor === TextAnchor.RightCenter) {
+        if (anchor === Anchor.LeftCenter || anchor === Anchor.CenterCenter || anchor === Anchor.RightCenter) {
             tAdjY = ty - textHeight / 2;
             atAdjY = this.display.yAxisPositiveOnBottom ? y - atTextHeight / 2 : y - 2 * atOffsetY - atTextHeight / 2;
         }
-        if (anchor === TextAnchor.LeftBottom || anchor === TextAnchor.CenterBottom || anchor === TextAnchor.RightBottom) {
+        if (anchor === Anchor.LeftBottom || anchor === Anchor.CenterBottom || anchor === Anchor.RightBottom) {
             tAdjY = ty - textHeight;
             atAdjY = this.display.yAxisPositiveOnBottom ? y - atTextHeight : y - 2 * atOffsetY;
         }

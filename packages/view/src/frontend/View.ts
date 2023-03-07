@@ -869,18 +869,18 @@ export default class View {
 
         this._elements.forEach(el => {
             if (el.shape instanceof Image) {
-                const imageSource = el.shape.imageSource;
+                const imageSource = el.shape.source;
                 renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);
             }
             if (el.shape instanceof ShapeArray || el.shape instanceof SealedShapeArray) {
                 ((el.shape.shapes as Shape[]).filter(shape => shape instanceof Image) as Image[]).forEach(image => {
-                    const imageSource = image.imageSource;
+                    const imageSource = image.source;
                     renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);
                 });
             }
             if (el.shape instanceof ShapeObject || el.shape instanceof SealedShapeObject) {
                 ((Object.values(el.shape.shapes) as Shape[]).filter(shape => shape instanceof Image) as Image[]).forEach(image => {
-                    const imageSource = image.imageSource;
+                    const imageSource = image.source;
                     renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);
                 });
             }
