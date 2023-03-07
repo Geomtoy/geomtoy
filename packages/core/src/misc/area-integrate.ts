@@ -44,7 +44,7 @@ export function arcPathIntegral(cx: number, cy: number, rx: number, ry: number, 
     // prettier-ignore
     return (
         (
-            (ea - sa) * rx * ry * (cosPhi ** 2 + sinPhi ** 2) + 
+            (ea - sa) * rx * ry  + 
             rx * (cosPhi * cy - cx * sinPhi) * (Maths.cos(sa) - Maths.cos(ea)) -
             ry * (cosPhi * cx + cy * sinPhi) * (Maths.sin(sa) - Maths.sin(ea))
         ) / 2
