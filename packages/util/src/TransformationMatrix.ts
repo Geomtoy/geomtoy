@@ -156,7 +156,7 @@ class TransformationMatrix {
      * @param ky
      */
     static skew(kx: number, ky: number) {
-        return [1, Maths.tan(kx), Maths.tan(ky), 1, 0, 0] as [number, number, number, number, number, number];
+        return [1, Maths.tan(ky), Maths.tan(kx), 1, 0, 0] as [number, number, number, number, number, number];
     }
     /**
      * Returns a transformation matrix of line reflection determined by `a`, `b` and `c` of the implicit function of the line.
