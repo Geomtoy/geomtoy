@@ -1,4 +1,4 @@
-import { Angle, Assert, Coordinates, EllipticIntegral, Maths, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Angle, Assert, Coordinates, Maths, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import SealedShapeArray from "../../collection/SealedShapeArray";
 import EventSourceObject from "../../event/EventSourceObject";
@@ -603,7 +603,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
      * Convert ellipse `this` to path, using two `Path.arcTo` commands.
      */
     toPath3() {
-        const { _centerX: centerX, _centerY: centerY, _rotation: rotation, _radiusX: radiusX, _radiusY: radiusY } = this;
+        const { _rotation: rotation, _radiusX: radiusX, _radiusY: radiusY } = this;
         const c0 = this.getParametricEquation()(0);
         const c1 = this.getParametricEquation()(Maths.PI);
         const path = new Path();
