@@ -148,11 +148,11 @@ export default class CanvasRenderer extends Renderer {
         this._buffer.restore();
     }
     private _drawText(cmd: TextGraphicCommand, path: Path2D, onTop: boolean) {
-        const { x, y, offsetX, offsetY, text, fontSize, fontFamily, fontBold, fontItalic, anchor } = cmd;
+        const { x, y, offsetX, offsetY, content, fontSize, fontFamily, fontBold, fontItalic, anchor } = cmd;
 
         const [tx, ty] = TransformationMatrix.transformCoordinates(this.display.globalTransformation, [x, y]);
         const scale = this.display.scale;
-        const [textWidth, textHeight] = TextMeasurer.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", text);
+        const [textWidth, textHeight] = TextMeasurer.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", content);
         const [atTextWidth, atTextHeight] = [textWidth / scale, textHeight / scale];
         const [atOffsetX, atOffsetY] = [offsetX / scale, offsetY / scale];
 
@@ -196,8 +196,8 @@ export default class CanvasRenderer extends Renderer {
         this._buffer.globalCompositeOperation = onTop ? "source-over" : "destination-over";
         this._buffer.resetTransform();
         this._setStyle();
-        this.style_.noFill || this._buffer.fillText(text, tAdjX + offsetX, tAdjY + offsetY);
-        this.style_.noStroke || this._buffer.strokeText(text, tAdjX + offsetX, tAdjY + offsetY);
+        this.style_.noFill || this._buffer.fillText(content, tAdjX + offsetX, tAdjY + offsetY);
+        this.style_.noStroke || this._buffer.strokeText(content, tAdjX + offsetX, tAdjY + offsetY);
         this._buffer.restore();
 
         // implicit bounding box

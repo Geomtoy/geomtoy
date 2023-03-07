@@ -168,12 +168,12 @@ export default class SvgRenderer extends Renderer {
         }
     }
     private _drawText(cmd: TextGraphicCommand, path: SVGPathElement, onTop: boolean) {
-        const { x, y, offsetX, offsetY, text, fontSize, fontFamily, fontBold, fontItalic, anchor } = cmd;
+        const { x, y, offsetX, offsetY, content, fontSize, fontFamily, fontBold, fontItalic, anchor } = cmd;
         const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
 
         const [tx, ty] = TransformationMatrix.transformCoordinates(this.display.globalTransformation, [x, y]);
         const scale = this.display.scale;
-        const [textWidth, textHeight] = TextMeasurer.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", text);
+        const [textWidth, textHeight] = TextMeasurer.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", content);
         const [atTextWidth, atTextHeight] = [textWidth / scale, textHeight / scale];
         const [atOffsetX, atOffsetY] = [offsetX / scale, offsetY / scale];
 
@@ -218,7 +218,7 @@ export default class SvgRenderer extends Renderer {
         this.style_.noFill && textEl.setAttribute("fill", "none");
         this.style_.noStroke && textEl.setAttribute("stroke", "none");
 
-        textEl.textContent = text;
+        textEl.textContent = content;
         onTop ? this._buffer.append(textEl) : this._buffer.prepend(textEl);
 
         // implicit bounding box

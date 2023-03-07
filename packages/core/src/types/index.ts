@@ -206,7 +206,7 @@ export type TextGraphicCommand = {
     y: number;
     offsetX: number;
     offsetY: number;
-    text: string;
+    content: string;
     fontSize: number;
     fontFamily: string;
     fontBold: boolean;
