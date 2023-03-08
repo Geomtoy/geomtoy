@@ -41,6 +41,8 @@
         "orthocenter",
         "perpendiculate",
         "proxyable",
+        "renderable",
+        "renderables",
         "rpoly",
         "significand",
         "symmedian",
@@ -48,7 +50,6 @@
         "touchables",
         "trilean",
         "unhover",
-        "unhovering",
         "viewbox",
         "visibles"
     ],
