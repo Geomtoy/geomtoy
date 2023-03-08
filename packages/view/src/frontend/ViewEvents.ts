@@ -19,10 +19,10 @@ export const enum ViewEventType {
     Zooming = "zooming",
     ZoomEnd = "zoomEnd",
 
-    Activating = "activating",
-    Deactivating = "deactivating",
-    Hovering = "hovering",
-    Unhovering = "unhovering"
+    Activate = "activate",
+    Deactivate = "deactivate",
+    Hover = "hover",
+    Unhover = "unhover"
 }
 export interface ViewEvent {
     isTouch: boolean;
@@ -65,9 +65,16 @@ export function viewZoomEvent(viewEvent: ViewEvent, zoom: number) {
     return { ...viewEvent, zoom } as ViewZoomEvent;
 }
 
-export interface ViewActiveHoverEvent extends ViewEvent {
+export interface ViewHoverEvent extends ViewEvent {
     element: ViewElement;
 }
-export function viewActiveHoverEvent(viewEvent: ViewEvent, element: ViewElement) {
-    return { ...viewEvent, element } as ViewActiveHoverEvent;
+export function viewHoverEvent(viewEvent: ViewEvent, element: ViewElement) {
+    return { ...viewEvent, element } as ViewHoverEvent;
+}
+
+export interface ViewActivateEvent extends ViewEvent {
+    elements: ViewElement[];
+}
+export function viewActivateEvent(viewEvent: ViewEvent, elements: ViewElement[]) {
+    return { ...viewEvent, elements } as ViewActivateEvent;
 }

@@ -2,15 +2,19 @@ import { Geomtoy, Image, SealedShapeArray, SealedShapeObject, Shape, ShapeArray,
 import { Assert, Maths, TransformationMatrix } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import type Renderer from "../renderer/Renderer";
+import SubView, { SV_VIEW_SYMBOL } from "./SubView";
 import type ViewElement from "./ViewElement";
+import { VE_SUB_VIEW_SYMBOL, VE_VIEW_SYMBOL } from "./ViewElement";
 import {
-    viewActiveHoverEvent,
-    ViewActiveHoverEvent,
+    viewActivateEvent,
+    ViewActivateEvent,
     viewDragEvent,
     ViewDragEvent,
     viewEvent,
     ViewEvent,
     ViewEventType,
+    viewHoverEvent,
+    ViewHoverEvent,
     viewPanEvent,
     ViewPanEvent,
     viewPointerEvent,
@@ -30,7 +34,6 @@ const VIEW_DEFAULTS = {
     maxTouchPointerCount: 2,
     resizeObserverDebouncingTime: 100 //ms
 };
-
 export default class View {
     private _dragThrottleDistance = VIEW_DEFAULTS.dragThrottleDistance;
     private _minZoom = VIEW_DEFAULTS.minZoom;
@@ -42,9 +45,9 @@ export default class View {
     private _hasTouchDevice: boolean;
     private _touchPointers: { id: number; offset: [number, number] }[] = [];
 
-    private _hoverElement: ViewElement | null = null;
     private _activeElements: ViewElement[] = [];
-    private _deactivatingElement: ViewElement | null = null;
+    private _hoverElement: ViewElement | null = null;
+    private _indeterminateElement: ViewElement | null = null;
     private _isDragging: boolean = false;
     private _isPanning: boolean = false;
     private _isZooming: boolean = false;
@@ -58,9 +61,13 @@ export default class View {
     private _resizeObserver: ResizeObserver | null = null;
     private _resizeTimer = 0;
 
-    // The `elements` are considered to be stored and arranged from the foremost to the backmost.
     private _elements: ViewElement[] = [];
+    private _subViews: SubView[] = [];
+
+    // The renderable `ViewElement`s are considered to be stored and arranged from the foremost to the backmost.
+    private _renderables: ViewElement[] = [];
     private _interactables: ViewElement[] = [];
+
     private _rafTicking = false;
 
     constructor(
@@ -133,7 +140,6 @@ export default class View {
         Assert.condition(value !== 1, "[G]The `wheelZoomDeltaRate` can not be 1.");
         this._wheelZoomDeltaRate = value;
     }
-
     get renderer() {
         return this._renderer;
     }
@@ -141,9 +147,26 @@ export default class View {
         this._renderer = value;
         value.view = this;
     }
-
     get elements() {
         return [...this._elements];
+    }
+    set elements(value) {
+        this.empty();
+        this.add(...value);
+    }
+    get subViews() {
+        return [...this._subViews];
+    }
+    set subViews(value) {
+        this.emptySubView();
+        this.addSubView(...value);
+    }
+
+    get maxZIndex() {
+        return this._renderables[0]?.zIndex ?? 0;
+    }
+    get minZIndex() {
+        return this._renderables[this._renderables.length - 1]?.zIndex ?? 0;
     }
 
     use(renderer: Renderer, responsiveCallback: (width: number, height: number) => void) {
@@ -154,22 +177,34 @@ export default class View {
         this.startResponsive(responsiveCallback);
     }
 
+    suspendRefreshRenderables = false;
+
+    refreshRenderables() {
+        if (this.suspendRefreshRenderables) return;
+        this._renderables = [...this.elements, ...this._subViews.reduce((acc, subView) => acc.concat(subView.elements), [] as ViewElement[])];
+        this.sortRenderables();
+        this.refreshInteractables();
+    }
+    sortRenderables() {
+        this._renderables.sort((a, b) => b.zIndex - a.zIndex);
+    }
     refreshInteractables() {
-        this._interactables = this._elements.filter(el => el.interactable);
+        this._interactables = this._renderables.filter(el => el.interactable);
+        if (this._hoverElement !== null && !this._interactables.includes(this._hoverElement)) {
+            this._hoverElement = null;
+        }
+        if (this._indeterminateElement !== null && !this._interactables.includes(this._indeterminateElement)) {
+            this._indeterminateElement = null;
+        }
+        if (this._activeElements.length !== 0) {
+            this._activeElements = this._activeElements.filter(el => this._interactables.includes(el));
+        }
     }
 
-    private _maxZIndex = NaN;
-    private _minZIndex = NaN;
-
-    sortElements() {
-        this._elements.sort((a, b) => b.zIndex - a.zIndex);
-        this._maxZIndex = this._elements[0].zIndex;
-        this._minZIndex = this._elements[this.elements.length - 1].zIndex;
-        this.requestRender();
-    }
     requestRender() {
         Geomtoy.tick();
     }
+
     private _rafTick(callback: (...args: any[]) => void) {
         if (!this._rafTicking) {
             this._rafTicking = true;
@@ -221,11 +256,8 @@ export default class View {
     on(eventType: ViewEventType.DragStart | ViewEventType.Dragging | ViewEventType.DragEnd, callback: (e: ViewDragEvent) => void, waitViewUpdate?: boolean): this;
     on(eventType: ViewEventType.PanStart | ViewEventType.Panning | ViewEventType.PanEnd, callback: (e: ViewPanEvent) => void, waitViewUpdate?: boolean): this;
     on(eventType: ViewEventType.ZoomStart | ViewEventType.Zooming | ViewEventType.ZoomEnd, callback: (e: ViewZoomEvent) => void, waitViewUpdate?: boolean): this;
-    on(
-        eventType: ViewEventType.Activating | ViewEventType.Deactivating | ViewEventType.Hovering | ViewEventType.Unhovering,
-        callback: (e: ViewActiveHoverEvent) => void,
-        waitViewUpdate?: boolean
-    ): this;
+    on(eventType: ViewEventType.Activate | ViewEventType.Deactivate, callback: (e: ViewActivateEvent) => void, waitViewUpdate?: boolean): this;
+    on(eventType: ViewEventType.Hover | ViewEventType.Unhover, callback: (e: ViewHoverEvent) => void, waitViewUpdate?: boolean): this;
     on(eventType: ViewEventType, callback: (e: any) => void, waitViewUpdate = true) {
         if (this._eventHandler[eventType] === undefined) this._eventHandler[eventType] = [];
         this._eventHandler[eventType].push({
@@ -275,7 +307,8 @@ export default class View {
     trigger(eventType: ViewEventType.DragStart | ViewEventType.Dragging | ViewEventType.DragEnd, object: ViewDragEvent): this;
     trigger(eventType: ViewEventType.PanStart | ViewEventType.Panning | ViewEventType.PanEnd, object: ViewPanEvent): this;
     trigger(eventType: ViewEventType.ZoomStart | ViewEventType.Zooming | ViewEventType.ZoomEnd, object: ViewZoomEvent): this;
-    trigger(eventType: ViewEventType.Activating | ViewEventType.Deactivating | ViewEventType.Hovering | ViewEventType.Unhovering, object: ViewActiveHoverEvent): this;
+    trigger(eventType: ViewEventType.Activate | ViewEventType.Deactivate, object: ViewActivateEvent): this;
+    trigger(eventType: ViewEventType.Hover | ViewEventType.Unhover, object: ViewHoverEvent): this;
     trigger(eventType: ViewEventType, object: ViewEvent) {
         if (this._eventHandler[eventType] === undefined) return this;
         for (const { cb, wait } of this._eventHandler[eventType]) {
@@ -333,12 +366,12 @@ export default class View {
                 this.cursor("default");
                 this._preparingDragging = false;
 
-                if (this._deactivatingElement !== null) {
-                    const index = this._activeElements.indexOf(this._deactivatingElement);
+                if (this._indeterminateElement !== null) {
+                    const index = this._activeElements.indexOf(this._indeterminateElement);
                     index !== -1 && this._activeElements.splice(index, 1);
-                    this.trigger(ViewEventType.Deactivating, viewActiveHoverEvent(ve, this._deactivatingElement));
+                    this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [this._indeterminateElement]));
                     this.requestRender();
-                    this._deactivatingElement = null;
+                    this._indeterminateElement = null;
                 }
             } else if (this._isPanning) {
                 this.cursor("default");
@@ -357,12 +390,12 @@ export default class View {
             } else if (this._preparingDragging) {
                 this.cursor("default");
                 this._preparingDragging = false;
-                if (this._deactivatingElement !== null) {
-                    const index = this._activeElements.indexOf(this._deactivatingElement);
+                if (this._indeterminateElement !== null) {
+                    const index = this._activeElements.indexOf(this._indeterminateElement);
                     index !== -1 && this._activeElements.splice(index, 1);
-                    this.trigger(ViewEventType.Deactivating, viewActiveHoverEvent(ve, this._deactivatingElement));
+                    this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [this._indeterminateElement]));
                     this.requestRender();
-                    this._deactivatingElement = null;
+                    this._indeterminateElement = null;
                 }
             } else if (this._isPanning || this._preparingPanning || this._isZooming || this._preparingZooming) {
                 this.cursor("default");
@@ -407,10 +440,10 @@ export default class View {
                 this.cursor("pointer");
                 if (!this._activeElements.includes(this._interactables[foundIndex])) {
                     this._activeElements.push(this._interactables[foundIndex]);
-                    this.trigger(ViewEventType.Activating, viewActiveHoverEvent(ve, this._interactables[foundIndex]));
+                    this.trigger(ViewEventType.Activate, viewActivateEvent(ve, [this._interactables[foundIndex]]));
                     this.requestRender();
                 } else {
-                    this._deactivatingElement = this._interactables[foundIndex];
+                    this._indeterminateElement = this._interactables[foundIndex];
                 }
                 this.trigger(ViewEventType.DragStart, viewDragEvent(ve, this._activeElements));
                 this._draggingOffset = atOffset;
@@ -431,10 +464,10 @@ export default class View {
                     this.cursor("pointer");
                     if (!this._activeElements.includes(this._interactables[foundIndex])) {
                         this._activeElements.push(this._interactables[foundIndex]);
-                        this.trigger(ViewEventType.Activating, viewActiveHoverEvent(ve, this._interactables[foundIndex]));
+                        this.trigger(ViewEventType.Activate, viewActivateEvent(ve, [this._interactables[foundIndex]]));
                         this.requestRender();
                     } else {
-                        this._deactivatingElement = this._interactables[foundIndex];
+                        this._indeterminateElement = this._interactables[foundIndex];
                     }
                     this.trigger(ViewEventType.DragStart, viewDragEvent(ve, this._activeElements));
                     this._draggingOffset = atOffset;
@@ -488,12 +521,12 @@ export default class View {
                 this.cursor("default");
                 this._preparingDragging = false;
 
-                if (this._deactivatingElement !== null) {
-                    const index = this._activeElements.indexOf(this._deactivatingElement);
+                if (this._indeterminateElement !== null) {
+                    const index = this._activeElements.indexOf(this._indeterminateElement);
                     index !== -1 && this._activeElements.splice(index, 1);
-                    this.trigger(ViewEventType.Deactivating, viewActiveHoverEvent(ve, this._deactivatingElement));
+                    this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [this._indeterminateElement]));
                     this.requestRender();
-                    this._deactivatingElement = null;
+                    this._indeterminateElement = null;
                 }
             } else if (this._isPanning) {
                 this.cursor("default");
@@ -512,12 +545,12 @@ export default class View {
             } else if (this._preparingDragging) {
                 this.cursor("default");
                 this._preparingDragging = false;
-                if (this._deactivatingElement !== null) {
-                    const index = this._activeElements.indexOf(this._deactivatingElement);
+                if (this._indeterminateElement !== null) {
+                    const index = this._activeElements.indexOf(this._indeterminateElement);
                     index !== -1 && this._activeElements.splice(index, 1);
-                    this.trigger(ViewEventType.Deactivating, viewActiveHoverEvent(ve, this._deactivatingElement));
+                    this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [this._indeterminateElement]));
                     this.requestRender();
-                    this._deactivatingElement = null;
+                    this._indeterminateElement = null;
                 }
             } else if (this._isPanning || this._preparingPanning || this._isZooming || this._preparingZooming) {
                 this.cursor("default");
@@ -578,7 +611,7 @@ export default class View {
                     if (foundIndex !== -1) {
                         if (this._hoverElement !== this._interactables[foundIndex]) {
                             this.cursor("pointer");
-                            this.trigger(ViewEventType.Hovering, viewActiveHoverEvent(ve, this._interactables[foundIndex]));
+                            this.trigger(ViewEventType.Hover, viewHoverEvent(ve, this._interactables[foundIndex]));
                             this._hoverElement = this._interactables[foundIndex];
                             this.requestRender();
                         } else {
@@ -587,7 +620,7 @@ export default class View {
                     } else {
                         if (this._hoverElement !== null) {
                             this.cursor("default");
-                            this.trigger(ViewEventType.Unhovering, viewActiveHoverEvent(ve, this._hoverElement));
+                            this.trigger(ViewEventType.Unhover, viewHoverEvent(ve, this._hoverElement));
                             this._hoverElement = null;
                             this.requestRender();
                         } else {
@@ -730,6 +763,7 @@ export default class View {
             this._resizeObserver = null;
         }
     }
+
     zoom(zoom: number, keepViewCenter = true) {
         if (keepViewCenter) {
             const display = this.renderer.display;
@@ -754,114 +788,157 @@ export default class View {
 
     add(...elements: ViewElement[]) {
         for (const el of elements) {
-            if (el.view !== this) {
-                el.view?.remove(el);
-            }
-            const index = this._elements.indexOf(el);
-            if (index !== -1) {
-                console.warn("[G]The `View` already has this `ViewElement`, it will be ignored");
+            if (el[VE_SUB_VIEW_SYMBOL] !== null) {
+                if (el[VE_SUB_VIEW_SYMBOL]![SV_VIEW_SYMBOL] === this) {
+                    this.suspendRefreshRenderables = true;
+                    el[VE_SUB_VIEW_SYMBOL]!.remove(el);
+                    this.suspendRefreshRenderables = false;
+                } else {
+                    el[VE_SUB_VIEW_SYMBOL]!.remove(el);
+                }
+                this._elements.push(el);
+                el[VE_VIEW_SYMBOL] = this;
                 continue;
             }
+            if (el[VE_VIEW_SYMBOL] === this) continue;
+            if (el[VE_VIEW_SYMBOL] !== null) el[VE_VIEW_SYMBOL]!.remove(el);
             this._elements.push(el);
-            el.view = this;
+            el[VE_VIEW_SYMBOL] = this;
         }
-        this.sortElements();
-        this.refreshInteractables();
+        this.refreshRenderables();
         this.requestRender();
         return this;
     }
-
     remove(...elements: ViewElement[]) {
         for (const el of elements) {
-            if (el.view !== this) continue;
-            const index = this._elements.indexOf(el);
-            if (index === -1) {
-                throw new Error("[G]Should not happened.");
-            }
-            this._elements.splice(index, 1);
-            el.view = null;
-            // clear state
-            if (this._hoverElement === el) this._hoverElement = null;
-            if (this._deactivatingElement === el) this._deactivatingElement = null;
-            const index2 = this._activeElements.indexOf(el);
-            if (index2 !== -1) this._activeElements.splice(index, 1);
+            // We do not directly remove the `ViewElement` in the `SubView`
+            if (el[VE_SUB_VIEW_SYMBOL] !== null) continue;
+            if (el[VE_VIEW_SYMBOL] !== this) continue;
 
-            el.subView?.remove(el);
+            const index = this._elements.indexOf(el);
+            if (index === -1) throw new Error("[G]Should not happened.");
+
+            this._elements.splice(index, 1);
+            el[VE_VIEW_SYMBOL] = null;
         }
-        this.refreshInteractables();
+        this.refreshRenderables();
         this.requestRender();
         return this;
     }
-
     empty() {
         for (const el of this._elements) {
-            if (el.subView !== null) {
-                if (el.subView.elements !== []) el.subView.elements = [];
-                el.subView = null;
-            }
-            el.view = null;
+            el[VE_VIEW_SYMBOL] = null;
         }
-
         this._elements = [];
+        this.refreshRenderables();
+        this.requestRender();
+        return this;
+    }
+    has(element: ViewElement) {
+        return this._elements.includes(element);
+    }
+    addSubView(...subViews: SubView[]) {
+        for (const sv of subViews) {
+            if (sv[SV_VIEW_SYMBOL] === this) continue;
+            if (sv[SV_VIEW_SYMBOL] !== null) sv[SV_VIEW_SYMBOL]!.removeSubView(sv);
+            this._subViews.push(sv);
+            sv[SV_VIEW_SYMBOL] = this;
+        }
+        this.refreshRenderables();
+        this.requestRender();
+        return this;
+    }
+    removeSubView(...subViews: SubView[]) {
+        for (const sv of subViews) {
+            if (sv[SV_VIEW_SYMBOL] !== this) continue;
+
+            const index = this._subViews.indexOf(sv);
+            if (index === -1) throw new Error("[G]Should not happened.");
+
+            this._subViews.splice(index, 1);
+            sv[SV_VIEW_SYMBOL] = null;
+        }
+        this.refreshRenderables();
+        this.requestRender();
+        return this;
+    }
+    emptySubView() {
+        for (const sv of this._subViews) {
+            sv[SV_VIEW_SYMBOL] = null;
+        }
+        this._subViews = [];
+        this.refreshRenderables();
+        this.requestRender();
+        return this;
+    }
+    hasSubView(subView: SubView) {
+        return this._subViews.includes(subView);
+    }
+    emptyAll() {
+        for (const el of this._elements) {
+            el[VE_VIEW_SYMBOL] = null;
+        }
+        this._elements = [];
+        for (const sv of this._subViews) {
+            sv[SV_VIEW_SYMBOL] = null;
+        }
+        this._subViews = [];
+
+        this._renderables = [];
         this._interactables = [];
-        this._deactivatingElement = null;
         this._hoverElement = null;
+        this._indeterminateElement = null;
         this._activeElements = [];
         this.requestRender();
         return this;
     }
-
-    activate(element: ViewElement) {
-        const index = this._interactables.indexOf(element);
-        const index2 = this._activeElements.indexOf(element);
-        if (index !== -1 && index2 === -1) {
-            this._activeElements.push(this._interactables[index]);
-            this.requestRender();
-        }
+    /**
+     * * Memo
+     * `activate` and `deactivate` methods etc. do not trigger events
+     */
+    activate(...elements: ViewElement[]) {
+        this._activeElements = [...elements.filter(el => !this._activeElements.includes(el)), ...this._activeElements].filter(el => this._interactables.includes(el));
+        this.requestRender();
         return this;
     }
-    deactivate(element: ViewElement) {
-        const index = this._interactables.indexOf(element);
-        const index2 = this._activeElements.indexOf(element);
-        if (index !== -1 && index2 !== -1) {
-            this._activeElements.splice(index2, 1);
-            this.requestRender();
-        }
+    deactivate(...elements: ViewElement[]) {
+        this._activeElements = this._activeElements.filter(el => !elements.includes(el));
+        this.requestRender();
         return this;
     }
 
     forward(element: ViewElement) {
-        const index = this._elements.indexOf(element);
+        const index = this._renderables.indexOf(element);
         if (index !== -1 && index !== 0) {
-            this._elements[index].zIndex = this.elements[index - 1].zIndex + 1;
-            this.sortElements();
+            this._renderables[index].zIndex = this._renderables[index - 1].zIndex + 1;
+            this.sortRenderables();
             this.requestRender();
         }
         return this;
     }
     foremost(element: ViewElement) {
-        const index = this._elements.indexOf(element);
+        const index = this._renderables.indexOf(element);
         if (index !== -1 && index !== 0) {
-            this._elements[index].zIndex = this._maxZIndex + 1;
-            this.sortElements();
+            this._renderables[index].zIndex = this.maxZIndex + 1;
+            this.sortRenderables();
             this.requestRender();
         }
         return this;
     }
     backward(element: ViewElement) {
-        const index = this._elements.indexOf(element);
-        if (index !== -1 && index !== this._elements.length - 1) {
-            this._elements[index].zIndex = this.elements[index + 1].zIndex + 1;
-            this.sortElements();
+        const index = this._renderables.indexOf(element);
+        if (index !== -1 && index !== this._renderables.length - 1) {
+            this._renderables[index].zIndex = this.elements[index + 1].zIndex - 1;
+            this.sortRenderables();
             this.requestRender();
         }
         return this;
     }
     backmost(element: ViewElement) {
-        const index = this._elements.indexOf(element);
-        if (index !== -1 && index !== this._elements.length - 1) {
-            this._elements[index].zIndex = this._minZIndex - 1;
-            this.sortElements();
+        const index = this._renderables.indexOf(element);
+        if (index !== -1 && index !== this._renderables.length - 1) {
+            this._renderables[index].zIndex = this.minZIndex - 1;
+            this.sortRenderables();
             this.requestRender();
         }
         return this;
@@ -869,9 +946,9 @@ export default class View {
 
     private _renderFunc() {
         const renderer = this.renderer;
-        if (this._elements.length === 0) renderer.clear();
+        if (this._renderables.length === 0) renderer.clear();
 
-        this._elements.forEach(el => {
+        this._renderables.forEach(el => {
             if (el.shape instanceof Image) {
                 const imageSource = el.shape.source;
                 renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);

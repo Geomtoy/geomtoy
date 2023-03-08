@@ -2,6 +2,7 @@ import type { Shape } from "@geomtoy/core";
 import { Assert, Type, Utility } from "@geomtoy/util";
 import type { InteractiveStyle, PathInfo, Style } from "../types";
 import type SubView from "./SubView";
+import { SV_VIEW_SYMBOL } from "./SubView";
 import type View from "./View";
 
 const DEFAULT_STYLE: Style = {
@@ -23,6 +24,11 @@ const DEFAULT_INTERACTIVE_STYLE: InteractiveStyle = {
     strokeWidth: 1
 };
 
+const VE_VIEW_SYMBOL = Symbol("ViewElement.view");
+const VE_SUB_VIEW_SYMBOL = Symbol("ViewElement.subView");
+
+export { VE_VIEW_SYMBOL, VE_SUB_VIEW_SYMBOL };
+
 export default class ViewElement<T extends Shape = Shape> {
     private _interactable: boolean;
     private _zIndex: number;
@@ -36,11 +42,11 @@ export default class ViewElement<T extends Shape = Shape> {
 
     // view: null && subView: null - ViewElement initial status
     // view: View && subView: null - ViewElement directly added to a View
-    // view: View && subView: SubView - ViewElement added to a SubView
+    // view: null && subView: SubView - ViewElement added to a SubView
     // @internal
-    view: View | null = null;
+    [VE_VIEW_SYMBOL]: View | null = null;
     // @internal
-    subView: SubView | null = null;
+    [VE_SUB_VIEW_SYMBOL]: SubView | null = null;
 
     constructor(
         shape: T,
@@ -66,7 +72,7 @@ export default class ViewElement<T extends Shape = Shape> {
     }
     set interactable(value) {
         this._interactable = value;
-        this.view?.refreshInteractables();
+        (this[VE_VIEW_SYMBOL] ?? this[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL])?.refreshInteractables();
     }
 
     get zIndex() {
@@ -75,12 +81,12 @@ export default class ViewElement<T extends Shape = Shape> {
     set zIndex(value) {
         Assert.isInteger(value, "zIndex");
         this._zIndex = value;
-        this.view?.sortElements();
+        (this[VE_VIEW_SYMBOL] ?? this[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL])?.sortRenderables();
     }
 
     move(deltaX: number, deltaY: number) {
         this.shape.move(deltaX, deltaY);
-        this.view?.requestRender();
+        (this[VE_VIEW_SYMBOL] ?? this[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL])?.requestRender();
     }
 
     style(): Style;
@@ -107,7 +113,7 @@ export default class ViewElement<T extends Shape = Shape> {
             delete value.strokeDash;
         }
         Utility.assignDeep(this._style, value);
-        this.view?.requestRender();
+        (this[VE_VIEW_SYMBOL] ?? this[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL])?.requestRender();
     }
     hoverStyle(): InteractiveStyle;
     hoverStyle(value: Partial<InteractiveStyle>): void;
@@ -121,7 +127,7 @@ export default class ViewElement<T extends Shape = Shape> {
             delete value.strokeWidth;
         }
         Object.assign(this._hoverStyle, value);
-        this.view?.requestRender();
+        (this[VE_VIEW_SYMBOL] ?? this[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL])?.requestRender();
     }
     activeStyle(): InteractiveStyle;
     activeStyle(value: Partial<InteractiveStyle>): void;
@@ -135,6 +141,6 @@ export default class ViewElement<T extends Shape = Shape> {
             delete value.strokeWidth;
         }
         Object.assign(this._activeStyle, value);
-        this.view?.requestRender();
+        (this[VE_VIEW_SYMBOL] ?? this[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL])?.requestRender();
     }
 }
