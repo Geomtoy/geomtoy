@@ -1,20 +1,19 @@
-import { Assert, Box, Coordinates, Maths, Size, Type, Utility, Vector2 } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-geometry";
-
+import { Angle, Assert, Box, Coordinates, Maths, Size, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
-import EventSourceObject from "../../event/EventSourceObject";
-import GeometryGraphic from "../../graphics/GeometryGraphic";
-import Transformation from "../../transformation";
-import Point from "./Point";
-
 import SealedShapeArray from "../../collection/SealedShapeArray";
+import EventSourceObject from "../../event/EventSourceObject";
 import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
-import { statedWithBoolean } from "../../misc/decor-cache";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
+import { stated, statedWithBoolean } from "../../misc/decor-cache";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
+import { getCoordinates } from "../../misc/point-like";
+import Transformation from "../../transformation";
 import type { ClosedGeometry, RotationFeaturedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
 import Path from "../general/Path";
 import Polygon from "../general/Polygon";
 import LineSegment from "./LineSegment";
+import Point from "./Point";
 
 @validGeometry
 export default class Rectangle extends Geometry implements ClosedGeometry, RotationFeaturedGeometry {
@@ -164,141 +163,209 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         const h0 = Maths.equalTo(this._height, 0, optioner.options.epsilon);
         if (check) return w0 || h0;
 
-        if (w0 && !h0) {
-            // prettier-ignore
-            return new SealedShapeArray([
-                new LineSegment(this._x, this._y, this._x, this._y + this._height), 
-                new LineSegment(this._x, this._y + this._height, this._x, this._y)
-            ]);
+        const c = this.coordinates;
+        if ((w0 && !h0) || (!w0 && h0)) {
+            const d = Vector2.add(c, Vector2.from2(this._rotation, Maths.hypot(this._width, this.height)));
+            return new SealedShapeArray([new LineSegment(c, d), new LineSegment(d, c)]);
         }
-        if (!w0 && h0) {
-            // prettier-ignore
-            return new SealedShapeArray([
-                new LineSegment(this._x, this._y, this._x + this._width, this._y), 
-                new LineSegment(this._x + this._width, this._y, this._x, this._y)
-            ]);
-        }
-        if (w0 && h0) return new Point(this._x, this._y);
+        if (w0 && h0) return new Point(c);
         return this;
     }
 
-    static fromTwoPointsAndRotation(point1: Point, point2: Point, rotation = 0) {
-        const c1 = point1.coordinates;
-        const c2 = point2.coordinates;
-        const box = Box.from(c1, c2);
-        return new Rectangle(Box.x(box), Box.y(box), Box.width(box), Box.height(box), rotation);
+    static fromTwoPointsAndRotation(point1: [number, number] | Point, point2: [number, number] | Point, rotation = 0) {
+        const c1 = getCoordinates(point1, "point1");
+        const c2 = getCoordinates(point2, "point2");
+
+        const v = Vector2.from(c1, c2);
+        const vuw = Vector2.from2(rotation, 1);
+        const dpw = Vector2.dot(v, vuw);
+        const vw = Vector2.project(v, vuw);
+        const vuh = Vector2.from2(rotation + Maths.PI / 2, 1);
+        const dph = Vector2.dot(v, vuh);
+        const vh = Vector2.project(v, vuh);
+        let c: [number, number];
+
+        const c3 = Vector2.add(c1, vw);
+        const c4 = Vector2.add(c1, vh);
+        if (dpw > 0) {
+            if (dph > 0) c = c1;
+            else c = c4;
+        } else {
+            if (dph > 0) c = c3;
+            else c = c2;
+        }
+        const w = Vector2.magnitude(vw);
+        const h = Vector2.magnitude(vh);
+        return new Rectangle(c, w, h, rotation);
     }
 
-    getLength(): number {
-        throw new Error("Method not implemented.");
+    static fromCenterPointEtc(centerPoint: [number, number] | Point, width: number, height: number, rotation = 0) {
+        const cc = getCoordinates(centerPoint, "centerPoint");
+        const vw = Vector2.from2(rotation, -width / 2);
+        const vh = Vector2.from2(rotation + Maths.PI / 2, -height / 2);
+        const [x, y] = Vector2.add(cc, Vector2.add(vw, vh));
+        return new Rectangle(x, y, width, height, rotation);
     }
-    getArea(): number {
-        throw new Error("Method not implemented.");
-    }
-    getWindingDirection(): WindingDirection {
-        throw new Error("Method not implemented.");
-    }
-    isPointOn(point: [number, number] | Point): boolean {
-        throw new Error("Method not implemented.");
-    }
-    isPointOutside(point: [number, number] | Point): boolean {
-        throw new Error("Method not implemented.");
-    }
-    isPointInside(point: [number, number] | Point): boolean {
-        throw new Error("Method not implemented.");
+    /**
+     * By change the `point` and swap the `width` and `height`(if needed), to make the `rotation` of rectangle `this` into the interval $[0,\frac{\pi}{2})$.
+     */
+    simplify() {
+        const { coordinates: c, _width: w, _height: h, _rotation: phi } = this;
+        const vw = Vector2.from2(phi, w);
+        const vh = Vector2.from2(phi + Maths.PI / 2, h);
+        if (Angle.between(phi, 0, Maths.PI / 2, true, false, true)) {
+            // do nothing;
+        }
+        if (Angle.between(phi, Maths.PI / 2, Maths.PI, true, false, true)) {
+            this.coordinates = Vector2.add(c, vh);
+            this.rotation = phi - Maths.PI / 2;
+            [this.width, this.height] = [h, w];
+        }
+        if (Angle.between(phi, Maths.PI, (3 * Maths.PI) / 2, true, false, true)) {
+            this.coordinates = Vector2.add(Vector2.add(c, vw), vh);
+            this.rotation = phi - Maths.PI;
+        }
+        if (Angle.between(phi, (3 * Maths.PI) / 2, 2 * Maths.PI, true, false, true)) {
+            this.coordinates = Vector2.add(c, vw);
+            this.rotation = phi - (3 * Maths.PI) / 2;
+            [this.width, this.height] = [h, w];
+        }
+        return this;
     }
 
-    getVertices(): [Point, Point, Point, Point] {
-        const { x: x, y: y, width: w, height: h, rotation } = this;
-        const b: [number, number, number, number] = [x, y, w, h];
-        const t = new Transformation();
-        t.setRotate(rotation, this.getCenterPoint());
-        const nn = t.transformCoordinates(Box.nn(b));
-        const mn = t.transformCoordinates(Box.mn(b));
-        const mm = t.transformCoordinates(Box.mm(b));
-        const nm = t.transformCoordinates(Box.nm(b));
-        return [new Point(nn), new Point(mn), new Point(mm), new Point(nm)];
+    getLength() {
+        return 2 * this._width + 2 * this._height;
+    }
+    getArea() {
+        return this._width * this._height;
+    }
+    getWindingDirection() {
+        return 1 as WindingDirection;
+    }
+    @validGeometryArguments
+    isPointOn(point: [number, number] | Point) {
+        const vectorEpsilon = optioner.options.vectorEpsilon;
+        const c0 = getCoordinates(point, "point");
+        const [c1, c2, c3, c4] = this.getVertices().map(p => p.coordinates);
+        const v12 = Vector2.from(c1, c2);
+        const v23 = Vector2.from(c2, c3);
+        const v34 = Vector2.from(c3, c4);
+        const v41 = Vector2.from(c4, c1);
+        const v10 = Vector2.from(c1, c0);
+        const v20 = Vector2.from(c2, c0);
+        const v30 = Vector2.from(c3, c0);
+        const v40 = Vector2.from(c4, c0);
+
+        if (Maths.equalTo(Vector2.cross(v12, v10), 0, vectorEpsilon) && Maths.between(Vector2.dot(v12, v10) / Vector2.dot(v12, v12), 0, 1, false, false, vectorEpsilon)) return true;
+        if (Maths.equalTo(Vector2.cross(v23, v20), 0, vectorEpsilon) && Maths.between(Vector2.dot(v23, v20) / Vector2.dot(v23, v23), 0, 1, false, false, vectorEpsilon)) return true;
+        if (Maths.equalTo(Vector2.cross(v34, v30), 0, vectorEpsilon) && Maths.between(Vector2.dot(v34, v30) / Vector2.dot(v34, v34), 0, 1, false, false, vectorEpsilon)) return true;
+        if (Maths.equalTo(Vector2.cross(v41, v40), 0, vectorEpsilon) && Maths.between(Vector2.dot(v41, v40) / Vector2.dot(v41, v41), 0, 1, false, false, vectorEpsilon)) return true;
+        return false;
+    }
+    @validGeometryArguments
+    isPointOutside(point: [number, number] | Point) {
+        const vectorEpsilon = optioner.options.vectorEpsilon;
+        const c0 = getCoordinates(point, "point");
+        const [c1, c2, c3, c4] = this.getVertices().map(p => p.coordinates);
+        const v12 = Vector2.from(c1, c2);
+        const v23 = Vector2.from(c2, c3);
+        const v34 = Vector2.from(c3, c4);
+        const v41 = Vector2.from(c4, c1);
+        const v10 = Vector2.from(c1, c0);
+        const v20 = Vector2.from(c2, c0);
+        const v30 = Vector2.from(c3, c0);
+        const v40 = Vector2.from(c4, c0);
+        if (Maths.lessThan(Vector2.cross(v12, v10), 0, vectorEpsilon)) return true;
+        if (Maths.lessThan(Vector2.cross(v23, v20), 0, vectorEpsilon)) return true;
+        if (Maths.lessThan(Vector2.cross(v34, v30), 0, vectorEpsilon)) return true;
+        if (Maths.lessThan(Vector2.cross(v41, v40), 0, vectorEpsilon)) return true;
+        return false;
+    }
+    @validGeometryArguments
+    isPointInside(point: [number, number] | Point) {
+        const vectorEpsilon = optioner.options.vectorEpsilon;
+        const c0 = getCoordinates(point, "point");
+        const [c1, c2, c3, c4] = this.getVertices().map(p => p.coordinates);
+        const v12 = Vector2.from(c1, c2);
+        const v23 = Vector2.from(c2, c3);
+        const v34 = Vector2.from(c3, c4);
+        const v41 = Vector2.from(c4, c1);
+        const v10 = Vector2.from(c1, c0);
+        const v20 = Vector2.from(c2, c0);
+        const v30 = Vector2.from(c3, c0);
+        const v40 = Vector2.from(c4, c0);
+        if (
+            Maths.greaterThan(Vector2.cross(v12, v10), 0, vectorEpsilon) &&
+            Maths.greaterThan(Vector2.cross(v23, v20), 0, vectorEpsilon) &&
+            Maths.greaterThan(Vector2.cross(v34, v30), 0, vectorEpsilon) &&
+            Maths.greaterThan(Vector2.cross(v41, v40), 0, vectorEpsilon)
+        )
+            return true;
+        return false;
     }
 
+    @stated
+    getVertices() {
+        const { _x: x, _y: y, _width: w, _height: h, _rotation: phi } = this;
+        const vw = Vector2.from2(phi, w);
+        const vh = Vector2.from2(phi + Maths.PI / 2, h);
+        const nn = [x, y] as [number, number];
+        const nm = Vector2.add(nn, vw);
+        const mm = Vector2.add(nm, vh);
+        const mn = Vector2.add(nn, vh);
+        return [new Point(nn), new Point(nm), new Point(mm), new Point(mn)] as [Point, Point, Point, Point];
+    }
     getCenterPoint() {
-        const c = Vector2.add(this.coordinates, [Size.width(this.size) / 2, Size.height(this.size) / 2]);
+        const { coordinates: cc, _width: w, _height: h, _rotation: phi } = this;
+        const vw = Vector2.from2(phi, w / 2);
+        const vh = Vector2.from2(phi + Maths.PI / 2, h / 2);
+        const c = Vector2.add(cc, Vector2.add(vw, vh));
         return new Point(c);
     }
 
-    normalize() {
-        //todo Normalize rectangle with rotation of `n * Maths.PI / 2` to regular non-rotational rectangle
-    }
+    getBoundingBox() {
+        const { _x: x, _y: y, _width: w, _height: h, rotation: phi } = this;
+        const vw = Vector2.from2(phi, w);
+        const vh = Vector2.from2(phi + Maths.PI / 2, h);
+        const xs = [x, x + vw[0], x + vh[0], x + vw[0] + vh[0]];
+        const ys = [y, y + vw[1], y + vh[1], y + vw[1] + vh[1]];
+        const nx = Maths.min(...xs);
+        const mx = Maths.max(...xs);
+        const ny = Maths.min(...ys);
+        const my = Maths.max(...ys);
 
-    getBoundingBox(): [number, number, number, number] {
-        throw new Error();
-        // let xRight = this.owner.xAxisPositiveOnRight,
-        //     yBottom = this.owner.yAxisPositiveOnBottom,
-        //     { x: x, y: y, width: w, height: h } = this,
-        //     l = x,
-        //     r = x + w,
-        //     t = y,
-        //     b = y + h
-        // if (!xRight) [l, r] = [r, l]
-        // if (!yBottom) [t, b] = [b, t]
-        // let ret = 0
-        // if (side === "left") {
-        //     ret = l
-        // }
-        // if (side === "right") {
-        //     ret = r
-        // }
-        // if (side === "top") {
-        //     ret = t
-        // }
-        // if (side === "bottom") {
-        //     ret = b
-        // }
-        // return ret
+        return Box.from([nx, ny], [mx, my]);
     }
     move(deltaX: number, deltaY: number) {
         this.coordinates = Vector2.add(this.coordinates, [deltaX, deltaY]);
         return this;
     }
 
-    inflate(size: [number, number]) {
-        return this.clone().inflateSelf(size);
-    }
-    inflateSelf(size: [number, number]) {
-        let { x: x, y: y, width: w, height: h } = this,
-            [sw, sh] = size,
-            nx = x - sw,
-            ny = y - sh,
-            nw = w + sw * 2,
-            nh = h + sw * 2;
-        if (nw <= 0 || nh <= 0) {
+    /**
+     * Keep the center of the rectangle `this` put, try to set the rectangle with `width` and `height`, but keep the aspect ratio of the rectangle `this`,
+     * if `clamped` is true, it limits the new width and height of rectangle `this` not to exceed the `width` and `height`.
+     * @param width
+     * @param height
+     */
+    keepAspectRatioFit(width: number, height: number, clamped = true) {
+        const cc = this.getCenterPoint().coordinates;
+        const { _width: w, _height: h } = this;
+
+        const nw = (w / h) * height;
+        const nh = (h / w) * width;
+
+        if (nw === width || nh === height) {
+            this.copyFrom(Rectangle.fromCenterPointEtc(cc, nw, nh, this._rotation));
             return this;
         }
-        this.x = nx;
-        this.y = ny;
-        this.width = nw;
-        this.height = nh;
-        return this;
+        if (nw < width === clamped) {
+            this.copyFrom(Rectangle.fromCenterPointEtc(cc, nw, height, this._rotation));
+            return this;
+        } else {
+            this.copyFrom(Rectangle.fromCenterPointEtc(cc, width, nh, this._rotation));
+            return this;
+        }
     }
-
-    // keepAspectRadioAndFit(size, keepInside = true) {
-    //     if (this.width === 0) {
-    //         return new Size(0, Size.height)
-    //     }
-    //     if (this.height === 0) {
-    //         return new Size(Size.width, 0)
-    //     }
-    //     let nw = (this.width / this.height) * Size.height,
-    //         nh = (this.height / this.width) * Size.width
-
-    //     if (nw === Size.width && nh === Size.height) {
-    //         return new Size(size)
-    //     }
-    //     if ((nw < Size.width) ^ keepInside) {
-    //         return new Size(nw, Size.height)
-    //     } else {
-    //         return new Size(Size.width, nh)
-    //     }
-    // }
 
     toPolygon() {
         const polygon = new Polygon();
@@ -323,9 +390,10 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
     }
 
     apply(transformation: Transformation) {
-        const { coordinates: c, width: w, height: h, rotation } = this;
+        const { _x: x, _y: y, _width: w, _height: h, _rotation: phi } = this;
+        // Treat the rectangle as it is from a square(0,0,1,1).
         const rectangleTransformation = new Transformation();
-        rectangleTransformation.setRotate(rotation, this.getCenterPoint());
+        rectangleTransformation.addScale(w, h).addRotate(phi).addTranslate(x, y);
         const t = transformation.clone().addMatrix(...rectangleTransformation.matrix);
         const {
             skew: [kx, ky],
@@ -335,9 +403,9 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         const epsilon = optioner.options.epsilon;
 
         if (Maths.equalTo(kx, 0, epsilon) && Maths.equalTo(ky, 0, epsilon)) {
-            const newCoordinates = t.transformCoordinates(c);
-            const newWidth = w * sx;
-            const newHeight = h * sy;
+            const newCoordinates = transformation.transformCoordinates([x, y]);
+            const newWidth = Maths.abs(sx);
+            const newHeight = Maths.abs(sy);
             const newRotation = rotate;
             return new Rectangle(newCoordinates, newWidth, newHeight, newRotation);
         } else {
@@ -362,7 +430,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         return g;
     }
     clone() {
-        return new Rectangle(this.x, this.y, this.width, this.height, this.rotation);
+        return new Rectangle(this._x, this._y, this._width, this._height, this._rotation);
     }
     copyFrom(shape: Rectangle | null) {
         if (shape === null) shape = new Rectangle();
@@ -377,11 +445,11 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         // prettier-ignore
         return [
             `${this.name}(${this.id}){`,
-            `\tx: ${this.x}`,
-            `\ty: ${this.y}`,
-            `\twidth: ${this.width}`,
-            `\theight: ${this.height}`,
-            `\trotation: ${this.rotation}`,
+            `\tx: ${this._x}`,
+            `\ty: ${this._y}`,
+            `\twidth: ${this._width}`,
+            `\theight: ${this._height}`,
+            `\trotation: ${this._rotation}`,
             `}`
         ].join("\n");
     }
