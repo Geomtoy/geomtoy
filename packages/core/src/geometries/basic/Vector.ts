@@ -4,17 +4,17 @@ import { validGeometry } from "../../misc/decor-geometry";
 
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
+import { optioner } from "../../geomtoy";
+import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
+import { stated, statedWithBoolean } from "../../misc/decor-cache";
+import { getCoordinates } from "../../misc/point-like";
+import type Transformation from "../../transformation";
+import type { ViewportDescriptor } from "../../types";
 import Line from "./Line";
 import LineSegment from "./LineSegment";
 import Point from "./Point";
 import Ray from "./Ray";
-
-import { optioner } from "../../geomtoy";
-import Graphics from "../../graphics";
-import { getCoordinates } from "../../misc/point-like";
-import type Transformation from "../../transformation";
-import type { ViewportDescriptor } from "../../types";
 
 @validGeometry
 export default class Vector extends Geometry {
@@ -190,12 +190,20 @@ export default class Vector extends Geometry {
         return Vector2.magnitude(this.coordinates);
     }
 
+    @stated
     initialized() {
         // prettier-ignore
         return (
             !Number.isNaN(this._x) &&
             !Number.isNaN(this._y)
         );
+    }
+    degenerate(check: false): this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
+        return check ? false : this;
     }
 
     move(deltaX: number, deltaY: number) {

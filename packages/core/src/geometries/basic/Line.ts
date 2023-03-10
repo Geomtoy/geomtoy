@@ -1,20 +1,17 @@
 import { Angle, Assert, Box, Coordinates, Maths, Matrix2, Type, Utility, Vector2 } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-geometry";
-
 import Geometry from "../../base/Geometry";
-import ArrowGraphics from "../../helper/ArrowGraphics";
-import Point from "./Point";
-
 import EventSourceObject from "../../event/EventSourceObject";
 import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
-import { stated } from "../../misc/decor-cache";
+import ArrowGraphics from "../../helper/ArrowGraphics";
+import { stated, statedWithBoolean } from "../../misc/decor-cache";
+import { validGeometry } from "../../misc/decor-geometry";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
 import type { InfiniteOpenGeometry, ViewportDescriptor } from "../../types";
-import Circle from "./Circle";
 import type LineSegment from "./LineSegment";
+import Point from "./Point";
 
 @validGeometry
 export default class Line extends Geometry implements InfiniteOpenGeometry {
@@ -145,6 +142,13 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
             !Number.isNaN(this._y) &&
             !Number.isNaN(this._slope)
         );
+    }
+    degenerate(check: false): this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
+        return check ? false : this;
     }
 
     static yAxis() {

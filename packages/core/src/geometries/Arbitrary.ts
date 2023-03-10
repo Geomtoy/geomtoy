@@ -2,7 +2,7 @@ import { Box } from "@geomtoy/util";
 import Geometry from "../base/Geometry";
 import EventSourceObject from "../event/EventSourceObject";
 import Graphics from "../graphics";
-import { stated } from "../misc/decor-cache";
+import { stated, statedWithBoolean } from "../misc/decor-cache";
 import { validGeometry } from "../misc/decor-geometry";
 import Transformation from "../transformation";
 import { ViewportDescriptor } from "../types";
@@ -34,10 +34,16 @@ export default class Arbitrary extends Geometry {
     set geometry(value: Geometry | null) {
         this._setGeometry(value);
     }
-
     @stated
     initialized() {
         return this._geometry !== null;
+    }
+    degenerate(check: false): this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
+        return check ? false : this;
     }
 
     is<T extends typeof Geometry>(ctor: T): this is { geometry: InstanceType<T> } {

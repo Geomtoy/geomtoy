@@ -142,6 +142,7 @@ export default class Path extends Geometry {
         return this._commands.length;
     }
 
+    @stated
     initialized() {
         return this._commands.length >= PATH_MIN_COMMAND_COUNT;
     }

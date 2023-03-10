@@ -5,6 +5,7 @@ import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import ArrowGraphics from "../../helper/ArrowGraphics";
+import { stated, statedWithBoolean } from "../../misc/decor-cache";
 import { validGeometry } from "../../misc/decor-geometry";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
@@ -91,6 +92,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         this._setAngle(value);
     }
 
+    @stated
     initialized() {
         // prettier-ignore
         return (
@@ -99,6 +101,14 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
             !Number.isNaN(this._angle)
         );
     }
+    degenerate(check: false): this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
+        return check ? false : this;
+    }
+
     isPointOn(point: [number, number] | Point) {
         const epsilon = optioner.options.epsilon;
         const c = getCoordinates(point, "point");

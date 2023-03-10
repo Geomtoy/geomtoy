@@ -4,7 +4,7 @@ import EventSourceObject from "../../event/EventSourceObject";
 import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
-import { statedWithBoolean } from "../../misc/decor-cache";
+import { stated, statedWithBoolean } from "../../misc/decor-cache";
 import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { getCoordinates } from "../../misc/point-like";
 import Transformation from "../../transformation";
@@ -146,6 +146,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         return (this.sideCount * (this.sideCount - 3)) / 2;
     }
 
+    @stated
     initialized() {
         // prettier-ignore
         return (

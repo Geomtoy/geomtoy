@@ -208,6 +208,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         this._setControlPoint2Y(value.y);
     }
 
+    @stated
     initialized() {
         return (
             !Number.isNaN(this._point1X) &&
@@ -219,32 +220,6 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
             !Number.isNaN(this._controlPoint2X) &&
             !Number.isNaN(this._controlPoint2Y)
         );
-    }
-
-    /**
-     * Returns an array of `[Point, time]` indicate where and at what time, bezier curve `this` has max/min x/y coordinate value.
-     */
-    @stated
-    extrema() {
-        const [polyX, polyY] = this.getPolynomial();
-        // prettier-ignore
-        const [polyXD, polyYD] = [
-            Polynomial.standardize(Polynomial.derivative(polyX)), 
-            Polynomial.standardize(Polynomial.derivative(polyY))
-        ];
-        const { epsilon, curveEpsilon } = optioner.options;
-        // prettier-ignore
-        let tRoots = [
-            ...(!Polynomial.isConstant(polyXD) ? Polynomial.roots(polyXD) : []),
-            ...(!Polynomial.isConstant(polyYD) ? Polynomial.roots(polyYD) : [])
-        ].filter(Type.isNumber);
-        tRoots = Utility.uniqWith(tRoots, (a, b) => Maths.equalTo(a, b, curveEpsilon));
-
-        return tRoots
-            .filter(t => {
-                return Maths.between(t, 0, 1, false, false, epsilon);
-            })
-            .map(t => [new Point(this.getParametricEquation()(t)), t] as [point: Point, time: number]);
     }
 
     degenerate(check: false): Point | QuadraticBezier | LineSegment | this | null;
@@ -283,6 +258,31 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
             return new QuadraticBezier([x0, y0], [x3, y3], cpc);
         }
         return this;
+    }
+    /**
+     * Returns an array of `[Point, time]` indicate where and at what time, bezier curve `this` has max/min x/y coordinate value.
+     */
+    @stated
+    extrema() {
+        const [polyX, polyY] = this.getPolynomial();
+        // prettier-ignore
+        const [polyXD, polyYD] = [
+            Polynomial.standardize(Polynomial.derivative(polyX)), 
+            Polynomial.standardize(Polynomial.derivative(polyY))
+        ];
+        const { epsilon, curveEpsilon } = optioner.options;
+        // prettier-ignore
+        let tRoots = [
+            ...(!Polynomial.isConstant(polyXD) ? Polynomial.roots(polyXD) : []),
+            ...(!Polynomial.isConstant(polyYD) ? Polynomial.roots(polyYD) : [])
+        ].filter(Type.isNumber);
+        tRoots = Utility.uniqWith(tRoots, (a, b) => Maths.equalTo(a, b, curveEpsilon));
+
+        return tRoots
+            .filter(t => {
+                return Maths.between(t, 0, 1, false, false, epsilon);
+            })
+            .map(t => [new Point(this.getParametricEquation()(t)), t] as [point: Point, time: number]);
     }
 
     move(deltaX: number, deltaY: number) {

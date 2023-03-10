@@ -143,6 +143,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         this._setRotation(value);
     }
 
+    @stated
     initialized() {
         // prettier-ignore
         return (
@@ -164,8 +165,12 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         if (check) return w0 || h0;
 
         const c = this.coordinates;
-        if ((w0 && !h0) || (!w0 && h0)) {
-            const d = Vector2.add(c, Vector2.from2(this._rotation, Maths.hypot(this._width, this._height)));
+        if (w0 && !h0) {
+            const d = Vector2.add(c, Vector2.from2(this._rotation + Maths.PI / 2, this._height));
+            return new SealedGeometryArray([new LineSegment(c, d), new LineSegment(d, c)]);
+        }
+        if (!w0 && h0) {
+            const d = Vector2.add(c, Vector2.from2(this._rotation, this._width));
             return new SealedGeometryArray([new LineSegment(c, d), new LineSegment(d, c)]);
         }
         if (w0 && h0) return new Point(c);

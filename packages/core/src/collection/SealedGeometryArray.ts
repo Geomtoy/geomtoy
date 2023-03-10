@@ -31,6 +31,12 @@ export default class SealedGeometryArray<T extends Geometry[]> extends Geometry 
     initialized() {
         return true;
     }
+    degenerate(check: false): this;
+    degenerate(check: true): false;
+    degenerate(check: boolean) {
+        return check ? false : this;
+    }
+
     getBoundingBox() {
         let bbox = Box.nullBox();
         for (const item of this._items) {

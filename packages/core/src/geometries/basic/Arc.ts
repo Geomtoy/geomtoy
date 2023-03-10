@@ -131,10 +131,12 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
             !Number.isNaN(_inputRadiusY)
         )
         if (correctPrecondition) {
-            let rx = NaN;
-            let ry = NaN;
-            const epsilon = optioner.options.epsilon;
-            if (Maths.equalTo(_inputRadiusX, 0, epsilon) || Maths.equalTo(_inputRadiusY, 0, epsilon)) {
+            let rx: number;
+            let ry: number;
+            if (_inputRadiusX === 0 && _inputRadiusY === 0) {
+                Maths.random() > 0.5 ? (this._inputRadiusX = 1) : (this._inputRadiusY = 1);
+            }
+            if (_inputRadiusX === 0 || _inputRadiusY === 0) {
                 [rx, ry] = [_inputRadiusX, _inputRadiusY];
             } else {
                 [rx, ry] = flexCorrectRadii(_point1X, _point1Y, _point2X, _point2Y, _inputRadiusX, _inputRadiusY, _rotation);
@@ -268,7 +270,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
 
         if (c12) return new Point(c1);
         if ((rx0 && !ry0) || (!rx0 && ry0)) return new LineSegment(c1, c2);
-        if (rx0 && ry0) return null;
         return this;
     }
 

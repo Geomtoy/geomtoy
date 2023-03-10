@@ -5,7 +5,7 @@ import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import { Cartesian } from "../../helper/CoordinateSystem";
 import PointGraphics from "../../helper/PointGraphics";
-import { stated } from "../../misc/decor-cache";
+import { stated, statedWithBoolean } from "../../misc/decor-cache";
 import { validGeometry } from "../../misc/decor-geometry";
 import { getCoordinates } from "../../misc/point-like";
 import Transformation from "../../transformation";
@@ -81,6 +81,14 @@ export default class Point extends Geometry {
             !Number.isNaN(this._y)
         );
     }
+    degenerate(check: false): this | null;
+    degenerate(check: true): boolean;
+    @statedWithBoolean(undefined)
+    degenerate(check: boolean) {
+        if (!this.initialized()) return check ? true : null;
+        return check ? false : this;
+    }
+
     move(deltaX: number, deltaY: number) {
         this.coordinates = Vector2.add(this.coordinates, [deltaX, deltaY]);
         return this;

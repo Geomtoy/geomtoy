@@ -29,6 +29,12 @@ export default class SealedGeometryObject<T extends { [key: string]: Geometry }>
     initialized() {
         return true;
     }
+    degenerate(check: false): this;
+    degenerate(check: true): false;
+    degenerate(check: boolean) {
+        return check ? false : this;
+    }
+
     getBoundingBox() {
         let bbox = Box.nullBox();
         for (const item of Object.values(this._items)) {

@@ -79,6 +79,11 @@ export default class Compound extends Geometry {
     initialized() {
         return true;
     }
+    degenerate(check: false): this;
+    degenerate(check: true): false;
+    degenerate(check: boolean) {
+        return check ? false : this;
+    }
     move(deltaX: number, deltaY: number) {
         Assert.isRealNumber(deltaX, "deltaX");
         Assert.isRealNumber(deltaY, "deltaY");

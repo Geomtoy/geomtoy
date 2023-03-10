@@ -6,18 +6,21 @@ function article(name: string, adj?: string) {
     const a = adj !== undefined ? (vowels.includes(adj[0].toUpperCase()) ? `an ${adj}` : `a ${adj}`) : vowels.includes(name[0].toUpperCase()) ? "an" : "a";
     return `${a} \`${name}\``;
 }
-// prettier-ignore
 const alwaysAvailableInstanceMethods = [
-    "initialized", 
-    "degenerate", 
-    "isValid", 
-    "toString", 
-    "copyFrom", 
-    "getGraphics", 
-    "appendVertex", 
-    "prependVertex", 
-    "appendCommand", 
-    "prependCommand"
+    "initialized",
+    "degenerate",
+    "isValid",
+    "move",
+    "toString",
+    "copyFrom",
+    "clone",
+    "getGraphics",
+    "appendVertex",
+    "prependVertex",
+    "setVertex",
+    "appendCommand",
+    "prependCommand",
+    "setCommand"
 ];
 
 function geometryInvalidText(geometryInstance: Geometry) {
