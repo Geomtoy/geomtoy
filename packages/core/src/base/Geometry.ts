@@ -23,6 +23,7 @@ export default abstract class Geometry extends Shape {
         if (this.degenerate !== undefined) return !this.degenerate(true);
         return this.initialized();
     }
+    abstract getBoundingBox(): [number, number, number, number];
     /**
      * Apply transformation `transformation` to geometry `this` to get a new geometry.
      * @param transformation
