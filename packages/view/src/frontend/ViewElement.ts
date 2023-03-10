@@ -67,6 +67,13 @@ export default class ViewElement<T extends Shape = Shape> {
         this._interactable = interactable;
     }
 
+    get view() {
+        return this[VE_VIEW_SYMBOL];
+    }
+    get subView() {
+        return this[VE_SUB_VIEW_SYMBOL];
+    }
+
     get interactable() {
         return this._interactable;
     }

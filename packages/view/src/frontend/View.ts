@@ -110,6 +110,7 @@ export default class View {
 
     // todo
     // snapToGrid: boolean = true;
+    // selectMode: single/multiple/holdMultiple/lasso
 
     get minZoom() {
         return this._minZoom;
@@ -954,13 +955,13 @@ export default class View {
                 renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);
             }
             if (el.shape instanceof ShapeArray || el.shape instanceof SealedShapeArray) {
-                ((el.shape.shapes as Shape[]).filter(shape => shape instanceof Image) as Image[]).forEach(image => {
+                ((el.shape.items as Shape[]).filter(shape => shape instanceof Image) as Image[]).forEach(image => {
                     const imageSource = image.source;
                     renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);
                 });
             }
             if (el.shape instanceof ShapeObject || el.shape instanceof SealedShapeObject) {
-                ((Object.values(el.shape.shapes) as Shape[]).filter(shape => shape instanceof Image) as Image[]).forEach(image => {
+                ((Object.values(el.shape.items) as Shape[]).filter(shape => shape instanceof Image) as Image[]).forEach(image => {
                     const imageSource = image.source;
                     renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);
                 });

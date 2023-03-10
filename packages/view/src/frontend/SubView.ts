@@ -11,6 +11,9 @@ export default class SubView {
     // @internal
     [SV_VIEW_SYMBOL]: View | null = null;
 
+    get view() {
+        return this[SV_VIEW_SYMBOL];
+    }
     get elements() {
         return [...this._elements];
     }
