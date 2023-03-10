@@ -1,11 +1,12 @@
-import { Utility } from "@geomtoy/util";
-import Shape from "../base/Shape";
+import { Box, Utility } from "@geomtoy/util";
+import Geometry from "../base/Geometry";
 import EventSourceObject from "../event/EventSourceObject";
 import Graphics from "../graphics";
+import Transformation from "../transformation";
 import { ViewportDescriptor } from "../types";
 import { initObjectProxy } from "./helper";
 
-export default class ShapeObject<T extends Shape> extends Shape {
+export default class GeometryObject<T extends Geometry> extends Geometry {
     private _items: { [key: string]: T } = {};
     private _itemsProxy!: { [key: string]: T };
 
@@ -21,7 +22,7 @@ export default class ShapeObject<T extends Shape> extends Shape {
         itemRemoved: "itemRemove"
     };
     private _setItems(value: { [key: string]: T }) {
-        if (!Utility.isEqualTo(this._items, value)) this.trigger_(new EventSourceObject(this, ShapeObject.events.itemsReset));
+        if (!Utility.isEqualTo(this._items, value)) this.trigger_(new EventSourceObject(this, GeometryObject.events.itemsReset));
         for (const k of Object.keys(this._items)) delete this._items[k];
         for (const [k, v] of Object.entries(value)) this._items[k] = v;
     }
@@ -34,6 +35,26 @@ export default class ShapeObject<T extends Shape> extends Shape {
     private _initProxy() {
         this._itemsProxy = initObjectProxy.call<this, [{ [key: string]: T }], { [key: string]: T }>(this, this._items);
     }
+
+    initialized() {
+        return true;
+    }
+    getBoundingBox() {
+        let bbox = [Infinity, Infinity, -Infinity, -Infinity] as [number, number, number, number];
+        for (const item of Object.values(this._items)) {
+            bbox = Box.extend(bbox, item.getBoundingBox());
+        }
+        return bbox;
+    }
+    apply(transformation: Transformation) {
+        const transformed = {} as { [key: string]: Geometry };
+        for (const [key, value] of Object.entries(this._items)) {
+            const t = value.apply(transformation);
+            if (t !== null) transformed[key] = t;
+        }
+        return new GeometryObject(transformed);
+    }
+
     move(deltaX: number, deltaY: number) {
         for (const item of Object.values(this._items)) {
             item.move(deltaX, deltaY);
@@ -41,7 +62,7 @@ export default class ShapeObject<T extends Shape> extends Shape {
         return this;
     }
     clone() {
-        return new ShapeObject(this._items);
+        return new GeometryObject(this._items);
     }
     getGraphics(viewport: ViewportDescriptor) {
         const g = new Graphics();

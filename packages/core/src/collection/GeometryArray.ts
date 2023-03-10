@@ -1,11 +1,13 @@
-import { Utility } from "@geomtoy/util";
-import Shape from "../base/Shape";
+import { Box, Utility } from "@geomtoy/util";
+import Geometry from "../base/Geometry";
 import EventSourceObject from "../event/EventSourceObject";
 import Graphics from "../graphics";
+import Transformation from "../transformation";
 import { ViewportDescriptor } from "../types";
 import { initArrayProxy } from "./helper";
+import ShapeArray from "./ShapeArray";
 
-export default class ShapeArray<T extends Shape> extends Shape {
+export default class GeometryArray<T extends Geometry> extends Geometry {
     private _items: T[] = [];
     private _itemsProxy!: T[];
 
@@ -35,6 +37,24 @@ export default class ShapeArray<T extends Shape> extends Shape {
         this._itemsProxy = initArrayProxy.call<this, [T[]], T[]>(this, this._items);
     }
 
+    initialized() {
+        return true;
+    }
+    getBoundingBox() {
+        let bbox = [Infinity, Infinity, -Infinity, -Infinity] as [number, number, number, number];
+        for (const item of this._items) {
+            bbox = Box.extend(bbox, item.getBoundingBox());
+        }
+        return bbox;
+    }
+    apply(transformation: Transformation) {
+        const transformed = [] as Geometry[];
+        for (const item of this._items) {
+            const t = item.apply(transformation);
+            if (t !== null) transformed.push(t);
+        }
+        return new GeometryArray(transformed);
+    }
     move(deltaX: number, deltaY: number) {
         for (const item of this._items) {
             item.move(deltaX, deltaY);

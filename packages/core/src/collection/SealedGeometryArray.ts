@@ -1,9 +1,12 @@
-import Shape from "../base/Shape";
+import { Box } from "@geomtoy/util";
+import Geometry from "../base/Geometry";
 import Graphics from "../graphics";
+import Transformation from "../transformation";
 import { ViewportDescriptor } from "../types";
+import GeometryArray from "./GeometryArray";
 import { initSealedArrayProxy } from "./helper";
 
-export default class SealedShapeArray<T extends Shape[]> extends Shape {
+export default class SealedGeometryArray<T extends Geometry[]> extends Geometry {
     private _items: [...T];
     private _itemsProxy!: [...T];
 
@@ -25,6 +28,24 @@ export default class SealedShapeArray<T extends Shape[]> extends Shape {
         this._itemsProxy = initSealedArrayProxy.call<this, [[...T]], [...T]>(this, this._items);
     }
 
+    initialized() {
+        return true;
+    }
+    getBoundingBox() {
+        let bbox = [Infinity, Infinity, -Infinity, -Infinity] as [number, number, number, number];
+        for (const item of this._items) {
+            bbox = Box.extend(bbox, item.getBoundingBox());
+        }
+        return bbox;
+    }
+    apply(transformation: Transformation) {
+        const transformed = [] as Geometry[];
+        for (const item of this._items) {
+            const t = item.apply(transformation);
+            if (t !== null) transformed.push(t);
+        }
+        return new GeometryArray(transformed);
+    }
     move(deltaX: number, deltaY: number) {
         for (const item of this._items) {
             item.move(deltaX, deltaY);
@@ -32,7 +53,7 @@ export default class SealedShapeArray<T extends Shape[]> extends Shape {
         return this;
     }
     clone() {
-        return new SealedShapeArray(this._items);
+        return new SealedGeometryArray(this._items);
     }
     getGraphics(viewport: ViewportDescriptor) {
         const g = new Graphics();

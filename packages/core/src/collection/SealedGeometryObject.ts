@@ -1,9 +1,12 @@
-import Shape from "../base/Shape";
+import { Box } from "@geomtoy/util";
+import Geometry from "../base/Geometry";
 import Graphics from "../graphics";
+import Transformation from "../transformation";
 import { ViewportDescriptor } from "../types";
+import GeometryObject from "./GeometryObject";
 import { initSealedObjectProxy } from "./helper";
 
-export default class SealedShapeObject<T extends { [key: string]: Shape }> extends Shape {
+export default class SealedGeometryObject<T extends { [key: string]: Geometry }> extends Geometry {
     private _items: T;
     private _itemsProxy!: T;
 
@@ -23,7 +26,24 @@ export default class SealedShapeObject<T extends { [key: string]: Shape }> exten
     private _initProxy() {
         this._itemsProxy = initSealedObjectProxy.call<this, [T], T>(this, this._items);
     }
-
+    initialized() {
+        return true;
+    }
+    getBoundingBox() {
+        let bbox = [Infinity, Infinity, -Infinity, -Infinity] as [number, number, number, number];
+        for (const item of Object.values(this._items)) {
+            bbox = Box.extend(bbox, item.getBoundingBox());
+        }
+        return bbox;
+    }
+    apply(transformation: Transformation) {
+        const transformed = {} as { [key: string]: Geometry };
+        for (const [key, value] of Object.entries(this._items)) {
+            const t = value.apply(transformation);
+            if (t !== null) transformed[key] = t;
+        }
+        return new GeometryObject(transformed);
+    }
     move(deltaX: number, deltaY: number) {
         for (const item of Object.values(this._items)) {
             item.move(deltaX, deltaY);
@@ -31,7 +51,7 @@ export default class SealedShapeObject<T extends { [key: string]: Shape }> exten
         return this;
     }
     clone() {
-        return new SealedShapeObject(this._items);
+        return new SealedGeometryObject(this._items);
     }
     getGraphics(viewport: ViewportDescriptor) {
         const g = new Graphics();
