@@ -15,6 +15,9 @@ class Coordinates {
     static is(v: [number, number]) {
         return Type.isArray(v) && v.length === 2 && v.every(elem => Type.isRealNumber(elem));
     }
+    static nullCoordinates() {
+        return [NaN, NaN] as [number, number];
+    }
     /**
      * Whether coordinates `c1` is equal to coordinates `c2`, make an approximate comparison if `epsilon` is provided.
      * @param c1

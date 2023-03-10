@@ -540,8 +540,7 @@ export default class Polygon extends Geometry {
     }
 
     getBoundingBox() {
-        let bbox = [Infinity, Infinity, -Infinity, -Infinity] as [number, number, number, number];
-
+        let bbox = Box.nullBox();
         for (const seg of this.getSegments(true)) bbox = Box.extend(bbox, seg.getBoundingBox());
         return bbox;
     }

@@ -41,8 +41,13 @@ export default class GeometryArray<T extends Geometry> extends Geometry {
         return true;
     }
     getBoundingBox() {
-        let bbox = [Infinity, Infinity, -Infinity, -Infinity] as [number, number, number, number];
+        let bbox = Box.nullBox();
         for (const item of this._items) {
+            if (item.degenerate) {
+                const dg = item.degenerate(false);
+                if (dg === null) continue;
+                Box.extend(bbox, dg.getBoundingBox());
+            }
             bbox = Box.extend(bbox, item.getBoundingBox());
         }
         return bbox;

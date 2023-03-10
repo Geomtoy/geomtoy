@@ -205,7 +205,7 @@ export default class Compound extends Geometry {
     }
 
     getBoundingBox() {
-        let bbox = [Infinity, Infinity, -Infinity, -Infinity] as [number, number, number, number];
+        let bbox = Box.nullBox();
         for (const item of this._items) {
             bbox = Box.extend(bbox, item.getBoundingBox());
         }

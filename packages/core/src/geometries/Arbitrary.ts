@@ -1,3 +1,4 @@
+import { Box } from "@geomtoy/util";
 import Geometry from "../base/Geometry";
 import EventSourceObject from "../event/EventSourceObject";
 import Graphics from "../graphics";
@@ -44,6 +45,11 @@ export default class Arbitrary extends Geometry {
     }
 
     getBoundingBox() {
+        if (this.geometry!.degenerate !== undefined) {
+            const dg = this.geometry!.degenerate(false);
+            if (dg === null) return Box.nullBox();
+            return dg.getBoundingBox();
+        }
         return this._geometry!.getBoundingBox();
     }
 

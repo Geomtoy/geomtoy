@@ -21,6 +21,9 @@ class Size {
     static isNonZero(v: [number, number]): v is [number, number] {
         return Type.isArray(v) && v.length === 2 && v.every(elem => Type.isRealNumber(elem)) && v[0] > 0 && v[1] > 0;
     }
+    static nullSize() {
+        return [NaN, NaN] as [number, number];
+    }
     /**
      * Whether size `s1` is equal to size `s2`. If `epsilon` is not `undefined`, make an approximate comparison.
      * @param s1

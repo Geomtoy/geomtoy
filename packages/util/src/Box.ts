@@ -22,7 +22,9 @@ class Box {
     static isNoneZero(v: [number, number, number, number]): v is [number, number, number, number] {
         return Type.isArray(v) && v.length === 4 && v.every(elem => Type.isRealNumber(elem)) && v[2] > 0 && v[3] > 0;
     }
-
+    static nullBox() {
+        return [NaN, NaN, NaN, NaN] as [number, number, number, number];
+    }
     /**
      * Whether box `b1` is equal to box `b2`. If `epsilon` is not `undefined`, make an approximate comparison.
      * @param b1
@@ -161,6 +163,10 @@ class Box {
     }
 
     static extend(b1: [number, number, number, number], b2: [number, number, number, number]) {
+        const b1b = Box.is(b1);
+        const b2b = Box.is(b2);
+        if (!b1b || !b2b) return b1b ? b1 : b2b ? b2 : Box.nullBox();
+
         const minX = Maths.min(Box.minX(b1), Box.minX(b2));
         const minY = Maths.min(Box.minY(b1), Box.minY(b2));
         const maxX = Maths.max(Box.maxX(b1), Box.maxX(b2));
