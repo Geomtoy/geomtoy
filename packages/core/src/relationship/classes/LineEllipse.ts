@@ -1,5 +1,5 @@
 import { Angle, Complex, Maths, Polynomial, RootMultiplicity, Type } from "@geomtoy/util";
-import SealedShapeArray from "../../collection/SealedShapeArray";
+import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import Ellipse from "../../geometries/basic/Ellipse";
 import Line from "../../geometries/basic/Line";
 import Point from "../../geometries/basic/Point";
@@ -12,7 +12,7 @@ export default class LineEllipse extends BaseRelationship {
     constructor(public geometry1: Line, public geometry2: Ellipse) {
         super();
         const dg2 = geometry2.degenerate(false);
-        if (dg2 instanceof Point || dg2 instanceof SealedShapeArray) {
+        if (dg2 instanceof Point || dg2 instanceof SealedGeometryArray) {
             this.degeneration.relationship = null;
             return this;
         }

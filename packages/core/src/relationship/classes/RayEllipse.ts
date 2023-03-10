@@ -1,5 +1,5 @@
 import { Coordinates } from "@geomtoy/util";
-import SealedShapeArray from "../../collection/SealedShapeArray";
+import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import Ellipse from "../../geometries/basic/Ellipse";
 import Point from "../../geometries/basic/Point";
 import Ray from "../../geometries/basic/Ray";
@@ -13,7 +13,7 @@ export default class RayEllipse extends BaseRelationship {
     constructor(public geometry1: Ray, public geometry2: Ellipse) {
         super();
         const dg2 = geometry2.degenerate(false);
-        if (dg2 instanceof Point || dg2 instanceof SealedShapeArray) {
+        if (dg2 instanceof Point || dg2 instanceof SealedGeometryArray) {
             this.degeneration.relationship = null;
             return this;
         }

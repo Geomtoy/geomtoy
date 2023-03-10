@@ -1,6 +1,6 @@
 import { Angle, Assert, Coordinates, Maths, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
-import SealedShapeArray from "../../collection/SealedShapeArray";
+import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import EventSourceObject from "../../event/EventSourceObject";
 import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
@@ -136,7 +136,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         );
     }
 
-    degenerate(check: false): Point | SealedShapeArray<[LineSegment, LineSegment]> | this | null;
+    degenerate(check: false): Point | SealedGeometryArray<[LineSegment, LineSegment]> | this | null;
     degenerate(check: true): boolean;
     @statedWithBoolean(undefined)
     degenerate(check: boolean) {
@@ -151,7 +151,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
             const c1 = Vector2.add(cc, Vector2.rotate([0, ry], phi));
             const c2 = Vector2.add(cc, Vector2.rotate([0, -ry], phi));
             // prettier-ignore
-            return new SealedShapeArray([
+            return new SealedGeometryArray([
                 new LineSegment(c1, c2), 
                 new LineSegment(c2, c1)
             ]);
@@ -160,7 +160,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
             const c1 = Vector2.add(cc, Vector2.rotate([0, rx], phi));
             const c2 = Vector2.add(cc, Vector2.rotate([0, -rx], phi));
             // prettier-ignore
-            return new SealedShapeArray([
+            return new SealedGeometryArray([
                 new LineSegment(c1, c2), 
                 new LineSegment(c2, c1)
             ]);

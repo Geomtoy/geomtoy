@@ -1,6 +1,6 @@
 import { Angle, Assert, Box, Coordinates, Maths, Size, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
-import SealedShapeArray from "../../collection/SealedShapeArray";
+import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import EventSourceObject from "../../event/EventSourceObject";
 import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
@@ -153,7 +153,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         );
     }
 
-    degenerate(check: false): Point | SealedShapeArray<[LineSegment, LineSegment]> | this | null;
+    degenerate(check: false): Point | SealedGeometryArray<[LineSegment, LineSegment]> | this | null;
     degenerate(check: true): boolean;
     @statedWithBoolean(undefined)
     degenerate(check: boolean) {
@@ -165,8 +165,8 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
 
         const c = this.coordinates;
         if ((w0 && !h0) || (!w0 && h0)) {
-            const d = Vector2.add(c, Vector2.from2(this._rotation, Maths.hypot(this._width, this.height)));
-            return new SealedShapeArray([new LineSegment(c, d), new LineSegment(d, c)]);
+            const d = Vector2.add(c, Vector2.from2(this._rotation, Maths.hypot(this._width, this._height)));
+            return new SealedGeometryArray([new LineSegment(c, d), new LineSegment(d, c)]);
         }
         if (w0 && h0) return new Point(c);
         return this;

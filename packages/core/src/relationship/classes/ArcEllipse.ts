@@ -1,5 +1,5 @@
 import { Angle } from "@geomtoy/util";
-import SealedShapeArray from "../../collection/SealedShapeArray";
+import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import Arc from "../../geometries/basic/Arc";
 import Ellipse from "../../geometries/basic/Ellipse";
 import LineSegment from "../../geometries/basic/LineSegment";
@@ -17,7 +17,7 @@ export default class ArcEllipse extends BaseRelationship {
         super();
         const dg1 = geometry1.degenerate(false);
         const dg2 = geometry2.degenerate(false);
-        if (dg1 instanceof Point || dg2 instanceof Point || dg2 instanceof SealedShapeArray) {
+        if (dg1 instanceof Point || dg2 instanceof Point || dg2 instanceof SealedGeometryArray) {
             this.degeneration.relationship = null;
             return this;
         }
