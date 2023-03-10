@@ -391,23 +391,27 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
 
     apply(transformation: Transformation) {
         const { _x: x, _y: y, _width: w, _height: h, _rotation: phi } = this;
-        // Treat the rectangle as it is from a square(0,0,1,1).
+        // Treat the rectangle as it is from a square(-1/2,-1/2,1,1) with center at [0,0].
+        const c = this.getCenterPoint().coordinates;
         const rectangleTransformation = new Transformation();
-        rectangleTransformation.addScale(w, h).addRotate(phi).addTranslate(x, y);
+        rectangleTransformation
+            .addTranslate(...c)
+            .addRotate(phi)
+            .addScale(w, h);
         const t = transformation.clone().addMatrix(...rectangleTransformation.matrix);
         const {
-            skew: [kx, ky],
+            translate: [tx, ty],
+            rotate,
             scale: [sx, sy],
-            rotate
+            skew: [kx, ky]
         } = t.decomposeQr();
         const epsilon = optioner.options.epsilon;
 
         if (Maths.equalTo(kx, 0, epsilon) && Maths.equalTo(ky, 0, epsilon)) {
-            const newCoordinates = transformation.transformCoordinates([x, y]);
             const newWidth = Maths.abs(sx);
             const newHeight = Maths.abs(sy);
             const newRotation = rotate;
-            return new Rectangle(newCoordinates, newWidth, newHeight, newRotation);
+            return Rectangle.fromCenterPointEtc([tx, ty], newWidth, newHeight, newRotation);
         } else {
             return this.toPath().apply(transformation);
         }
