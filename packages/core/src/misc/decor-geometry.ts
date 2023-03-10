@@ -7,20 +7,21 @@ function article(name: string, adj?: string) {
     return `${a} \`${name}\``;
 }
 const alwaysAvailableInstanceMethods = [
-    "initialized",
-    "degenerate",
-    "isValid",
-    "move",
-    "toString",
-    "copyFrom",
-    "clone",
-    "getGraphics",
-    "appendVertex",
-    "prependVertex",
-    "setVertex",
-    "appendCommand",
-    "prependCommand",
-    "setCommand"
+    "initialized", // from Geometry
+    "degenerate", // from Geometry
+    "isValid", // from Geometry
+    "move", // from Shape
+    "toString", // from Object
+    "copyFrom", // from Shape
+    "clone", // from Shape
+    "getGraphics", // from Shape
+    "is", // from Arbitrary
+    "appendVertex", // from Polygon
+    "prependVertex", // from Polygon
+    "setVertex", // from Polygon
+    "appendCommand", // from Path
+    "prependCommand", // from Path
+    "setCommand" // from Path
 ];
 
 function geometryInvalidText(geometryInstance: Geometry) {

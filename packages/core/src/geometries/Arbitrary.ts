@@ -36,7 +36,8 @@ export default class Arbitrary extends Geometry {
     }
     @stated
     initialized() {
-        return this._geometry !== null;
+        // We do not require the `geometry` to be non-degenerate, but we cannot tolerate it not being initialized.
+        return this._geometry !== null && this._geometry.initialized();
     }
     degenerate(check: false): this | null;
     degenerate(check: true): boolean;
@@ -51,16 +52,13 @@ export default class Arbitrary extends Geometry {
     }
 
     getBoundingBox() {
-        if (this.geometry!.degenerate !== undefined) {
-            const dg = this.geometry!.degenerate(false);
-            if (dg === null) return Box.nullBox();
-            return dg.getBoundingBox();
-        }
-        return this._geometry!.getBoundingBox();
+        const dg = this.geometry!.degenerate(false);
+        return dg!.getBoundingBox();
     }
 
     apply(transformation: Transformation) {
-        return this._geometry!.apply(transformation);
+        const dg = this.geometry!.degenerate(false);
+        return dg!.apply(transformation);
     }
 
     move(deltaX: number, deltaY: number) {
@@ -83,7 +81,7 @@ export default class Arbitrary extends Geometry {
         // prettier-ignore
         return [
             `${this.name}(${this.id}){`,
-             `\tgeometry: ${this.geometry}(${this.geometry?.id})`, 
+             `\tgeometry: ${this._geometry}(${this._geometry?.id})`, 
              `}`
         ].join("\n");
     }

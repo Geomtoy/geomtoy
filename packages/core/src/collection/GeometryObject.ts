@@ -48,20 +48,18 @@ export default class GeometryObject<T extends Geometry> extends Geometry {
     getBoundingBox() {
         let bbox = Box.nullBox();
         for (const item of Object.values(this._items)) {
-            if (item.degenerate !== undefined) {
-                const dg = item.degenerate(false);
-                if (dg === null) continue;
-                Box.extend(bbox, dg.getBoundingBox());
-            }
-            bbox = Box.extend(bbox, item.getBoundingBox());
+            const dg = item.degenerate(false);
+            if (dg === null) continue;
+            bbox = Box.extend(bbox, dg.getBoundingBox());
         }
         return bbox;
     }
     apply(transformation: Transformation) {
         const transformed = {} as { [key: string]: Geometry };
         for (const [key, value] of Object.entries(this._items)) {
-            const t = value.apply(transformation);
-            if (t !== null) transformed[key] = t;
+            const dg = value.degenerate(false);
+            if (dg === null) continue;
+            transformed[key] = value.apply(transformation);
         }
         return new GeometryObject(transformed);
     }
