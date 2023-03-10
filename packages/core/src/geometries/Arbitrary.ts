@@ -43,6 +43,10 @@ export default class Arbitrary extends Geometry {
         return this._geometry instanceof ctor;
     }
 
+    getBoundingBox() {
+        return this._geometry!.getBoundingBox();
+    }
+
     apply(transformation: Transformation) {
         return this._geometry!.apply(transformation);
     }

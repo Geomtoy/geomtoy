@@ -1,4 +1,4 @@
-import { Angle, Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Angle, Assert, Box, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import ArrowGraphics from "../../helper/ArrowGraphics";
 import { validGeometry } from "../../misc/decor-geometry";
 
@@ -296,6 +296,9 @@ export default class Vector extends Geometry {
     }
     toLineSegment() {
         return new LineSegment(this.point1Coordinates, this.point2Coordinates);
+    }
+    getBoundingBox() {
+        return Box.from(this.point1Coordinates, this.point2Coordinates);
     }
 
     dotProduct(vector: Vector) {

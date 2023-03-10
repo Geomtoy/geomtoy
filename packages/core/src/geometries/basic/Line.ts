@@ -427,6 +427,10 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
         return Maths.abs(c1 - c2) / Maths.hypot(a1, b1);
     }
 
+    getBoundingBox() {
+        return this.point.getBoundingBox();
+    }
+
     getGraphics(viewport: ViewportDescriptor) {
         if (!this.initialized()) return new Graphics();
 

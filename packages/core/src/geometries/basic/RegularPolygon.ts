@@ -1,20 +1,19 @@
 import { Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
-import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
-
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
-import GeometryGraphic from "../../graphics/GeometryGraphic";
-import Circle from "./Circle";
-import LineSegment from "./LineSegment";
-import Point from "./Point";
-
 import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { statedWithBoolean } from "../../misc/decor-cache";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { getCoordinates } from "../../misc/point-like";
 import Transformation from "../../transformation";
 import type { ClosedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
 import Path from "../general/Path";
+import Polygon from "../general/Polygon";
+import Circle from "./Circle";
+import LineSegment from "./LineSegment";
+import Point from "./Point";
 
 const REGULAR_POLYGON_MIN_SIDE_COUNT = 3;
 
@@ -239,14 +238,25 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         return (p * this.apothem) / 2;
     }
 
+    getBoundingBox() {
+        return this.toPolygon().getBoundingBox();
+    }
+
+    toPolygon() {
+        const vertices = this.getVertices();
+        return new Polygon(
+            vertices.map(vtx => Polygon.vertex(vtx)),
+            true
+        );
+    }
+
     toPath() {
         const [head, ...tail] = this.getVertices();
-        const path = new Path();
+        const path = new Path(true);
         path.appendCommand(Path.moveTo(head.coordinates));
         tail.forEach(p => {
             path.appendCommand(Path.lineTo(p.coordinates));
         });
-        path.closed = true;
         return path;
     }
     apply(transformation: Transformation) {

@@ -11,7 +11,7 @@ import Line from "./Line";
 import LineSegment from "./LineSegment";
 import Point from "./Point";
 
-import SealedShapeArray from "../../collection/SealedShapeArray";
+import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import { optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
@@ -219,7 +219,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         );
     }
 
-    degenerate(check: false): Point | SealedShapeArray<[LineSegment, LineSegment, LineSegment]> | SealedShapeArray<[LineSegment, LineSegment]> | SealedShapeArray<[LineSegment]> | this | null;
+    degenerate(check: false): Point | SealedGeometryArray<[LineSegment, LineSegment, LineSegment]> | SealedGeometryArray<[LineSegment, LineSegment]> | SealedGeometryArray<[LineSegment]> | this | null;
     degenerate(check: true): boolean;
     @statedWithBoolean(undefined)
     degenerate(check: boolean) {
@@ -234,7 +234,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
 
         const lss = [new LineSegment(c1, c2), new LineSegment(c2, c3), new LineSegment(c3, c1)].filter(ls => ls.degenerate(false) instanceof LineSegment);
         if (lss.length === 0) return new Point(c1);
-        return new SealedShapeArray(lss);
+        return new SealedGeometryArray(lss);
     }
 
     @stated
@@ -960,6 +960,10 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const rb = (2 * area) / ebd;
         const rc = (2 * area) / ecd;
         return [new Circle(ea, ra), new Circle(eb, rb), new Circle(ec, rc)];
+    }
+
+    getBoundingBox() {
+        return this.toPolygon().getBoundingBox();
     }
 
     toPolygon() {

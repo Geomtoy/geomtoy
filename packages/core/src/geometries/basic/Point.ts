@@ -233,6 +233,9 @@ export default class Point extends Geometry {
         const v10 = Vector2.from(c1, c);
         return Vector2.cross(v12, v10) ** 2 / Vector2.squaredMagnitude(Vector2.from(c1, c2));
     }
+    getBoundingBox() {
+        return [...this.coordinates, 0, 0] as [number, number, number, number];
+    }
     getGraphics(viewport: ViewportDescriptor) {
         if (!this.initialized()) return new Graphics();
 
