@@ -43,7 +43,7 @@ export default class GeometryArray<T extends Geometry> extends Geometry {
     getBoundingBox() {
         let bbox = Box.nullBox();
         for (const item of this._items) {
-            if (item.degenerate) {
+            if (item.degenerate !== undefined) {
                 const dg = item.degenerate(false);
                 if (dg === null) continue;
                 Box.extend(bbox, dg.getBoundingBox());
