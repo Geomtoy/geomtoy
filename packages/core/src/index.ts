@@ -44,9 +44,13 @@ import SealedShapeArray from "./collection/SealedShapeArray";
 import SealedShapeObject from "./collection/SealedShapeObject";
 import ShapeArray from "./collection/ShapeArray";
 import ShapeObject from "./collection/ShapeObject";
+import SealedGeometryArray from "./collection/SealedGeometryArray";
+import SealedGeometryObject from "./collection/SealedGeometryObject";
+import GeometryArray from "./collection/GeometryArray";
+import GeometryObject from "./collection/GeometryObject";
 
 /** @category Collection */
-export { SealedShapeArray, SealedShapeObject, ShapeArray, ShapeObject };
+export { SealedShapeArray, SealedShapeObject, ShapeArray, ShapeObject, SealedGeometryArray, SealedGeometryObject, GeometryArray, GeometryObject };
 
 import Dynamic from "./dynamic";
 import Inversion from "./inversion";
