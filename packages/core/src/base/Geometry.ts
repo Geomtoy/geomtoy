@@ -13,7 +13,7 @@ export default abstract class Geometry extends Shape {
      * @see https://en.wikipedia.org/wiki/Degenerate_conic
      * The return of this method affects `isValid`.
      */
-    degenerate?(check: false): Shape | null;
+    degenerate?(check: false): Geometry | null;
     degenerate?(check: true): boolean;
     /**
      * Whether geometry `this` is valid, `valid` means that essential properties of geometry `this` is properly set, and does not degenerate.
