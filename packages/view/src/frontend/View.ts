@@ -163,6 +163,9 @@ export default class View {
         this.addSubView(...value);
     }
 
+    get activeElements() {
+        return [...this._activeElements];
+    }
     get maxZIndex() {
         return this._renderables[0]?.zIndex ?? 0;
     }
