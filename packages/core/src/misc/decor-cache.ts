@@ -1,7 +1,6 @@
-const CACHE_KEY = "_cache_";
-const STATE_KEY = "_state_";
-
-export const STATE_IDENTIFIER = "_stateId_";
+export const CACHE_SYMBOL = Symbol("cache");
+const STATE_SYMBOL = Symbol("state");
+export const STATE_IDENTIFIER_SYMBOL = Symbol("stateId");
 /**
  * Used to cache the return value of a stateless method(The method can not have input parameters,
  * for different input parameters mean different results, we do not cache input parameters).
@@ -10,11 +9,11 @@ export const STATE_IDENTIFIER = "_stateId_";
 export function cached(target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<(...args: any[]) => any>) {
     const method = descriptor.value!;
     descriptor.value = function (this: typeof target) {
-        if (this[CACHE_KEY] === undefined) this[CACHE_KEY] = {};
-        if (propertyKey in this[CACHE_KEY]) {
-            return this[CACHE_KEY][propertyKey];
+        if (this[CACHE_SYMBOL] === undefined) this[CACHE_SYMBOL] = {};
+        if (propertyKey in this[CACHE_SYMBOL]) {
+            return this[CACHE_SYMBOL][propertyKey];
         }
-        return (this[CACHE_KEY][propertyKey] = method.call(this));
+        return (this[CACHE_SYMBOL][propertyKey] = method.call(this));
     };
 }
 
@@ -22,8 +21,8 @@ export function cachedWithBoolean(...defaultValues: (boolean | undefined)[]) {
     return function (target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<(...args: any[]) => any>) {
         const method = descriptor.value!;
         descriptor.value = function (this: typeof target) {
-            if (this[CACHE_KEY] === undefined) this[CACHE_KEY] = {};
-            if (this[CACHE_KEY][propertyKey] === undefined) this[CACHE_KEY][propertyKey] = {};
+            if (this[CACHE_SYMBOL] === undefined) this[CACHE_SYMBOL] = {};
+            if (this[CACHE_SYMBOL][propertyKey] === undefined) this[CACHE_SYMBOL][propertyKey] = {};
 
             const valueKey = [...new Array(defaultValues.length).keys()]
                 .reduce((acc, index) => {
@@ -32,10 +31,10 @@ export function cachedWithBoolean(...defaultValues: (boolean | undefined)[]) {
                 }, [] as boolean[])
                 .join("-");
 
-            if (valueKey in this[CACHE_KEY][propertyKey]) {
-                return this[CACHE_KEY][propertyKey][valueKey];
+            if (valueKey in this[CACHE_SYMBOL][propertyKey]) {
+                return this[CACHE_SYMBOL][propertyKey][valueKey];
             }
-            return (this[CACHE_KEY][propertyKey][valueKey] = method.call(this, ...arguments));
+            return (this[CACHE_SYMBOL][propertyKey][valueKey] = method.call(this, ...arguments));
         };
     };
 }
@@ -48,21 +47,21 @@ export function cachedWithBoolean(...defaultValues: (boolean | undefined)[]) {
 export function stated(target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<(...args: any[]) => any>) {
     const method = descriptor.value!;
     descriptor.value = function (this: typeof target) {
-        if (this[CACHE_KEY] === undefined) {
-            this[CACHE_KEY] = {
-                [STATE_KEY]: undefined
+        if (this[CACHE_SYMBOL] === undefined) {
+            this[CACHE_SYMBOL] = {
+                [STATE_SYMBOL]: undefined
             };
         }
-        if (this[STATE_IDENTIFIER] !== this[CACHE_KEY][STATE_KEY]) {
+        if (this[STATE_IDENTIFIER_SYMBOL] !== this[CACHE_SYMBOL][STATE_SYMBOL]) {
             // clean all cached result and set new state
-            Object.keys(this[CACHE_KEY]).forEach(key => delete this[CACHE_KEY][key]);
-            this[CACHE_KEY][STATE_KEY] = this[STATE_IDENTIFIER];
+            Object.keys(this[CACHE_SYMBOL]).forEach(key => delete this[CACHE_SYMBOL][key]);
+            this[CACHE_SYMBOL][STATE_SYMBOL] = this[STATE_IDENTIFIER_SYMBOL];
         }
 
-        if (propertyKey in this[CACHE_KEY]) {
-            return this[CACHE_KEY][propertyKey];
+        if (propertyKey in this[CACHE_SYMBOL]) {
+            return this[CACHE_SYMBOL][propertyKey];
         }
-        return (this[CACHE_KEY][propertyKey] = method.call(this));
+        return (this[CACHE_SYMBOL][propertyKey] = method.call(this));
     };
 }
 
@@ -70,18 +69,18 @@ export function statedWithBoolean(...defaultValues: (boolean | undefined)[]) {
     return function (target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<(...args: any[]) => any>) {
         const method = descriptor.value!;
         descriptor.value = function (this: typeof target) {
-            if (this[CACHE_KEY] === undefined) {
-                this[CACHE_KEY] = {
-                    [STATE_KEY]: undefined
+            if (this[CACHE_SYMBOL] === undefined) {
+                this[CACHE_SYMBOL] = {
+                    [STATE_SYMBOL]: undefined
                 };
             }
-            if (this[STATE_IDENTIFIER] !== this[CACHE_KEY][STATE_KEY]) {
+            if (this[STATE_IDENTIFIER_SYMBOL] !== this[CACHE_SYMBOL][STATE_SYMBOL]) {
                 // clean all cached result and set new state
-                Object.keys(this[CACHE_KEY]).forEach(key => delete this[CACHE_KEY][key]);
-                this[CACHE_KEY][STATE_KEY] = this[STATE_IDENTIFIER];
+                Object.keys(this[CACHE_SYMBOL]).forEach(key => delete this[CACHE_SYMBOL][key]);
+                this[CACHE_SYMBOL][STATE_SYMBOL] = this[STATE_IDENTIFIER_SYMBOL];
             }
 
-            if (this[CACHE_KEY][propertyKey] === undefined) this[CACHE_KEY][propertyKey] = {};
+            if (this[CACHE_SYMBOL][propertyKey] === undefined) this[CACHE_SYMBOL][propertyKey] = {};
 
             const valueKey = [...new Array(defaultValues.length).keys()]
                 .reduce((acc, index) => {
@@ -90,10 +89,10 @@ export function statedWithBoolean(...defaultValues: (boolean | undefined)[]) {
                 }, [] as boolean[])
                 .join("-");
 
-            if (valueKey in this[CACHE_KEY][propertyKey]) {
-                return this[CACHE_KEY][propertyKey][valueKey];
+            if (valueKey in this[CACHE_SYMBOL][propertyKey]) {
+                return this[CACHE_SYMBOL][propertyKey][valueKey];
             }
-            return (this[CACHE_KEY][propertyKey][valueKey] = method.call(this, ...arguments));
+            return (this[CACHE_SYMBOL][propertyKey][valueKey] = method.call(this, ...arguments));
         };
     };
 }
