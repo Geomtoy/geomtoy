@@ -174,7 +174,11 @@ class Box {
         return [minX, minY, maxX - minX, maxY - minY] as [number, number, number, number];
     }
     static collide(b1: [number, number, number, number], b2: [number, number, number, number], epsilon?: number) {
-        if (Box.isZero(b1) || Box.isZero(b2)) return false;
+        if (Box.isZero(b1) && Box.isZero(b2)) return false;
+        const b1z = Box.isZero(b1);
+        const b2z = Box.isZero(b2);
+        if (b1z || b2z) return b1z ? !Box.coordinatesOutside([b1[0], b1[1]], b2) : b2z ? !Box.coordinatesOutside([b2[0], b2[1]], b1) : false;
+
         const [nx1, ny1, mx1, my1] = [b1[0], b1[1], b1[0] + b1[2], b1[1] + b1[3]];
         const [nx2, ny2, mx2, my2] = [b2[0], b2[1], b2[0] + b2[2], b2[1] + b2[3]];
         if (epsilon === undefined) {
