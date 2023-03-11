@@ -10,7 +10,6 @@ import { validGeometry } from "../../misc/decor-geometry";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
 import type { InfiniteOpenGeometry, ViewportDescriptor } from "../../types";
-import type LineSegment from "./LineSegment";
 import Point from "./Point";
 
 @validGeometry
@@ -309,85 +308,6 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
         return Maths.equalTo(this.slope * line.slope, -1, epsilon);
     }
     /**
-     * Get the intersection point with line `line`.
-     * @param line
-     */
-    getIntersectionPointWithLine(line: Line): null | Point {
-        if (this.isParallelToLine(line)) return null;
-        const [a1, b1, c1] = this.getImplicitFunctionCoefs();
-        const [a2, b2, c2] = line.getImplicitFunctionCoefs();
-        //`m` will not be equal to 0, we call `isParallelToLine` already
-        const m = a1 * b2 - a2 * b1;
-        const x = (c2 * b1 - c1 * b2) / m;
-        const y = (c1 * a2 - c2 * a1) / m;
-        return new Point(x, y);
-    }
-    /**
-     * Whether line `this` is parallel to line segment `lineSegment`.
-     * @param {LineSegment} lineSegment
-     */
-    isParallelToLineSegment(lineSegment: LineSegment): boolean {
-        /* 
-        If `line` is parallel to `lineSegment`, the signed distances of endpoints of `lineSegment` between `line` are equal,
-        and we can eliminate the denominator "sqrt(a^2+b^2)", just compare the numerator.
-        */
-        const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = lineSegment;
-        const [a, b] = this.getImplicitFunctionCoefs();
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(a * x1 + b * y1, a * x2 + b * y2, epsilon);
-    }
-    /**
-     * Whether line `this` is perpendicular to line segment `lineSegment`.
-     * @param {LineSegment} lineSegment
-     */
-    isPerpendicularToLineSegment(lineSegment: LineSegment): boolean {
-        /* 
-        If `line` is perpendicular to `lineSegment`, then `lineSegment` should parallel to the line which is perpendicular to `line`.
-        The perpendicular line of "y=-(a/b)x-(c/b)" is written as "y=(b/a)x-(c/b)", simplify it to "bx-ay=0".
-        */
-        const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = lineSegment;
-        const [a, b] = this.getImplicitFunctionCoefs();
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(b * x1 - a * y1, b * x2 - a * y2, epsilon);
-    }
-    /**
-     * Whether line `this` is collinear with line segment `lineSegment`.
-     * @param {LineSegment} lineSegment
-     */
-    isCollinearWithLineSegment(lineSegment: LineSegment): boolean {
-        const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = lineSegment;
-        const [a, b, c] = this.getImplicitFunctionCoefs();
-        const epsilon = optioner.options.epsilon;
-        const s1 = Maths.sign(a * x1 + b * y1 + c, epsilon);
-        const s2 = Maths.sign(a * x2 + b * y2 + c, epsilon);
-        return s1 === 0 && s2 === 0;
-    }
-    /**
-     * Whether line `this` is separated from line segment `lineSegment`.
-     * @param {LineSegment} lineSegment
-     */
-    isSeparatedFromLineSegment(lineSegment: LineSegment): boolean {
-        const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = lineSegment;
-        const [a, b, c] = this.getImplicitFunctionCoefs();
-        const epsilon = optioner.options.epsilon;
-        const s1 = Maths.sign(a * x1 + b * y1 + c, epsilon);
-        const s2 = Maths.sign(a * x2 + b * y2 + c, epsilon);
-        return s1 * s2 === 1;
-    }
-    /**
-     * Whether line `this` is intersected with line segment `lineSegment`.
-     * @param {LineSegment} lineSegment
-     */
-    isIntersectedWithLineSegment(lineSegment: LineSegment): boolean {
-        // If `line` is intersected with `lineSegment`, the signed distance of endpoints of `lineSegment` between `line` have different sign.
-        const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = lineSegment;
-        const [a, b, c] = this.getImplicitFunctionCoefs();
-        const epsilon = optioner.options.epsilon;
-        const s1 = Maths.sign(a * x1 + b * y1 + c, epsilon);
-        const s2 = Maths.sign(a * x2 + b * y2 + c, epsilon);
-        return (s1 === 0) !== (s2 === 0) || s1 * s2 === -1;
-    }
-    /**
      * Find the perpendicular line of line `this` from point `point`.
      * @param point
      */
@@ -421,7 +341,7 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
         return [new Point(r * a + x, r * b + y), dist] as [point: Point, distance: number];
     }
     /**
-     * 若`直线this`与`直线line`平行，则返回它们之间的距离，否则返回NaN
+     * If line `this` is parallel to line `line`, then return the distance between them, otherwise return NaN.
      * @param line
      */
     getDistanceToParallelLine(line: Line): number {
