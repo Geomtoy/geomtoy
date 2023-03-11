@@ -10,7 +10,6 @@ const DATA_KEY_RENDERER_INITIALIZED = "data-renderer-initialized";
 
 export default abstract class Renderer {
     protected style_: Partial<Style> = {};
-    view?: View;
 
     abstract get container(): ContainerElement;
     abstract get interface(): Interface;

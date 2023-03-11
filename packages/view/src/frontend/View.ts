@@ -2,6 +2,8 @@ import { Geomtoy, Image, SealedShapeArray, SealedShapeObject, Shape, ShapeArray,
 import { Assert, Maths, TransformationMatrix } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import type Renderer from "../renderer/Renderer";
+import type { Style } from "../types";
+import Lasso from "./Lasso";
 import SubView, { SV_VIEW_SYMBOL } from "./SubView";
 import type ViewElement from "./ViewElement";
 import { VE_SUB_VIEW_SYMBOL, VE_VIEW_SYMBOL } from "./ViewElement";
@@ -32,8 +34,22 @@ const VIEW_DEFAULTS = {
     inverseWheelZoom: false,
     dragThrottleDistance: 10,
     maxTouchPointerCount: 2,
-    resizeObserverDebouncingTime: 100 //ms
+    resizeObserverDebouncingTime: 100, //ms
+    lassoStyle: {
+        paintOrder: "fill",
+        noStroke: false,
+        noFill: false,
+        fill: "rgba(0,0,0,0.2)",
+        stroke: "rgba(0,0,0,0.8)",
+        strokeWidth: 1,
+        strokeDash: [2],
+        strokeDashOffset: 0,
+        strokeLineJoin: "miter",
+        strokeMiterLimit: 10,
+        strokeLineCap: "butt"
+    } as Style
 };
+
 export default class View {
     private _dragThrottleDistance = VIEW_DEFAULTS.dragThrottleDistance;
     private _minZoom = VIEW_DEFAULTS.minZoom;
@@ -47,13 +63,13 @@ export default class View {
 
     private _activeElements: ViewElement[] = [];
     private _hoverElement: ViewElement | null = null;
-    private _indeterminateElement: ViewElement | null = null;
+    private _indeterminateElements: ViewElement[] = [];
     private _isDragging: boolean = false;
     private _isPanning: boolean = false;
     private _isZooming: boolean = false;
-    private _preparingDragging: boolean = false;
-    private _preparingPanning: boolean = false;
-    private _preparingZooming: boolean = false;
+    private _prepareDragging: boolean = false;
+    private _preparePanning: boolean = false;
+    private _prepareZooming: boolean = false;
     private _draggingOffset: [number, number] = [0, 0];
     private _panningOffset: [number, number] = [0, 0];
     private _zoomingDistance: number = 0;
@@ -100,8 +116,14 @@ export default class View {
         this.renderer = renderer;
 
         // execute rendering on every tick of `Geomtoy`
-        Geomtoy.allTick(() => this._renderFunc());
+        Geomtoy.allTick(this._renderFunc);
         this._hasTouchDevice = window.matchMedia("(any-pointer: coarse)").matches || "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    }
+
+    dispose() {
+        Geomtoy.allTick(this._renderFunc, true);
+        this.stopResponsive();
+        this.stopInteractive();
     }
 
     hoverForemost: boolean;
@@ -110,7 +132,34 @@ export default class View {
 
     // todo
     // snapToGrid: boolean = true;
-    // selectMode: single/multiple/holdMultiple/lasso
+    /**
+     * *Memo
+     * The `activeElements` modified not by the user interaction(`activate`, `deactivate` etc.) does not trigger an event.
+     */
+    /**
+     * Active mode:
+     *
+     * `numerous`:(This requires a modifier key to do multiple activating, so it' not suitable for touch devices.)
+     * - Click on a inactive element to activate it.
+     * - Click on a element of active elements will deactivate active elements but this element unless start dragging.
+     * - Click on another inactive element will deactivate active elements and activate the another element.
+     * - Hold modifier key and click on a inactive element will activate this element and keep current active elements.
+     * - Hold modifier key and click on a active element will remove this from active elements.
+     * - Click on a blank area will deactivate all active elements.
+     * - Hold modifier key and click on a blank area will do nothing.
+     *
+     * `continuous`:(This does not require extra actions to do multiple activating, so it suitable for touch devices.)
+     * - Click on a inactive element to activate it.
+     * - Click on a element of actives elements will deactivate this element but keep the rest active elements unless start dragging.
+     * - Click on another inactive element will activate the another element and keep current active elements.
+     * - Click on a blank area will deactivate all active elements.
+     */
+    activeMode: "numerous" | "continuous" = "continuous";
+    modifierKey: "Alt" | "Shift" | "Control" = "Shift";
+    // todo
+    // autoSwitchActiveMode:
+    // `numerous` does not suitable on touch devices, so `activeMode` will automatically switches to `continuous` if on touch devices,
+    //  while if we are on PCs, `activeMode` will automatically switches to `numerous`.
 
     get minZoom() {
         return this._minZoom;
@@ -146,7 +195,6 @@ export default class View {
     }
     set renderer(value) {
         this._renderer = value;
-        value.view = this;
     }
     get elements() {
         return [...this._elements];
@@ -197,8 +245,8 @@ export default class View {
         if (this._hoverElement !== null && !this._interactables.includes(this._hoverElement)) {
             this._hoverElement = null;
         }
-        if (this._indeterminateElement !== null && !this._interactables.includes(this._indeterminateElement)) {
-            this._indeterminateElement = null;
+        if (this._indeterminateElements.length !== 0) {
+            this._indeterminateElements = this._indeterminateElements.filter(el => this._interactables.includes(el));
         }
         if (this._activeElements.length !== 0) {
             this._activeElements = this._activeElements.filter(el => this._interactables.includes(el));
@@ -326,8 +374,26 @@ export default class View {
         return this;
     }
 
-    cursor(type: "default" | "pointer" | "move" | "grab" | "grabbing" | "zoom-in" | "zoom-out") {
+    cursor(type: "default" | "pointer" | "all-scroll" | "move" | "grab" | "grabbing" | "zoom-in" | "zoom-out" | "crosshair") {
         this.renderer.container.style.cursor = type;
+    }
+
+    /**
+     * Click on anywhere to start drag a lasso, and before drag, all active elements will be inactive.
+     * Dragging a lasso.
+     * Then stop drag, and after drag, elements hit the lasso will be active.
+     */
+    private _doLasso = false;
+    private _prepareLasso = false;
+    private _lassoing = false;
+    private _lasso = new Lasso();
+    startLasso() {
+        this._doLasso = true;
+        this.requestRender();
+    }
+    stopLasso() {
+        this._doLasso = false;
+        this.requestRender();
     }
 
     private _getAntiOffset(offset: [x: number, y: number]) {
@@ -366,24 +432,23 @@ export default class View {
                 this.cursor("default");
                 this._isDragging = false;
                 this.trigger(ViewEventType.DragEnd, viewDragEvent(ve, this._activeElements));
-            } else if (this._preparingDragging) {
+            } else if (this._prepareDragging) {
                 this.cursor("default");
-                this._preparingDragging = false;
+                this._prepareDragging = false;
 
-                if (this._indeterminateElement !== null) {
-                    const index = this._activeElements.indexOf(this._indeterminateElement);
-                    index !== -1 && this._activeElements.splice(index, 1);
-                    this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [this._indeterminateElement]));
+                if (this._indeterminateElements.length !== 0) {
+                    this._deactivateInternal(...this._indeterminateElements);
+                    this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [...this._indeterminateElements]));
                     this.requestRender();
-                    this._indeterminateElement = null;
+                    this._indeterminateElements = [];
                 }
             } else if (this._isPanning) {
                 this.cursor("default");
                 this._isPanning = false;
                 this.trigger(ViewEventType.PanEnd, viewPanEvent(ve, ...this.renderer.display.pan));
-            } else if (this._preparingPanning) {
+            } else if (this._preparePanning) {
                 this.cursor("default");
-                this._preparingPanning = false;
+                this._preparePanning = false;
             }
         }
         if (isTouch) {
@@ -391,22 +456,21 @@ export default class View {
                 this.cursor("default");
                 this._isDragging = false;
                 this.trigger(ViewEventType.DragEnd, viewDragEvent(ve, this._activeElements));
-            } else if (this._preparingDragging) {
+            } else if (this._prepareDragging) {
                 this.cursor("default");
-                this._preparingDragging = false;
-                if (this._indeterminateElement !== null) {
-                    const index = this._activeElements.indexOf(this._indeterminateElement);
-                    index !== -1 && this._activeElements.splice(index, 1);
-                    this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [this._indeterminateElement]));
+                this._prepareDragging = false;
+                if (this._indeterminateElements.length !== 0) {
+                    this._deactivateInternal(...this._indeterminateElements);
+                    this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [...this._indeterminateElements]));
                     this.requestRender();
-                    this._indeterminateElement = null;
+                    this._indeterminateElements = [];
                 }
-            } else if (this._isPanning || this._preparingPanning || this._isZooming || this._preparingZooming) {
+            } else if (this._isPanning || this._preparePanning || this._isZooming || this._prepareZooming) {
                 this.cursor("default");
                 this._isPanning = false;
-                this._preparingPanning = false;
+                this._preparePanning = false;
                 this._isZooming = false;
-                this._preparingZooming = false;
+                this._prepareZooming = false;
                 this.trigger(ViewEventType.PanEnd, viewPanEvent(ve, ...this.renderer.display.pan));
                 this.trigger(ViewEventType.ZoomEnd, viewZoomEvent(ve, this.renderer.display.zoom));
                 this._clearTouch();
@@ -438,23 +502,57 @@ export default class View {
         const ve = viewEvent(isTouch, ...pointerOffset, ...atOffset);
         this.trigger(ViewEventType.PointerDown, viewPointerEvent(ve, e));
 
+        if (this._doLasso) {
+            this.cursor("crosshair");
+            this._lasso.init = atOffset;
+            this._prepareLasso = true;
+            return;
+        }
+
         if (isMouse) {
             const foundIndex = this._interactables.findIndex(el => this._isPointInElement(el, ...atOffset));
             if (foundIndex !== -1) {
-                this.cursor("pointer");
-                if (!this._activeElements.includes(this._interactables[foundIndex])) {
-                    this._activeElements.push(this._interactables[foundIndex]);
-                    this.trigger(ViewEventType.Activate, viewActivateEvent(ve, [this._interactables[foundIndex]]));
-                    this.requestRender();
-                } else {
-                    this._indeterminateElement = this._interactables[foundIndex];
+                this.cursor("all-scroll");
+                if (this.activeMode === "continuous") {
+                    if (!this._activeElements.includes(this._interactables[foundIndex])) {
+                        this._activateInternal(this._interactables[foundIndex]);
+                        this.trigger(ViewEventType.Activate, viewActivateEvent(ve, [this._interactables[foundIndex]]));
+                        this.requestRender();
+                    } else {
+                        this._indeterminateElements = [this._interactables[foundIndex]];
+                    }
+                    this.trigger(ViewEventType.DragStart, viewDragEvent(ve, this._activeElements));
+                    this._draggingOffset = atOffset;
+                    this._prepareDragging = true;
                 }
-                this.trigger(ViewEventType.DragStart, viewDragEvent(ve, this._activeElements));
-                this._draggingOffset = atOffset;
-                this._preparingDragging = true;
+                if (this.activeMode === "numerous") {
+                    if (e.getModifierState(this.modifierKey)) {
+                        if (!this._activeElements.includes(this._interactables[foundIndex])) {
+                            this._activateInternal(this._interactables[foundIndex]);
+                            this.trigger(ViewEventType.Activate, viewActivateEvent(ve, [this._interactables[foundIndex]]));
+                            this.requestRender();
+                        } else {
+                            this._deactivateInternal(this._interactables[foundIndex]);
+                            this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [this._interactables[foundIndex]]));
+                            this.requestRender();
+                        }
+                    } else {
+                        if (!this._activeElements.includes(this._interactables[foundIndex])) {
+                            if (this._activeElements.length !== 0) this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [...this._activeElements]));
+                            this._activeElements = [this._interactables[foundIndex]];
+                            this.trigger(ViewEventType.Activate, viewActivateEvent(ve, [this._interactables[foundIndex]]));
+                            this.requestRender();
+                        } else {
+                            this._indeterminateElements = this._activeElements.filter(el => el !== this._interactables[foundIndex]);
+                        }
+                        this.trigger(ViewEventType.DragStart, viewDragEvent(ve, this._activeElements));
+                        this._draggingOffset = atOffset;
+                        this._prepareDragging = true;
+                    }
+                }
             } else {
                 this.cursor("grab");
-                this._preparingPanning = true;
+                this._preparePanning = true;
                 this._panningOffset = pointerOffset;
                 this.trigger(ViewEventType.PanStart, viewPanEvent(ve, this.renderer.display.pan[0], this.renderer.display.pan[1]));
                 this._activeElements.length > 0 && this.requestRender();
@@ -465,17 +563,45 @@ export default class View {
             if (this._touchPointers.length === 1) {
                 const foundIndex = this._interactables.findIndex(el => this._isPointInElement(el, ...atOffset));
                 if (foundIndex !== -1) {
-                    this.cursor("pointer");
-                    if (!this._activeElements.includes(this._interactables[foundIndex])) {
-                        this._activeElements.push(this._interactables[foundIndex]);
-                        this.trigger(ViewEventType.Activate, viewActivateEvent(ve, [this._interactables[foundIndex]]));
-                        this.requestRender();
-                    } else {
-                        this._indeterminateElement = this._interactables[foundIndex];
+                    this.cursor("all-scroll");
+
+                    if (this.activeMode === "continuous") {
+                        if (!this._activeElements.includes(this._interactables[foundIndex])) {
+                            this._activeElements.push(this._interactables[foundIndex]);
+                            this.trigger(ViewEventType.Activate, viewActivateEvent(ve, [this._interactables[foundIndex]]));
+                            this.requestRender();
+                        } else {
+                            this._indeterminateElements = [this._interactables[foundIndex]];
+                        }
+                        this.trigger(ViewEventType.DragStart, viewDragEvent(ve, this._activeElements));
+                        this._draggingOffset = atOffset;
+                        this._prepareDragging = true;
                     }
-                    this.trigger(ViewEventType.DragStart, viewDragEvent(ve, this._activeElements));
-                    this._draggingOffset = atOffset;
-                    this._preparingDragging = true;
+                    if (this.activeMode === "numerous") {
+                        if (e.getModifierState(this.modifierKey)) {
+                            if (!this._activeElements.includes(this._interactables[foundIndex])) {
+                                this._activateInternal(this._interactables[foundIndex]);
+                                this.trigger(ViewEventType.Activate, viewActivateEvent(ve, [this._interactables[foundIndex]]));
+                                this.requestRender();
+                            } else {
+                                this._deactivateInternal(this._interactables[foundIndex]);
+                                this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [this._interactables[foundIndex]]));
+                                this.requestRender();
+                            }
+                        } else {
+                            if (!this._activeElements.includes(this._interactables[foundIndex])) {
+                                if (this._activeElements.length !== 0) this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [...this._activeElements]));
+                                this._activeElements = [this._interactables[foundIndex]];
+                                this.trigger(ViewEventType.Activate, viewActivateEvent(ve, [this._interactables[foundIndex]]));
+                                this.requestRender();
+                            } else {
+                                this._indeterminateElements = this._activeElements.filter(el => el !== this._interactables[foundIndex]);
+                            }
+                            this.trigger(ViewEventType.DragStart, viewDragEvent(ve, this._activeElements));
+                            this._draggingOffset = atOffset;
+                            this._prepareDragging = true;
+                        }
+                    }
                 } else {
                     this.cursor("grab");
                     this._activeElements.length > 0 && this.requestRender();
@@ -490,15 +616,15 @@ export default class View {
                 this._zoomingDistance = distance;
                 this._panningOffset = centerOffset;
 
-                this._preparingDragging = false;
+                this._prepareDragging = false;
                 this._isDragging = false;
                 this.trigger(ViewEventType.PanStart, viewPanEvent(ve, ...this.renderer.display.pan));
                 this.trigger(ViewEventType.ZoomStart, viewZoomEvent(ve, this.renderer.display.zoom));
                 this._activeElements.length > 0 && this.requestRender();
                 this._activeElements = [];
 
-                this._preparingPanning = true;
-                this._preparingZooming = true;
+                this._preparePanning = true;
+                this._prepareZooming = true;
             }
         }
     }.bind(this);
@@ -516,29 +642,48 @@ export default class View {
         const ve = viewEvent(isTouch, ...pointerOffset, ...atOffset);
         this.trigger(ViewEventType.PointerUp, viewPointerEvent(ve, e));
 
+        if (this._doLasso) {
+            this.cursor("default");
+            if (this._lassoing) {
+                this._lassoing = false;
+                this._lasso.term = atOffset;
+                const hits = this._lasso.hit(this._interactables);
+                if (this._activeElements.length !== 0) this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [...this._activeElements]));
+                this._activeElements = hits;
+                if (this._activeElements.length !== 0) this.trigger(ViewEventType.Activate, viewActivateEvent(ve, [...this._activeElements]));
+                this.requestRender();
+            }
+            if (this._prepareLasso) {
+                this._prepareLasso = false;
+                if (this._activeElements.length !== 0) this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [...this._activeElements]));
+                this._activeElements = [];
+                this.requestRender();
+            }
+            return;
+        }
+
         if (isMouse) {
             if (this._isDragging) {
                 this.cursor("default");
                 this._isDragging = false;
                 this.trigger(ViewEventType.DragEnd, viewDragEvent(ve, this._activeElements));
-            } else if (this._preparingDragging) {
+            } else if (this._prepareDragging) {
                 this.cursor("default");
-                this._preparingDragging = false;
+                this._prepareDragging = false;
 
-                if (this._indeterminateElement !== null) {
-                    const index = this._activeElements.indexOf(this._indeterminateElement);
-                    index !== -1 && this._activeElements.splice(index, 1);
-                    this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [this._indeterminateElement]));
+                if (this._indeterminateElements.length !== 0) {
+                    this._deactivateInternal(...this._indeterminateElements);
+                    this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [...this._indeterminateElements]));
                     this.requestRender();
-                    this._indeterminateElement = null;
+                    this._indeterminateElements = [];
                 }
             } else if (this._isPanning) {
                 this.cursor("default");
                 this._isPanning = false;
                 this.trigger(ViewEventType.PanEnd, viewPanEvent(ve, ...this.renderer.display.pan));
-            } else if (this._preparingPanning) {
+            } else if (this._preparePanning) {
                 this.cursor("default");
-                this._preparingPanning = false;
+                this._preparePanning = false;
             }
         }
         if (isTouch) {
@@ -546,22 +691,21 @@ export default class View {
                 this.cursor("default");
                 this._isDragging = false;
                 this.trigger(ViewEventType.DragEnd, viewDragEvent(ve, this._activeElements));
-            } else if (this._preparingDragging) {
+            } else if (this._prepareDragging) {
                 this.cursor("default");
-                this._preparingDragging = false;
-                if (this._indeterminateElement !== null) {
-                    const index = this._activeElements.indexOf(this._indeterminateElement);
-                    index !== -1 && this._activeElements.splice(index, 1);
-                    this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [this._indeterminateElement]));
+                this._prepareDragging = false;
+                if (this._indeterminateElements.length !== 0) {
+                    this._deactivateInternal(...this._indeterminateElements);
+                    this.trigger(ViewEventType.Deactivate, viewActivateEvent(ve, [...this._indeterminateElements]));
                     this.requestRender();
-                    this._indeterminateElement = null;
+                    this._indeterminateElements = [];
                 }
-            } else if (this._isPanning || this._preparingPanning || this._isZooming || this._preparingZooming) {
+            } else if (this._isPanning || this._preparePanning || this._isZooming || this._prepareZooming) {
                 this.cursor("default");
                 this._isPanning = false;
-                this._preparingPanning = false;
+                this._preparePanning = false;
                 this._isZooming = false;
-                this._preparingZooming = false;
+                this._prepareZooming = false;
                 this.trigger(ViewEventType.PanEnd, viewPanEvent(ve, ...this.renderer.display.pan));
                 this.trigger(ViewEventType.ZoomEnd, viewZoomEvent(ve, this.renderer.display.zoom));
                 this._clearTouch();
@@ -583,16 +727,26 @@ export default class View {
             const ve = viewEvent(isTouch, ...pointerOffset, ...atOffset);
             this.trigger(ViewEventType.PointerMove, viewPointerEvent(ve, e));
 
+            if (this._doLasso) {
+                if (this._prepareLasso || this._lassoing) {
+                    this._prepareLasso = false;
+                    this._lassoing = true;
+                    this._lasso.term = atOffset;
+                    this.requestRender();
+                }
+                return;
+            }
+
             if (isMouse) {
-                if (this._preparingDragging) {
+                if (this._prepareDragging) {
                     const scale = this.renderer.display.density * this.renderer.display.zoom;
                     const dragDistance = Maths.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
                     if (dragDistance < this.dragThrottleDistance) return;
                 }
 
-                if (this._preparingDragging || this._isDragging) {
+                if (this._prepareDragging || this._isDragging) {
                     this.cursor("move");
-                    this._preparingDragging = false;
+                    this._prepareDragging = false;
                     this._isDragging = true;
 
                     const [deltaX, deltaY] = [atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]];
@@ -600,9 +754,9 @@ export default class View {
                     this._activeElements.forEach(el => el.move(deltaX, deltaY));
                     this.trigger(ViewEventType.Dragging, viewDragEvent(ve, this._activeElements));
                     // this.requestRender();
-                } else if (this._preparingPanning || this._isPanning) {
+                } else if (this._preparePanning || this._isPanning) {
                     this.cursor("grabbing");
-                    this._preparingPanning = false;
+                    this._preparePanning = false;
                     this._isPanning = true;
 
                     const [deltaX, deltaY] = [pointerOffset[0] - this._panningOffset[0], pointerOffset[1] - this._panningOffset[1]];
@@ -636,15 +790,15 @@ export default class View {
 
             if (isTouch) {
                 const atOffset = TransformationMatrix.antitransformCoordinates(this.renderer.display.globalTransformation, pointerOffset);
-                if (this._preparingDragging) {
+                if (this._prepareDragging) {
                     const scale = this.renderer.display.density * this.renderer.display.zoom;
                     const dragDistance = Maths.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
                     if (dragDistance < this.dragThrottleDistance) return;
                 }
 
-                if (this._preparingDragging || this._isDragging) {
+                if (this._prepareDragging || this._isDragging) {
                     this.cursor("move");
-                    this._preparingDragging = false;
+                    this._prepareDragging = false;
                     this._isDragging = true;
 
                     const [deltaX, deltaY] = [atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]];
@@ -652,10 +806,10 @@ export default class View {
                     this._activeElements.forEach(el => el.move(deltaX, deltaY));
                     this.trigger(ViewEventType.Dragging, viewDragEvent(ve, this._activeElements));
                     // this.requestRender();
-                } else if (this._preparingZooming || this._isZooming || this._preparingPanning || this._isPanning) {
+                } else if (this._prepareZooming || this._isZooming || this._preparePanning || this._isPanning) {
                     this.cursor("default");
-                    this._preparingZooming = false;
-                    this._preparingPanning = false;
+                    this._prepareZooming = false;
+                    this._preparePanning = false;
                     this._isZooming = true;
                     this._isPanning = true;
 
@@ -891,15 +1045,25 @@ export default class View {
         this._renderables = [];
         this._interactables = [];
         this._hoverElement = null;
-        this._indeterminateElement = null;
+        this._indeterminateElements = [];
         this._activeElements = [];
         this.requestRender();
         return this;
     }
-    /**
-     * * Memo
-     * `activate` and `deactivate` methods etc. do not trigger events
-     */
+
+    /* 
+    Why these internal methods? 
+    These methods we will call in the interaction, so the input elements are as expected. We just use the input elements without checking or additional operations.
+    */
+    private _activateInternal(...elements: ViewElement[]) {
+        this._activeElements.push(...elements);
+    }
+    private _deactivateInternal(...elements: ViewElement[]) {
+        elements.forEach(el => {
+            this._activeElements.splice(this._activeElements.indexOf(el), 1);
+        });
+    }
+
     activate(...elements: ViewElement[]) {
         this._activeElements = [...elements.filter(el => !this._activeElements.includes(el)), ...this._activeElements].filter(el => this._interactables.includes(el));
         this.requestRender();
@@ -948,7 +1112,7 @@ export default class View {
         return this;
     }
 
-    private _renderFunc() {
+    private _renderFunc = function (this: View) {
         const renderer = this.renderer;
         if (this._renderables.length === 0) renderer.clear();
 
@@ -979,7 +1143,6 @@ export default class View {
             // `active` has a higher priority than `hover`
 
             renderer.paintOrder(s.paintOrder);
-
             renderer.noFill(s.noFill);
             renderer.fill((active && as.fill) || (hover && hs.fill) || s.fill);
 
@@ -995,5 +1158,21 @@ export default class View {
             const onTop = (hover && this.hoverForemost) || (active && this.activeForemost);
             el.paths = renderer.draw(el.shape, onTop);
         });
-    }
+
+        if (this._lassoing) {
+            renderer.paintOrder(VIEW_DEFAULTS.lassoStyle.paintOrder);
+            renderer.noFill(VIEW_DEFAULTS.lassoStyle.noFill);
+            renderer.fill(VIEW_DEFAULTS.lassoStyle.fill);
+
+            renderer.noStroke(VIEW_DEFAULTS.lassoStyle.noStroke);
+            renderer.stroke(VIEW_DEFAULTS.lassoStyle.stroke);
+            renderer.strokeWidth(VIEW_DEFAULTS.lassoStyle.strokeWidth);
+            renderer.strokeDash(VIEW_DEFAULTS.lassoStyle.strokeDash);
+            renderer.strokeDashOffset(VIEW_DEFAULTS.lassoStyle.strokeDashOffset);
+            renderer.strokeLineJoin(VIEW_DEFAULTS.lassoStyle.strokeLineJoin);
+            renderer.strokeLineCap(VIEW_DEFAULTS.lassoStyle.strokeLineCap);
+            renderer.strokeMiterLimit(VIEW_DEFAULTS.lassoStyle.strokeMiterLimit);
+            renderer.draw(this._lasso, true);
+        }
+    }.bind(this);
 }
