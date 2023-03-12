@@ -7,6 +7,8 @@ import CanvasInterface from "./CanvasInterface";
 import Display from "./Display";
 import Renderer from "./Renderer";
 
+const DEFAULT_BASELINE = "alphabetic";
+
 export default class CanvasRenderer extends Renderer {
     private _id = Utility.id("CanvasRenderer");
     private _surface: CanvasRenderingContext2D;
@@ -160,10 +162,10 @@ export default class CanvasRenderer extends Renderer {
     }
     private _drawText(cmd: TextGraphicCommand, path: Path2D, onTop: boolean) {
         const { x, y, offsetX, offsetY, content, fontSize, fontFamily, fontBold, fontItalic, anchor } = cmd;
-
+        const { dx, dy, width: textWidth, height: textHeight } = TextMeasurer.measure([x, y], content, DEFAULT_BASELINE, { fontSize, fontFamily, fontBold, fontItalic });
         const [tx, ty] = TransformationMatrix.transformCoordinates(this.display.globalTransformation, [x, y]);
+        const [tNbx, tNby] = [tx + dx, ty + dy];
         const scale = this.display.scale;
-        const [textWidth, textHeight] = TextMeasurer.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", content);
         const [atTextWidth, atTextHeight] = [textWidth / scale, textHeight / scale];
         const [atOffsetX, atOffsetY] = [offsetX / scale, offsetY / scale];
 
@@ -171,33 +173,33 @@ export default class CanvasRenderer extends Renderer {
         let [atAdjX, atAdjY] = [NaN, NaN];
 
         if (anchor === Anchor.LeftTop || anchor === Anchor.LeftCenter || anchor === Anchor.LeftBottom) {
-            tAdjX = tx;
+            tAdjX = tNbx;
             atAdjX = this.display.xAxisPositiveOnRight ? x : x - 2 * atOffsetX - atTextWidth;
         }
         if (anchor === Anchor.CenterTop || anchor === Anchor.CenterCenter || anchor === Anchor.CenterBottom) {
-            tAdjX = tx - textWidth / 2;
+            tAdjX = tNbx - textWidth / 2;
             atAdjX = this.display.xAxisPositiveOnRight ? x - atTextWidth / 2 : x - 2 * atOffsetX - atTextWidth / 2;
         }
         if (anchor === Anchor.RightTop || anchor === Anchor.RightCenter || anchor === Anchor.RightBottom) {
-            tAdjX = tx - textWidth;
+            tAdjX = tNbx - textWidth;
             atAdjX = this.display.xAxisPositiveOnRight ? x - atTextWidth : x - 2 * atOffsetX;
         }
         //
         if (anchor === Anchor.LeftTop || anchor === Anchor.CenterTop || anchor === Anchor.RightTop) {
-            tAdjY = ty;
+            tAdjY = tNby;
             atAdjY = this.display.yAxisPositiveOnBottom ? y : y - 2 * atOffsetY - atTextHeight;
         }
         if (anchor === Anchor.LeftCenter || anchor === Anchor.CenterCenter || anchor === Anchor.RightCenter) {
-            tAdjY = ty - textHeight / 2;
+            tAdjY = tNby - textHeight / 2;
             atAdjY = this.display.yAxisPositiveOnBottom ? y - atTextHeight / 2 : y - 2 * atOffsetY - atTextHeight / 2;
         }
         if (anchor === Anchor.LeftBottom || anchor === Anchor.CenterBottom || anchor === Anchor.RightBottom) {
-            tAdjY = ty - textHeight;
+            tAdjY = tNby - textHeight;
             atAdjY = this.display.yAxisPositiveOnBottom ? y - atTextHeight : y - 2 * atOffsetY;
         }
 
         this._buffer.save();
-        this._buffer.textBaseline = "hanging";
+        this._buffer.textBaseline = DEFAULT_BASELINE;
         let fontStyle = "";
         fontBold && (fontStyle += "bold ");
         fontItalic && (fontStyle += "italic ");

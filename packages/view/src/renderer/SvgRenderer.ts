@@ -1,4 +1,4 @@
-import { GeometryGraphic, ImageGraphic, Anchor, TextGraphic, type FillRule, type GeometryGraphicCommand, type ImageGraphicCommand, type Shape, type TextGraphicCommand } from "@geomtoy/core";
+import { Anchor, GeometryGraphic, ImageGraphic, TextGraphic, type FillRule, type GeometryGraphicCommand, type ImageGraphicCommand, type Shape, type TextGraphicCommand } from "@geomtoy/core";
 import { Angle, Box, TransformationMatrix, Utility } from "@geomtoy/util";
 import TextMeasurer from "../helper/TextMeasurer";
 import type { DisplaySettings, InterfaceSettings, PathInfo } from "../types";
@@ -7,9 +7,8 @@ import Renderer from "./Renderer";
 import SvgImageSourceManager from "./SvgImageSourceManager";
 import SvgInterface from "./SvgInterface";
 
-/**
- * @category Renderer
- */
+const DEFAULT_BASELINE = "alphabetic";
+
 export default class SvgRenderer extends Renderer {
     private _id = Utility.id("SvgRenderer");
     private _surface: SVGGElement;
@@ -171,11 +170,10 @@ export default class SvgRenderer extends Renderer {
     }
     private _drawText(cmd: TextGraphicCommand, path: SVGPathElement, onTop: boolean) {
         const { x, y, offsetX, offsetY, content, fontSize, fontFamily, fontBold, fontItalic, anchor } = cmd;
-        const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
-
+        const { dx, dy, width: textWidth, height: textHeight } = TextMeasurer.measure([x, y], content, DEFAULT_BASELINE, { fontSize, fontFamily, fontBold, fontItalic });
         const [tx, ty] = TransformationMatrix.transformCoordinates(this.display.globalTransformation, [x, y]);
+        const [tNbx, tNby] = [tx + dx, ty + dy];
         const scale = this.display.scale;
-        const [textWidth, textHeight] = TextMeasurer.measure({ fontSize, fontFamily, fontBold, fontItalic }, "hanging", content);
         const [atTextWidth, atTextHeight] = [textWidth / scale, textHeight / scale];
         const [atOffsetX, atOffsetY] = [offsetX / scale, offsetY / scale];
 
@@ -183,36 +181,37 @@ export default class SvgRenderer extends Renderer {
         let [atAdjX, atAdjY] = [NaN, NaN];
 
         if (anchor === Anchor.LeftTop || anchor === Anchor.LeftCenter || anchor === Anchor.LeftBottom) {
-            tAdjX = tx;
+            tAdjX = tNbx;
             atAdjX = this.display.xAxisPositiveOnRight ? x : x - 2 * atOffsetX - atTextWidth;
         }
         if (anchor === Anchor.CenterTop || anchor === Anchor.CenterCenter || anchor === Anchor.CenterBottom) {
-            tAdjX = tx - textWidth / 2;
+            tAdjX = tNbx - textWidth / 2;
             atAdjX = this.display.xAxisPositiveOnRight ? x - atTextWidth / 2 : x - 2 * atOffsetX - atTextWidth / 2;
         }
         if (anchor === Anchor.RightTop || anchor === Anchor.RightCenter || anchor === Anchor.RightBottom) {
-            tAdjX = tx - textWidth;
+            tAdjX = tNbx - textWidth;
             atAdjX = this.display.xAxisPositiveOnRight ? x - atTextWidth : x - 2 * atOffsetX;
         }
         //
         if (anchor === Anchor.LeftTop || anchor === Anchor.CenterTop || anchor === Anchor.RightTop) {
-            tAdjY = ty;
+            tAdjY = tNby;
             atAdjY = this.display.yAxisPositiveOnBottom ? y : y - 2 * atOffsetY - atTextHeight;
         }
         if (anchor === Anchor.LeftCenter || anchor === Anchor.CenterCenter || anchor === Anchor.RightCenter) {
-            tAdjY = ty - textHeight / 2;
+            tAdjY = tNby - textHeight / 2;
             atAdjY = this.display.yAxisPositiveOnBottom ? y - atTextHeight / 2 : y - 2 * atOffsetY - atTextHeight / 2;
         }
         if (anchor === Anchor.LeftBottom || anchor === Anchor.CenterBottom || anchor === Anchor.RightBottom) {
-            tAdjY = ty - textHeight;
+            tAdjY = tNby - textHeight;
             atAdjY = this.display.yAxisPositiveOnBottom ? y - atTextHeight : y - 2 * atOffsetY;
         }
 
-        textEl.setAttribute("dominant-baseline", "hanging");
-        textEl.setAttribute("font-size", `${fontSize}`);
-        textEl.setAttribute("font-family", `${fontFamily}`);
+        const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        textEl.setAttribute("dominant-baseline", DEFAULT_BASELINE);
         fontBold && textEl.setAttribute("font-weight", "bold");
         fontItalic && textEl.setAttribute("font-style", "italic");
+        textEl.setAttribute("font-size", `${fontSize}`);
+        textEl.setAttribute("font-family", `${fontFamily}`);
         textEl.setAttribute("transform", `matrix(${TransformationMatrix.invert(this.display.globalTransformation).join(" ")})`);
         textEl.setAttribute("x", `${tAdjX + offsetX}`);
         textEl.setAttribute("y", `${tAdjY + offsetY}`);
