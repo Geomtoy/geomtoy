@@ -1,7 +1,7 @@
 import { TransformationMatrix, Utility } from "@geomtoy/util";
 
-import type Renderer from "./Renderer";
 import type { InterfaceSettings } from "../types";
+import type Renderer from "./Renderer";
 
 const INTERFACE_DEFAULTS: InterfaceSettings = {
     showAxis: true,
@@ -52,16 +52,9 @@ export default abstract class Interface implements InterfaceSettings {
     // transformed origin y-coordinate remainder
     private _tOyRem = NaN;
 
-    /**
-     * Safari(<=15 tested) do not support `SVGImageElement.decode()`, and implement `HTMLImageElement.decode()` in the task queue.
-     * Plus: CanvasRenderingContext2D.createPattern can't use svg image. This is a big todo....
-     */
-    private _svgImageElementDecodeSupported = true;
     constructor(renderer: Renderer, interfaceSettings: Partial<InterfaceSettings> = {}) {
         this._renderer = renderer;
         Object.assign(this, Utility.cloneDeep(interfaceSettings));
-
-        this._svgImageElementDecodeSupported = "decode" in document.createElementNS("http://www.w3.org/2000/svg", "image");
     }
 
     showAxis = INTERFACE_DEFAULTS.showAxis;
@@ -126,27 +119,39 @@ export default abstract class Interface implements InterfaceSettings {
         return n.toString();
     }
     private _decodeImage(width: number, height: number, svgDataUrl: string) {
-        const image = document.createElementNS("http://www.w3.org/2000/svg", "image");
-        image.setAttribute("width", `${width}`);
-        image.setAttribute("height", `${height}`);
+        // Why don't we use `onload`, because our renderer drawing is in the microtask queue,
+        // and the `onload` callback is put into the macrotask queue,
+        // which will cause the image of this frame to run to later.
 
-        let promise;
-        if (!this._svgImageElementDecodeSupported) {
-            promise = new Promise<void>((resolve, reject) => {
-                image.onload = function () {
-                    resolve();
-                };
-                image.onerror = function () {
-                    reject();
-                };
-            });
-            image.setAttribute("href", svgDataUrl);
-        } else {
-            image.setAttribute("href", svgDataUrl);
-            // @ts-ignore
-            promise = image.decode() as Promise<void>;
+        // The image(HTMLImageElement or SVGImageElement).decode method is executed in the microtask queue, which is why we chose `decode`.
+        // But Safari never seemed to have any intention of supporting SVGImageElement's decode.
+        // Fortunately, SVGImageElement can be inserted directly into <svg> without necessarily having to decode it first (Canvas is a must).
+        // But the consequence of this non-decoding is that the decoding will be put into the main thread. But the impact of this should
+        // be very small, after all, our pictures are very small.
+
+        // Old Safari incompatible note:
+        // Safari(<=15 tested):
+        // Do not support `SVGImageElement.decode`. (still do not support now)
+        // Implement `HTMLImageElement.decode` in the macrotask queue.(not on 16.1)
+        // `CanvasRenderingContext2D.createPattern` can't use svg image. (do not know yet)
+
+        if (this._renderer.container instanceof HTMLCanvasElement) {
+            const image = document.createElement("img");
+            image.setAttribute("width", `${width}`);
+            image.setAttribute("height", `${height}`);
+            image.setAttribute("src", svgDataUrl);
+            return image.decode().then(() => image) as Promise<HTMLImageElement>;
         }
-        return [promise, image] as const;
+
+        if (this._renderer.container instanceof SVGSVGElement) {
+            const image = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            image.setAttribute("width", `${width}`);
+            image.setAttribute("height", `${height}`);
+            image.setAttribute("href", svgDataUrl);
+            return Promise.resolve(image);
+        }
+
+        throw new Error("[G]We should never be here.");
     }
 
     protected prepare_() {

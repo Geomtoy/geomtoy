@@ -252,13 +252,10 @@ export default class SvgRenderer extends Renderer {
         this._bufferFlushScheduled = true;
 
         const createdInterface = await this._interface.create();
-
-        Promise.resolve().then(() => {
-            this._surface.setAttribute("transform", `matrix(${this.display.globalTransformation.join(" ")})`);
-            this._interfaceSurface.replaceChildren(createdInterface);
-            this._surface.replaceChildren(this._buffer);
-            this._bufferFlushScheduled = false;
-        });
+        this._surface.setAttribute("transform", `matrix(${this.display.globalTransformation.join(" ")})`);
+        this._interfaceSurface.replaceChildren(createdInterface);
+        this._surface.replaceChildren(this._buffer);
+        this._bufferFlushScheduled = false;
     }
     private _initBuffer() {}
 

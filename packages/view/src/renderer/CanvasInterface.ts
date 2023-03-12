@@ -21,22 +21,19 @@ export default class CanvasInterface extends Interface {
 
     private async _createLabel() {
         if (!this.showLabel) return;
-        const [promise, img] = this.labelImage_();
-        return promise.then(() => {
+        return this.labelImage_().then(img => {
             this._interfaceBuffer.drawImage(img, 0, 0);
         });
     }
     private async _createAxis() {
         if (!this.showAxis) return;
-        const [promise, img] = this.axisImage_();
-        return promise.then(() => {
+        return this.axisImage_().then(img => {
             this._interfaceBuffer.drawImage(img, 0, 0);
         });
     }
     private async _createGrid() {
         if (!this.showGrid) return;
-        const [promise, img] = this.gridPatternImage_();
-        return promise.then(() => {
+        return this.gridPatternImage_().then(img => {
             const pattern = this._interfaceBuffer.createPattern(img, "repeat");
             this._interfaceBuffer.fillStyle = pattern!;
             this._interfaceBuffer.fillRect(0, 0, this.renderer.display.width, this.renderer.display.height);

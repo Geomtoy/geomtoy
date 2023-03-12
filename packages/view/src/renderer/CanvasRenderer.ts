@@ -251,13 +251,10 @@ export default class CanvasRenderer extends Renderer {
         this._bufferFlushScheduled = true;
 
         const createdInterface = await this._interface.create();
-
-        Promise.resolve().then(() => {
-            this._surface.clearRect(0, 0, this.container.width, this.container.height);
-            this._interfaceSurface.drawImage(createdInterface, 0, 0);
-            this._surface.drawImage(this._buffer.canvas, 0, 0);
-            this._bufferFlushScheduled = false;
-        });
+        this._surface.clearRect(0, 0, this.container.width, this.container.height);
+        this._interfaceSurface.drawImage(createdInterface, 0, 0);
+        this._surface.drawImage(this._buffer.canvas, 0, 0);
+        this._bufferFlushScheduled = false;
     }
     private _initBuffer() {
         if (!this._bufferFlushScheduled) {
