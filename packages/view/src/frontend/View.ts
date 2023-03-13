@@ -374,7 +374,7 @@ export default class View {
         return this;
     }
 
-    cursor(type: "default" | "pointer" | "all-scroll" | "move" | "grab" | "grabbing" | "zoom-in" | "zoom-out" | "crosshair") {
+    cursor(type: "default" | "pointer" | "move" | "grab" | "zoom-in" | "zoom-out" | "crosshair") {
         this.renderer.container.style.cursor = type;
     }
 
@@ -411,6 +411,7 @@ export default class View {
 
         const atOffset = this._getAntiOffset(pointerOffset);
         const ve = viewEvent(isTouch, ...pointerOffset, ...atOffset);
+        this.cursor("default");
         this.trigger(ViewEventType.PointerEnter, viewPointerEvent(ve, e));
     }.bind(this);
 
@@ -486,6 +487,7 @@ export default class View {
 
         const atOffset = this._getAntiOffset(pointerOffset);
         const ve = viewEvent(isTouch, ...pointerOffset, ...atOffset);
+        this.cursor("default");
         this.trigger(ViewEventType.PointerCancel, viewPointerEvent(ve, e));
     }.bind(this);
 
@@ -512,7 +514,6 @@ export default class View {
         if (isMouse) {
             const foundIndex = this._interactables.findIndex(el => this._isPointInElement(el, ...atOffset));
             if (foundIndex !== -1) {
-                this.cursor("all-scroll");
                 if (this.activeMode === "continuous") {
                     if (!this._activeElements.includes(this._interactables[foundIndex])) {
                         this._activateInternal(this._interactables[foundIndex]);
@@ -551,7 +552,6 @@ export default class View {
                     }
                 }
             } else {
-                this.cursor("grab");
                 this._preparePanning = true;
                 this._panningOffset = pointerOffset;
                 this.trigger(ViewEventType.PanStart, viewPanEvent(ve, this.renderer.display.pan[0], this.renderer.display.pan[1]));
@@ -563,8 +563,6 @@ export default class View {
             if (this._touchPointers.length === 1) {
                 const foundIndex = this._interactables.findIndex(el => this._isPointInElement(el, ...atOffset));
                 if (foundIndex !== -1) {
-                    this.cursor("all-scroll");
-
                     if (this.activeMode === "continuous") {
                         if (!this._activeElements.includes(this._interactables[foundIndex])) {
                             this._activeElements.push(this._interactables[foundIndex]);
@@ -603,7 +601,6 @@ export default class View {
                         }
                     }
                 } else {
-                    this.cursor("grab");
                     this._activeElements.length > 0 && this.requestRender();
                     this._activeElements = [];
                 }
@@ -664,11 +661,11 @@ export default class View {
 
         if (isMouse) {
             if (this._isDragging) {
-                this.cursor("default");
+                this.cursor("pointer");
                 this._isDragging = false;
                 this.trigger(ViewEventType.DragEnd, viewDragEvent(ve, this._activeElements));
             } else if (this._prepareDragging) {
-                this.cursor("default");
+                this.cursor("pointer");
                 this._prepareDragging = false;
 
                 if (this._indeterminateElements.length !== 0) {
@@ -688,11 +685,11 @@ export default class View {
         }
         if (isTouch) {
             if (this._isDragging) {
-                this.cursor("default");
+                this.cursor("pointer");
                 this._isDragging = false;
                 this.trigger(ViewEventType.DragEnd, viewDragEvent(ve, this._activeElements));
             } else if (this._prepareDragging) {
-                this.cursor("default");
+                this.cursor("pointer");
                 this._prepareDragging = false;
                 if (this._indeterminateElements.length !== 0) {
                     this._deactivateInternal(...this._indeterminateElements);
@@ -743,6 +740,7 @@ export default class View {
                     const dragDistance = Maths.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
                     if (dragDistance < this.dragThrottleDistance) return;
                 }
+                // todo panThrottleDistance
 
                 if (this._prepareDragging || this._isDragging) {
                     this.cursor("move");
@@ -755,7 +753,7 @@ export default class View {
                     this.trigger(ViewEventType.Dragging, viewDragEvent(ve, this._activeElements));
                     // this.requestRender();
                 } else if (this._preparePanning || this._isPanning) {
-                    this.cursor("grabbing");
+                    this.cursor("grab");
                     this._preparePanning = false;
                     this._isPanning = true;
 
