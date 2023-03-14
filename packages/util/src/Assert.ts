@@ -100,7 +100,7 @@ class Assert {
     }
     static isCoordinates(v: any, p: string): asserts v is [number, number] {
         if (!Coordinates.is(v)) {
-            throw new TypeError(`[G]The \`${p}\` should be a coordinates like \`[real number, real number]\` but got ${v}$.`);
+            throw new TypeError(`[G]The \`${p}\` should be a coordinates like \`[real number, real number]\` but got ${v}.`);
         }
     }
     static isSize(v: any, p: string): asserts v is [number, number] {

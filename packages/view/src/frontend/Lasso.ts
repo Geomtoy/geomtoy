@@ -9,10 +9,17 @@ export default class Lasso extends Shape {
     hit(interactables: ViewElement[]) {
         const lassoBox = Box.from(this.init, this.term);
         const filtered = [] as ViewElement[];
-        for (const ve of interactables) {
+        for (const ve of interactables.filter(el => el.interactMode === "activation")) {
             if (ve.shape instanceof Geometry) {
-                const box = ve.shape.getBoundingBox();
-                if (Box.collide(box, lassoBox)) {
+                let box = ve.shape.getBoundingBox();
+                // todo find a better way
+                const halfStroke = ve.style().strokeWidth / 2;
+                box[0] -= halfStroke;
+                box[1] -= halfStroke;
+                box[2] += halfStroke * 2;
+                box[3] += halfStroke * 2;
+
+                if (Box.contain(box, lassoBox)) {
                     filtered.push(ve);
                 }
             }
