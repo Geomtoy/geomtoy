@@ -28,6 +28,7 @@ const DISPLAY_DEFAULT_RANGES = {
     minPan: -Maths.pow(2, 44)
 };
 
+//todo add event to `Display`
 export default class Display implements ViewportDescriptor {
     private _renderer: Renderer;
 
