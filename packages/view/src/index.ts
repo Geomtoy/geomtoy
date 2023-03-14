@@ -13,7 +13,6 @@ import ViewElement from "./frontend/ViewElement";
  * @category Frontend
  */
 export { View, SubView, ViewElement };
-export * from "./frontend/ViewEvents";
 
 import Display from "./renderer/Display";
 /**

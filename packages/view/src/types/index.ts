@@ -1,5 +1,27 @@
 import { ViewportDescriptor, FillRule } from "@geomtoy/core";
 
+export const enum ViewElementInteractMode {
+    None = "none",
+    Operation = "operation",
+    Activation = "activation"
+}
+export const enum ViewElementEventType {
+    DragStart = "dragStart", // view.operativeElement / view.activeElements
+    DragEnd = "dragEnd", // view.operativeElement / view.activeElements
+    Activate = "activate", // view.activeElements
+    Deactivate = "deactivate", // view.activeElements
+    Click = "click", // operativeElement
+    Hover = "hover",
+    Unhover = "unhover"
+}
+export interface ViewElementEvent {
+    isTouch: boolean;
+    viewportX: number;
+    viewportY: number;
+    x: number;
+    y: number;
+}
+
 export type StrokeLineJoinType = "bevel" | "miter" | "round";
 export type StrokeLineCapType = "butt" | "round" | "square";
 export type PaintOrderType = "stroke" | "fill";
