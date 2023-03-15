@@ -1,5 +1,5 @@
 import { Geomtoy, Image, SealedShapeArray, SealedShapeObject, Shape, ShapeArray, ShapeObject } from "@geomtoy/core";
-import { Assert, Maths, TransformationMatrix } from "@geomtoy/util";
+import { Assert, Maths, TransformationMatrix, Vector2 } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import type Renderer from "../renderer/Renderer";
 import { Style, ViewElementEventType, ViewElementInteractMode, type ViewElementEvent } from "../types";
@@ -555,9 +555,9 @@ export default class View {
                 }
             } else if (this._touchPointers.length === 2) {
                 this.cursor("default");
-                const [offset1, offset2] = [this._touchPointers[0].offset, this._touchPointers[1].offset];
-                const distance = Maths.hypot(offset2[0] - offset1[0], offset2[1] - offset1[1]);
-                const centerOffset = [(offset2[0] + offset1[0]) / 2, (offset2[1] + offset1[1]) / 2] as [number, number];
+                const offsetVec = Vector2.from(this._touchPointers[0].offset, this._touchPointers[1].offset);
+                const distance = Vector2.magnitude(offsetVec);
+                const centerOffset = Vector2.add(this._touchPointers[0].offset, Vector2.scalarMultiply(offsetVec, 0.5));
 
                 this._zoomingDistance = distance;
                 this._panningOffset = centerOffset;
@@ -695,11 +695,11 @@ export default class View {
         const isTouch = e.pointerType === "touch";
 
         if (isTouch && !this._hasTouch(e.pointerId)) return;
+        const pointerOffset = [e.offsetX, e.offsetY] as [number, number];
+        // We must update touch here, `_rafTick` definitely causes storing of pointer old offset.
+        isTouch && this._updateTouch(e.pointerId, pointerOffset);
 
         this._rafTick(() => {
-            const pointerOffset = [e.offsetX, e.offsetY] as [number, number];
-            isTouch && this._updateTouch(e.pointerId, pointerOffset);
-
             const atOffset = this._getAntiOffset(pointerOffset);
 
             if (this._doLasso) {
@@ -804,9 +804,10 @@ export default class View {
                     this._isPanning = true;
                 } else if (this._isZooming || this._isPanning) {
                     this.cursor("default");
-                    const [offset1, offset2] = [this._touchPointers[0].offset, this._touchPointers[1].offset];
-                    const distance = Maths.hypot(offset2[0] - offset1[0], offset2[1] - offset1[1]);
-                    const centerOffset = [(offset2[0] + offset1[0]) / 2, (offset2[1] + offset1[1]) / 2] as [number, number];
+
+                    const offsetVec = Vector2.from(this._touchPointers[0].offset, this._touchPointers[1].offset);
+                    const distance = Vector2.magnitude(offsetVec);
+                    const centerOffset = Vector2.add(this._touchPointers[0].offset, Vector2.scalarMultiply(offsetVec, 0.5));
 
                     const deltaZoom = distance / this._zoomingDistance;
                     const [deltaX, deltaY] = [centerOffset[0] - this._panningOffset[0], centerOffset[1] - this._panningOffset[1]];
@@ -816,7 +817,7 @@ export default class View {
 
                     const display = this.renderer.display;
                     let zoom = display.zoom * deltaZoom;
-                    zoom = zoom < this.minZoom ? this.minZoom : zoom > this.maxZoom ? this.maxZoom : zoom;
+                    zoom = Maths.clamp(zoom, this.minZoom, this.maxZoom);
 
                     const atOffset = this._getAntiOffset(centerOffset);
                     display.zoom = zoom;
