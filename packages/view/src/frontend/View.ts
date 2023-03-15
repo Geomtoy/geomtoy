@@ -733,7 +733,11 @@ export default class View {
                     this.cursor("move");
                     const [deltaX, deltaY] = [atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]];
                     this._draggingOffset = atOffset;
-                    this._isActiveDrag ? this._activeElements.forEach(el => el.move(deltaX, deltaY)) : this._operativeElement?.move(deltaX, deltaY);
+                    if (this._isActiveDrag) {
+                        this._activeElements.forEach(el => !el.noDrag && el.move(deltaX, deltaY));
+                    } else {
+                        !this._operativeElement?.noDrag && this._operativeElement?.move(deltaX, deltaY);
+                    }
                     // this.requestRender();
                 } else if (this._preparePanning) {
                     this._preparePanning = false;
@@ -787,7 +791,11 @@ export default class View {
                     this.cursor("move");
                     const [deltaX, deltaY] = [atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]];
                     this._draggingOffset = atOffset;
-                    this._isActiveDrag ? this._activeElements.forEach(el => el.move(deltaX, deltaY)) : this._operativeElement?.move(deltaX, deltaY);
+                    if (this._isActiveDrag) {
+                        this._activeElements.forEach(el => !el.noDrag && el.move(deltaX, deltaY));
+                    } else {
+                        !this._operativeElement?.noDrag && this._operativeElement?.move(deltaX, deltaY);
+                    }
                     // this.requestRender();
                 } else if (this._prepareZooming || this._preparePanning) {
                     this._prepareZooming = false;
