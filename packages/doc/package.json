@@ -8,7 +8,7 @@
         "type": "git",
         "url": "https://github.com/mog1347/geomtoy.git"
     },
-    "license": "GPL-3.0-or-later",
+    "license": "MIT",
     "scripts": {
         "doc": "rimraf ./dist && node ./typedoc.js"
     },
