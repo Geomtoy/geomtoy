@@ -19,7 +19,7 @@ export default class Lasso extends Shape {
                 box[2] += halfStroke * 2;
                 box[3] += halfStroke * 2;
 
-                if (Box.contain(box, lassoBox)) {
+                if (Box.contain(lassoBox, box)) {
                     filtered.push(ve);
                 }
             }
