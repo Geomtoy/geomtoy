@@ -1,12 +1,12 @@
 {
-    "name": "@geomtoy/doc",
+    "name": "@geomtoy/docs",
     "version": "0.0.0",
     "description": "A 2D geometry responsive computing, visualizing and interacting library.",
     "author": "Fish Eleven",
-    "homepage": "https://github.com/mog1347/geomtoy.git/#README",
+    "homepage": "https://github.com/Geomtoy/geomtoy.git/#README",
     "repository": {
         "type": "git",
-        "url": "https://github.com/mog1347/geomtoy.git"
+        "url": "https://github.com/Geomtoy/geomtoy.git"
     },
     "license": "MIT",
     "scripts": {

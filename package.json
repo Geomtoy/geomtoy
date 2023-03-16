@@ -20,12 +20,6 @@
             "view": {
                 "scopedName": "@geomtoy/view",
                 "pascalName": "GeomtoyView"
-            },
-            "doc": {
-                "scopedName": "@geomtoy/doc"
-            },
-            "example": {
-                "scopedName": "@geomtoy/example"
             }
         }
     },
