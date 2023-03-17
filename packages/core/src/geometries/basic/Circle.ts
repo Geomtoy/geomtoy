@@ -269,7 +269,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
      * - If `point` is outside `this`, return the tangent lines.
      * - If `point` is not outside `this`, return `[]`.
      */
-    getTangentLinesFromPointOutside(point: [number, number] | Point): [] | [[line: Line, tangentPoint: Point], [line: Line, tangentPoint: Point]] {
+    getTangentLinesFromPoint(point: [number, number] | Point): [] | [[line: Line, tangentPoint: Point], [line: Line, tangentPoint: Point]] {
         if (!this.isPointOutside(point)) return [];
         const ci = getCoordinates(point, "point");
         const cc = this.centerCoordinates;
