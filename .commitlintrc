@@ -10,6 +10,11 @@
             [
                 "sentence-case"
             ]
+        ],
+        "header-max-length":[
+            1,
+            "always",
+            200
         ]
     },
     "prompt": {
