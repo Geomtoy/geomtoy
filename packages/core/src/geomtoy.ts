@@ -1,5 +1,6 @@
 import { Utility } from "@geomtoy/util";
 import EventTarget from "./base/EventTarget";
+import Shape from "./base/Shape";
 import { Options, RecursivePartial } from "./types";
 
 const SCHEDULER_FLUSH_TIMEOUT = 1000; //1000ms
@@ -48,6 +49,7 @@ const optioner = {
 
 const scheduler = {
     callbackMarkMap: new Map<(...args: any) => void, WeakSet<EventTarget>>(),
+    presentShapeSet: new Set<Shape>(),
 
     mark(callback: (...args: any) => void, context: EventTarget) {
         if (!this.callbackMarkMap.has(callback)) this.callbackMarkMap.set(callback, new WeakSet());
@@ -65,13 +67,21 @@ const scheduler = {
         this.callbackMarkMap.clear();
     },
 
+    record(et: EventTarget) {
+        if (et instanceof Shape) this.presentShapeSet.add(et);
+    },
+    clearRecord() {
+        this.presentShapeSet.clear();
+    },
+
     // three queues
     // - Internal tasks that complete the entire computing process, and are executed and cleared on every tick.
     internalQueue: [] as (() => void)[],
     // - External "one-shot" tasks, and are executed and cleared in the next tick.
     externalQueueNext: [] as (() => void)[],
+    externalQueueNextAlt: [] as (() => void)[],
     // - External tasks that are always executed on every tick and are never cleared.
-    externalQueueAll: [] as (() => void)[],
+    externalQueueAll: [] as ((presentShapeSet: Set<Shape>) => void)[],
 
     flushed: false,
 
@@ -93,17 +103,20 @@ const scheduler = {
             }
             this.clearMark();
 
-            for (const fn of [...this.externalQueueNext]) fn();
-            this.externalQueueNext = [];
+            for (const fn of [...this.externalQueueAll]) fn(this.presentShapeSet);
+            this.clearRecord();
 
-            for (const fn of [...this.externalQueueAll]) fn();
+            [this.externalQueueNextAlt, this.externalQueueNext] = [this.externalQueueNext, this.externalQueueNextAlt];
+            while (this.externalQueueNextAlt.length !== 0) {
+                this.externalQueueNextAlt.shift()!();
+            }
+
             this.flushed = false;
         });
     },
 
     queue(fn: () => void) {
         this.internalQueue.push(fn);
-        if (!this.flushed) this.flushQueue();
     },
     tick() {
         if (!this.flushed) this.flushQueue();
@@ -111,16 +124,14 @@ const scheduler = {
     nextTick(fn: () => void) {
         if (this.externalQueueNext.includes(fn)) return;
         this.externalQueueNext.push(fn);
-        if (!this.flushed) this.flushQueue();
     },
-    allTick(fn: () => void, remove = false) {
+    allTick(fn: (currentEventTargets: Set<EventTarget>) => void, remove = false) {
         const index = this.externalQueueAll.indexOf(fn);
         if (index !== -1) {
             if (remove) this.externalQueueAll.splice(index, 1);
             return;
         }
         this.externalQueueAll.push(fn);
-        if (!this.flushed) this.flushQueue();
     }
 };
 

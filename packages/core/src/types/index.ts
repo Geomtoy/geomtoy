@@ -1,4 +1,5 @@
 import type EventTarget from "../base/EventTarget";
+import type Shape from "../base/Shape";
 import type SegmentWithFill from "../boolean-operation/SegmentWithFill";
 import type EventObject from "../event/EventObject";
 import type Arc from "../geometries/basic/Arc";
@@ -84,6 +85,10 @@ export interface DynamicEventTargetConstructor<T extends { [key: string]: any }>
 // #region Shape
 export type WindingDirection = 1 /**for positive**/ | -1 /**for negative**/ | 0 /**for undetermined**/;
 export type FillRule = "nonzero" | "evenodd";
+
+export interface ParentShape {
+    get items(): Shape[] | { [key: string]: Shape };
+}
 
 export interface ClosedGeometry {
     getLength(): number;

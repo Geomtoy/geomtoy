@@ -1,4 +1,4 @@
-import { Geomtoy, Image, SealedShapeArray, SealedShapeObject, Shape, ShapeArray, ShapeObject } from "@geomtoy/core";
+import { EventTarget, Geomtoy, Image, ParentShape, SealedShapeArray, SealedShapeObject, Shape, ShapeArray, ShapeObject } from "@geomtoy/core";
 import { Assert, Maths, TransformationMatrix, Vector2 } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import type Renderer from "../renderer/Renderer";
@@ -10,6 +10,9 @@ import { VE_EVENT_HANDLERS_SYMBOL, VE_SUB_VIEW_SYMBOL, VE_VIEW_SYMBOL } from "./
 
 function viewElementEvent(isTouch: boolean, viewportX: number, viewportY: number, x: number, y: number) {
     return { isTouch, viewportX, viewportY, x, y } as ViewElementEvent;
+}
+function isParentShape(v: Shape): v is Shape & ParentShape {
+    return "items" in v;
 }
 
 const VIEW_DEFAULTS = {
@@ -258,7 +261,7 @@ export default class View {
     }
 
     requestRender() {
-        Geomtoy.tick();
+        Promise.resolve().then(this._renderFunc);
     }
 
     private _rafTick(callback: (...args: any[]) => void) {
@@ -1102,70 +1105,99 @@ export default class View {
         return this;
     }
 
-    private _renderFunc = function (this: View) {
-        const renderer = this.renderer;
-        if (this._renderables.length === 0) renderer.clear();
-
-        this._renderables.forEach(el => {
-            if (el.shape instanceof Image) {
-                const imageSource = el.shape.source;
-                renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);
+    private _shouldRender(presentShapeSet: Set<EventTarget>) {
+        function _shapeDeepIn(shape: Shape & ParentShape): boolean {
+            for (const item of Object.values(shape.items)) {
+                if (isParentShape(item)) return _shapeDeepIn(item);
+                if (presentShapeSet.has(item)) return true;
             }
-            if (el.shape instanceof ShapeArray || el.shape instanceof SealedShapeArray) {
-                ((el.shape.items as Shape[]).filter(shape => shape instanceof Image) as Image[]).forEach(image => {
-                    const imageSource = image.source;
-                    renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);
-                });
-            }
-            if (el.shape instanceof ShapeObject || el.shape instanceof SealedShapeObject) {
-                ((Object.values(el.shape.items) as Shape[]).filter(shape => shape instanceof Image) as Image[]).forEach(image => {
-                    const imageSource = image.source;
-                    renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);
-                });
-            }
-
-            const s = el.style();
-            const hs = el.hoverStyle();
-            const cs = el.clickStyle();
-            const as = el.activeStyle();
-
-            const hover = this._hoverElement === el;
-            const click = this._operativeElement === el;
-            const active = this._activeElements.includes(el);
-            // `active` || `click` >`hover`
-
-            renderer.paintOrder(s.paintOrder);
-            renderer.noFill(s.noFill);
-            renderer.fill((active && as.fill) || (click && cs.fill) || (hover && hs.fill) || s.fill);
-
-            renderer.noStroke(s.noStroke);
-            renderer.stroke((active && as.stroke) || (click && cs.stroke) || (hover && hs.stroke) || s.stroke);
-            renderer.strokeWidth((active && as.strokeWidth) || (click && cs.strokeWidth) || (hover && hs.strokeWidth) || s.strokeWidth);
-
-            renderer.strokeDash(s.strokeDash);
-            renderer.strokeDashOffset(s.strokeDashOffset);
-            renderer.strokeLineJoin(s.strokeLineJoin);
-            renderer.strokeLineCap(s.strokeLineCap);
-            renderer.strokeMiterLimit(s.strokeMiterLimit);
-
-            const onTop = (hover && this.hoverForemost) || (click && this.clickForemost) || (active && this.activeForemost);
-            el.paths = renderer.draw(el.shape, onTop);
-        });
-
-        if (this._lassoing) {
-            renderer.paintOrder(VIEW_DEFAULTS.lassoStyle.paintOrder);
-            renderer.noFill(VIEW_DEFAULTS.lassoStyle.noFill);
-            renderer.fill(VIEW_DEFAULTS.lassoStyle.fill);
-
-            renderer.noStroke(VIEW_DEFAULTS.lassoStyle.noStroke);
-            renderer.stroke(VIEW_DEFAULTS.lassoStyle.stroke);
-            renderer.strokeWidth(VIEW_DEFAULTS.lassoStyle.strokeWidth);
-            renderer.strokeDash(VIEW_DEFAULTS.lassoStyle.strokeDash);
-            renderer.strokeDashOffset(VIEW_DEFAULTS.lassoStyle.strokeDashOffset);
-            renderer.strokeLineJoin(VIEW_DEFAULTS.lassoStyle.strokeLineJoin);
-            renderer.strokeLineCap(VIEW_DEFAULTS.lassoStyle.strokeLineCap);
-            renderer.strokeMiterLimit(VIEW_DEFAULTS.lassoStyle.strokeMiterLimit);
-            renderer.draw(this._lasso, true);
+            return false;
         }
+        for (const ve of this._renderables) {
+            if (isParentShape(ve.shape)) {
+                if (_shapeDeepIn(ve.shape)) return true;
+            } else {
+                if (presentShapeSet.has(ve.shape)) return true;
+            }
+        }
+        return false;
+    }
+
+    private _renderLasso() {
+        const renderer = this.renderer;
+        renderer.paintOrder(VIEW_DEFAULTS.lassoStyle.paintOrder);
+        renderer.noFill(VIEW_DEFAULTS.lassoStyle.noFill);
+        renderer.fill(VIEW_DEFAULTS.lassoStyle.fill);
+
+        renderer.noStroke(VIEW_DEFAULTS.lassoStyle.noStroke);
+        renderer.stroke(VIEW_DEFAULTS.lassoStyle.stroke);
+        renderer.strokeWidth(VIEW_DEFAULTS.lassoStyle.strokeWidth);
+        renderer.strokeDash(VIEW_DEFAULTS.lassoStyle.strokeDash);
+        renderer.strokeDashOffset(VIEW_DEFAULTS.lassoStyle.strokeDashOffset);
+        renderer.strokeLineJoin(VIEW_DEFAULTS.lassoStyle.strokeLineJoin);
+        renderer.strokeLineCap(VIEW_DEFAULTS.lassoStyle.strokeLineCap);
+        renderer.strokeMiterLimit(VIEW_DEFAULTS.lassoStyle.strokeMiterLimit);
+        renderer.draw(this._lasso, true);
+    }
+
+    private _renderFunc = function (this: View, presentShapeSet: void | Set<EventTarget>) {
+        const renderer = this.renderer;
+        if (this._renderables.length === 0) {
+            this._lassoing ? this._renderLasso() : renderer.clear();
+            return;
+        }
+        // If `presentShapeSet` is undefined, then the render request is not from Geomtoy but the view interaction.
+        // We have to sift through the incoming changed shapes to see if any of them are included in our renderables.
+        const shouldRender = presentShapeSet ? this._shouldRender(presentShapeSet) : true;
+
+        if (shouldRender) {
+            this._renderables.forEach(el => {
+                if (el.shape instanceof Image) {
+                    const imageSource = el.shape.source;
+                    renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);
+                }
+                if (el.shape instanceof ShapeArray || el.shape instanceof SealedShapeArray) {
+                    ((el.shape.items as Shape[]).filter(shape => shape instanceof Image) as Image[]).forEach(image => {
+                        const imageSource = image.source;
+                        renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);
+                    });
+                }
+                if (el.shape instanceof ShapeObject || el.shape instanceof SealedShapeObject) {
+                    ((Object.values(el.shape.items) as Shape[]).filter(shape => shape instanceof Image) as Image[]).forEach(image => {
+                        const imageSource = image.source;
+                        renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);
+                    });
+                }
+
+                const s = el.style();
+                const hs = el.hoverStyle();
+                const cs = el.clickStyle();
+                const as = el.activeStyle();
+
+                const hover = this._hoverElement === el;
+                const click = this._operativeElement === el;
+                const active = this._activeElements.includes(el);
+                // `active` || `click` >`hover`
+
+                renderer.paintOrder(s.paintOrder);
+                renderer.noFill(s.noFill);
+                renderer.fill((active && as.fill) || (click && cs.fill) || (hover && hs.fill) || s.fill);
+
+                renderer.noStroke(s.noStroke);
+                renderer.stroke((active && as.stroke) || (click && cs.stroke) || (hover && hs.stroke) || s.stroke);
+                renderer.strokeWidth((active && as.strokeWidth) || (click && cs.strokeWidth) || (hover && hs.strokeWidth) || s.strokeWidth);
+
+                renderer.strokeDash(s.strokeDash);
+                renderer.strokeDashOffset(s.strokeDashOffset);
+                renderer.strokeLineJoin(s.strokeLineJoin);
+                renderer.strokeLineCap(s.strokeLineCap);
+                renderer.strokeMiterLimit(s.strokeMiterLimit);
+
+                const onTop = (hover && this.hoverForemost) || (click && this.clickForemost) || (active && this.activeForemost);
+                el.paths = renderer.draw(el.shape, onTop);
+            });
+        }
+
+        if (this._lassoing) this._renderLasso();
     }.bind(this);
 }

@@ -251,6 +251,7 @@ export default abstract class EventTarget extends BaseObject {
             this._eventCache.clear();
             this._eventScheduled = false;
         });
+        scheduler.tick();
     }
 
     // @internal
@@ -265,6 +266,8 @@ export default abstract class EventTarget extends BaseObject {
     protected trigger_<T extends EventTarget>(this: T, eso: EventSourceObject<T>) {
         // change the state when event happens
         this[STATE_IDENTIFIER_SYMBOL] = eso.timestamp;
+
+        scheduler.record(this);
 
         // We are muted, so do nothing
         if (this._muted) return this;
