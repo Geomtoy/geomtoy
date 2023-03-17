@@ -125,7 +125,7 @@ const scheduler = {
         if (this.externalQueueNext.includes(fn)) return;
         this.externalQueueNext.push(fn);
     },
-    allTick(fn: (currentEventTargets: Set<EventTarget>) => void, remove = false) {
+    allTick(fn: (presentShapeSet: Set<Shape>) => void, remove = false) {
         const index = this.externalQueueAll.indexOf(fn);
         if (index !== -1) {
             if (remove) this.externalQueueAll.splice(index, 1);

@@ -1,4 +1,4 @@
-import { EventTarget, Geomtoy, Image, ParentShape, SealedShapeArray, SealedShapeObject, Shape, ShapeArray, ShapeObject } from "@geomtoy/core";
+import { Geomtoy, Image, ParentShape, SealedShapeArray, SealedShapeObject, Shape, ShapeArray, ShapeObject } from "@geomtoy/core";
 import { Assert, Maths, TransformationMatrix, Vector2 } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import type Renderer from "../renderer/Renderer";
@@ -260,8 +260,14 @@ export default class View {
         }
     }
 
+    private _requestRenderFlushed = false;
     requestRender() {
-        Promise.resolve().then(this._renderFunc);
+        if (this._requestRenderFlushed) return;
+        this._requestRenderFlushed = true;
+        Promise.resolve().then(() => {
+            this._renderFunc();
+            this._requestRenderFlushed = false;
+        });
     }
 
     private _rafTick(callback: (...args: any[]) => void) {
@@ -741,7 +747,6 @@ export default class View {
                     } else {
                         !this._operativeElement?.noDrag && this._operativeElement?.move(deltaX, deltaY);
                     }
-                    // this.requestRender();
                 } else if (this._preparePanning) {
                     this._preparePanning = false;
                     this._isPanning = true;
@@ -799,7 +804,6 @@ export default class View {
                     } else {
                         !this._operativeElement?.noDrag && this._operativeElement?.move(deltaX, deltaY);
                     }
-                    // this.requestRender();
                 } else if (this._prepareZooming || this._preparePanning) {
                     this._prepareZooming = false;
                     this._preparePanning = false;
@@ -1105,7 +1109,7 @@ export default class View {
         return this;
     }
 
-    private _shouldRender(presentShapeSet: Set<EventTarget>) {
+    private _shouldRender(presentShapeSet: Set<Shape>) {
         function _shapeDeepIn(shape: Shape & ParentShape): boolean {
             for (const item of Object.values(shape.items)) {
                 if (isParentShape(item)) return _shapeDeepIn(item);
@@ -1140,7 +1144,7 @@ export default class View {
         renderer.draw(this._lasso, true);
     }
 
-    private _renderFunc = function (this: View, presentShapeSet: void | Set<EventTarget>) {
+    private _renderFunc = function (this: View, presentShapeSet: void | Set<Shape>) {
         const renderer = this.renderer;
         if (this._renderables.length === 0) {
             this._lassoing ? this._renderLasso() : renderer.clear();
