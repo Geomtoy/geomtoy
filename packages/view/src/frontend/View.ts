@@ -135,7 +135,7 @@ export default class View {
      * The `activeElements` modified not by the user interaction(`activate`, `deactivate` etc.) does not dispatch an event.
      */
     /**
-     * Active mode:
+     * Activation mode:
      *
      * `numerous`:(This requires a modifier key to do multiple activating, so it' not suitable for touch devices.)
      * - Click on a inactive element to activate it.
@@ -152,12 +152,12 @@ export default class View {
      * - Click on another inactive element will activate the another element and keep current active elements.
      * - Click on a blank area will deactivate all active elements.
      */
-    activeMode: "numerous" | "continuous" = "continuous";
+    activationMode: "numerous" | "continuous" = "continuous";
     modifierKey: "Alt" | "Shift" | "Control" = "Shift";
     // todo
-    // autoSwitchActiveMode:
-    // `numerous` does not suitable on touch devices, so `activeMode` will automatically switches to `continuous` if on touch devices,
-    //  while if we are on PCs, `activeMode` will automatically switches to `numerous`.
+    // autoSwitchActivationMode:
+    // `numerous` does not suitable on touch devices, so `activationMode` will automatically switches to `continuous` if on touch devices,
+    //  while if we are on PCs, `activationMode` will automatically switches to `numerous`.
 
     get minZoom() {
         return this._minZoom;
@@ -425,7 +425,7 @@ export default class View {
                 // activeElements
                 if (this._interactables[foundIndex].interactMode === ViewElementInteractMode.Activation) {
                     // continuous
-                    if (this.activeMode === "continuous") {
+                    if (this.activationMode === "continuous") {
                         if (!this._activeElements.includes(this._interactables[foundIndex])) {
                             this._activateInternal(this._interactables[foundIndex]);
                             this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, vee);
@@ -438,7 +438,7 @@ export default class View {
                         this._prepareDragging = true;
                     }
                     // numerous
-                    if (this.activeMode === "numerous") {
+                    if (this.activationMode === "numerous") {
                         // with modifier key
                         if (e.getModifierState(this.modifierKey)) {
                             if (!this._activeElements.includes(this._interactables[foundIndex])) {
@@ -498,7 +498,7 @@ export default class View {
                     // activeElements
                     if (this._interactables[foundIndex].interactMode === ViewElementInteractMode.Activation) {
                         // continuous
-                        if (this.activeMode === "continuous") {
+                        if (this.activationMode === "continuous") {
                             if (!this._activeElements.includes(this._interactables[foundIndex])) {
                                 this._activateInternal(this._interactables[foundIndex]);
                                 this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, vee);
@@ -511,7 +511,7 @@ export default class View {
                             this._prepareDragging = true;
                         }
                         // numerous
-                        if (this.activeMode === "numerous") {
+                        if (this.activationMode === "numerous") {
                             // with modifier key, a touch device can also has a physical keyboard.
                             if (e.getModifierState(this.modifierKey)) {
                                 if (!this._activeElements.includes(this._interactables[foundIndex])) {
