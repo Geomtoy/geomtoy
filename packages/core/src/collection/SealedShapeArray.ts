@@ -1,9 +1,9 @@
 import Shape from "../base/Shape";
 import Graphics from "../graphics";
-import { ViewportDescriptor } from "../types";
+import type { ParentShape, ViewportDescriptor } from "../types";
 import { initSealedArrayProxy } from "./helper";
 
-export default class SealedShapeArray<T extends Shape[]> extends Shape {
+export default class SealedShapeArray<T extends Shape[]> extends Shape implements ParentShape {
     private _items: [...T];
     private _itemsProxy!: [...T];
 
@@ -14,7 +14,7 @@ export default class SealedShapeArray<T extends Shape[]> extends Shape {
     }
 
     static override events = {
-        itemChanged: "itemChange"
+        itemChanged: "itemChange" as const
     };
 
     get items() {

@@ -2,11 +2,11 @@ import { Box } from "@geomtoy/util";
 import Geometry from "../base/Geometry";
 import Graphics from "../graphics";
 import Transformation from "../transformation";
-import { ViewportDescriptor } from "../types";
+import type { ParentShape, ViewportDescriptor } from "../types";
 import GeometryArray from "./GeometryArray";
 import { initSealedArrayProxy } from "./helper";
 
-export default class SealedGeometryArray<T extends Geometry[]> extends Geometry {
+export default class SealedGeometryArray<T extends Geometry[]> extends Geometry implements ParentShape {
     private _items: [...T];
     private _itemsProxy!: [...T];
 
@@ -17,7 +17,7 @@ export default class SealedGeometryArray<T extends Geometry[]> extends Geometry 
     }
 
     static override events = {
-        itemChanged: "itemChange"
+        itemChanged: "itemChange" as const
     };
 
     get items() {

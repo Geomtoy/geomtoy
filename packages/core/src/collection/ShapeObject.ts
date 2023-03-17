@@ -2,10 +2,10 @@ import { Utility } from "@geomtoy/util";
 import Shape from "../base/Shape";
 import EventSourceObject from "../event/EventSourceObject";
 import Graphics from "../graphics";
-import { ViewportDescriptor } from "../types";
+import type { ParentShape, ViewportDescriptor } from "../types";
 import { initObjectProxy } from "./helper";
 
-export default class ShapeObject<T extends Shape> extends Shape {
+export default class ShapeObject<T extends Shape> extends Shape implements ParentShape {
     private _items: { [key: string]: T } = {};
     private _itemsProxy!: { [key: string]: T };
 
@@ -15,10 +15,10 @@ export default class ShapeObject<T extends Shape> extends Shape {
         this._initProxy();
     }
     static override events = {
-        itemsReset: "reset",
-        itemChanged: "itemChange",
-        itemAdded: "itemAdd",
-        itemRemoved: "itemRemove"
+        itemsReset: "reset" as const,
+        itemChanged: "itemChange" as const,
+        itemAdded: "itemAdd" as const,
+        itemRemoved: "itemRemove" as const
     };
     private _setItems(value: { [key: string]: T }) {
         if (!Utility.isEqualTo(this._items, value)) this.trigger_(new EventSourceObject(this, ShapeObject.events.itemsReset));

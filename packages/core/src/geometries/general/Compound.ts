@@ -14,11 +14,11 @@ import { statedWithBoolean } from "../../misc/decor-cache";
 import { getCoordinates } from "../../misc/point-like";
 import { parseSvgPath } from "../../misc/svg-path";
 import Transformation from "../../transformation";
-import { FillRule, ViewportDescriptor } from "../../types";
+import type { FillRule, ParentShape, ViewportDescriptor } from "../../types";
 import Path from "./Path";
 import Polygon from "./Polygon";
 
-export default class Compound extends Geometry {
+export default class Compound extends Geometry implements ParentShape {
     private _fillRule: FillRule = "nonzero";
     private _items: (Path | Polygon)[] = [];
 

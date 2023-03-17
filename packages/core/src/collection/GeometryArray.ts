@@ -3,11 +3,11 @@ import Geometry from "../base/Geometry";
 import EventSourceObject from "../event/EventSourceObject";
 import Graphics from "../graphics";
 import Transformation from "../transformation";
-import { ViewportDescriptor } from "../types";
+import type { ParentShape, ViewportDescriptor } from "../types";
 import { initArrayProxy } from "./helper";
 import ShapeArray from "./ShapeArray";
 
-export default class GeometryArray<T extends Geometry> extends Geometry {
+export default class GeometryArray<T extends Geometry> extends Geometry implements ParentShape {
     private _items: T[] = [];
     private _itemsProxy!: T[];
 
@@ -17,10 +17,10 @@ export default class GeometryArray<T extends Geometry> extends Geometry {
         this._initProxy();
     }
     static override events = {
-        itemsReset: "reset",
-        itemChanged: "itemChange",
-        itemAdded: "itemAdd",
-        itemRemoved: "itemRemove"
+        itemsReset: "reset" as const,
+        itemChanged: "itemChange" as const,
+        itemAdded: "itemAdd" as const,
+        itemRemoved: "itemRemove" as const
     };
     private _setItems(value: T[]) {
         if (!Utility.isEqualTo(this._items, value)) this.trigger_(new EventSourceObject(this, ShapeArray.events.itemsReset));
