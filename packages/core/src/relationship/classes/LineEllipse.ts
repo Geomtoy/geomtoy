@@ -79,7 +79,7 @@ export default class LineEllipse extends BaseRelationship {
             let x = px1 * cosTheta + px2 * sinTheta + px3;
             let y = py1 * cosTheta + py2 * sinTheta + py3;
             //lower the calculation error
-            [x, y] = this.geometry1.getClosestPointFrom([x, y])[0].coordinates;
+            [x, y] = this.geometry1.getClosestPointFromPoint([x, y])[0].coordinates;
 
             const a = Angle.simplify(Maths.atan2(sinTheta, cosTheta));
 

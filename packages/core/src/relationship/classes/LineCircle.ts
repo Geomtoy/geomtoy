@@ -23,7 +23,7 @@ export default class LineCircle extends BaseRelationship {
         m: number; // multiplicity
     }[] {
         const { radius: r, centerCoordinates: cc } = this.geometry2;
-        const pc = this.geometry1.getClosestPointFrom(cc)[0].coordinates;
+        const pc = this.geometry1.getClosestPointFromPoint(cc)[0].coordinates;
         const sd = Vector2.squaredMagnitude(Vector2.from(cc, pc));
         const r2 = r ** 2;
         const epsilon = optioner.options.epsilon;

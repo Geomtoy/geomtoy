@@ -169,7 +169,7 @@ export default class Inversion extends EventTarget {
         // The inversion center is not on `line`, then we get a circle, and the inversion center is on this circle.
         const cc = this.centerCoordinates;
         const power = this.power;
-        const c1 = line.getClosestPointFrom(cc)[0].coordinates;
+        const c1 = line.getClosestPointFromPoint(cc)[0].coordinates;
         const v1 = Vector2.from(cc, c1);
         const d = Vector2.magnitude(v1);
         const angle = Vector2.angle(v1);

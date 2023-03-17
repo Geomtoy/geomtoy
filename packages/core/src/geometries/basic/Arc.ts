@@ -547,7 +547,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     }
 
     @validGeometryArguments
-    getClosestPointFrom(point: [number, number] | Point) {
+    getClosestPointFromPoint(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         const [cx, cy] = this.getCenterPoint().coordinates;
         const [sa, ea] = this.getStartEndAngles();
@@ -562,7 +562,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const fn = this.getParametricEquation();
 
         if (cx === x && cy === y && rx === ry) {
-            return [new Point(fn(sa)), rx] as [point: Point, distance: number]; // circle and at centerPoint
+            return [new Point(fn(sa)), rx2] as [point: Point, distanceSquare: number]; // circle and at centerPoint
         }
 
         let tPoly = [
@@ -591,7 +591,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
                 minA = a;
             }
         });
-        return [new Point(fn(minA)), Maths.sqrt(minSd)] as [point: Point, distance: number];
+        return [new Point(fn(minA)), minSd] as [point: Point, distanceSquare: number];
     }
 
     /**

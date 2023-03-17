@@ -395,7 +395,7 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
      * Get the closest point on quadratic bezier `this` from point `point`.
      * @param point
      */
-    getClosestPointFrom(point: [number, number] | Point) {
+    getClosestPointFromPoint(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         const [polyX, polyY] = this.getPolynomial();
         const fn = this.getParametricEquation();
@@ -419,7 +419,7 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
                 minT = t;
             }
         });
-        return [new Point(fn(minT)), Maths.sqrt(minSd)] as [point: Point, distance: number];
+        return [new Point(fn(minT)), minSd] as [point: Point, distanceSquare: number];
     }
 
     private _clampTime(t: number, p: string) {

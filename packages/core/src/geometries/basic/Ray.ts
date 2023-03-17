@@ -171,7 +171,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
      * Returns the closest point(the foot of the perpendicular) on line `this` from point `point`.
      * @param point
      */
-    getClosestPointFrom(point: [number, number] | Point) {
+    getClosestPointFromPoint(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const co = this.coordinates;
         const v = Vector2.from(co, c);
@@ -181,8 +181,8 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
 
         const vv = Vector2.from2(this._angle, dp);
         const p = Vector2.add(co, vv);
-        const d = Vector2.magnitude(Vector2.from(c, p));
-        return [new Point(p), d] as [point: Point, distance: number];
+        const sd = Vector2.squaredMagnitude(Vector2.from(c, p));
+        return [new Point(p), sd] as [point: Point, distanceSquare: number];
     }
 
     apply(transformation: Transformation) {

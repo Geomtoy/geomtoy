@@ -26,7 +26,7 @@ export default class SweepLine {
             if (Coordinates.isEqualTo(event.coordinates, node.data.coordinates, epsilon)) {
                 return event.compareQuickY(node.data) >= 0;
             } else {
-                const p = node.data.mono.segment.getClosestPointFrom(event.coordinates)[0];
+                const p = node.data.mono.segment.getClosestPointFromPoint(event.coordinates)[0];
                 return event.coordinates[1] >= p.coordinates[1];
             }
         });

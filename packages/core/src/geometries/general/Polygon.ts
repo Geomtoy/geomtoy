@@ -201,8 +201,25 @@ export default class Polygon extends Geometry {
         return this._vertices[index]?.id ?? "";
     }
 
-    // todo
-    // getClosestPointFrom()
+    /**
+     * Get the closest point on polygon `this` from point `point`.
+     * @param point
+     */
+    @validGeometryArguments
+    getClosestPointFromPoint(point: [number, number] | Point) {
+        const c = getCoordinates(point, "point");
+        let minPoint = new Point();
+        let minSd = Infinity;
+
+        for (const seg of this.getSegments(true)) {
+            const [p, sd] = seg.getClosestPointFromPoint(c);
+            if (sd < minSd) {
+                minPoint = p;
+                minSd = sd;
+            }
+        }
+        return [minPoint, minSd] as [point: Point, distanceSquare: number];
+    }
 
     // #region Segment
     /**

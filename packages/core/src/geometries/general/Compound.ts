@@ -17,6 +17,7 @@ import Transformation from "../../transformation";
 import type { FillRule, ParentShape, ViewportDescriptor } from "../../types";
 import Path from "./Path";
 import Polygon from "./Polygon";
+import { validGeometryArguments } from "../../misc/decor-geometry";
 
 export default class Compound extends Geometry implements ParentShape {
     private _fillRule: FillRule = "nonzero";
@@ -95,8 +96,25 @@ export default class Compound extends Geometry implements ParentShape {
         return this;
     }
 
-    // todo
-    // getClosestPointFrom()
+    /**
+     * Get the closest point on compound `this` from point `point`.
+     * @param point
+     */
+    @validGeometryArguments
+    getClosestPointFromPoint(point: [number, number] | Point) {
+        const c = getCoordinates(point, "point");
+        let minPoint = new Point();
+        let minSd = Infinity;
+
+        for (const seg of this.getSegments(true)) {
+            const [p, sd] = seg.getClosestPointFromPoint(c);
+            if (sd < minSd) {
+                minPoint = p;
+                minSd = sd;
+            }
+        }
+        return [minPoint, minSd] as [point: Point, distanceSquare: number];
+    }
 
     @statedWithBoolean(false, false)
     getSegments(clean = false, assumeClosed = false) {

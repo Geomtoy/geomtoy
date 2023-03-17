@@ -367,7 +367,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     }
 
     @validGeometryArguments
-    getClosestPointFrom(point: [number, number] | Point) {
+    getClosestPointFromPoint(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         const { centerX: cx, centerY: cy, rotation: phi, radiusX: rx, radiusY: ry } = this;
         const cosPhi = Maths.cos(phi);
@@ -405,7 +405,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
                 minA = a;
             }
         });
-        return [new Point(fn(minA)), Maths.sqrt(minSd)] as [point: Point, distance: number];
+        return [new Point(fn(minA)), minSd] as [point: Point, distanceSquare: number];
     }
 
     move(deltaX: number, deltaY: number) {

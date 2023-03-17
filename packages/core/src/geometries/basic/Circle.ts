@@ -230,14 +230,14 @@ export default class Circle extends Geometry implements ClosedGeometry {
         return Maths.lessThan(sd, sr, optioner.options.epsilon);
     }
 
-    getClosestPointFrom(point: [number, number] | Point) {
+    getClosestPointFromPoint(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const { centerCoordinates: cc, _radius: r } = this;
         // if `point` is exactly the same as the `centerPoint`, then zero vector, then angle 0.
         const v = Vector2.from(cc, c);
         const angle = Vector2.angle(v);
         const distance = Vector2.magnitude(v) - r;
-        return [this.getPointAtAngle(angle), distance] as [point: Point, distance: number];
+        return [this.getPointAtAngle(angle), distance ** 2] as [point: Point, distanceSquare: number];
     }
 
     /**
@@ -416,7 +416,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
             const circle = (inverse1IsLine ? inverse2 : inverse1) as Circle;
             const line = (inverse1IsLine ? inverse1 : inverse2) as Line;
             const cc = circle.centerCoordinates;
-            const cp = line.getClosestPointFrom(cc)[0].coordinates;
+            const cp = line.getClosestPointFromPoint(cc)[0].coordinates;
 
             let angles: number[];
             if (circle.isPointOn(cp)) {

@@ -331,14 +331,14 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
      * Returns the closest point(the foot of the perpendicular) on line `this` from point `point`.
      * @param point
      */
-    getClosestPointFrom(point: [number, number] | Point) {
+    getClosestPointFromPoint(point: [number, number] | Point) {
         const [a, b, c] = this.getImplicitFunctionCoefs();
         const [x, y] = getCoordinates(point, "point");
         const num = -(a * x + b * y + c);
         const den = a ** 2 + b ** 2;
         const r = num / den;
         const dist = Maths.abs(num) / Maths.sqrt(den);
-        return [new Point(r * a + x, r * b + y), dist] as [point: Point, distance: number];
+        return [new Point(r * a + x, r * b + y), dist ** 2] as [point: Point, distanceSquare: number];
     }
     /**
      * If line `this` is parallel to line `line`, then return the distance between them, otherwise return NaN.
