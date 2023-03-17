@@ -148,8 +148,8 @@ export default class ViewElement<T extends Shape = Shape> {
     }
 
     move(deltaX: number, deltaY: number) {
+        // `this.shape.move` will definitely make Geomtoy enter a new loop and trigger `allTick`, so we don't use `requestRender` here.
         this.shape.move(deltaX, deltaY);
-        (this[VE_VIEW_SYMBOL] ?? this[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL])?.requestRender();
     }
 
     style(): Style;
