@@ -268,7 +268,9 @@ export default class CanvasRenderer extends Renderer {
     }
 
     clear() {
-        this._initBuffer();
+        this._buffer.canvas.width = this.container.width;
+        this._buffer.canvas.height = this.container.height;
+        this._buffer.setTransform(...this.display.globalTransformation);
         this._flushBuffer();
     }
     draw(shape: Shape, onTop = false) {

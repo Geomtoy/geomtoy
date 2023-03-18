@@ -259,7 +259,7 @@ export default class SvgRenderer extends Renderer {
     private _initBuffer() {}
 
     clear() {
-        this._initBuffer();
+        this._buffer.replaceChildren();
         this._flushBuffer();
     }
     draw(shape: Shape, onTop = false) {
