@@ -71,6 +71,7 @@ export default class Transformation extends EventTarget {
         Assert.isRealNumber(offsetY, "offsetY");
 
         this._setMatrix(TransformationMatrix.translate(offsetX, offsetY));
+        return this;
     }
     /**
      * Add a translation with `offsetX` and `offsetY` to transformation `this`.
