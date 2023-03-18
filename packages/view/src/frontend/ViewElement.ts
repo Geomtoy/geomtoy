@@ -1,6 +1,6 @@
 import type { Shape } from "@geomtoy/core";
 import { Assert, Type, Utility } from "@geomtoy/util";
-import { ViewElementEventType, ViewElementInteractMode, type InteractiveStyle, type PathInfo, type Style, type ViewElementEvent } from "../types";
+import { ViewElementEventType, ViewElementInteractMode, type InteractiveStyle, type PathInfo, type Style, type ViewEventObject } from "../types";
 import type SubView from "./SubView";
 import { SV_VIEW_SYMBOL } from "./SubView";
 import type View from "./View";
@@ -60,7 +60,7 @@ export default class ViewElement<T extends Shape = Shape> {
     private _activeStyle = Utility.cloneDeep(DEFAULT_INTERACTIVE_STYLE);
 
     // @internal
-    [VE_EVENT_HANDLERS_SYMBOL]: { [key: string]: ((e: ViewElementEvent) => void)[] } = {};
+    [VE_EVENT_HANDLERS_SYMBOL]: { [key: string]: ((e: ViewEventObject) => void)[] } = {};
 
     private _shape: T;
     paths: PathInfo[] = [];
@@ -127,12 +127,12 @@ export default class ViewElement<T extends Shape = Shape> {
         }
     }
 
-    on(eventType: ViewElementEventType, callback: (this: this, e: ViewElementEvent) => void) {
+    on(eventType: ViewElementEventType, callback: (this: this, e: ViewEventObject) => void) {
         if (this[VE_EVENT_HANDLERS_SYMBOL][eventType] === undefined) this[VE_EVENT_HANDLERS_SYMBOL][eventType] = [];
         this[VE_EVENT_HANDLERS_SYMBOL][eventType].push(callback);
         return this;
     }
-    off(eventType: ViewElementEventType, callback: (this: this, e: ViewElementEvent) => void) {
+    off(eventType: ViewElementEventType, callback: (this: this, e: ViewEventObject) => void) {
         if (this[VE_EVENT_HANDLERS_SYMBOL][eventType] === undefined) return this;
         const index = this[VE_EVENT_HANDLERS_SYMBOL][eventType].findIndex(h => h === callback);
         this[VE_EVENT_HANDLERS_SYMBOL][eventType].splice(index, 1);

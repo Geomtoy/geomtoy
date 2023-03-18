@@ -2,15 +2,16 @@ import { Geomtoy, Image, ParentShape, SealedShapeArray, SealedShapeObject, Shape
 import { Assert, Maths, TransformationMatrix, Vector2 } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import type Renderer from "../renderer/Renderer";
-import { Style, ViewElementEventType, ViewElementInteractMode, type ViewElementEvent } from "../types";
+import { Style, ViewElementEventType, ViewElementInteractMode, ViewEventType, type ViewEventObject } from "../types";
 import Lasso from "./Lasso";
 import SubView, { SV_VIEW_SYMBOL } from "./SubView";
 import type ViewElement from "./ViewElement";
 import { VE_EVENT_HANDLERS_SYMBOL, VE_SUB_VIEW_SYMBOL, VE_VIEW_SYMBOL } from "./ViewElement";
 
-function viewElementEvent(isTouch: boolean, viewportX: number, viewportY: number, x: number, y: number) {
-    return { isTouch, viewportX, viewportY, x, y } as ViewElementEvent;
+function viewEventObject(isTouch: boolean, viewportX: number, viewportY: number, x: number, y: number) {
+    return { isTouch, viewportX, viewportY, x, y } as ViewEventObject;
 }
+
 function isParentShape(v: Shape): v is Shape & ParentShape {
     return "items" in v;
 }
@@ -215,6 +216,9 @@ export default class View {
     get operativeElement() {
         return this._operativeElement;
     }
+    get isActiveDrag() {
+        return this._isActiveDrag;
+    }
     get hoverElement() {
         return this._hoverElement;
     }
@@ -294,7 +298,34 @@ export default class View {
         this._touchPointers.length = 0;
     }
 
-    private _dispatch(viewElements: (ViewElement | null)[], eventType: ViewElementEventType, object: ViewElementEvent) {
+    private _eventHandlers: { [key: string]: ((e: ViewEventObject) => void)[] } = {};
+
+    on(eventType: ViewEventType, callback: (this: this, e: ViewEventObject) => void) {
+        if (this._eventHandlers[eventType] === undefined) this._eventHandlers[eventType] = [];
+        this._eventHandlers[eventType].push(callback);
+        return this;
+    }
+    off(eventType: ViewEventType, callback: (this: this, e: ViewEventObject) => void) {
+        if (this._eventHandlers[eventType] === undefined) return this;
+        const index = this._eventHandlers[eventType].findIndex(h => h === callback);
+        this._eventHandlers[eventType].splice(index, 1);
+        return this;
+    }
+    clear(eventType?: ViewEventType) {
+        if (eventType === undefined) {
+            this._eventHandlers = {};
+        } else {
+            delete this._eventHandlers[eventType];
+        }
+        return this;
+    }
+
+    private _trigger(eventType: ViewEventType, object: ViewEventObject) {
+        if (this._eventHandlers[eventType] === undefined) return;
+        for (const cb of this._eventHandlers[eventType]) cb.call(this, object);
+    }
+
+    private _dispatch(viewElements: (ViewElement | null)[], eventType: ViewElementEventType, object: ViewEventObject) {
         for (const viewElement of viewElements) {
             if (viewElement === null) continue;
             if (viewElement[VE_EVENT_HANDLERS_SYMBOL][eventType] === undefined) return;
@@ -334,6 +365,30 @@ export default class View {
         return TransformationMatrix.transformCoordinates(this.renderer.display.globalTransformation, antiOffset);
     }
 
+    private readonly _pointerEnterHandler = function (this: View, e: PointerEvent) {
+        const isTouch = e.pointerType === "touch";
+        // this touch is not our touch
+        if (isTouch && !this._hasTouch(e.pointerId)) return;
+        const pointerOffset = [e.offsetX, e.offsetY] as [number, number];
+
+        const atOffset = this._getAntiOffset(pointerOffset);
+        this.cursor = "default";
+        const veo = viewEventObject(isTouch, ...pointerOffset, ...atOffset);
+        this._trigger(ViewEventType.PointerEnter, veo);
+    }.bind(this);
+
+    private readonly _pointerCancelHandler = function (this: View, e: PointerEvent) {
+        const isTouch = e.pointerType === "touch";
+        // this touch is not our touch
+        if (isTouch && !this._hasTouch(e.pointerId)) return;
+        const pointerOffset = [e.offsetX, e.offsetY] as [number, number];
+
+        const atOffset = this._getAntiOffset(pointerOffset);
+        this.cursor = "default";
+        const veo = viewEventObject(isTouch, ...pointerOffset, ...atOffset);
+        this._trigger(ViewEventType.PointerCancel, veo);
+    }.bind(this);
+
     private readonly _pointerLeaveHandler = function (this: View, e: PointerEvent) {
         const isMouse = e.pointerType === "mouse";
         const isTouch = e.pointerType === "touch";
@@ -344,28 +399,33 @@ export default class View {
         isTouch && this._removeTouch(e.pointerId);
 
         const atOffset = this._getAntiOffset(pointerOffset);
-        const vee = viewElementEvent(isTouch, ...pointerOffset, ...atOffset);
+        const veo = viewEventObject(isTouch, ...pointerOffset, ...atOffset);
+        this._trigger(ViewEventType.PointerLeave, veo);
 
         if (isMouse) {
             if (this._isDragging) {
                 this.cursor = "default";
                 this._isDragging = false;
                 if (this._isActiveDrag) {
-                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, vee);
+                    this._trigger(ViewEventType.DragEnd, veo);
+                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, veo);
                 } else {
-                    this._dispatch([this._operativeElement], ViewElementEventType.DragEnd, vee);
+                    const temp = this._operativeElement;
                     this._operativeElement = null;
+                    this._trigger(ViewEventType.DragEnd, veo);
+                    this._dispatch([temp], ViewElementEventType.DragEnd, veo);
                     this.requestRender();
                 }
             } else if (this._prepareDragging) {
+                this.cursor = "default";
                 this._prepareDragging = false;
-                console.warn("[G]How can you make this happen?");
             } else if (this._isPanning) {
                 this.cursor = "default";
                 this._isPanning = false;
+                this._trigger(ViewEventType.PanEnd, veo);
             } else if (this._preparePanning) {
+                this.cursor = "default";
                 this._preparePanning = false;
-                console.warn("[G]How can you make this happen?");
             }
         }
         if (isTouch) {
@@ -373,23 +433,27 @@ export default class View {
                 this.cursor = "default";
                 this._isDragging = false;
                 if (this._isActiveDrag) {
-                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, vee);
+                    this._trigger(ViewEventType.DragEnd, veo);
+                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, veo);
                 } else {
-                    this._dispatch([this._operativeElement], ViewElementEventType.DragEnd, vee);
+                    const temp = this._operativeElement;
                     this._operativeElement = null;
+                    this._trigger(ViewEventType.DragEnd, veo);
+                    this._dispatch([temp], ViewElementEventType.DragEnd, veo);
                     this.requestRender();
                 }
             } else if (this._prepareDragging) {
+                this.cursor = "default";
                 this._prepareDragging = false;
-                console.warn("[G]How can you make this happen?");
             } else if (this._isPanning || this._isZooming) {
                 this._isPanning = false;
                 this._isZooming = false;
+                this._trigger(ViewEventType.ZoomEnd, veo);
+                this._trigger(ViewEventType.PanEnd, veo);
                 this._clearTouch();
             } else if (this._preparePanning || this._prepareZooming) {
                 this._preparePanning = false;
                 this._prepareZooming = false;
-                console.warn("[G]How can you make this happen?");
             }
         }
     }.bind(this);
@@ -404,6 +468,8 @@ export default class View {
         if (isMouse && !e.isPrimary) return;
 
         const atOffset = this._getAntiOffset(pointerOffset);
+        const veo = viewEventObject(isTouch, ...pointerOffset, ...atOffset);
+        this._trigger(ViewEventType.PointerDown, veo);
 
         if (this._doLasso) {
             this.cursor = "crosshair";
@@ -411,8 +477,6 @@ export default class View {
             this._prepareLasso = true;
             return;
         }
-
-        const vee = viewElementEvent(isTouch, ...pointerOffset, ...atOffset);
 
         if (isMouse) {
             const foundIndex = this._interactables.findIndex(el => this._isPointInElement(el, ...atOffset));
@@ -431,7 +495,8 @@ export default class View {
                     if (this.activationMode === "continuous") {
                         if (!this._activeElements.includes(this._interactables[foundIndex])) {
                             this._activateInternal(this._interactables[foundIndex]);
-                            this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, vee);
+                            this._trigger(ViewEventType.Activate, veo);
+                            this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, veo);
                             this.requestRender();
                         } else {
                             this._indActiveElements = [this._interactables[foundIndex]];
@@ -446,11 +511,13 @@ export default class View {
                         if (e.getModifierState(this.modifierKey)) {
                             if (!this._activeElements.includes(this._interactables[foundIndex])) {
                                 this._activateInternal(this._interactables[foundIndex]);
-                                this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, vee);
+                                this._trigger(ViewEventType.Activate, veo);
+                                this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, veo);
                                 this.requestRender();
                             } else {
                                 this._deactivateInternal(this._interactables[foundIndex]);
-                                this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Deactivate, vee);
+                                this._trigger(ViewEventType.Deactivate, veo);
+                                this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Deactivate, veo);
                                 this.requestRender();
                             }
                         }
@@ -460,10 +527,12 @@ export default class View {
                                 if (this._activeElements.length !== 0) {
                                     const temp = [...this._activeElements];
                                     this._activeElements.length = 0;
-                                    this._dispatch(temp, ViewElementEventType.Deactivate, vee);
+                                    this._trigger(ViewEventType.Deactivate, veo);
+                                    this._dispatch(temp, ViewElementEventType.Deactivate, veo);
                                 }
                                 this._activateInternal(this._interactables[foundIndex]);
-                                this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, vee);
+                                this._trigger(ViewEventType.Activate, veo);
+                                this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, veo);
                                 this.requestRender();
                             } else {
                                 this._indActiveElements = this._activeElements.filter(el => el !== this._interactables[foundIndex]);
@@ -480,7 +549,8 @@ export default class View {
                 if (this._activeElements.length !== 0) {
                     const temp = [...this._activeElements];
                     this._activeElements.length = 0;
-                    this._dispatch(temp, ViewElementEventType.Deactivate, vee);
+                    this._trigger(ViewEventType.Deactivate, veo);
+                    this._dispatch(temp, ViewElementEventType.Deactivate, veo);
                     this.requestRender();
                 }
             }
@@ -504,7 +574,8 @@ export default class View {
                         if (this.activationMode === "continuous") {
                             if (!this._activeElements.includes(this._interactables[foundIndex])) {
                                 this._activateInternal(this._interactables[foundIndex]);
-                                this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, vee);
+                                this._trigger(ViewEventType.Activate, veo);
+                                this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, veo);
                                 this.requestRender();
                             } else {
                                 this._indActiveElements = [this._interactables[foundIndex]];
@@ -519,11 +590,13 @@ export default class View {
                             if (e.getModifierState(this.modifierKey)) {
                                 if (!this._activeElements.includes(this._interactables[foundIndex])) {
                                     this._activateInternal(this._interactables[foundIndex]);
-                                    this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, vee);
+                                    this._trigger(ViewEventType.Activate, veo);
+                                    this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, veo);
                                     this.requestRender();
                                 } else {
                                     this._deactivateInternal(this._interactables[foundIndex]);
-                                    this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Deactivate, vee);
+                                    this._trigger(ViewEventType.Deactivate, veo);
+                                    this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Deactivate, veo);
                                     this.requestRender();
                                 }
                             }
@@ -533,10 +606,11 @@ export default class View {
                                     if (this._activeElements.length !== 0) {
                                         const temp = [...this._activeElements];
                                         this._activeElements.length = 0;
-                                        this._dispatch(temp, ViewElementEventType.Deactivate, vee);
+                                        this._trigger(ViewEventType.Deactivate, veo);
+                                        this._dispatch(temp, ViewElementEventType.Deactivate, veo);
                                     }
-
-                                    this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, vee);
+                                    this._trigger(ViewEventType.Activate, veo);
+                                    this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Activate, veo);
                                     this.requestRender();
                                 } else {
                                     this._indActiveElements = this._activeElements.filter(el => el !== this._interactables[foundIndex]);
@@ -551,7 +625,8 @@ export default class View {
                     if (this._activeElements.length !== 0) {
                         const temp = [...this._activeElements];
                         this._activeElements.length = 0;
-                        this._dispatch(temp, ViewElementEventType.Deactivate, vee);
+                        this._trigger(ViewEventType.Deactivate, veo);
+                        this._dispatch(temp, ViewElementEventType.Deactivate, veo);
                         this.requestRender();
                     }
                 }
@@ -570,7 +645,8 @@ export default class View {
                 if (this._activeElements.length !== 0) {
                     const temp = [...this._activeElements];
                     this._activeElements.length = 0;
-                    this._dispatch(temp, ViewElementEventType.Deactivate, vee);
+                    this._trigger(ViewEventType.Deactivate, veo);
+                    this._dispatch(temp, ViewElementEventType.Deactivate, veo);
                     this.requestRender();
                 }
             }
@@ -587,7 +663,8 @@ export default class View {
         isTouch && this._removeTouch(e.pointerId);
 
         const atOffset = this._getAntiOffset(pointerOffset);
-        const vee = viewElementEvent(isTouch, ...pointerOffset, ...atOffset);
+        const veo = viewEventObject(isTouch, ...pointerOffset, ...atOffset);
+        this._trigger(ViewEventType.PointerUp, veo);
 
         if (this._doLasso) {
             this.cursor = "default";
@@ -598,11 +675,13 @@ export default class View {
                 if (this._activeElements.length !== 0) {
                     const temp = [...this._activeElements];
                     this._activeElements.length = 0;
-                    this._dispatch(temp, ViewElementEventType.Deactivate, vee);
+                    this._trigger(ViewEventType.Deactivate, veo);
+                    this._dispatch(temp, ViewElementEventType.Deactivate, veo);
                 }
                 if (hits.length !== 0) {
                     this._activateInternal(...hits);
-                    this._dispatch(hits, ViewElementEventType.Activate, vee);
+                    this._trigger(ViewEventType.Activate, veo);
+                    this._dispatch(hits, ViewElementEventType.Activate, veo);
                 }
                 this.requestRender();
             }
@@ -611,7 +690,8 @@ export default class View {
                 if (this._activeElements.length !== 0) {
                     const temp = [...this._activeElements];
                     this._activeElements.length = 0;
-                    this._dispatch(temp, ViewElementEventType.Deactivate, vee);
+                    this._trigger(ViewEventType.Deactivate, veo);
+                    this._dispatch(temp, ViewElementEventType.Deactivate, veo);
                 }
                 this.requestRender();
             }
@@ -623,10 +703,13 @@ export default class View {
                 this.cursor = "pointer";
                 this._isDragging = false;
                 if (this._isActiveDrag) {
-                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, vee);
+                    this._trigger(ViewEventType.DragEnd, veo);
+                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, veo);
                 } else {
-                    this._dispatch([this._operativeElement], ViewElementEventType.DragEnd, vee);
+                    const temp = this._operativeElement;
                     this._operativeElement = null;
+                    this._trigger(ViewEventType.DragEnd, veo);
+                    this._dispatch([temp], ViewElementEventType.DragEnd, veo);
                     this.requestRender();
                 }
             } else if (this._prepareDragging) {
@@ -635,18 +718,22 @@ export default class View {
                 if (this._isActiveDrag) {
                     if (this._indActiveElements.length !== 0) {
                         this._deactivateInternal(...this._indActiveElements);
-                        this._dispatch(this._indActiveElements, ViewElementEventType.Deactivate, vee);
-                        this.requestRender();
+                        this._trigger(ViewEventType.Deactivate, veo);
+                        this._dispatch(this._indActiveElements, ViewElementEventType.Deactivate, veo);
                         this._indActiveElements.length = 0;
+                        this.requestRender();
                     }
                 } else {
-                    this._dispatch([this._operativeElement], ViewElementEventType.Click, vee);
+                    const temp = this._operativeElement;
                     this._operativeElement = null;
+                    this._trigger(ViewEventType.Click, veo);
+                    this._dispatch([temp], ViewElementEventType.Click, veo);
                     this.requestRender();
                 }
             } else if (this._isPanning) {
                 this.cursor = "default";
                 this._isPanning = false;
+                this._trigger(ViewEventType.PanEnd, veo);
             } else if (this._preparePanning) {
                 this.cursor = "default";
                 this._preparePanning = false;
@@ -657,10 +744,13 @@ export default class View {
                 this.cursor = "pointer";
                 this._isDragging = false;
                 if (this._isActiveDrag) {
-                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, vee);
+                    this._trigger(ViewEventType.DragEnd, veo);
+                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, veo);
                 } else {
-                    this._dispatch([this._operativeElement], ViewElementEventType.DragEnd, vee);
+                    const temp = this._operativeElement;
                     this._operativeElement = null;
+                    this._trigger(ViewEventType.DragEnd, veo);
+                    this._dispatch([temp], ViewElementEventType.DragEnd, veo);
                     this.requestRender();
                 }
             } else if (this._prepareDragging) {
@@ -669,13 +759,16 @@ export default class View {
                 if (this._isActiveDrag) {
                     if (this._indActiveElements.length !== 0) {
                         this._deactivateInternal(...this._indActiveElements);
-                        this._dispatch(this._indActiveElements, ViewElementEventType.Deactivate, vee);
-                        this.requestRender();
+                        this._trigger(ViewEventType.Deactivate, veo);
+                        this._dispatch(this._indActiveElements, ViewElementEventType.Deactivate, veo);
                         this._indActiveElements.length = 0;
+                        this.requestRender();
                     }
                 } else {
-                    this._dispatch([this._operativeElement], ViewElementEventType.Click, vee);
+                    const temp = this._operativeElement;
                     this._operativeElement = null;
+                    this._trigger(ViewEventType.Click, veo);
+                    this._dispatch([temp], ViewElementEventType.Click, veo);
                     this.requestRender();
                 }
             } else if (this._prepareZooming || this._preparePanning) {
@@ -687,6 +780,8 @@ export default class View {
                 this.cursor = "default";
                 this._isPanning = false;
                 this._isZooming = false;
+                this._trigger(ViewEventType.ZoomEnd, veo);
+                this._trigger(ViewEventType.PanEnd, veo);
                 this._clearTouch();
             }
         }
@@ -703,6 +798,8 @@ export default class View {
 
         this._rafTick(() => {
             const atOffset = this._getAntiOffset(pointerOffset);
+            const veo = viewEventObject(isTouch, ...pointerOffset, ...atOffset);
+            this._trigger(ViewEventType.PointerMove, veo);
 
             if (this._doLasso) {
                 if (this._prepareLasso || this._lassoing) {
@@ -714,8 +811,6 @@ export default class View {
                 return;
             }
 
-            const vee = viewElementEvent(isTouch, ...pointerOffset, ...atOffset);
-
             if (isMouse) {
                 if (this._prepareDragging) {
                     const scale = this.renderer.display.scale;
@@ -726,7 +821,8 @@ export default class View {
                         this._isDragging = true;
                         this._prepareDragging = false;
                         if (this._isActiveDrag && this._indActiveElements.length !== 0) this._indActiveElements.length = 0;
-                        this._dispatch(this._isActiveDrag ? this._activeElements : [this._operativeElement], ViewElementEventType.DragStart, vee);
+                        this._trigger(ViewEventType.DragStart, veo);
+                        this._dispatch(this._isActiveDrag ? this._activeElements : [this._operativeElement], ViewElementEventType.DragStart, veo);
                         return;
                     }
                 }
@@ -740,14 +836,17 @@ export default class View {
                     } else {
                         !this._operativeElement?.noDrag && this._operativeElement?.move(deltaX, deltaY);
                     }
+                    this._trigger(ViewEventType.Dragging, veo);
                 } else if (this._preparePanning) {
                     this._preparePanning = false;
                     this._isPanning = true;
+                    this._trigger(ViewEventType.PanStart, veo);
                 } else if (this._isPanning) {
                     this.cursor = "grab";
                     const [deltaX, deltaY] = [pointerOffset[0] - this._panningOffset[0], pointerOffset[1] - this._panningOffset[1]];
                     this._panningOffset = pointerOffset;
                     this.renderer.display.pan = [this.renderer.display.pan[0] + deltaX, this.renderer.display.pan[1] + deltaY];
+                    this._trigger(ViewEventType.Panning, veo);
                     this.requestRender();
                 } else {
                     const foundIndex = this._interactables.findIndex(el => this._isPointInElement(el, ...atOffset));
@@ -755,24 +854,29 @@ export default class View {
                         if (this._hoverElement !== null) {
                             if (this._hoverElement !== this._interactables[foundIndex]) {
                                 this.cursor = "pointer";
-                                this._dispatch([this._hoverElement], ViewElementEventType.Unhover, vee);
-                                this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Hover, vee);
+                                this._hoverElement = null;
+                                this._trigger(ViewEventType.Unhover, veo);
+                                this._dispatch([this._hoverElement], ViewElementEventType.Unhover, veo);
                                 this._hoverElement = this._interactables[foundIndex];
+                                this._trigger(ViewEventType.Hover, veo);
+                                this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Hover, veo);
                                 this.requestRender();
                             } else {
                                 if (this.cursor !== "pointer") this.cursor = "pointer";
                             }
                         } else {
                             this.cursor = "pointer";
-                            this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Hover, vee);
                             this._hoverElement = this._interactables[foundIndex];
+                            this._trigger(ViewEventType.Hover, veo);
+                            this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Hover, veo);
                             this.requestRender();
                         }
                     } else {
                         if (this._hoverElement !== null) {
                             this.cursor = "default";
-                            this._dispatch([this._hoverElement], ViewElementEventType.Unhover, vee);
                             this._hoverElement = null;
+                            this._trigger(ViewEventType.Unhover, veo);
+                            this._dispatch([this._hoverElement], ViewElementEventType.Unhover, veo);
                             this.requestRender();
                         } else {
                             if (this.cursor !== "default") this.cursor = "default";
@@ -791,7 +895,8 @@ export default class View {
                         this._isDragging = true;
                         this._prepareDragging = false;
                         if (this._isActiveDrag && this._indActiveElements.length !== 0) this._indActiveElements.length = 0;
-                        this._dispatch(this._isActiveDrag ? this._activeElements : [this._operativeElement], ViewElementEventType.DragStart, vee);
+                        this._trigger(ViewEventType.DragStart, veo);
+                        this._dispatch(this._isActiveDrag ? this._activeElements : [this._operativeElement], ViewElementEventType.DragStart, veo);
                         return;
                     }
                 }
@@ -805,11 +910,14 @@ export default class View {
                     } else {
                         !this._operativeElement?.noDrag && this._operativeElement?.move(deltaX, deltaY);
                     }
+                    this._trigger(ViewEventType.Dragging, veo);
                 } else if (this._prepareZooming || this._preparePanning) {
                     this._prepareZooming = false;
                     this._preparePanning = false;
                     this._isZooming = true;
                     this._isPanning = true;
+                    this._trigger(ViewEventType.ZoomStart, veo);
+                    this._trigger(ViewEventType.PanStart, veo);
                 } else if (this._isZooming || this._isPanning) {
                     this.cursor = "default";
 
@@ -829,9 +937,11 @@ export default class View {
 
                     const atOffset = this._getAntiOffset(centerOffset);
                     display.zoom = zoom;
+                    this._trigger(ViewEventType.Zooming, veo);
                     const [scaledOffsetX, scaledOffsetY] = this._getOffset(atOffset);
                     const [zoomOffsetX, zoomOffsetY] = [centerOffset[0] - scaledOffsetX, centerOffset[1] - scaledOffsetY];
                     display.pan = [display.pan[0] + deltaX + zoomOffsetX, display.pan[1] + deltaY + zoomOffsetY];
+                    this._trigger(ViewEventType.Panning, veo);
                     this.requestRender();
                 }
             }
@@ -842,6 +952,12 @@ export default class View {
         e.preventDefault();
         this._rafTick(() => {
             const mouseOffset = [e.offsetX, e.offsetY] as [number, number];
+            const atOffset = this._getAntiOffset(mouseOffset);
+            const veo = viewEventObject(false, ...mouseOffset, ...atOffset);
+            this._trigger(ViewEventType.Wheel, veo);
+            this._trigger(ViewEventType.ZoomStart, veo);
+            this._trigger(ViewEventType.PanStart, veo);
+
             const deltaY = e.deltaY;
             const display = this.renderer.display;
             let zoom: number;
@@ -851,12 +967,15 @@ export default class View {
                 zoom = deltaY > 0 ? display.zoom / this.wheelZoomDeltaRate : deltaY < 0 ? display.zoom * this.wheelZoomDeltaRate : display.zoom;
             }
             zoom = Maths.clamp(zoom, this.minZoom, this.maxZoom);
-
-            const atOffset = this._getAntiOffset(mouseOffset);
             display.zoom = zoom;
+            this._trigger(ViewEventType.Zooming, veo);
+
             const [scaledOffsetX, scaledOffsetY] = this._getOffset(atOffset);
             const [zoomOffsetX, zoomOffsetY] = [mouseOffset[0] - scaledOffsetX, mouseOffset[1] - scaledOffsetY];
             display.pan = [display.pan[0] + zoomOffsetX, display.pan[1] + zoomOffsetY];
+            this._trigger(ViewEventType.Panning, veo);
+            this._trigger(ViewEventType.ZoomEnd, veo);
+            this._trigger(ViewEventType.PanEnd, veo);
             this.requestRender();
         });
     }.bind(this);
@@ -865,14 +984,18 @@ export default class View {
         this.renderer.container.addEventListener("pointerdown", this._pointerDownHandler as EventListener);
         this.renderer.container.addEventListener("pointerup", this._pointerUpHandler as EventListener);
         this.renderer.container.addEventListener("pointermove", this._pointerMoveHandler as EventListener);
+        this.renderer.container.addEventListener("pointerenter", this._pointerEnterHandler as EventListener);
         this.renderer.container.addEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
+        this.renderer.container.addEventListener("pointercancel", this._pointerCancelHandler as EventListener);
         this.renderer.container.addEventListener("wheel", this._wheelHandler as EventListener);
     }
     stopInteractive() {
         this.renderer.container.removeEventListener("pointerdown", this._pointerDownHandler as EventListener);
         this.renderer.container.removeEventListener("pointerup", this._pointerUpHandler as EventListener);
         this.renderer.container.removeEventListener("pointermove", this._pointerMoveHandler as EventListener);
+        this.renderer.container.removeEventListener("pointerenter", this._pointerEnterHandler as EventListener);
         this.renderer.container.removeEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
+        this.renderer.container.removeEventListener("pointercancel", this._pointerCancelHandler as EventListener);
         this.renderer.container.removeEventListener("wheel", this._wheelHandler as EventListener);
     }
     startResponsive(callback: (width: number, height: number) => void) {

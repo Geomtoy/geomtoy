@@ -10,11 +10,37 @@ export const enum ViewElementEventType {
     DragEnd = "dragEnd", // view.operativeElement / view.activeElements
     Activate = "activate", // view.activeElements
     Deactivate = "deactivate", // view.activeElements
-    Click = "click", // operativeElement
+    Click = "click", // view.operativeElement
     Hover = "hover",
     Unhover = "unhover"
 }
-export interface ViewElementEvent {
+export const enum ViewEventType {
+    PointerEnter = "pointerEnter",
+    PointerLeave = "pointerLeave",
+    PointerMove = "pointerMove",
+    PointerDown = "pointerDown",
+    PointerUp = "pointerUp",
+    PointerCancel = "pointerCancel",
+    Wheel = "wheel",
+
+    DragStart = "dragStart",
+    Dragging = "dragging",
+    DragEnd = "dragEnd",
+    PanStart = "panStart",
+    Panning = "panning",
+    PanEnd = "panEnd",
+    ZoomStart = "zoomStart",
+    Zooming = "zooming",
+    ZoomEnd = "zoomEnd",
+
+    Activate = "activate",
+    Deactivate = "deactivate",
+    Click = "click",
+    Hover = "hover",
+    Unhover = "unhover"
+}
+
+export interface ViewEventObject {
     isTouch: boolean;
     viewportX: number;
     viewportY: number;
