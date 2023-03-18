@@ -1,8 +1,7 @@
-import { Maths } from "@geomtoy/util";
 import { ContainerElement, ImageSourceStatus } from "../types";
 
+const imageCache: { [key: string]: { image: SVGImageElement | null; status: ImageSourceStatus } } = {};
 export default abstract class ImageSourceManager {
-    private _cache: { [key: string]: { image: SVGImageElement | null; status: ImageSourceStatus } } = {};
     private _isBlobUrl(url: string) {
         return url.substring(0, 8) === `blob:http`;
     }
@@ -13,24 +12,24 @@ export default abstract class ImageSourceManager {
     abstract placeholder(width: number, height: number, backgroundColor: string, color: string): ContainerElement;
 
     successful(url: string) {
-        return this._cache[url]?.status === ImageSourceStatus.Successful;
+        return imageCache[url]?.status === ImageSourceStatus.Successful;
     }
     failed(url: string) {
-        return this._cache[url]?.status === ImageSourceStatus.Failed;
+        return imageCache[url]?.status === ImageSourceStatus.Failed;
     }
     notLoaded(url: string) {
-        return this._cache[url] === undefined;
+        return imageCache[url] === undefined;
     }
     loading(url: string) {
-        return this._cache[url]?.status === ImageSourceStatus.Loading;
+        return imageCache[url]?.status === ImageSourceStatus.Loading;
     }
     take(url: string) {
-        return this._cache[url].image;
+        return imageCache[url].image;
     }
 
     async load(url: string) {
         if (this.notLoaded(url)) {
-            this._cache[url] = { image: null, status: ImageSourceStatus.Loading };
+            imageCache[url] = { image: null, status: ImageSourceStatus.Loading };
         }
 
         if (this.failed(url) || this.successful(url)) {
@@ -44,13 +43,13 @@ export default abstract class ImageSourceManager {
             }
 
             image.onload = () => {
-                this._cache[url].image = image;
-                this._cache[url].status = ImageSourceStatus.Successful;
+                imageCache[url].image = image;
+                imageCache[url].status = ImageSourceStatus.Successful;
                 resolve();
             };
             image.onerror = () => {
                 console.warn(`[G]Failed to request image from the url: ${url}.`);
-                this._cache[url].status = ImageSourceStatus.Failed;
+                imageCache[url].status = ImageSourceStatus.Failed;
                 reject();
             };
             image.setAttribute("href", url);
