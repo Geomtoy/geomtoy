@@ -302,8 +302,11 @@ export default class View {
         }
     }
 
-    cursor(type: "default" | "pointer" | "move" | "grab" | "zoom-in" | "zoom-out" | "crosshair") {
-        this.renderer.container.style.cursor = type;
+    get cursor() {
+        return this.renderer.container.style.cursor as "default" | "pointer" | "move" | "grab" | "zoom-in" | "zoom-out" | "crosshair";
+    }
+    set cursor(value: "default" | "pointer" | "move" | "grab" | "zoom-in" | "zoom-out" | "crosshair") {
+        this.renderer.container.style.cursor = value;
     }
 
     /**
@@ -345,7 +348,7 @@ export default class View {
 
         if (isMouse) {
             if (this._isDragging) {
-                this.cursor("default");
+                this.cursor = "default";
                 this._isDragging = false;
                 if (this._isActiveDrag) {
                     this._dispatch(this._activeElements, ViewElementEventType.DragEnd, vee);
@@ -358,7 +361,7 @@ export default class View {
                 this._prepareDragging = false;
                 console.warn("[G]How can you make this happen?");
             } else if (this._isPanning) {
-                this.cursor("default");
+                this.cursor = "default";
                 this._isPanning = false;
             } else if (this._preparePanning) {
                 this._preparePanning = false;
@@ -367,7 +370,7 @@ export default class View {
         }
         if (isTouch) {
             if (this._isDragging) {
-                this.cursor("default");
+                this.cursor = "default";
                 this._isDragging = false;
                 if (this._isActiveDrag) {
                     this._dispatch(this._activeElements, ViewElementEventType.DragEnd, vee);
@@ -403,7 +406,7 @@ export default class View {
         const atOffset = this._getAntiOffset(pointerOffset);
 
         if (this._doLasso) {
-            this.cursor("crosshair");
+            this.cursor = "crosshair";
             this._lasso.init = atOffset;
             this._prepareLasso = true;
             return;
@@ -553,7 +556,7 @@ export default class View {
                     }
                 }
             } else if (this._touchPointers.length === 2) {
-                this.cursor("default");
+                this.cursor = "default";
                 const offsetVec = Vector2.from(this._touchPointers[0].offset, this._touchPointers[1].offset);
                 const distance = Vector2.magnitude(offsetVec);
                 const centerOffset = Vector2.add(this._touchPointers[0].offset, Vector2.scalarMultiply(offsetVec, 0.5));
@@ -587,7 +590,7 @@ export default class View {
         const vee = viewElementEvent(isTouch, ...pointerOffset, ...atOffset);
 
         if (this._doLasso) {
-            this.cursor("default");
+            this.cursor = "default";
             if (this._lassoing) {
                 this._lassoing = false;
                 this._lasso.term = atOffset;
@@ -617,7 +620,7 @@ export default class View {
 
         if (isMouse) {
             if (this._isDragging) {
-                this.cursor("pointer");
+                this.cursor = "pointer";
                 this._isDragging = false;
                 if (this._isActiveDrag) {
                     this._dispatch(this._activeElements, ViewElementEventType.DragEnd, vee);
@@ -627,7 +630,7 @@ export default class View {
                     this.requestRender();
                 }
             } else if (this._prepareDragging) {
-                this.cursor("pointer");
+                this.cursor = "pointer";
                 this._prepareDragging = false;
                 if (this._isActiveDrag) {
                     if (this._indActiveElements.length !== 0) {
@@ -642,16 +645,16 @@ export default class View {
                     this.requestRender();
                 }
             } else if (this._isPanning) {
-                this.cursor("default");
+                this.cursor = "default";
                 this._isPanning = false;
             } else if (this._preparePanning) {
-                this.cursor("default");
+                this.cursor = "default";
                 this._preparePanning = false;
             }
         }
         if (isTouch) {
             if (this._isDragging) {
-                this.cursor("pointer");
+                this.cursor = "pointer";
                 this._isDragging = false;
                 if (this._isActiveDrag) {
                     this._dispatch(this._activeElements, ViewElementEventType.DragEnd, vee);
@@ -661,7 +664,7 @@ export default class View {
                     this.requestRender();
                 }
             } else if (this._prepareDragging) {
-                this.cursor("pointer");
+                this.cursor = "pointer";
                 this._prepareDragging = false;
                 if (this._isActiveDrag) {
                     if (this._indActiveElements.length !== 0) {
@@ -676,12 +679,12 @@ export default class View {
                     this.requestRender();
                 }
             } else if (this._prepareZooming || this._preparePanning) {
-                this.cursor("default");
+                this.cursor = "default";
                 this._preparePanning = false;
                 this._prepareZooming = false;
                 this._clearTouch();
             } else if (this._isPanning || this._isZooming) {
-                this.cursor("default");
+                this.cursor = "default";
                 this._isPanning = false;
                 this._isZooming = false;
                 this._clearTouch();
@@ -729,7 +732,7 @@ export default class View {
                 }
 
                 if (this._isDragging) {
-                    this.cursor("move");
+                    this.cursor = "move";
                     const [deltaX, deltaY] = [atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]];
                     this._draggingOffset = atOffset;
                     if (this._isActiveDrag) {
@@ -741,7 +744,7 @@ export default class View {
                     this._preparePanning = false;
                     this._isPanning = true;
                 } else if (this._isPanning) {
-                    this.cursor("grab");
+                    this.cursor = "grab";
                     const [deltaX, deltaY] = [pointerOffset[0] - this._panningOffset[0], pointerOffset[1] - this._panningOffset[1]];
                     this._panningOffset = pointerOffset;
                     this.renderer.display.pan = [this.renderer.display.pan[0] + deltaX, this.renderer.display.pan[1] + deltaY];
@@ -749,22 +752,30 @@ export default class View {
                 } else {
                     const foundIndex = this._interactables.findIndex(el => this._isPointInElement(el, ...atOffset));
                     if (foundIndex !== -1) {
-                        if (this._hoverElement !== this._interactables[foundIndex]) {
-                            this.cursor("pointer");
+                        if (this._hoverElement !== null) {
+                            if (this._hoverElement !== this._interactables[foundIndex]) {
+                                this.cursor = "pointer";
+                                this._dispatch([this._hoverElement], ViewElementEventType.Unhover, vee);
+                                this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Hover, vee);
+                                this._hoverElement = this._interactables[foundIndex];
+                                this.requestRender();
+                            } else {
+                                if (this.cursor !== "pointer") this.cursor = "pointer";
+                            }
+                        } else {
+                            this.cursor = "pointer";
                             this._dispatch([this._interactables[foundIndex]], ViewElementEventType.Hover, vee);
                             this._hoverElement = this._interactables[foundIndex];
                             this.requestRender();
-                        } else {
-                            // do nothing
                         }
                     } else {
                         if (this._hoverElement !== null) {
-                            this.cursor("default");
+                            this.cursor = "default";
                             this._dispatch([this._hoverElement], ViewElementEventType.Unhover, vee);
                             this._hoverElement = null;
                             this.requestRender();
                         } else {
-                            // do nothing
+                            if (this.cursor !== "default") this.cursor = "default";
                         }
                     }
                 }
@@ -786,7 +797,7 @@ export default class View {
                 }
 
                 if (this._isDragging) {
-                    this.cursor("move");
+                    this.cursor = "move";
                     const [deltaX, deltaY] = [atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]];
                     this._draggingOffset = atOffset;
                     if (this._isActiveDrag) {
@@ -800,7 +811,7 @@ export default class View {
                     this._isZooming = true;
                     this._isPanning = true;
                 } else if (this._isZooming || this._isPanning) {
-                    this.cursor("default");
+                    this.cursor = "default";
 
                     const offsetVec = Vector2.from(this._touchPointers[0].offset, this._touchPointers[1].offset);
                     const distance = Vector2.magnitude(offsetVec);
