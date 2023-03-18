@@ -1145,23 +1145,14 @@ export default class View {
         });
     }
     private _geomtoyRequestRender = function (this: View, presentShapeSet: Set<Shape>) {
-        if (this._renderScheduled) return;
         if (!this._shouldRender(presentShapeSet)) return;
-
-        this._renderScheduled = true;
-        Promise.resolve().then(() => {
-            this._renderFunc();
-            this._renderScheduled = false;
-        });
+        this._renderFunc();
     }.bind(this);
 
     private _renderFunc() {
         const renderer = this.renderer;
 
-        if (this._renderables.length === 0) {
-            this._lassoing ? this._renderLasso() : renderer.clear();
-            return;
-        }
+        renderer.clear();
 
         this._renderables.forEach(el => {
             if (el.shape instanceof Image) {
