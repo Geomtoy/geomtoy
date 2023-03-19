@@ -1,9 +1,9 @@
 import { ViewportDescriptor, FillRule } from "@geomtoy/core";
 
 export const enum ViewElementInteractMode {
-    None = "none",
-    Operation = "operation",
-    Activation = "activation"
+    None = 0,
+    Activation = 1,
+    Operation = 2
 }
 export const enum ViewElementEventType {
     DragStart = "dragStart", // view.operativeElement / view.activeElements

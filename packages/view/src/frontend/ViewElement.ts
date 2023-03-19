@@ -65,6 +65,7 @@ export default class ViewElement<T extends Shape = Shape> {
     private _shape: T;
     paths: PathInfo[] = [];
     noDrag: boolean;
+    noHover: boolean;
 
     // view: null && subView: null - ViewElement initial status
     // view: View && subView: null - ViewElement directly added to a View
@@ -76,10 +77,11 @@ export default class ViewElement<T extends Shape = Shape> {
 
     constructor(
         shape: T,
-        { interactMode = ViewElementInteractMode.Activation, zIndex = 0, noDrag = false, style, hoverStyle, clickStyle, activeStyle } = {} as Partial<{
+        { interactMode = ViewElementInteractMode.Activation, zIndex = 0, noDrag = false, noHover = false, style, hoverStyle, clickStyle, activeStyle } = {} as Partial<{
             interactMode: ViewElementInteractMode;
             zIndex: number;
             noDrag: boolean;
+            noHover: boolean;
             style: Partial<Style>;
             hoverStyle: Partial<InteractiveStyle>;
             clickStyle: Partial<InteractiveStyle>;
@@ -94,6 +96,7 @@ export default class ViewElement<T extends Shape = Shape> {
         this._shape = shape;
         this._zIndex = zIndex;
         this.noDrag = noDrag;
+        this.noHover = noHover;
         this._interactMode = interactMode;
     }
     get shape() {

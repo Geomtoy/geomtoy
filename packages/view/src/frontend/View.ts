@@ -18,7 +18,7 @@ function isParentShape(v: Shape): v is Shape & ParentShape {
 
 const VIEW_DEFAULTS = {
     hoverForemost: true,
-    clickForemost: true,
+    operativeForemost: true,
     activeForemost: true,
     minZoom: 0.001,
     maxZoom: 1000,
@@ -84,7 +84,7 @@ export default class View {
     constructor(
         {
             hoverForemost = VIEW_DEFAULTS.hoverForemost,
-            clickForemost = VIEW_DEFAULTS.clickForemost,
+            operativeForemost = VIEW_DEFAULTS.operativeForemost,
             activeForemost = VIEW_DEFAULTS.activeForemost,
             dragThrottleDistance = VIEW_DEFAULTS.dragThrottleDistance,
             minZoom = VIEW_DEFAULTS.minZoom,
@@ -93,7 +93,7 @@ export default class View {
             inverseWheelZoom = VIEW_DEFAULTS.inverseWheelZoom
         }: Partial<{
             hoverForemost: boolean;
-            clickForemost: boolean;
+            operativeForemost: boolean;
             activeForemost: boolean;
             dragThrottleDistance: number;
             minZoom: number;
@@ -104,7 +104,7 @@ export default class View {
         renderer: Renderer
     ) {
         this.hoverForemost = hoverForemost;
-        this.clickForemost = clickForemost;
+        this.operativeForemost = operativeForemost;
         this.activeForemost = activeForemost;
         this.minZoom = minZoom;
         this.maxZoom = maxZoom;
@@ -125,7 +125,7 @@ export default class View {
     }
 
     hoverForemost: boolean;
-    clickForemost: boolean;
+    operativeForemost: boolean;
     activeForemost: boolean;
     inverseWheelZoom: boolean;
 
@@ -246,7 +246,11 @@ export default class View {
         this.refreshInteractables();
     }
     sortRenderables() {
-        this._renderables.sort((a, b) => b.zIndex - a.zIndex);
+        this._renderables.sort((a, b) => {
+            const i = b.interactMode - a.interactMode;
+            if (i !== 0) return i;
+            return b.zIndex - a.zIndex;
+        });
     }
     refreshInteractables() {
         this._interactables = this._renderables.filter(el => el.interactMode !== ViewElementInteractMode.None);
@@ -1302,7 +1306,9 @@ export default class View {
 
         renderer.clear();
 
-        this._renderables.forEach(el => {
+        const renderList = sortToRender(this._renderables, this.hoverForemost, this.operativeForemost, this.activeForemost, this._hoverElement, this._operativeElement, this._activeElements);
+
+        renderList.forEach(el => {
             if (el.shape instanceof Image) {
                 const imageSource = el.shape.source;
                 renderer.imageSourceManager.notLoaded(imageSource) && renderer.imageSourceManager.load(imageSource).then(this.requestRender.bind(this)).catch(console.error);
@@ -1326,17 +1332,17 @@ export default class View {
             const as = el.activeStyle();
 
             const hover = this._hoverElement === el;
-            const click = this._operativeElement === el;
+            const operative = this._operativeElement === el;
             const active = this._activeElements.includes(el);
             // `active` || `click` >`hover`
 
             renderer.paintOrder(s.paintOrder);
             renderer.noFill(s.noFill);
-            renderer.fill((active && as.fill) || (click && cs.fill) || (hover && hs.fill) || s.fill);
+            renderer.fill((active && as.fill) || (operative && cs.fill) || (hover && hs.fill) || s.fill);
 
             renderer.noStroke(s.noStroke);
-            renderer.stroke((active && as.stroke) || (click && cs.stroke) || (hover && hs.stroke) || s.stroke);
-            renderer.strokeWidth((active && as.strokeWidth) || (click && cs.strokeWidth) || (hover && hs.strokeWidth) || s.strokeWidth);
+            renderer.stroke((active && as.stroke) || (operative && cs.stroke) || (hover && hs.stroke) || s.stroke);
+            renderer.strokeWidth((active && as.strokeWidth) || (operative && cs.strokeWidth) || (hover && hs.strokeWidth) || s.strokeWidth);
 
             renderer.strokeDash(s.strokeDash);
             renderer.strokeDashOffset(s.strokeDashOffset);
@@ -1344,10 +1350,64 @@ export default class View {
             renderer.strokeLineCap(s.strokeLineCap);
             renderer.strokeMiterLimit(s.strokeMiterLimit);
 
-            const onTop = (hover && this.hoverForemost) || (click && this.clickForemost) || (active && this.activeForemost);
-            el.paths = renderer.draw(el.shape, onTop);
+            el.paths = renderer.draw(el.shape, false);
         });
 
         this._lassoing && this._renderLasso();
     }
+}
+
+function sortToRender(
+    renderables: ViewElement[], // pre sorted with  [...Operations desc, ...Activation desc, ...None desc]
+    hoverForemost: boolean,
+    operativeForemost: boolean,
+    activeForemost: boolean,
+    hoverElement: ViewElement | null,
+    operativeElement: ViewElement | null,
+    activeElements: ViewElement[]
+) {
+    /**
+     * from the top to bottom
+     * interactMode: Operation      operativeForemost ? operativeElement
+     *                              hoverForemost ? hoverElement
+     *                              other operation interact mode view element ordered by z-index desc
+     * interactMode: Activation     activeForemost? activeElements ordered by z-index desc
+     *                              hoverForemost ? hoverElement
+     *                              other activation interact mode view element ordered by z-index desc
+     * interactMode: None           all none interact mode mode view element ordered by z-index desc
+     */
+    let hoverOperation: ViewElement | undefined;
+    let operativeOperation: ViewElement | undefined;
+    const plainOperations: ViewElement[] = [];
+
+    let hoverActivation: ViewElement | undefined;
+    const activeActivations: ViewElement[] = [];
+    const plainActivations: ViewElement[] = [];
+
+    const nones: ViewElement[] = [];
+
+    for (const ve of renderables) {
+        if (ve.interactMode === ViewElementInteractMode.Operation) {
+            if (hoverForemost && hoverElement === ve) hoverOperation = ve;
+            else if (operativeForemost && operativeElement === ve) operativeOperation = ve;
+            else plainOperations.push(ve);
+        }
+        if (ve.interactMode === ViewElementInteractMode.Activation) {
+            if (hoverForemost && hoverElement === ve) hoverActivation = ve;
+            else if (activeForemost && activeElements.includes(ve)) activeActivations.push(ve);
+            else plainActivations.push(ve);
+        }
+        if (ve.interactMode === ViewElementInteractMode.None) {
+            nones.push(ve);
+        }
+    }
+    return [
+        ...(operativeOperation ? [operativeOperation] : []),
+        ...(hoverOperation ? [hoverOperation] : []),
+        ...plainOperations,
+        ...activeActivations,
+        ...(hoverActivation ? [hoverActivation] : []),
+        ...plainActivations,
+        ...nones
+    ];
 }

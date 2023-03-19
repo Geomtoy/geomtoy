@@ -1,5 +1,6 @@
 import { Geometry, GeometryGraphic, Graphics, Shape, ViewportDescriptor } from "@geomtoy/core";
 import { Box } from "@geomtoy/util";
+import { ViewElementInteractMode } from "../types";
 import ViewElement from "./ViewElement";
 
 export default class Lasso extends Shape {
@@ -9,7 +10,7 @@ export default class Lasso extends Shape {
     hit(interactables: ViewElement[]) {
         const lassoBox = Box.from(this.init, this.term);
         const filtered = [] as ViewElement[];
-        for (const ve of interactables.filter(el => el.interactMode === "activation")) {
+        for (const ve of interactables.filter(el => el.interactMode === ViewElementInteractMode.Activation)) {
             if (ve.shape instanceof Geometry) {
                 let box = ve.shape.getBoundingBox();
                 // todo find a better way
