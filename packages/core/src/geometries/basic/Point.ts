@@ -253,7 +253,7 @@ export default class Point extends Geometry {
     }
     apply(transformation: Transformation) {
         const nc = transformation.transformCoordinates(this.coordinates);
-        return new Point(nc);
+        return new Point(nc, this.appearance);
     }
     clone() {
         return new Point(this._x, this._y);
