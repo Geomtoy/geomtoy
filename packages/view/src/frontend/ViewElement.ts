@@ -47,6 +47,7 @@ export default class ViewElement<T extends Shape = Shape> {
      * `ViewElement` is interactive that can respond to
      *      -`hover`, `unhover`
      *      -`activate`, `deactivate`
+     *      -`click`,
      *      -`dragStart`, `dragEnd`
      * This is mostly used for the contents.
      * Requiring property of `View` `activeElements`

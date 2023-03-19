@@ -11,6 +11,9 @@ import { VE_EVENT_HANDLERS_SYMBOL, VE_SUB_VIEW_SYMBOL, VE_VIEW_SYMBOL } from "./
 function viewEventObject(isTouch: boolean, viewportX: number, viewportY: number, x: number, y: number) {
     return { isTouch, viewportX, viewportY, x, y } as ViewEventObject;
 }
+function withElement(veo: ViewEventObject, el: ViewElement | null) {
+    return { ...veo, currentElement: el } as ViewEventObject;
+}
 
 function isParentShape(v: Shape): v is Shape & ParentShape {
     return "items" in v;
@@ -55,10 +58,11 @@ export default class View {
 
     private _activeElements: ViewElement[] = [];
     private _indActiveElements: ViewElement[] = []; // indeterminate active elements
-    private _operativeElement: ViewElement | null = null;
+    private _currentActivationElement: ViewElement | null = null;
+    private _currentOperationElement: ViewElement | null = null;
     private _hoverElement: ViewElement | null = null;
 
-    private _isActiveDrag = false;
+    private _isActivationDrag = false;
     private _isDragging: boolean = false;
     private _isPanning: boolean = false;
     private _isZooming: boolean = false;
@@ -133,14 +137,15 @@ export default class View {
     // snapToGrid: boolean = true;
     /**
      * *Memo
-     * The `activeElements` modified not by the user interaction(`activate`, `deactivate` etc.) does not dispatch an event.
+     * The `activeElements` modified not by the user interaction does not trigger or dispatch events.
      */
     /**
      * Activation mode:
      *
      * `numerous`:(This requires a modifier key to do multiple activating, so it' not suitable for touch devices.)
      * - Click on a inactive element to activate it.
-     * - Click on a element of active elements will deactivate active elements but this element unless start dragging.
+     * - Click on a element of active elements will do nothing.
+     *   `numerousAlt`: Click on a element of active elements will deactivate active elements but this element unless start dragging.
      * - Click on another inactive element will deactivate active elements and activate the another element.
      * - Hold modifier key and click on a inactive element will activate this element and keep current active elements.
      * - Hold modifier key and click on a active element will remove this from active elements.
@@ -149,11 +154,13 @@ export default class View {
      *
      * `continuous`:(This does not require extra actions to do multiple activating, so it suitable for touch devices.)
      * - Click on a inactive element to activate it.
-     * - Click on a element of actives elements will deactivate this element but keep the rest active elements unless start dragging.
+     * - Click on a element of actives elements will do nothing.
+     *   `continuousAlt`: Click on a element of actives elements will deactivate this element but keep the rest active elements unless start dragging.
      * - Click on another inactive element will activate the another element and keep current active elements.
      * - Click on a blank area will deactivate all active elements.
      */
-    activationMode: "numerous" | "continuous" = "continuous";
+    //todo
+    activationMode: "numerous" | "numerousAlt" | "continuous" | "continuousAlt" = "numerous";
     modifierKey: "Alt" | "Shift" | "Control" = "Shift";
     // todo
     // autoSwitchActivationMode:
@@ -213,11 +220,14 @@ export default class View {
     get activeElements() {
         return [...this._activeElements];
     }
-    get operativeElement() {
-        return this._operativeElement;
+    get currentActivationElement() {
+        return this._currentActivationElement;
     }
-    get isActiveDrag() {
-        return this._isActiveDrag;
+    get currentOperationElement() {
+        return this._currentOperationElement;
+    }
+    get isActivationDrag() {
+        return this._isActivationDrag;
     }
     get hoverElement() {
         return this._hoverElement;
@@ -260,11 +270,14 @@ export default class View {
         if (this._indActiveElements.length !== 0) {
             this._indActiveElements = this._indActiveElements.filter(el => this._interactables.includes(el));
         }
-        if (this._operativeElement !== null && !this._interactables.includes(this._operativeElement)) {
-            this._operativeElement = null;
+        if (this._currentOperationElement !== null && !this._interactables.includes(this._currentOperationElement)) {
+            this._currentOperationElement = null;
         }
         if (this._activeElements.length !== 0) {
             this._activeElements = this._activeElements.filter(el => this._interactables.includes(el));
+        }
+        if (this._currentActivationElement !== null && !this._interactables.includes(this._currentActivationElement)) {
+            this._currentActivationElement = null;
         }
     }
 
@@ -410,14 +423,17 @@ export default class View {
             if (this._isDragging) {
                 this.cursor = "default";
                 this._isDragging = false;
-                if (this._isActiveDrag) {
-                    this._trigger(ViewEventType.DragEnd, veo);
-                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, veo);
+                if (this._isActivationDrag) {
+                    const temp = this._currentActivationElement;
+                    this._currentActivationElement = null;
+                    this._trigger(ViewEventType.DragEnd, withElement(veo, temp));
+                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, withElement(veo, temp));
+                    this.requestRender();
                 } else {
-                    const temp = this._operativeElement;
-                    this._operativeElement = null;
+                    const temp = this._currentOperationElement;
+                    this._currentOperationElement = null;
                     this._trigger(ViewEventType.DragEnd, veo);
-                    this._dispatch([temp], ViewElementEventType.DragEnd, veo);
+                    this._dispatch([temp], ViewElementEventType.DragEnd, withElement(veo, temp));
                     this.requestRender();
                 }
             } else if (this._prepareDragging) {
@@ -436,14 +452,17 @@ export default class View {
             if (this._isDragging) {
                 this.cursor = "default";
                 this._isDragging = false;
-                if (this._isActiveDrag) {
-                    this._trigger(ViewEventType.DragEnd, veo);
-                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, veo);
+                if (this._isActivationDrag) {
+                    const temp = this._currentActivationElement;
+                    this._currentActivationElement = null;
+                    this._trigger(ViewEventType.DragEnd, withElement(veo, temp));
+                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, withElement(veo, temp));
+                    this.requestRender();
                 } else {
-                    const temp = this._operativeElement;
-                    this._operativeElement = null;
-                    this._trigger(ViewEventType.DragEnd, veo);
-                    this._dispatch([temp], ViewElementEventType.DragEnd, veo);
+                    const temp = this._currentOperationElement;
+                    this._currentOperationElement = null;
+                    this._trigger(ViewEventType.DragEnd, withElement(veo, temp));
+                    this._dispatch([temp], ViewElementEventType.DragEnd, withElement(veo, temp));
                     this.requestRender();
                 }
             } else if (this._prepareDragging) {
@@ -488,41 +507,46 @@ export default class View {
                 const foundElement = this._interactables[foundIndex];
                 // operativeElement
                 if (foundElement.interactMode === ViewElementInteractMode.Operation) {
-                    this._isActiveDrag = false;
+                    this._isActivationDrag = false;
                     this._draggingOffset = atOffset;
                     this._prepareDragging = true;
-                    this._operativeElement = foundElement;
+                    this._currentOperationElement = foundElement;
                     this.requestRender();
                 }
                 // activeElements
                 if (foundElement.interactMode === ViewElementInteractMode.Activation) {
                     // continuous
-                    if (this.activationMode === "continuous") {
+                    if (this.activationMode === "continuous" || this.activationMode === "continuousAlt") {
                         if (!this._activeElements.includes(foundElement)) {
                             this._activateInternal(foundElement);
-                            this._trigger(ViewEventType.Activate, veo);
-                            this._dispatch([foundElement], ViewElementEventType.Activate, veo);
+                            this._currentActivationElement = foundElement;
+                            this._trigger(ViewEventType.Activate, withElement(veo, foundElement));
+                            this._dispatch([foundElement], ViewElementEventType.Activate, withElement(veo, foundElement));
                             this.requestRender();
                         } else {
-                            this._indActiveElements = [foundElement];
+                            this._currentActivationElement = foundElement;
+                            if (this.activationMode === "continuousAlt") this._indActiveElements = [foundElement];
+                            this.requestRender();
                         }
-                        this._isActiveDrag = true;
+                        this._isActivationDrag = true;
                         this._draggingOffset = atOffset;
                         this._prepareDragging = true;
                     }
                     // numerous
-                    if (this.activationMode === "numerous") {
-                        // with modifier key
+                    if (this.activationMode === "numerous" || this.activationMode === "numerousAlt") {
+                        // with modifier key, can NOT continue with drag or click
                         if (e.getModifierState(this.modifierKey)) {
                             if (!this._activeElements.includes(foundElement)) {
                                 this._activateInternal(foundElement);
-                                this._trigger(ViewEventType.Activate, veo);
-                                this._dispatch([foundElement], ViewElementEventType.Activate, veo);
+                                this._currentActivationElement = foundElement;
+                                this._trigger(ViewEventType.Activate, withElement(veo, foundElement));
+                                this._dispatch([foundElement], ViewElementEventType.Activate, withElement(veo, foundElement));
                                 this.requestRender();
                             } else {
                                 this._deactivateInternal(foundElement);
-                                this._trigger(ViewEventType.Deactivate, veo);
-                                this._dispatch([foundElement], ViewElementEventType.Deactivate, veo);
+                                this._currentActivationElement = foundElement;
+                                this._trigger(ViewEventType.Deactivate, withElement(veo, foundElement));
+                                this._dispatch([foundElement], ViewElementEventType.Deactivate, withElement(veo, foundElement));
                                 this.requestRender();
                             }
                         }
@@ -532,17 +556,19 @@ export default class View {
                                 if (this._activeElements.length !== 0) {
                                     const temp = [...this._activeElements];
                                     this._activeElements.length = 0;
-                                    this._trigger(ViewEventType.Deactivate, veo);
-                                    this._dispatch(temp, ViewElementEventType.Deactivate, veo);
+                                    this._trigger(ViewEventType.Deactivate, withElement(veo, foundElement));
+                                    this._dispatch(temp, ViewElementEventType.Deactivate, withElement(veo, foundElement));
                                 }
                                 this._activateInternal(foundElement);
-                                this._trigger(ViewEventType.Activate, veo);
-                                this._dispatch([foundElement], ViewElementEventType.Activate, veo);
+                                this._currentActivationElement = foundElement;
+                                this._trigger(ViewEventType.Activate, withElement(veo, foundElement));
+                                this._dispatch([foundElement], ViewElementEventType.Activate, withElement(veo, foundElement));
                                 this.requestRender();
                             } else {
-                                this._indActiveElements = this._activeElements.filter(el => el !== foundElement);
+                                this._currentActivationElement = foundElement;
+                                if (this.activationMode === "numerousAlt") this._indActiveElements = this._activeElements.filter(el => el !== foundElement);
                             }
-                            this._isActiveDrag = true;
+                            this._isActivationDrag = true;
                             this._draggingOffset = atOffset;
                             this._prepareDragging = true;
                         }
@@ -554,8 +580,8 @@ export default class View {
                 if (this._activeElements.length !== 0) {
                     const temp = [...this._activeElements];
                     this._activeElements.length = 0;
-                    this._trigger(ViewEventType.Deactivate, veo);
-                    this._dispatch(temp, ViewElementEventType.Deactivate, veo);
+                    this._trigger(ViewEventType.Deactivate, withElement(veo, null));
+                    this._dispatch(temp, ViewElementEventType.Deactivate, withElement(veo, null));
                     this.requestRender();
                 }
             }
@@ -568,41 +594,45 @@ export default class View {
                     const foundElement = this._interactables[foundIndex];
                     // operativeElement
                     if (foundElement.interactMode === ViewElementInteractMode.Operation) {
-                        this._isActiveDrag = false;
+                        this._isActivationDrag = false;
                         this._draggingOffset = atOffset;
                         this._prepareDragging = true;
-                        this._operativeElement = foundElement;
+                        this._currentOperationElement = foundElement;
                         this.requestRender();
                     }
                     // activeElements
                     if (foundElement.interactMode === ViewElementInteractMode.Activation) {
                         // continuous
-                        if (this.activationMode === "continuous") {
+                        if (this.activationMode === "continuous" || this.activationMode === "continuousAlt") {
                             if (!this._activeElements.includes(foundElement)) {
                                 this._activateInternal(foundElement);
-                                this._trigger(ViewEventType.Activate, veo);
-                                this._dispatch([foundElement], ViewElementEventType.Activate, veo);
+                                this._currentActivationElement = foundElement;
+                                this._trigger(ViewEventType.Activate, withElement(veo, foundElement));
+                                this._dispatch([foundElement], ViewElementEventType.Activate, withElement(veo, foundElement));
                                 this.requestRender();
                             } else {
-                                this._indActiveElements = [foundElement];
+                                this._currentActivationElement = foundElement;
+                                if (this.activationMode === "continuousAlt") this._indActiveElements = [foundElement];
                             }
-                            this._isActiveDrag = true;
+                            this._isActivationDrag = true;
                             this._draggingOffset = atOffset;
                             this._prepareDragging = true;
                         }
                         // numerous
-                        if (this.activationMode === "numerous") {
-                            // with modifier key, a touch device can also has a physical keyboard.
+                        if (this.activationMode === "numerous" || this.activationMode === "numerousAlt") {
+                            // with modifier key, can NOT continue with drag or click. A touch device may also has a physical keyboard.
                             if (e.getModifierState(this.modifierKey)) {
                                 if (!this._activeElements.includes(foundElement)) {
                                     this._activateInternal(foundElement);
-                                    this._trigger(ViewEventType.Activate, veo);
-                                    this._dispatch([foundElement], ViewElementEventType.Activate, veo);
+                                    this._currentActivationElement = foundElement;
+                                    this._trigger(ViewEventType.Activate, withElement(veo, foundElement));
+                                    this._dispatch([foundElement], ViewElementEventType.Activate, withElement(veo, foundElement));
                                     this.requestRender();
                                 } else {
                                     this._deactivateInternal(foundElement);
-                                    this._trigger(ViewEventType.Deactivate, veo);
-                                    this._dispatch([foundElement], ViewElementEventType.Deactivate, veo);
+                                    this._currentActivationElement = foundElement;
+                                    this._trigger(ViewEventType.Deactivate, withElement(veo, foundElement));
+                                    this._dispatch([foundElement], ViewElementEventType.Deactivate, withElement(veo, foundElement));
                                     this.requestRender();
                                 }
                             }
@@ -612,16 +642,19 @@ export default class View {
                                     if (this._activeElements.length !== 0) {
                                         const temp = [...this._activeElements];
                                         this._activeElements.length = 0;
-                                        this._trigger(ViewEventType.Deactivate, veo);
-                                        this._dispatch(temp, ViewElementEventType.Deactivate, veo);
+                                        this._trigger(ViewEventType.Deactivate, withElement(veo, foundElement));
+                                        this._dispatch(temp, ViewElementEventType.Deactivate, withElement(veo, foundElement));
                                     }
-                                    this._trigger(ViewEventType.Activate, veo);
-                                    this._dispatch([foundElement], ViewElementEventType.Activate, veo);
+                                    this._activateInternal(foundElement);
+                                    this._currentActivationElement = foundElement;
+                                    this._trigger(ViewEventType.Activate, withElement(veo, foundElement));
+                                    this._dispatch([foundElement], ViewElementEventType.Activate, withElement(veo, foundElement));
                                     this.requestRender();
                                 } else {
-                                    this._indActiveElements = this._activeElements.filter(el => el !== foundElement);
+                                    this._currentActivationElement = foundElement;
+                                    if (this.activationMode === "numerousAlt") this._indActiveElements = this._activeElements.filter(el => el !== foundElement);
                                 }
-                                this._isActiveDrag = true;
+                                this._isActivationDrag = true;
                                 this._draggingOffset = atOffset;
                                 this._prepareDragging = true;
                             }
@@ -631,8 +664,8 @@ export default class View {
                     if (this._activeElements.length !== 0) {
                         const temp = [...this._activeElements];
                         this._activeElements.length = 0;
-                        this._trigger(ViewEventType.Deactivate, veo);
-                        this._dispatch(temp, ViewElementEventType.Deactivate, veo);
+                        this._trigger(ViewEventType.Deactivate, withElement(veo, null));
+                        this._dispatch(temp, ViewElementEventType.Deactivate, withElement(veo, null));
                         this.requestRender();
                     }
                 }
@@ -651,8 +684,8 @@ export default class View {
                 if (this._activeElements.length !== 0) {
                     const temp = [...this._activeElements];
                     this._activeElements.length = 0;
-                    this._trigger(ViewEventType.Deactivate, veo);
-                    this._dispatch(temp, ViewElementEventType.Deactivate, veo);
+                    this._trigger(ViewEventType.Deactivate, withElement(veo, null));
+                    this._dispatch(temp, ViewElementEventType.Deactivate, withElement(veo, null));
                     this.requestRender();
                 }
             }
@@ -681,13 +714,13 @@ export default class View {
                 if (this._activeElements.length !== 0) {
                     const temp = [...this._activeElements];
                     this._activeElements.length = 0;
-                    this._trigger(ViewEventType.Deactivate, veo);
-                    this._dispatch(temp, ViewElementEventType.Deactivate, veo);
+                    this._trigger(ViewEventType.Deactivate, withElement(veo, null));
+                    this._dispatch(temp, ViewElementEventType.Deactivate, withElement(veo, null));
                 }
                 if (hits.length !== 0) {
                     this._activateInternal(...hits);
-                    this._trigger(ViewEventType.Activate, veo);
-                    this._dispatch(hits, ViewElementEventType.Activate, veo);
+                    this._trigger(ViewEventType.Activate, withElement(veo, null));
+                    this._dispatch(hits, ViewElementEventType.Activate, withElement(veo, null));
                 }
                 this.requestRender();
             }
@@ -696,8 +729,8 @@ export default class View {
                 if (this._activeElements.length !== 0) {
                     const temp = [...this._activeElements];
                     this._activeElements.length = 0;
-                    this._trigger(ViewEventType.Deactivate, veo);
-                    this._dispatch(temp, ViewElementEventType.Deactivate, veo);
+                    this._trigger(ViewEventType.Deactivate, withElement(veo, null));
+                    this._dispatch(temp, ViewElementEventType.Deactivate, withElement(veo, null));
                 }
                 this.requestRender();
             }
@@ -708,32 +741,42 @@ export default class View {
             if (this._isDragging) {
                 this.cursor = "pointer";
                 this._isDragging = false;
-                if (this._isActiveDrag) {
-                    this._trigger(ViewEventType.DragEnd, veo);
-                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, veo);
+                if (this._isActivationDrag) {
+                    const temp = this._currentOperationElement;
+                    this._currentActivationElement = null;
+                    this._trigger(ViewEventType.DragEnd, withElement(veo, temp));
+                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, withElement(veo, temp));
+                    this.requestRender();
                 } else {
-                    const temp = this._operativeElement;
-                    this._operativeElement = null;
-                    this._trigger(ViewEventType.DragEnd, veo);
-                    this._dispatch([temp], ViewElementEventType.DragEnd, veo);
+                    const temp = this._currentOperationElement;
+                    this._currentOperationElement = null;
+                    this._trigger(ViewEventType.DragEnd, withElement(veo, temp));
+                    this._dispatch([temp], ViewElementEventType.DragEnd, withElement(veo, temp));
                     this.requestRender();
                 }
             } else if (this._prepareDragging) {
                 this.cursor = "pointer";
                 this._prepareDragging = false;
-                if (this._isActiveDrag) {
-                    if (this._indActiveElements.length !== 0) {
-                        this._deactivateInternal(...this._indActiveElements);
-                        this._trigger(ViewEventType.Deactivate, veo);
-                        this._dispatch(this._indActiveElements, ViewElementEventType.Deactivate, veo);
-                        this._indActiveElements.length = 0;
-                        this.requestRender();
+                if (this._isActivationDrag) {
+                    const temp = this._currentActivationElement;
+                    this._currentActivationElement = null;
+                    this._trigger(ViewEventType.Click, withElement(veo, temp));
+                    this._dispatch([temp], ViewElementEventType.Click, withElement(veo, temp));
+                    this.requestRender();
+                    if (this.activationMode === "continuousAlt" || this.activationMode === "numerousAlt") {
+                        if (this._indActiveElements.length !== 0) {
+                            this._deactivateInternal(...this._indActiveElements);
+                            this._trigger(ViewEventType.Deactivate, withElement(veo, temp));
+                            this._dispatch(this._indActiveElements, ViewElementEventType.Deactivate, withElement(veo, temp));
+                            this._indActiveElements.length = 0;
+                            this.requestRender();
+                        }
                     }
                 } else {
-                    const temp = this._operativeElement;
-                    this._operativeElement = null;
-                    this._trigger(ViewEventType.Click, veo);
-                    this._dispatch([temp], ViewElementEventType.Click, veo);
+                    const temp = this._currentOperationElement;
+                    this._currentOperationElement = null;
+                    this._trigger(ViewEventType.Click, withElement(veo, temp));
+                    this._dispatch([temp], ViewElementEventType.Click, withElement(veo, temp));
                     this.requestRender();
                 }
             } else if (this._isPanning) {
@@ -749,32 +792,42 @@ export default class View {
             if (this._isDragging) {
                 this.cursor = "pointer";
                 this._isDragging = false;
-                if (this._isActiveDrag) {
-                    this._trigger(ViewEventType.DragEnd, veo);
-                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, veo);
+                if (this._isActivationDrag) {
+                    const temp = this._currentActivationElement;
+                    this._currentActivationElement = null;
+                    this._trigger(ViewEventType.DragEnd, withElement(veo, temp));
+                    this._dispatch(this._activeElements, ViewElementEventType.DragEnd, withElement(veo, temp));
+                    this.requestRender();
                 } else {
-                    const temp = this._operativeElement;
-                    this._operativeElement = null;
-                    this._trigger(ViewEventType.DragEnd, veo);
-                    this._dispatch([temp], ViewElementEventType.DragEnd, veo);
+                    const temp = this._currentOperationElement;
+                    this._currentOperationElement = null;
+                    this._trigger(ViewEventType.DragEnd, withElement(veo, temp));
+                    this._dispatch([temp], ViewElementEventType.DragEnd, withElement(veo, temp));
                     this.requestRender();
                 }
             } else if (this._prepareDragging) {
                 this.cursor = "pointer";
                 this._prepareDragging = false;
-                if (this._isActiveDrag) {
-                    if (this._indActiveElements.length !== 0) {
-                        this._deactivateInternal(...this._indActiveElements);
-                        this._trigger(ViewEventType.Deactivate, veo);
-                        this._dispatch(this._indActiveElements, ViewElementEventType.Deactivate, veo);
-                        this._indActiveElements.length = 0;
-                        this.requestRender();
+                if (this._isActivationDrag) {
+                    const temp = this._currentActivationElement;
+                    this._currentActivationElement = null;
+                    this._trigger(ViewEventType.Click, withElement(veo, temp));
+                    this._dispatch([temp], ViewElementEventType.Click, withElement(veo, temp));
+                    this.requestRender();
+                    if (this.activationMode === "continuousAlt" || this.activationMode === "numerousAlt") {
+                        if (this._indActiveElements.length !== 0) {
+                            this._deactivateInternal(...this._indActiveElements);
+                            this._trigger(ViewEventType.Deactivate, withElement(veo, temp));
+                            this._dispatch(this._indActiveElements, ViewElementEventType.Deactivate, withElement(veo, temp));
+                            this._indActiveElements.length = 0;
+                            this.requestRender();
+                        }
                     }
                 } else {
-                    const temp = this._operativeElement;
-                    this._operativeElement = null;
-                    this._trigger(ViewEventType.Click, veo);
-                    this._dispatch([temp], ViewElementEventType.Click, veo);
+                    const temp = this._currentOperationElement;
+                    this._currentOperationElement = null;
+                    this._trigger(ViewEventType.Click, withElement(veo, temp));
+                    this._dispatch([temp], ViewElementEventType.Click, withElement(veo, temp));
                     this.requestRender();
                 }
             } else if (this._prepareZooming || this._preparePanning) {
@@ -826,9 +879,14 @@ export default class View {
                     } else {
                         this._isDragging = true;
                         this._prepareDragging = false;
-                        if (this._isActiveDrag && this._indActiveElements.length !== 0) this._indActiveElements.length = 0;
-                        this._trigger(ViewEventType.DragStart, veo);
-                        this._dispatch(this._isActiveDrag ? this._activeElements : [this._operativeElement], ViewElementEventType.DragStart, veo);
+                        if (this._isActivationDrag && this._indActiveElements.length !== 0) this._indActiveElements.length = 0;
+                        if (this._isActivationDrag) {
+                            this._trigger(ViewEventType.DragStart, withElement(veo, this._currentActivationElement));
+                            this._dispatch(this._activeElements, ViewElementEventType.DragStart, withElement(veo, this._currentActivationElement));
+                        } else {
+                            this._trigger(ViewEventType.DragStart, withElement(veo, this._currentOperationElement));
+                            this._dispatch([this._currentOperationElement], ViewElementEventType.DragStart, withElement(veo, this._currentOperationElement));
+                        }
                         return;
                     }
                 }
@@ -837,12 +895,13 @@ export default class View {
                     this.cursor = "move";
                     const [deltaX, deltaY] = [atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]];
                     this._draggingOffset = atOffset;
-                    if (this._isActiveDrag) {
+                    if (this._isActivationDrag) {
                         this._activeElements.forEach(el => !el.noDrag && el.move(deltaX, deltaY));
+                        this._trigger(ViewEventType.Dragging, withElement(veo, this._currentActivationElement));
                     } else {
-                        !this._operativeElement?.noDrag && this._operativeElement?.move(deltaX, deltaY);
+                        !this._currentOperationElement!.noDrag && this._currentOperationElement!.move(deltaX, deltaY);
+                        this._trigger(ViewEventType.Dragging, withElement(veo, this._currentOperationElement));
                     }
-                    this._trigger(ViewEventType.Dragging, veo);
                 } else if (this._preparePanning) {
                     this._preparePanning = false;
                     this._isPanning = true;
@@ -860,13 +919,14 @@ export default class View {
                         const foundElement = this._interactables[foundIndex];
                         if (this._hoverElement !== null) {
                             if (this._hoverElement !== foundElement) {
+                                const temp = this._hoverElement;
                                 this._hoverElement = null;
-                                this._trigger(ViewEventType.Unhover, veo);
-                                this._dispatch([this._hoverElement], ViewElementEventType.Unhover, veo);
+                                this._trigger(ViewEventType.Unhover, withElement(veo, foundElement));
+                                this._dispatch([temp], ViewElementEventType.Unhover, withElement(veo, foundElement));
                                 if (!foundElement.noHover) {
                                     this._hoverElement = foundElement;
-                                    this._trigger(ViewEventType.Hover, veo);
-                                    this._dispatch([foundElement], ViewElementEventType.Hover, veo);
+                                    this._trigger(ViewEventType.Hover, withElement(veo, foundElement));
+                                    this._dispatch([foundElement], ViewElementEventType.Hover, withElement(veo, foundElement));
                                 } else {
                                     this.cursor = "default";
                                 }
@@ -884,8 +944,8 @@ export default class View {
                             if (!foundElement.noHover) {
                                 this.cursor = "pointer";
                                 this._hoverElement = foundElement;
-                                this._trigger(ViewEventType.Hover, veo);
-                                this._dispatch([foundElement], ViewElementEventType.Hover, veo);
+                                this._trigger(ViewEventType.Hover, withElement(veo, foundElement));
+                                this._dispatch([foundElement], ViewElementEventType.Hover, withElement(veo, foundElement));
                                 this.requestRender();
                             }
                         }
@@ -893,8 +953,8 @@ export default class View {
                         if (this._hoverElement !== null) {
                             this.cursor = "default";
                             this._hoverElement = null;
-                            this._trigger(ViewEventType.Unhover, veo);
-                            this._dispatch([this._hoverElement], ViewElementEventType.Unhover, veo);
+                            this._trigger(ViewEventType.Unhover, withElement(veo, null));
+                            this._dispatch([this._hoverElement], ViewElementEventType.Unhover, withElement(veo, null));
                             this.requestRender();
                         } else {
                             if (this.cursor !== "default") this.cursor = "default";
@@ -912,9 +972,14 @@ export default class View {
                     } else {
                         this._isDragging = true;
                         this._prepareDragging = false;
-                        if (this._isActiveDrag && this._indActiveElements.length !== 0) this._indActiveElements.length = 0;
-                        this._trigger(ViewEventType.DragStart, veo);
-                        this._dispatch(this._isActiveDrag ? this._activeElements : [this._operativeElement], ViewElementEventType.DragStart, veo);
+                        if (this._isActivationDrag && this._indActiveElements.length !== 0) this._indActiveElements.length = 0;
+                        if (this._isActivationDrag) {
+                            this._trigger(ViewEventType.DragStart, withElement(veo, this._currentActivationElement));
+                            this._dispatch(this._activeElements, ViewElementEventType.DragStart, withElement(veo, this._currentActivationElement));
+                        } else {
+                            this._trigger(ViewEventType.DragStart, withElement(veo, this._currentOperationElement));
+                            this._dispatch([this._currentOperationElement], ViewElementEventType.DragStart, withElement(veo, this._currentOperationElement));
+                        }
                         return;
                     }
                 }
@@ -923,12 +988,13 @@ export default class View {
                     this.cursor = "move";
                     const [deltaX, deltaY] = [atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]];
                     this._draggingOffset = atOffset;
-                    if (this._isActiveDrag) {
+                    if (this._isActivationDrag) {
                         this._activeElements.forEach(el => !el.noDrag && el.move(deltaX, deltaY));
+                        this._trigger(ViewEventType.Dragging, withElement(veo, this._currentActivationElement));
                     } else {
-                        !this._operativeElement?.noDrag && this._operativeElement?.move(deltaX, deltaY);
+                        !this._currentOperationElement!.noDrag && this._currentOperationElement!.move(deltaX, deltaY);
+                        this._trigger(ViewEventType.Dragging, withElement(veo, this._currentOperationElement));
                     }
-                    this._trigger(ViewEventType.Dragging, veo);
                 } else if (this._prepareZooming || this._preparePanning) {
                     this._prepareZooming = false;
                     this._preparePanning = false;
@@ -1208,7 +1274,7 @@ export default class View {
     }
     operate(element: ViewElement) {
         if ((element[VE_VIEW_SYMBOL] ?? element[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL]) === this && element.interactMode === ViewElementInteractMode.Operation) {
-            this._operativeElement = element;
+            this._currentOperationElement = element;
             this.requestRender();
         }
         return this;
@@ -1306,7 +1372,16 @@ export default class View {
 
         renderer.clear();
 
-        const renderList = sortToRender(this._renderables, this.hoverForemost, this.operativeForemost, this.activeForemost, this._hoverElement, this._operativeElement, this._activeElements);
+        const renderList = sortToRender(
+            this._renderables,
+            this.hoverForemost,
+            this.operativeForemost,
+            this.activeForemost,
+            this._hoverElement,
+            this._currentOperationElement,
+            this._currentActivationElement,
+            this._activeElements
+        );
 
         renderList.forEach(el => {
             if (el.shape instanceof Image) {
@@ -1332,17 +1407,17 @@ export default class View {
             const as = el.activeStyle();
 
             const hover = this._hoverElement === el;
-            const operative = this._operativeElement === el;
+            const click = this._currentOperationElement === el || this._currentActivationElement == el;
             const active = this._activeElements.includes(el);
             // `active` || `click` >`hover`
 
             renderer.paintOrder(s.paintOrder);
             renderer.noFill(s.noFill);
-            renderer.fill((active && as.fill) || (operative && cs.fill) || (hover && hs.fill) || s.fill);
+            renderer.fill((active && as.fill) || (click && cs.fill) || (hover && hs.fill) || s.fill);
 
             renderer.noStroke(s.noStroke);
-            renderer.stroke((active && as.stroke) || (operative && cs.stroke) || (hover && hs.stroke) || s.stroke);
-            renderer.strokeWidth((active && as.strokeWidth) || (operative && cs.strokeWidth) || (hover && hs.strokeWidth) || s.strokeWidth);
+            renderer.stroke((active && as.stroke) || (click && cs.stroke) || (hover && hs.stroke) || s.stroke);
+            renderer.strokeWidth((active && as.strokeWidth) || (click && cs.strokeWidth) || (hover && hs.strokeWidth) || s.strokeWidth);
 
             renderer.strokeDash(s.strokeDash);
             renderer.strokeDashOffset(s.strokeDashOffset);
@@ -1363,24 +1438,27 @@ function sortToRender(
     operativeForemost: boolean,
     activeForemost: boolean,
     hoverElement: ViewElement | null,
-    operativeElement: ViewElement | null,
+    currentOperationElement: ViewElement | null,
+    currentActivationElement: ViewElement | null,
     activeElements: ViewElement[]
 ) {
     /**
      * from the top to bottom
-     * interactMode: Operation      operativeForemost ? operativeElement
-     *                              hoverForemost ? hoverElement
-     *                              other operation interact mode view element ordered by z-index desc
-     * interactMode: Activation     activeForemost? activeElements ordered by z-index desc
-     *                              hoverForemost ? hoverElement
-     *                              other activation interact mode view element ordered by z-index desc
-     * interactMode: None           all none interact mode mode view element ordered by z-index desc
+     * interactMode: Operation      operativeForemost ? `currentOperationElement`
+     *                              hoverForemost ? hovered `Operation` - `hoverElement`
+     *                              other `Operation`s ordered by z-index desc
+     * interactMode: Activation     activeForemost ? `currentActivationElement`
+     *                              activeForemost ? `activeElements` ordered by z-index desc
+     *                              hoverForemost ? hovered `Activation` - `hoverElement`
+     *                              other `Activation`s ordered by z-index desc
+     * interactMode: None           all `None`s ordered by z-index desc
      */
     let hoverOperation: ViewElement | undefined;
-    let operativeOperation: ViewElement | undefined;
+    let operatingOperation: ViewElement | undefined;
     const plainOperations: ViewElement[] = [];
 
     let hoverActivation: ViewElement | undefined;
+    let activatingActivation: ViewElement | undefined;
     const activeActivations: ViewElement[] = [];
     const plainActivations: ViewElement[] = [];
 
@@ -1389,11 +1467,12 @@ function sortToRender(
     for (const ve of renderables) {
         if (ve.interactMode === ViewElementInteractMode.Operation) {
             if (hoverForemost && hoverElement === ve) hoverOperation = ve;
-            else if (operativeForemost && operativeElement === ve) operativeOperation = ve;
+            else if (operativeForemost && currentOperationElement === ve) operatingOperation = ve;
             else plainOperations.push(ve);
         }
         if (ve.interactMode === ViewElementInteractMode.Activation) {
             if (hoverForemost && hoverElement === ve) hoverActivation = ve;
+            else if (activeForemost && currentActivationElement === ve) activatingActivation = ve;
             else if (activeForemost && activeElements.includes(ve)) activeActivations.push(ve);
             else plainActivations.push(ve);
         }
@@ -1402,9 +1481,10 @@ function sortToRender(
         }
     }
     return [
-        ...(operativeOperation ? [operativeOperation] : []),
+        ...(operatingOperation ? [operatingOperation] : []),
         ...(hoverOperation ? [hoverOperation] : []),
         ...plainOperations,
+        ...(activatingActivation ? [activatingActivation] : []),
         ...activeActivations,
         ...(hoverActivation ? [hoverActivation] : []),
         ...plainActivations,

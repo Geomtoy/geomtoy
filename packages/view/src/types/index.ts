@@ -1,4 +1,5 @@
-import { ViewportDescriptor, FillRule } from "@geomtoy/core";
+import type { ViewportDescriptor, FillRule } from "@geomtoy/core";
+import type ViewElement from "../frontend/ViewElement";
 
 export const enum ViewElementInteractMode {
     None = 0,
@@ -46,6 +47,7 @@ export interface ViewEventObject {
     viewportY: number;
     x: number;
     y: number;
+    currentElement?: ViewElement | null;
 }
 
 export type StrokeLineJoinType = "bevel" | "miter" | "round";
