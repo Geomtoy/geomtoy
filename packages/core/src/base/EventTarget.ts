@@ -148,24 +148,42 @@ export default abstract class EventTarget extends BaseObject {
         this._addHandler(parsedEvent, callback, this, null, priority, debounce);
         return this;
     }
-    off(event: string, callback: (...args: any) => void) {
+    off(event: string, callback?: (...args: any) => void) {
         const parsedEvent = this._parseEvent(event);
         if (!parsedEvent) return this;
-
-        this._removeHandler(parsedEvent, callback, this);
+        if (callback === undefined) {
+            let l = this._eventMap.length - 1;
+            while (l >= 0) {
+                if (this._eventMap[l].event === parsedEvent && this._eventMap[l].context === this) {
+                    this._eventMap.splice(l, 1);
+                }
+                l--;
+            }
+        } else {
+            this._removeHandler(parsedEvent, callback, this);
+        }
         return this;
     }
-    clear(event?: string) {
-        if (event === undefined) {
-            this._eventMap = [];
-            return this;
+    clearOn() {
+        let l = this._eventMap.length - 1;
+        while (l >= 0) {
+            if (this._eventMap[l].context === this) {
+                this._eventMap.splice(l, 1);
+            }
+            l--;
         }
-        const parsedEvent = this._parseEvent(event);
-
-        const hs = this._eventMap;
-        const index = hs.findIndex(h => h.event === parsedEvent);
-        if (index != -1) hs.splice(index, 1);
-        return this;
+    }
+    clearBind() {
+        let l = this._eventMap.length - 1;
+        while (l >= 0) {
+            if (this._eventMap[l].context !== this) {
+                this._eventMap.splice(l, 1);
+            }
+            l--;
+        }
+    }
+    clear() {
+        this._eventMap.length = 0;
     }
 
     private _schedule() {
@@ -298,6 +316,8 @@ export default abstract class EventTarget extends BaseObject {
         return ret;
     }
 
+    private _binding = new Set<EventTarget>();
+
     bind<T extends EventPair[]>(bindOptions: BindOptions, ...bindParameters: BindParameters<T, this>): this;
     bind<T extends EventPair[]>(...bindParameters: BindParameters<T, this>): this;
     bind<T extends EventPair[]>(...args: any) {
@@ -342,6 +362,7 @@ export default abstract class EventTarget extends BaseObject {
                 return console.warn(`[G]An event handler with the same event \`${parsedEvent}\`, callback and context \`${this}\` already exists in \`${target}\`, so it will be ignored.`);
             }
             target._addHandler(parsedEvent, callback, this, targets, priority, debounce);
+            this._binding.add(target);
 
             if (immediately && !immediatelyCalled) {
                 callback.call(this, ...(targets.map(target => EventObject.empty(target)) as EventObjectsFromPairs<T>));
@@ -351,15 +372,54 @@ export default abstract class EventTarget extends BaseObject {
         return this;
     }
 
-    unbind(eventPair: EventPair[], callback: (...args: any) => void) {
+    unbind(eventPair: EventPair[], callback?: (...args: any) => void) {
         const { pairs } = this._parsePairs(eventPair);
         pairs.forEach(te => {
             const [target, event] = te;
             const parsedEvent = target._parseEvent(event);
             if (!parsedEvent) return;
-
-            target._removeHandler(parsedEvent, callback, this);
+            if (callback === undefined) {
+                let l = target._eventMap.length - 1;
+                while (l >= 0) {
+                    if (target._eventMap[l].event === parsedEvent && target._eventMap[l].context === this) {
+                        target._eventMap.splice(l, 1);
+                    }
+                    l--;
+                }
+            } else {
+                target._removeHandler(parsedEvent, callback, this);
+            }
+            if (target._eventMap.findIndex(h => h.context === this) === -1) {
+                this._binding.delete(target);
+            }
         });
         return this;
+    }
+    unbindAlt(eventTargets: EventTarget[], callback?: (...args: any) => void) {
+        eventTargets.forEach(et => {
+            if (callback === undefined) {
+                let l = et._eventMap.length - 1;
+                while (l >= 0) {
+                    if (et._eventMap[l].context === this) {
+                        et._eventMap.splice(l, 1);
+                    }
+                    l--;
+                }
+                this._binding.delete(et);
+            } else {
+                let l = et._eventMap.length - 1;
+                while (l >= 0) {
+                    if (et._eventMap[l].context === this && et._eventMap[l].callback === callback) {
+                        et._eventMap.splice(l, 1);
+                    }
+                    l--;
+                }
+                if (et._eventMap.findIndex(h => h.context === this) === -1) this._binding.delete(et);
+            }
+        });
+        return this;
+    }
+    unbindAll() {
+        this.unbindAlt([...this._binding]);
     }
 }
