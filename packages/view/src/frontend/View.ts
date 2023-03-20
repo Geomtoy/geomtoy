@@ -2,7 +2,7 @@ import { Geomtoy, Image, ParentShape, SealedShapeArray, SealedShapeObject, Shape
 import { Assert, Maths, TransformationMatrix, Vector2 } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import type Renderer from "../renderer/Renderer";
-import { Style, ViewElementEventType, ViewElementInteractMode, ViewEventType, type ViewEventObject } from "../types";
+import { Style, ViewElementEventType, ViewElementType, ViewEventType, type ViewEventObject } from "../types";
 import Lasso from "./Lasso";
 import SubView, { SV_VIEW_SYMBOL } from "./SubView";
 import type ViewElement from "./ViewElement";
@@ -263,7 +263,7 @@ export default class View {
         });
     }
     refreshInteractables() {
-        this._interactables = this._renderables.filter(el => el.interactMode !== ViewElementInteractMode.None);
+        this._interactables = this._renderables.filter(el => el.interactMode !== ViewElementType.None);
         if (this._hoverElement !== null && !this._interactables.includes(this._hoverElement)) {
             this._hoverElement = null;
         }
@@ -506,7 +506,7 @@ export default class View {
             if (foundIndex !== -1) {
                 const foundElement = this._interactables[foundIndex];
                 // operativeElement
-                if (foundElement.interactMode === ViewElementInteractMode.Operation) {
+                if (foundElement.interactMode === ViewElementType.Operation) {
                     this._isActivationDrag = false;
                     this._draggingOffset = atOffset;
                     this._prepareDragging = true;
@@ -514,7 +514,7 @@ export default class View {
                     this.requestRender();
                 }
                 // activeElements
-                if (foundElement.interactMode === ViewElementInteractMode.Activation) {
+                if (foundElement.interactMode === ViewElementType.Activation) {
                     // continuous
                     if (this.activationMode === "continuous" || this.activationMode === "continuousAlt") {
                         if (!this._activeElements.includes(foundElement)) {
@@ -593,7 +593,7 @@ export default class View {
                 if (foundIndex !== -1) {
                     const foundElement = this._interactables[foundIndex];
                     // operativeElement
-                    if (foundElement.interactMode === ViewElementInteractMode.Operation) {
+                    if (foundElement.interactMode === ViewElementType.Operation) {
                         this._isActivationDrag = false;
                         this._draggingOffset = atOffset;
                         this._prepareDragging = true;
@@ -601,7 +601,7 @@ export default class View {
                         this.requestRender();
                     }
                     // activeElements
-                    if (foundElement.interactMode === ViewElementInteractMode.Activation) {
+                    if (foundElement.interactMode === ViewElementType.Activation) {
                         // continuous
                         if (this.activationMode === "continuous" || this.activationMode === "continuousAlt") {
                             if (!this._activeElements.includes(foundElement)) {
@@ -1261,7 +1261,7 @@ export default class View {
 
     activate(...elements: ViewElement[]) {
         elements = elements.filter(el => {
-            return (el[VE_VIEW_SYMBOL] ?? el[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL]) === this && el.interactMode === ViewElementInteractMode.Activation && !this._activeElements.includes(el);
+            return (el[VE_VIEW_SYMBOL] ?? el[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL]) === this && el.interactMode === ViewElementType.Activation && !this._activeElements.includes(el);
         });
         this._activeElements.push(...elements);
         this.requestRender();
@@ -1273,7 +1273,7 @@ export default class View {
         return this;
     }
     operate(element: ViewElement) {
-        if ((element[VE_VIEW_SYMBOL] ?? element[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL]) === this && element.interactMode === ViewElementInteractMode.Operation) {
+        if ((element[VE_VIEW_SYMBOL] ?? element[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL]) === this && element.interactMode === ViewElementType.Operation) {
             this._currentOperationElement = element;
             this.requestRender();
         }
@@ -1465,18 +1465,18 @@ function sortToRender(
     const nones: ViewElement[] = [];
 
     for (const ve of renderables) {
-        if (ve.interactMode === ViewElementInteractMode.Operation) {
+        if (ve.interactMode === ViewElementType.Operation) {
             if (hoverForemost && hoverElement === ve) hoverOperation = ve;
             else if (operativeForemost && currentOperationElement === ve) operatingOperation = ve;
             else plainOperations.push(ve);
         }
-        if (ve.interactMode === ViewElementInteractMode.Activation) {
+        if (ve.interactMode === ViewElementType.Activation) {
             if (hoverForemost && hoverElement === ve) hoverActivation = ve;
             else if (activeForemost && currentActivationElement === ve) activatingActivation = ve;
             else if (activeForemost && activeElements.includes(ve)) activeActivations.push(ve);
             else plainActivations.push(ve);
         }
-        if (ve.interactMode === ViewElementInteractMode.None) {
+        if (ve.interactMode === ViewElementType.None) {
             nones.push(ve);
         }
     }

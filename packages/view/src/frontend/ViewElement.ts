@@ -1,6 +1,6 @@
 import type { Shape } from "@geomtoy/core";
 import { Assert, Type, Utility } from "@geomtoy/util";
-import { ViewElementEventType, ViewElementInteractMode, type InteractiveStyle, type PathInfo, type Style, type ViewEventObject } from "../types";
+import { ViewElementEventType, ViewElementType, type InteractiveStyle, type PathInfo, type Style, type ViewEventObject } from "../types";
 import type SubView from "./SubView";
 import { SV_VIEW_SYMBOL } from "./SubView";
 import type View from "./View";
@@ -30,30 +30,28 @@ export const VE_EVENT_HANDLERS_SYMBOL = Symbol("ViewElement.eventHandlers");
 
 export default class ViewElement<T extends Shape = Shape> {
     /**
-     * ViewElementInteractMode:
+     * type:
      *
-     * none:
-     * `ViewElement` has no interaction and exists as a background.
+     * `None`:
+     * The element has no interaction and exists as a background.
      *
-     * operation:
-     * `ViewElement` is interactive that can respond to
+     * `Operation`:
+     * The element is interactive that can respond to
      *      -`hover`, `unhover`
      *      -`click`,
      *      -`dragStart`, `dragEnd`
-     * This is mostly used for the UI.
-     * Requiring property of `View` `operativeElement`
+     * This is mostly used for the UI, corresponding to `currentOperationElement` of a view.
      *
-     * activation:
-     * `ViewElement` is interactive that can respond to
+     * `Activation`:
+     * The element is interactive that can respond to
      *      -`hover`, `unhover`
      *      -`activate`, `deactivate`
      *      -`click`,
      *      -`dragStart`, `dragEnd`
-     * This is mostly used for the contents.
-     * Requiring property of `View` `activeElements`
+     * This is mostly used for the contents corresponding to `currentActivationElement` and `activeElements` of a view.
      */
 
-    private _interactMode: ViewElementInteractMode;
+    private _type: ViewElementType;
     private _zIndex: number;
     private _style = Utility.cloneDeep(DEFAULT_STYLE);
     private _hoverStyle = Utility.cloneDeep(DEFAULT_INTERACTIVE_STYLE);
@@ -68,9 +66,10 @@ export default class ViewElement<T extends Shape = Shape> {
     noDrag: boolean;
     noHover: boolean;
 
-    // view: null && subView: null - ViewElement initial status
-    // view: View && subView: null - ViewElement directly added to a View
-    // view: null && subView: SubView - ViewElement added to a SubView
+    // There status:
+    // 1. view: null && subView: null - The view element initial status.
+    // 2. view: View && subView: null - The view element directly added to a view.
+    // 3. view: null && subView: SubView - The view element added to a sub view.
     // @internal
     [VE_VIEW_SYMBOL]: View | null = null;
     // @internal
@@ -78,8 +77,8 @@ export default class ViewElement<T extends Shape = Shape> {
 
     constructor(
         shape: T,
-        { interactMode = ViewElementInteractMode.Activation, zIndex = 0, noDrag = false, noHover = false, style, hoverStyle, clickStyle, activeStyle } = {} as Partial<{
-            interactMode: ViewElementInteractMode;
+        { interactMode = ViewElementType.Activation, zIndex = 0, noDrag = false, noHover = false, style, hoverStyle, clickStyle, activeStyle } = {} as Partial<{
+            interactMode: ViewElementType;
             zIndex: number;
             noDrag: boolean;
             noHover: boolean;
@@ -98,7 +97,7 @@ export default class ViewElement<T extends Shape = Shape> {
         this._zIndex = zIndex;
         this.noDrag = noDrag;
         this.noHover = noHover;
-        this._interactMode = interactMode;
+        this._type = interactMode;
     }
     get shape() {
         return this._shape;
@@ -111,11 +110,11 @@ export default class ViewElement<T extends Shape = Shape> {
     }
 
     get interactMode() {
-        return this._interactMode;
+        return this._type;
     }
     set interactMode(value) {
-        if (this._interactMode !== value) {
-            this._interactMode = value;
+        if (this._type !== value) {
+            this._type = value;
             (this[VE_VIEW_SYMBOL] ?? this[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL])?.refreshInteractables();
         }
     }

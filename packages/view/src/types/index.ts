@@ -1,7 +1,7 @@
 import type { ViewportDescriptor, FillRule } from "@geomtoy/core";
 import type ViewElement from "../frontend/ViewElement";
 
-export const enum ViewElementInteractMode {
+export const enum ViewElementType {
     None = 0,
     Activation = 1,
     Operation = 2
