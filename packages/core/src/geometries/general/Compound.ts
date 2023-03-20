@@ -245,15 +245,15 @@ export default class Compound extends Geometry implements ParentShape {
     }
     getGraphics(viewport: ViewportDescriptor) {
         if (!this.initialized()) return new Graphics();
-
         const g = new Graphics();
+        const gg = new GeometryGraphic();
+        gg.fillRule = this.fillRule;
+
         this._items.forEach(item => {
-            const itemG = item.getGraphics(viewport);
-            itemG.graphics.forEach(gg => {
-                (gg as GeometryGraphic).fillRule = this.fillRule;
-            });
-            g.concat(itemG);
+            const ig = item.getGraphics(viewport).graphics[0] as GeometryGraphic;
+            gg.commands.push(...ig.commands);
         });
+        g.append(gg);
         return g;
     }
     clone() {
