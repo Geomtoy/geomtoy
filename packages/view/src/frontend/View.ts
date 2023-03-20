@@ -142,22 +142,22 @@ export default class View {
     /**
      * Activation mode:
      *
-     * `numerous`:(This requires a modifier key to do multiple activating, so it' not suitable for touch devices.)
-     * - Click on a inactive element to activate it.
-     * - Click on a element of active elements will do nothing.
-     *   `numerousAlt`: Click on a element of active elements will deactivate active elements but this element unless start dragging.
-     * - Click on another inactive element will deactivate active elements and activate the another element.
-     * - Hold modifier key and click on a inactive element will activate this element and keep current active elements.
-     * - Hold modifier key and click on a active element will remove this from active elements.
-     * - Click on a blank area will deactivate all active elements.
-     * - Hold modifier key and click on a blank area will do nothing.
+     * numerous or numerousAlt: (This requires a modifier key to do multiple activating, so it' not suitable for touch devices.)
+     *     Click on an inactive ac-element to activate it.
+     *     numerous: Click on an ac-element of activeElements will do nothing.
+     *     numerousAlt: Click on an ac-element of activeElements will deactivate all activeElements except this one, unless start dragging.
+     *     Click on another inactive ac-element will deactivate all activeElements and activate the another ac-element.
+     *     Click on a blank area will deactivate all activeElements.
+     *     Hold modifier key and click on an inactive ac-element will activate this ac-element and keep current activeElements.
+     *     Hold modifier key and click on an active ac-element will remove this from activeElements.
+     *     Hold modifier key and click on a blank area will deactivate all activeElements.
      *
-     * `continuous`:(This does not require extra actions to do multiple activating, so it suitable for touch devices.)
-     * - Click on a inactive element to activate it.
-     * - Click on a element of actives elements will do nothing.
-     *   `continuousAlt`: Click on a element of actives elements will deactivate this element but keep the rest active elements unless start dragging.
-     * - Click on another inactive element will activate the another element and keep current active elements.
-     * - Click on a blank area will deactivate all active elements.
+     * continuous or continuousAlt :(This does not require extra actions to do multiple activating, so it suitable for touch devices.)
+     *     Click on an inactive ac-element to activate it.
+     *     continuous: Click on an ac-element of activeElements will do nothing.
+     *     continuousAlt: Click on an ac-element of activeElements will deactivate this ac-element but keep the rest activeElements, unless start dragging.
+     *     Click on another inactive ac-element will activate the another ac-element and keep current activeElements.
+     *     Click on a blank area will deactivate all activeElements.
      */
     //todo
     activationMode: "numerous" | "numerousAlt" | "continuous" | "continuousAlt" = "numerous";
@@ -257,13 +257,13 @@ export default class View {
     }
     sortRenderables() {
         this._renderables.sort((a, b) => {
-            const i = b.interactMode - a.interactMode;
+            const i = b.type - a.type;
             if (i !== 0) return i;
             return b.zIndex - a.zIndex;
         });
     }
     refreshInteractables() {
-        this._interactables = this._renderables.filter(el => el.interactMode !== ViewElementType.None);
+        this._interactables = this._renderables.filter(el => el.type !== ViewElementType.None);
         if (this._hoverElement !== null && !this._interactables.includes(this._hoverElement)) {
             this._hoverElement = null;
         }
@@ -506,7 +506,7 @@ export default class View {
             if (foundIndex !== -1) {
                 const foundElement = this._interactables[foundIndex];
                 // operativeElement
-                if (foundElement.interactMode === ViewElementType.Operation) {
+                if (foundElement.type === ViewElementType.Operation) {
                     this._isActivationDrag = false;
                     this._draggingOffset = atOffset;
                     this._prepareDragging = true;
@@ -514,7 +514,7 @@ export default class View {
                     this.requestRender();
                 }
                 // activeElements
-                if (foundElement.interactMode === ViewElementType.Activation) {
+                if (foundElement.type === ViewElementType.Activation) {
                     // continuous
                     if (this.activationMode === "continuous" || this.activationMode === "continuousAlt") {
                         if (!this._activeElements.includes(foundElement)) {
@@ -593,7 +593,7 @@ export default class View {
                 if (foundIndex !== -1) {
                     const foundElement = this._interactables[foundIndex];
                     // operativeElement
-                    if (foundElement.interactMode === ViewElementType.Operation) {
+                    if (foundElement.type === ViewElementType.Operation) {
                         this._isActivationDrag = false;
                         this._draggingOffset = atOffset;
                         this._prepareDragging = true;
@@ -601,7 +601,7 @@ export default class View {
                         this.requestRender();
                     }
                     // activeElements
-                    if (foundElement.interactMode === ViewElementType.Activation) {
+                    if (foundElement.type === ViewElementType.Activation) {
                         // continuous
                         if (this.activationMode === "continuous" || this.activationMode === "continuousAlt") {
                             if (!this._activeElements.includes(foundElement)) {
@@ -1261,7 +1261,7 @@ export default class View {
 
     activate(...elements: ViewElement[]) {
         elements = elements.filter(el => {
-            return (el[VE_VIEW_SYMBOL] ?? el[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL]) === this && el.interactMode === ViewElementType.Activation && !this._activeElements.includes(el);
+            return (el[VE_VIEW_SYMBOL] ?? el[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL]) === this && el.type === ViewElementType.Activation && !this._activeElements.includes(el);
         });
         this._activeElements.push(...elements);
         this.requestRender();
@@ -1273,7 +1273,7 @@ export default class View {
         return this;
     }
     operate(element: ViewElement) {
-        if ((element[VE_VIEW_SYMBOL] ?? element[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL]) === this && element.interactMode === ViewElementType.Operation) {
+        if ((element[VE_VIEW_SYMBOL] ?? element[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL]) === this && element.type === ViewElementType.Operation) {
             this._currentOperationElement = element;
             this.requestRender();
         }
@@ -1409,15 +1409,15 @@ export default class View {
             const hover = this._hoverElement === el;
             const click = this._currentOperationElement === el || this._currentActivationElement == el;
             const active = this._activeElements.includes(el);
-            // `active` || `click` >`hover`
+            // `click` > `active` >`hover`
 
             renderer.paintOrder(s.paintOrder);
             renderer.noFill(s.noFill);
-            renderer.fill((active && as.fill) || (click && cs.fill) || (hover && hs.fill) || s.fill);
+            renderer.fill((click && cs.fill) || (active && as.fill) || (hover && hs.fill) || s.fill);
 
             renderer.noStroke(s.noStroke);
-            renderer.stroke((active && as.stroke) || (click && cs.stroke) || (hover && hs.stroke) || s.stroke);
-            renderer.strokeWidth((active && as.strokeWidth) || (click && cs.strokeWidth) || (hover && hs.strokeWidth) || s.strokeWidth);
+            renderer.stroke((click && cs.stroke) || (active && as.stroke) || (hover && hs.stroke) || s.stroke);
+            renderer.strokeWidth((click && cs.strokeWidth) || (active && as.strokeWidth) || (hover && hs.strokeWidth) || s.strokeWidth);
 
             renderer.strokeDash(s.strokeDash);
             renderer.strokeDashOffset(s.strokeDashOffset);
@@ -1433,7 +1433,7 @@ export default class View {
 }
 
 function sortToRender(
-    renderables: ViewElement[], // pre sorted with  [...Operations desc, ...Activation desc, ...None desc]
+    renderables: ViewElement[], // pre sorted with  [...Operation desc, ...Activation desc, ...None desc]
     hoverForemost: boolean,
     operativeForemost: boolean,
     activeForemost: boolean,
@@ -1444,14 +1444,14 @@ function sortToRender(
 ) {
     /**
      * from the top to bottom
-     * interactMode: Operation      operativeForemost ? `currentOperationElement`
-     *                              hoverForemost ? hovered `Operation` - `hoverElement`
-     *                              other `Operation`s ordered by z-index desc
-     * interactMode: Activation     activeForemost ? `currentActivationElement`
-     *                              activeForemost ? `activeElements` ordered by z-index desc
-     *                              hoverForemost ? hovered `Activation` - `hoverElement`
-     *                              other `Activation`s ordered by z-index desc
-     * interactMode: None           all `None`s ordered by z-index desc
+     * Operation      operativeForemost ? `currentOperationElement`
+     *                hoverForemost ? hovered `Operation` - `hoverElement`
+     *                other `Operation`s ordered by z-index desc
+     * Activation     activeForemost ? `currentActivationElement`
+     *                activeForemost ? `activeElements` ordered by z-index desc
+     *                hoverForemost ? hovered `Activation` - `hoverElement`
+     *                other `Activation`s ordered by z-index desc
+     * None           all `None`s ordered by z-index desc
      */
     let hoverOperation: ViewElement | undefined;
     let operatingOperation: ViewElement | undefined;
@@ -1465,18 +1465,18 @@ function sortToRender(
     const nones: ViewElement[] = [];
 
     for (const ve of renderables) {
-        if (ve.interactMode === ViewElementType.Operation) {
+        if (ve.type === ViewElementType.Operation) {
             if (hoverForemost && hoverElement === ve) hoverOperation = ve;
             else if (operativeForemost && currentOperationElement === ve) operatingOperation = ve;
             else plainOperations.push(ve);
         }
-        if (ve.interactMode === ViewElementType.Activation) {
+        if (ve.type === ViewElementType.Activation) {
             if (hoverForemost && hoverElement === ve) hoverActivation = ve;
             else if (activeForemost && currentActivationElement === ve) activatingActivation = ve;
             else if (activeForemost && activeElements.includes(ve)) activeActivations.push(ve);
             else plainActivations.push(ve);
         }
-        if (ve.interactMode === ViewElementType.None) {
+        if (ve.type === ViewElementType.None) {
             nones.push(ve);
         }
     }

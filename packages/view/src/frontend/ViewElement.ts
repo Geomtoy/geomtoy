@@ -77,8 +77,8 @@ export default class ViewElement<T extends Shape = Shape> {
 
     constructor(
         shape: T,
-        { interactMode = ViewElementType.Activation, zIndex = 0, noDrag = false, noHover = false, style, hoverStyle, clickStyle, activeStyle } = {} as Partial<{
-            interactMode: ViewElementType;
+        { type = ViewElementType.Activation, zIndex = 0, noDrag = false, noHover = false, style, hoverStyle, clickStyle, activeStyle } = {} as Partial<{
+            type: ViewElementType;
             zIndex: number;
             noDrag: boolean;
             noHover: boolean;
@@ -97,7 +97,7 @@ export default class ViewElement<T extends Shape = Shape> {
         this._zIndex = zIndex;
         this.noDrag = noDrag;
         this.noHover = noHover;
-        this._type = interactMode;
+        this._type = type;
     }
     get shape() {
         return this._shape;
@@ -109,10 +109,10 @@ export default class ViewElement<T extends Shape = Shape> {
         return this[VE_SUB_VIEW_SYMBOL];
     }
 
-    get interactMode() {
+    get type() {
         return this._type;
     }
-    set interactMode(value) {
+    set type(value) {
         if (this._type !== value) {
             this._type = value;
             (this[VE_VIEW_SYMBOL] ?? this[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL])?.refreshInteractables();
