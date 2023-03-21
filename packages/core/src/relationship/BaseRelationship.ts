@@ -1,9 +1,8 @@
 import { Coordinates, Utility } from "@geomtoy/util";
-import type Point from "../geometries/basic/Point";
 import type Geometry from "../base/Geometry";
-
-import { type RelateResult, RelationshipPredicate, type Trilean } from "../types";
+import type Point from "../geometries/basic/Point";
 import { optioner } from "../geomtoy";
+import { RelationshipPredicate, type RelateResult, type Trilean } from "../types";
 
 //@see https://en.wikipedia.org/wiki/Contact_(mathematics)
 /*
