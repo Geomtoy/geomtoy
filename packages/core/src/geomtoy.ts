@@ -1,4 +1,4 @@
-import { Utility } from "@geomtoy/util";
+import { Maths, Utility } from "@geomtoy/util";
 import EventTarget from "./base/EventTarget";
 import Shape from "./base/Shape";
 import { Options, RecursivePartial } from "./types";
@@ -9,8 +9,8 @@ const DEFAULT_OPTIONS: Options = {
     coefficientEpsilon: 2 ** -32,
     trigonometricEpsilon: 2 ** -16,
     curveEpsilon: 2 ** -16, // coef, coordinates,length,size
-    timeEpsilon: 2 ** -18, // nth bezier time
-    angleEpsilon: 2 ** -16, // angle, circle ,ellipse
+    timeEpsilon: 2 ** -10, // nth bezier time
+    angleEpsilon: Maths.PI / 3600, // angle, circle ,ellipse
     vectorEpsilon: 2 ** -14, // handle cross product, dot product etc. geometric vector
     graphics: {
         point: {
