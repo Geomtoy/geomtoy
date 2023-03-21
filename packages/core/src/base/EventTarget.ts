@@ -282,14 +282,11 @@ export default abstract class EventTarget extends BaseObject {
     }
 
     protected trigger_<T extends EventTarget>(this: T, eso: EventSourceObject<T>) {
-        // change the state when event happens
+        // We are muted, so do nothing except change the our state.
         this[STATE_IDENTIFIER_SYMBOL] = eso.timestamp;
-
-        scheduler.record(this);
-
-        // We are muted, so do nothing
         if (this._muted) return this;
 
+        scheduler.record(this);
         // Here we put the triggering event name in to the `_eventCache` instead of directly invoking the event handlers in the event.
         // Doing so to avoid repeatedly invoking the event handlers in one loop.
         // No matter how many times an event of `EventTarget` is triggered,
