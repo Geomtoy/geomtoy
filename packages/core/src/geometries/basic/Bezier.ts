@@ -57,35 +57,35 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
     };
 
     private _setPoint1X(value: number) {
-        if (!Utility.isEqualTo(this._point1X, value)) this.trigger_(new EventSourceObject(this, Bezier.events.point1XChanged));
+        if (!Utility.is(this._point1X, value)) this.trigger_(new EventSourceObject(this, Bezier.events.point1XChanged));
         this._point1X = value;
     }
     private _setPoint1Y(value: number) {
-        if (!Utility.isEqualTo(this._point1Y, value)) this.trigger_(new EventSourceObject(this, Bezier.events.point1YChanged));
+        if (!Utility.is(this._point1Y, value)) this.trigger_(new EventSourceObject(this, Bezier.events.point1YChanged));
         this._point1Y = value;
     }
     private _setPoint2X(value: number) {
-        if (!Utility.isEqualTo(this._point2X, value)) this.trigger_(new EventSourceObject(this, Bezier.events.point2XChanged));
+        if (!Utility.is(this._point2X, value)) this.trigger_(new EventSourceObject(this, Bezier.events.point2XChanged));
         this._point2X = value;
     }
     private _setPoint2Y(value: number) {
-        if (!Utility.isEqualTo(this._point2Y, value)) this.trigger_(new EventSourceObject(this, Bezier.events.point2YChanged));
+        if (!Utility.is(this._point2Y, value)) this.trigger_(new EventSourceObject(this, Bezier.events.point2YChanged));
         this._point2Y = value;
     }
     private _setControlPoint1X(value: number) {
-        if (!Utility.isEqualTo(this._controlPoint1X, value)) this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint1XChanged));
+        if (!Utility.is(this._controlPoint1X, value)) this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint1XChanged));
         this._controlPoint1X = value;
     }
     private _setControlPoint1Y(value: number) {
-        if (!Utility.isEqualTo(this._controlPoint1Y, value)) this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint1YChanged));
+        if (!Utility.is(this._controlPoint1Y, value)) this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint1YChanged));
         this._controlPoint1Y = value;
     }
     private _setControlPoint2X(value: number) {
-        if (!Utility.isEqualTo(this._controlPoint2X, value)) this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint2XChanged));
+        if (!Utility.is(this._controlPoint2X, value)) this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint2XChanged));
         this._controlPoint2X = value;
     }
     private _setControlPoint2Y(value: number) {
-        if (!Utility.isEqualTo(this._controlPoint2Y, value)) this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint2YChanged));
+        if (!Utility.is(this._controlPoint2Y, value)) this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint2YChanged));
         this._controlPoint2Y = value;
     }
 

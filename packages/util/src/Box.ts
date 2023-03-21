@@ -31,7 +31,7 @@ class Box {
      * @param b2
      * @param epsilon
      */
-    static isEqualTo(b1: [number, number, number, number], b2: [number, number, number, number], epsilon?: number) {
+    static equalTo(b1: [number, number, number, number], b2: [number, number, number, number], epsilon?: number) {
         if (epsilon === undefined) return b1[0] === b2[0] && b1[1] === b2[1] && b1[2] === b2[2] && b1[3] === b2[3];
         return Maths.equalTo(b1[0], b2[0], epsilon) && Maths.equalTo(b1[1], b2[1], epsilon) && Maths.equalTo(b1[2], b2[2], epsilon) && Maths.equalTo(b1[3], b2[3], epsilon);
     }

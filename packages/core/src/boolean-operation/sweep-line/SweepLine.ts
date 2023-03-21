@@ -22,7 +22,7 @@ export default class SweepLine {
     findAboveAndBelow(event: SweepEvent) {
         // Find the first sweep event satisfy the conditions, it is the below, and its `prev` if existed is the above.
         const below = this.statusList.locate(node => {
-            if (Coordinates.isEqualTo(event.coordinates, node.data.coordinates, eps.epsilon)) {
+            if (Coordinates.equalTo(event.coordinates, node.data.coordinates, eps.epsilon)) {
                 return event.compareQuickY(node.data) >= 0;
             } else {
                 const p = node.data.mono.segment.getClosestPointFromPoint(event.coordinates)[0];

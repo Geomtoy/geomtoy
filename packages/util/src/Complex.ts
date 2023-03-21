@@ -1,6 +1,6 @@
-import Vector2 from "./Vector2";
 import Maths from "./Maths";
 import Type from "./Type";
+import Vector2 from "./Vector2";
 
 import type { StaticClass } from "./types";
 
@@ -19,7 +19,7 @@ class Complex {
      * @param c2
      * @param epsilon
      */
-    static isEqualTo(c1: [number, number], c2: [number, number], epsilon?: number) {
+    static equalTo(c1: [number, number], c2: [number, number], epsilon?: number) {
         if (epsilon === undefined) return c1[0] === c2[0] && c1[1] === c2[1];
         return Maths.equalTo(c1[0], c2[0], epsilon) && Maths.equalTo(c1[1], c2[1], epsilon);
     }

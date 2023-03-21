@@ -58,31 +58,31 @@ export default class Text extends Shape {
     };
 
     private _setX(value: number) {
-        if (!Utility.isEqualTo(this._x, value)) this.trigger_(new EventSourceObject(this, Text.events.xChanged, this._x));
+        if (!Utility.is(this._x, value)) this.trigger_(new EventSourceObject(this, Text.events.xChanged, this._x));
         this._x = value;
     }
     private _setY(value: number) {
-        if (!Utility.isEqualTo(this._y, value)) this.trigger_(new EventSourceObject(this, Text.events.yChanged));
+        if (!Utility.is(this._y, value)) this.trigger_(new EventSourceObject(this, Text.events.yChanged));
         this._y = value;
     }
     private _setOffsetX(value: number) {
-        if (!Utility.isEqualTo(this._offsetX, value)) this.trigger_(new EventSourceObject(this, Text.events.offsetXChanged));
+        if (!Utility.is(this._offsetX, value)) this.trigger_(new EventSourceObject(this, Text.events.offsetXChanged));
         this._offsetX = value;
     }
     private _setOffsetY(value: number) {
-        if (!Utility.isEqualTo(this._offsetY, value)) this.trigger_(new EventSourceObject(this, Text.events.offsetYChanged));
+        if (!Utility.is(this._offsetY, value)) this.trigger_(new EventSourceObject(this, Text.events.offsetYChanged));
         this._offsetY = value;
     }
     private _setText(value: string) {
-        if (!Utility.isEqualTo(this._content, value)) this.trigger_(new EventSourceObject(this, Text.events.contentChanged));
+        if (!Utility.is(this._content, value)) this.trigger_(new EventSourceObject(this, Text.events.contentChanged));
         this._content = value;
     }
     private _setFont(value: Partial<FontConfig>) {
-        if (!Utility.isEqualTo(this.font, value)) this.trigger_(new EventSourceObject(this, Text.events.fontChanged));
+        if (!Utility.is(this.font, value)) this.trigger_(new EventSourceObject(this, Text.events.fontChanged));
         this._font = { ...this._font, ...value };
     }
     private _setAnchor(value: Anchor) {
-        if (!Utility.isEqualTo(this._anchor, value)) this.trigger_(new EventSourceObject(this, Text.events.anchorChanged));
+        if (!Utility.is(this._anchor, value)) this.trigger_(new EventSourceObject(this, Text.events.anchorChanged));
         this._anchor = value;
     }
 

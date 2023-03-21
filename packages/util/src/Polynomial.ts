@@ -98,7 +98,7 @@ class Polynomial {
         );
         while (complexRoots.length > 0) {
             const [a, b] = complexRoots;
-            if (b === undefined || !Utility.isEqualTo(a, Complex.conjugate(b))) {
+            if (b === undefined || !Utility.is(a, Complex.conjugate(b))) {
                 throw new Error("[G]The complex roots of a polynomial should be conjugate pairs.");
             }
             complexRoots.shift();
@@ -222,7 +222,7 @@ class Polynomial {
         const d = Polynomial.degree(p);
         // complex root deflation
         if (Complex.is(root)) {
-            if (!Complex.isEqualTo(root, Complex.zero())) {
+            if (!Complex.equalTo(root, Complex.zero())) {
                 // deflation in conjugate pair
                 const r = -2 * Complex.real(root);
                 const u = Complex.squaredModulus(root);

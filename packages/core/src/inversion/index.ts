@@ -39,15 +39,15 @@ export default class Inversion extends EventTarget {
     };
 
     private _setCenterX(value: number) {
-        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(new EventSourceObject(this, Inversion.events.centerXChanged));
+        if (!Utility.is(this._centerX, value)) this.trigger_(new EventSourceObject(this, Inversion.events.centerXChanged));
         this._centerX = value;
     }
     private _setCenterY(value: number) {
-        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(new EventSourceObject(this, Inversion.events.centerYChanged));
+        if (!Utility.is(this._centerY, value)) this.trigger_(new EventSourceObject(this, Inversion.events.centerYChanged));
         this._centerY = value;
     }
     private _setPower(value: number) {
-        if (!Utility.isEqualTo(this._power, value)) this.trigger_(new EventSourceObject(this, Inversion.events.powerChanged));
+        if (!Utility.is(this._power, value)) this.trigger_(new EventSourceObject(this, Inversion.events.powerChanged));
         this._power = value;
     }
 
@@ -117,7 +117,7 @@ export default class Inversion extends EventTarget {
         const { centerCoordinates: cc0, radius: r0 } = inversionBasisCircle;
         const { centerCoordinates: cci, radius: ri } = circle;
         // the circle is the basis circle of inversion.
-        if (Coordinates.isEqualTo(cc0, cci, eps.epsilon) && Maths.equalTo(r0, ri, eps.epsilon)) {
+        if (Coordinates.equalTo(cc0, cci, eps.epsilon) && Maths.equalTo(r0, ri, eps.epsilon)) {
             return true;
         }
         // the circle is orthogonal circle of the basis circle of inversion.
@@ -135,7 +135,7 @@ export default class Inversion extends EventTarget {
         // If `point` is the inversion center, the inverse point is the point at infinity, so we return `null`
         const cc = this.centerCoordinates;
         const c1 = getCoordinates(point, "point");
-        if (Coordinates.isEqualTo(cc, c1, eps.epsilon)) {
+        if (Coordinates.equalTo(cc, c1, eps.epsilon)) {
             console.warn("[G]The `point` is same as the inversion center, `null` will be returned.");
             return null;
         }
@@ -194,7 +194,7 @@ export default class Inversion extends EventTarget {
         // The inversion center is the same as the center of `circle`, then we get a circle.
 
         // This equal to inverting all the points of `circle` individually, and we get a concentric circle.
-        if (Coordinates.isEqualTo(cc, c1, eps.epsilon)) {
+        if (Coordinates.equalTo(cc, c1, eps.epsilon)) {
             return new Circle(c1, power / radius);
         }
 

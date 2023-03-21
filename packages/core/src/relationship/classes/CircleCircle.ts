@@ -21,7 +21,7 @@ export default class CircleCircle extends BaseRelationship {
     onSameTrajectory() {
         const { centerCoordinates: cc1, radius: r1 } = this.geometry1;
         const { centerCoordinates: cc2, radius: r2 } = this.geometry2;
-        return Coordinates.isEqualTo(cc1, cc2, eps.epsilon) && Maths.equalTo(r1, r2, eps.epsilon);
+        return Coordinates.equalTo(cc1, cc2, eps.epsilon) && Maths.equalTo(r1, r2, eps.epsilon);
     }
 
     @cached

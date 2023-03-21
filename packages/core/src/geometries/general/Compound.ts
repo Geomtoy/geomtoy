@@ -47,7 +47,7 @@ export default class Compound extends Geometry implements ParentShape {
         this._items = [...value];
     }
     private _setFillRule(value: FillRule) {
-        if (!Utility.isEqualTo(this._fillRule, value)) this.trigger_(new EventSourceObject(this, Compound.events.fillRuleChanged));
+        if (!Utility.is(this._fillRule, value)) this.trigger_(new EventSourceObject(this, Compound.events.fillRuleChanged));
         this._fillRule = value;
     }
     get items(): (Path | Polygon)[] {
@@ -137,7 +137,7 @@ export default class Compound extends Geometry implements ParentShape {
     setItem(index: number, item: Polygon | Path) {
         this._assertIsCompoundItem(item, "item");
         const oldItem = this._items[index] ?? null;
-        if (!Utility.isEqualTo(item, oldItem)) {
+        if (!Utility.is(item, oldItem)) {
             this.trigger_(new EventSourceObject(this, Compound.events.itemChanged, index));
             this._items[index] = item;
         }

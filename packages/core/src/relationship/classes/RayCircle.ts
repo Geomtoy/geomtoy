@@ -64,7 +64,7 @@ export default class RayCircle extends BaseRelationship {
     // no block
     blockedBy() {
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, this.geometry1.coordinates, eps.epsilon))
+            .filter(i => Coordinates.equalTo(i.c, this.geometry1.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     // no connect

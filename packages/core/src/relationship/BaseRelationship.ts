@@ -71,7 +71,7 @@ export default abstract class BaseRelationship {
     }
 
     protected uniqCoordinates_(coordinatesArray: [number, number][]) {
-        return Utility.uniqWith(coordinatesArray, (a, b) => Coordinates.isEqualTo(a, b, eps.epsilon));
+        return Utility.uniqWith(coordinatesArray, (a, b) => Coordinates.equalTo(a, b, eps.epsilon));
     }
 
     equal?(): Trilean;

@@ -45,7 +45,7 @@ export default class RayRay extends BaseRelationship {
         const c1 = this.geometry1.coordinates;
         const c2 = this.geometry2.coordinates;
         return this.intersection()
-            .filter(i => !Coordinates.isEqualTo(i.c, c1, eps.epsilon) && !Coordinates.isEqualTo(i.c, c2, eps.epsilon))
+            .filter(i => !Coordinates.equalTo(i.c, c1, eps.epsilon) && !Coordinates.equalTo(i.c, c2, eps.epsilon))
             .map(i => new Point(i.c));
     }
     // no touch
@@ -53,21 +53,21 @@ export default class RayRay extends BaseRelationship {
         const c1 = this.geometry1.coordinates;
         const c2 = this.geometry2.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, c2, eps.epsilon) && !Coordinates.isEqualTo(i.c, c1, eps.epsilon))
+            .filter(i => Coordinates.equalTo(i.c, c2, eps.epsilon) && !Coordinates.equalTo(i.c, c1, eps.epsilon))
             .map(i => new Point(i.c));
     }
     blockedBy() {
         const c1 = this.geometry1.coordinates;
         const c2 = this.geometry2.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, c1, eps.epsilon) && !Coordinates.isEqualTo(i.c, c2, eps.epsilon))
+            .filter(i => Coordinates.equalTo(i.c, c1, eps.epsilon) && !Coordinates.equalTo(i.c, c2, eps.epsilon))
             .map(i => new Point(i.c));
     }
     connect() {
         const c1 = this.geometry1.coordinates;
         const c2 = this.geometry2.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, c1, eps.epsilon) && Coordinates.isEqualTo(i.c, c2, eps.epsilon))
+            .filter(i => Coordinates.equalTo(i.c, c1, eps.epsilon) && Coordinates.equalTo(i.c, c2, eps.epsilon))
             .map(i => new Point(i.c));
     }
     coincide() {
@@ -85,7 +85,7 @@ export default class RayRay extends BaseRelationship {
             }
         } else {
             if (on) {
-                if (Coordinates.isEqualTo(c1, c2, eps.epsilon)) {
+                if (Coordinates.equalTo(c1, c2, eps.epsilon)) {
                     coincide.push(new Point(c1));
                 } else {
                     coincide.push(new LineSegment(c1, c2));

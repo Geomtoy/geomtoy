@@ -67,34 +67,34 @@ export default class RayQuadraticBezier extends BaseRelationship {
     cross() {
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => i.m % 2 === 1 && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon) && !Coordinates.isEqualTo(i.c, coordinates, eps.epsilon))
+            .filter(i => i.m % 2 === 1 && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon) && !Coordinates.equalTo(i.c, coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => i.m % 2 === 0 && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon) && !Coordinates.isEqualTo(i.c, coordinates, eps.epsilon))
+            .filter(i => i.m % 2 === 0 && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon) && !Coordinates.equalTo(i.c, coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     block() {
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && !Coordinates.isEqualTo(i.c, coordinates, eps.epsilon))
+            .filter(i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && !Coordinates.equalTo(i.c, coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     blockedBy() {
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, coordinates, eps.epsilon) && !(Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
+            .filter(i => Coordinates.equalTo(i.c, coordinates, eps.epsilon) && !(Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     connect() {
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, coordinates, eps.epsilon) && (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
+            .filter(i => Coordinates.equalTo(i.c, coordinates, eps.epsilon) && (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     // no coincide

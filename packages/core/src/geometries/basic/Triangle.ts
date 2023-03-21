@@ -53,27 +53,27 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     };
 
     private _setPoint1X(value: number) {
-        if (!Utility.isEqualTo(this._point1X, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point1XChanged));
+        if (!Utility.is(this._point1X, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point1XChanged));
         this._point1X = value;
     }
     private _setPoint1Y(value: number) {
-        if (!Utility.isEqualTo(this._point1Y, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point1YChanged));
+        if (!Utility.is(this._point1Y, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point1YChanged));
         this._point1Y = value;
     }
     private _setPoint2X(value: number) {
-        if (!Utility.isEqualTo(this._point2X, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point2XChanged));
+        if (!Utility.is(this._point2X, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point2XChanged));
         this._point2X = value;
     }
     private _setPoint2Y(value: number) {
-        if (!Utility.isEqualTo(this._point2Y, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point2YChanged));
+        if (!Utility.is(this._point2Y, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point2YChanged));
         this._point2Y = value;
     }
     private _setPoint3X(value: number) {
-        if (!Utility.isEqualTo(this._point3X, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point3XChanged));
+        if (!Utility.is(this._point3X, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point3XChanged));
         this._point3X = value;
     }
     private _setPoint3Y(value: number) {
-        if (!Utility.isEqualTo(this._point3Y, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point3YChanged));
+        if (!Utility.is(this._point3Y, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point3YChanged));
         this._point3Y = value;
     }
 

@@ -52,23 +52,23 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
     };
 
     private _setCenterX(value: number) {
-        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.centerXChanged));
+        if (!Utility.is(this._centerX, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.centerXChanged));
         this._centerX = value;
     }
     private _setCenterY(value: number) {
-        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.centerYChanged));
+        if (!Utility.is(this._centerY, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.centerYChanged));
         this._centerY = value;
     }
     private _setRadius(value: number) {
-        if (!Utility.isEqualTo(this._radius, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.radiusChanged));
+        if (!Utility.is(this._radius, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.radiusChanged));
         this._radius = value;
     }
     private _setSideCount(value: number) {
-        if (!Utility.isEqualTo(this._sideCount, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.sideCountChanged));
+        if (!Utility.is(this._sideCount, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.sideCountChanged));
         this._sideCount = value;
     }
     private _setRotation(value: number) {
-        if (!Utility.isEqualTo(this._rotation, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.rotationChanged));
+        if (!Utility.is(this._rotation, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.rotationChanged));
         this._rotation = value;
     }
 

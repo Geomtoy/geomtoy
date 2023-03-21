@@ -171,7 +171,7 @@ function handleCoincident(monoSegmentsA: MonoSegment[], monoSegmentsB: MonoSegme
     for (let i = 0, l = monoSegmentsB.length; i < l; i++) {
         let { point1Coordinates: bie, point2Coordinates: bil } = monoSegmentsB[i].segment;
         if (monoSegmentsB[i].transposed) [bie, bil] = [bil, bie];
-        if (Coordinates.isEqualTo(a0e, bie, eps.epsilon) && Coordinates.isEqualTo(a0l, bil, eps.epsilon)) {
+        if (Coordinates.equalTo(a0e, bie, eps.epsilon) && Coordinates.equalTo(a0l, bil, eps.epsilon)) {
             const coincident = monoSegmentsA[0];
             monoSegmentsA[0] = null as unknown as MonoSegment;
 

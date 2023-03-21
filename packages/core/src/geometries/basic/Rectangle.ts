@@ -64,23 +64,23 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
     };
 
     private _setX(value: number) {
-        if (!Utility.isEqualTo(this._x, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.xChanged));
+        if (!Utility.is(this._x, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.xChanged));
         this._x = value;
     }
     private _setY(value: number) {
-        if (!Utility.isEqualTo(this._y, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.yChanged));
+        if (!Utility.is(this._y, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.yChanged));
         this._y = value;
     }
     private _setWidth(value: number) {
-        if (!Utility.isEqualTo(this._width, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.widthChanged));
+        if (!Utility.is(this._width, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.widthChanged));
         this._width = value;
     }
     private _setHeight(value: number) {
-        if (!Utility.isEqualTo(this._height, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.heightChanged));
+        if (!Utility.is(this._height, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.heightChanged));
         this._height = value;
     }
     private _setRotation(value: number) {
-        if (!Utility.isEqualTo(this._rotation, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.rotationChanged));
+        if (!Utility.is(this._rotation, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.rotationChanged));
         this._rotation = value;
     }
 

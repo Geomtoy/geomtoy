@@ -166,7 +166,7 @@ export function solve(p: number[], solutions: [number, number][]) {
         ff = f0 = Maths.abs(Polynomial.coef(p, 0));
         fz0 = [Polynomial.coef(p, 1), 0] as [number, number];
 
-        if (Complex.isEqualTo(fz0, Complex.zero()) === true) z = [1, 0] as [number, number];
+        if (Complex.equalTo(fz0, Complex.zero()) === true) z = [1, 0] as [number, number];
         else z = Complex.divide(Complex.negative([Polynomial.coef(p, 0), 0]), [Polynomial.coef(p, 1), 0]);
         z = Complex.multiply(Complex.divide(z, [Complex.modulus(z), 0]), [u, 0]);
 
@@ -177,7 +177,7 @@ export function solve(p: number[], solutions: [number, number][]) {
         eps = 2 * n * f0 * Maths.pow(2, -53);
         // Start main iteration for polynomial.
         // Stage 1: stop condition: $|f(z)|<eps$
-        for (iterCnt = 0; Complex.isEqualTo(Complex.add(z, dz), z) == false && f > eps && iterCnt < 50; iterCnt++) {
+        for (iterCnt = 0; Complex.equalTo(Complex.add(z, dz), z) == false && f > eps && iterCnt < 50; iterCnt++) {
             // Find first prime or approximation
             fz1 = Polynomial.evaluate(p1, z);
             f1 = Complex.modulus(fz1);
@@ -255,7 +255,7 @@ export function solve(p: number[], solutions: [number, number][]) {
                     dz0 = dz;
                     dz = changeDirection(dz, 0.5);
 
-                    if (Complex.isEqualTo(Complex.add(z, dz), z) == false) domain_error = true;
+                    if (Complex.equalTo(Complex.add(z, dz), z) == false) domain_error = true;
                 }
             }
         }

@@ -78,7 +78,7 @@ export default class Dynamic extends BaseObject {
                     return this._object[key];
                 },
                 set(value) {
-                    if (!Utility.isEqualTo(this._object[key], value)) this.trigger_(new EventSourceObject(this, dynamicEventTarget.events[`${key as string}Changed`]));
+                    if (!Utility.is(this._object[key], value)) this.trigger_(new EventSourceObject(this, dynamicEventTarget.events[`${key as string}Changed`]));
                     this._object[key] = value;
                 }
             });

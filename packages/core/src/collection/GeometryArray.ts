@@ -23,7 +23,7 @@ export default class GeometryArray<T extends Geometry> extends Geometry implemen
         itemRemoved: "itemRemove" as const
     };
     private _setItems(value: T[]) {
-        if (!Utility.isEqualTo(this._items, value)) this.trigger_(new EventSourceObject(this, ShapeArray.events.itemsReset));
+        if (!Utility.is(this._items, value)) this.trigger_(new EventSourceObject(this, ShapeArray.events.itemsReset));
         this._items.length = 0;
         for (const [i, v] of value.entries()) this._items[i] = v;
     }

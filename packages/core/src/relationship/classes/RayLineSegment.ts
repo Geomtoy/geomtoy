@@ -78,7 +78,7 @@ export default class RayLineSegment extends BaseRelationship {
     @superPreprocess("handleDegeneration")
     cross() {
         return this.intersection()
-            .filter(i => !Maths.equalTo(i.t2, 0, eps.timeEpsilon) && !Maths.equalTo(i.t2, 1, eps.timeEpsilon) && !Coordinates.isEqualTo(i.c, this.geometry1.coordinates, eps.epsilon))
+            .filter(i => !Maths.equalTo(i.t2, 0, eps.timeEpsilon) && !Maths.equalTo(i.t2, 1, eps.timeEpsilon) && !Coordinates.equalTo(i.c, this.geometry1.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     // no touch
@@ -91,13 +91,13 @@ export default class RayLineSegment extends BaseRelationship {
     @superPreprocess("handleDegeneration")
     blockedBy() {
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, this.geometry1.coordinates, eps.epsilon))
+            .filter(i => Coordinates.equalTo(i.c, this.geometry1.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     connect() {
         return this.intersection()
-            .filter(i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && Coordinates.isEqualTo(i.c, this.geometry1.coordinates, eps.epsilon))
+            .filter(i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && Coordinates.equalTo(i.c, this.geometry1.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")

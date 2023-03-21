@@ -64,25 +64,25 @@ export default class Vector extends Geometry {
     };
 
     private _setX(value: number) {
-        if (!Utility.isEqualTo(this._x, value)) {
+        if (!Utility.is(this._x, value)) {
             this.trigger_(new EventSourceObject(this, Vector.events.xChanged));
             this.trigger_(new EventSourceObject(this, Vector.events.point2XChanged));
         }
         this._x = value;
     }
     private _setY(value: number) {
-        if (!Utility.isEqualTo(this._y, value)) {
+        if (!Utility.is(this._y, value)) {
             this.trigger_(new EventSourceObject(this, Vector.events.yChanged));
             this.trigger_(new EventSourceObject(this, Vector.events.point2YChanged));
         }
         this._y = value;
     }
     private _setPoint1X(value: number) {
-        if (!Utility.isEqualTo(this._point1X, value)) this.trigger_(new EventSourceObject(this, Vector.events.point1XChanged));
+        if (!Utility.is(this._point1X, value)) this.trigger_(new EventSourceObject(this, Vector.events.point1XChanged));
         this._point1X = value;
     }
     private _setPoint1Y(value: number) {
-        if (!Utility.isEqualTo(this._point1Y, value)) this.trigger_(new EventSourceObject(this, Vector.events.point1YChanged));
+        if (!Utility.is(this._point1Y, value)) this.trigger_(new EventSourceObject(this, Vector.events.point1YChanged));
         this._point1Y = value;
     }
 
@@ -252,8 +252,8 @@ export default class Vector extends Geometry {
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;
         const l = this.toLine();
         if (l === null || l.isPointOn(c)) return NaN;
-        if (Coordinates.isEqualTo(c, c1, eps.epsilon)) return 0;
-        if (Coordinates.isEqualTo(c, c2, eps.epsilon)) return Infinity;
+        if (Coordinates.equalTo(c, c1, eps.epsilon)) return 0;
+        if (Coordinates.equalTo(c, c2, eps.epsilon)) return Infinity;
 
         const v10 = Vector2.from(c1, c);
         const v02 = Vector2.from(c, c2);

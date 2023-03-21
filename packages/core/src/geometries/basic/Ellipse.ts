@@ -54,23 +54,23 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     };
 
     private _setCenterX(value: number) {
-        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.centerXChanged));
+        if (!Utility.is(this._centerX, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.centerXChanged));
         this._centerX = value;
     }
     private _setCenterY(value: number) {
-        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.centerYChanged));
+        if (!Utility.is(this._centerY, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.centerYChanged));
         this._centerY = value;
     }
     private _setRadiusX(value: number) {
-        if (!Utility.isEqualTo(this._radiusX, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.radiusXChanged));
+        if (!Utility.is(this._radiusX, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.radiusXChanged));
         this._radiusX = value;
     }
     private _setRadiusY(value: number) {
-        if (!Utility.isEqualTo(this._radiusY, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.radiusYChanged));
+        if (!Utility.is(this._radiusY, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.radiusYChanged));
         this._radiusY = value;
     }
     private _setRotation(value: number) {
-        if (!Utility.isEqualTo(this._rotation, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.rotationChanged));
+        if (!Utility.is(this._rotation, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.rotationChanged));
         this._rotation = value;
     }
 
@@ -307,7 +307,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const cc = getCoordinates(centerPoint, "centerPoint");
         const c1 = getCoordinates(endpoint1, "endpoint1");
         const c2 = getCoordinates(endpoint2, "endpoint2");
-        if (Coordinates.isEqualTo(cc, c1, eps.epsilon) || Coordinates.isEqualTo(cc, c2, eps.epsilon) || Coordinates.isEqualTo(c1, c2, eps.epsilon)) {
+        if (Coordinates.equalTo(cc, c1, eps.epsilon) || Coordinates.equalTo(cc, c2, eps.epsilon) || Coordinates.equalTo(c1, c2, eps.epsilon)) {
             console.warn("[G]The `centerPoint`, `endpoint1` and `endpoint2` can not be the same to each other, `null` will be returned");
             return null;
         }

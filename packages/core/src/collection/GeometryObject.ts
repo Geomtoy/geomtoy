@@ -22,7 +22,7 @@ export default class GeometryObject<T extends Geometry> extends Geometry impleme
         itemRemoved: "itemRemove" as const
     };
     private _setItems(value: { [key: string]: T }) {
-        if (!Utility.isEqualTo(this._items, value)) this.trigger_(new EventSourceObject(this, GeometryObject.events.itemsReset));
+        if (!Utility.is(this._items, value)) this.trigger_(new EventSourceObject(this, GeometryObject.events.itemsReset));
         for (const k of Object.keys(this._items)) delete this._items[k];
         for (const [k, v] of Object.entries(value)) this._items[k] = v;
     }

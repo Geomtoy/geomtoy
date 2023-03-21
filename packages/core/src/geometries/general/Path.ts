@@ -111,11 +111,11 @@ export default class Path extends Geometry {
         this._commands = commands;
     }
     private _setClosed(value: boolean) {
-        if (!Utility.isEqualTo(this._closed, value)) this.trigger_(new EventSourceObject(this, Path.events.closedChanged));
+        if (!Utility.is(this._closed, value)) this.trigger_(new EventSourceObject(this, Path.events.closedChanged));
         this._closed = value;
     }
     private _setFillRule(value: FillRule) {
-        if (!Utility.isEqualTo(this._fillRule, value)) this.trigger_(new EventSourceObject(this, Path.events.fillRuleChanged));
+        if (!Utility.is(this._fillRule, value)) this.trigger_(new EventSourceObject(this, Path.events.fillRuleChanged));
         this._fillRule = value;
     }
 
@@ -158,15 +158,15 @@ export default class Path extends Geometry {
 
         for (let i = 1, l = this._commands.length; i < l; i++) {
             const { x: xi, y: yi, type } = commands[i];
-            if (!Coordinates.isEqualTo([x0, y0], [xi, yi], eps.epsilon)) return check ? false : this;
+            if (!Coordinates.equalTo([x0, y0], [xi, yi], eps.epsilon)) return check ? false : this;
 
             if (type === PathCommandType.QuadraticBezierTo) {
                 const { controlPointX: cpx, controlPointY: cpy } = commands[i] as PathQuadraticBezierToCommand;
-                if (!Coordinates.isEqualTo([x0, y0], [cpx, cpy], eps.epsilon)) return check ? false : this;
+                if (!Coordinates.equalTo([x0, y0], [cpx, cpy], eps.epsilon)) return check ? false : this;
             }
             if (type === PathCommandType.BezierTo) {
                 const { controlPoint1X: cp1x, controlPoint1Y: cp1y, controlPoint2X: cp2x, controlPoint2Y: cp2y } = commands[i] as PathBezierToCommand;
-                if (!Coordinates.isEqualTo([x0, y0], [cp1x, cp1y], eps.epsilon) || !Coordinates.isEqualTo([x0, y0], [cp2x, cp2y], eps.epsilon)) return check ? false : this;
+                if (!Coordinates.equalTo([x0, y0], [cp1x, cp1y], eps.epsilon) || !Coordinates.equalTo([x0, y0], [cp2x, cp2y], eps.epsilon)) return check ? false : this;
             }
         }
         return check ? true : new Point(x0, y0);
@@ -556,7 +556,7 @@ export default class Path extends Geometry {
                 ? { ...Path.lineTo([command.x, command.y]), id }
                 : { ...command, id };
 
-        if (!Utility.isEqualTo(this._commands[index], cmd)) {
+        if (!Utility.is(this._commands[index], cmd)) {
             this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index, id));
             this._commands[index] = cmd;
         }

@@ -43,12 +43,12 @@ export default class LineRay extends BaseRelationship {
     // no touch
     cross() {
         return this.intersection()
-            .filter(i => !Coordinates.isEqualTo(i.c, this.geometry2.coordinates, eps.epsilon))
+            .filter(i => !Coordinates.equalTo(i.c, this.geometry2.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     block() {
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, this.geometry2.coordinates, eps.epsilon))
+            .filter(i => Coordinates.equalTo(i.c, this.geometry2.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     // no blockedBy

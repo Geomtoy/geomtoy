@@ -42,11 +42,11 @@ export default class Point extends Geometry {
     };
 
     private _setX(value: number) {
-        if (!Utility.isEqualTo(this._x, value)) this.trigger_(new EventSourceObject(this, Point.events.xChanged));
+        if (!Utility.is(this._x, value)) this.trigger_(new EventSourceObject(this, Point.events.xChanged));
         this._x = value;
     }
     private _setY(value: number) {
-        if (!Utility.isEqualTo(this._y, value)) this.trigger_(new EventSourceObject(this, Point.events.yChanged));
+        if (!Utility.is(this._y, value)) this.trigger_(new EventSourceObject(this, Point.events.yChanged));
         this._y = value;
     }
 
@@ -173,7 +173,7 @@ export default class Point extends Geometry {
      */
     equalTo(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
-        return Coordinates.isEqualTo(this.coordinates, c, eps.epsilon);
+        return Coordinates.equalTo(this.coordinates, c, eps.epsilon);
     }
     /**
      * Get the distance between point `this` and point `point`.

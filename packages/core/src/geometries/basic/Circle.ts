@@ -47,15 +47,15 @@ export default class Circle extends Geometry implements ClosedGeometry {
     };
 
     private _setCenterX(value: number) {
-        if (!Utility.isEqualTo(this._centerX, value)) this.trigger_(new EventSourceObject(this, Circle.events.centerXChanged));
+        if (!Utility.is(this._centerX, value)) this.trigger_(new EventSourceObject(this, Circle.events.centerXChanged));
         this._centerX = value;
     }
     private _setCenterY(value: number) {
-        if (!Utility.isEqualTo(this._centerY, value)) this.trigger_(new EventSourceObject(this, Circle.events.centerYChanged));
+        if (!Utility.is(this._centerY, value)) this.trigger_(new EventSourceObject(this, Circle.events.centerYChanged));
         this._centerY = value;
     }
     private _setRadius(value: number) {
-        if (!Utility.isEqualTo(this._radius, value)) this.trigger_(new EventSourceObject(this, Circle.events.radiusChanged));
+        if (!Utility.is(this._radius, value)) this.trigger_(new EventSourceObject(this, Circle.events.radiusChanged));
         this._radius = value;
     }
 
@@ -385,7 +385,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
      */
     static getCommonTangentCirclesOfTwoCirclesThroughPoint(circle1: Circle, circle2: Circle, point: [number, number] | Point): Circle[] | [] {
         if (circle1.isPointOn(point) && circle2.isPointOn(point)) return [];
-        if (Maths.equalTo(circle1.radius, circle2.radius, eps.epsilon) && Coordinates.isEqualTo(circle1.centerCoordinates, circle2.centerCoordinates, eps.epsilon)) return [];
+        if (Maths.equalTo(circle1.radius, circle2.radius, eps.epsilon) && Coordinates.equalTo(circle1.centerCoordinates, circle2.centerCoordinates, eps.epsilon)) return [];
 
         const c = getCoordinates(point, "point");
         const inversion = new Inversion(c);

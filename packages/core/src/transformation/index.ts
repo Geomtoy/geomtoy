@@ -20,7 +20,7 @@ export default class Transformation extends EventTarget {
     };
 
     private _setMatrix(value: [number, number, number, number, number, number]) {
-        if (!Utility.isEqualTo(this._matrix, value)) this.trigger_(new EventSourceObject(this, Transformation.events.matrixChanged));
+        if (!Utility.is(this._matrix, value)) this.trigger_(new EventSourceObject(this, Transformation.events.matrixChanged));
         Object.assign(this._matrix, value);
     }
     get matrix() {

@@ -85,7 +85,7 @@ export default class FillRuleHelper {
             for (const inter of intersection) {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
                 // point is on
-                if (Coordinates.isEqualTo(c, coordinates, eps.epsilon)) return undefined;
+                if (Coordinates.equalTo(c, coordinates, eps.epsilon)) return undefined;
                 // exclude touching point
                 if (m % 2 === 0) continue;
 
@@ -141,7 +141,7 @@ export default class FillRuleHelper {
             for (const inter of intersection) {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
                 // point is on
-                if (Coordinates.isEqualTo(c, coordinates, eps.epsilon)) return undefined;
+                if (Coordinates.equalTo(c, coordinates, eps.epsilon)) return undefined;
                 // exclude touching point
                 if (m % 2 === 0) continue;
 
@@ -231,7 +231,7 @@ export default class FillRuleHelper {
             for (const inter of intersection) {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
                 // the coordinate itself
-                if (Coordinates.isEqualTo(coordinates, c, eps.epsilon)) continue;
+                if (Coordinates.equalTo(coordinates, c, eps.epsilon)) continue;
                 // exclude touching points
                 if (m % 2 === 0) continue;
 
@@ -292,7 +292,7 @@ export default class FillRuleHelper {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
 
                 // the coordinate itself
-                if (Coordinates.isEqualTo(coordinates, c, eps.epsilon)) continue;
+                if (Coordinates.equalTo(coordinates, c, eps.epsilon)) continue;
                 // exclude the touching points
                 if (m % 2 === 0) continue;
 

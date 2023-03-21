@@ -18,7 +18,7 @@ class TransformationMatrix {
         return [1, 0, 0, 1, 0, 0] as [number, number, number, number, number, number];
     }
     static isIdentity(m: [number, number, number, number, number, number]) {
-        return Utility.isEqualTo(m, TransformationMatrix.identity());
+        return Utility.is(m, TransformationMatrix.identity());
     }
     static span(m: [number, number, number, number, number, number]) {
         const [a, b, c, d] = m;

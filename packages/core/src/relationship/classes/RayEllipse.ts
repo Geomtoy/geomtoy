@@ -66,7 +66,7 @@ export default class RayEllipse extends BaseRelationship {
     blockedBy() {
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, coordinates, eps.epsilon))
+            .filter(i => Coordinates.equalTo(i.c, coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     // no connect

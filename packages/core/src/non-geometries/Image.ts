@@ -177,47 +177,47 @@ export default class Image extends Shape {
     };
 
     private _setX(value: number) {
-        if (!Utility.isEqualTo(this._x, value)) this.trigger_(new EventSourceObject(this, Image.events.xChanged));
+        if (!Utility.is(this._x, value)) this.trigger_(new EventSourceObject(this, Image.events.xChanged));
         this._x = value;
     }
     private _setY(value: number) {
-        if (!Utility.isEqualTo(this._y, value)) this.trigger_(new EventSourceObject(this, Image.events.yChanged));
+        if (!Utility.is(this._y, value)) this.trigger_(new EventSourceObject(this, Image.events.yChanged));
         this._y = value;
     }
     private _setWidth(value: number) {
-        if (!Utility.isEqualTo(this._width, value)) this.trigger_(new EventSourceObject(this, Image.events.widthChanged));
+        if (!Utility.is(this._width, value)) this.trigger_(new EventSourceObject(this, Image.events.widthChanged));
         this._width = value;
     }
     private _setHeight(value: number) {
-        if (!Utility.isEqualTo(this._height, value)) this.trigger_(new EventSourceObject(this, Image.events.heightChanged));
+        if (!Utility.is(this._height, value)) this.trigger_(new EventSourceObject(this, Image.events.heightChanged));
         this._height = value;
     }
     private _setSourceX(value: number) {
-        if (!Utility.isEqualTo(this._sourceX, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceXChanged));
+        if (!Utility.is(this._sourceX, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceXChanged));
         this._sourceX = value;
     }
     private _setSourceY(value: number) {
-        if (!Utility.isEqualTo(this._sourceY, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceYChanged));
+        if (!Utility.is(this._sourceY, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceYChanged));
         this._sourceY = value;
     }
     private _setSourceWidth(value: number) {
-        if (!Utility.isEqualTo(this._sourceWidth, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceWidthChanged));
+        if (!Utility.is(this._sourceWidth, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceWidthChanged));
         this._sourceWidth = value;
     }
     private _setSourceHeight(value: number) {
-        if (!Utility.isEqualTo(this._sourceHeight, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceHeightChanged));
+        if (!Utility.is(this._sourceHeight, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceHeightChanged));
         this._sourceHeight = value;
     }
     private _setImageSource(value: string) {
-        if (!Utility.isEqualTo(this._source, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceChanged));
+        if (!Utility.is(this._source, value)) this.trigger_(new EventSourceObject(this, Image.events.sourceChanged));
         this._source = value;
     }
     private _setConsistent(value: boolean) {
-        if (!Utility.isEqualTo(this._consistent, value)) this.trigger_(new EventSourceObject(this, Image.events.consistentChanged));
+        if (!Utility.is(this._consistent, value)) this.trigger_(new EventSourceObject(this, Image.events.consistentChanged));
         this._consistent = value;
     }
     private _setAnchor(value: Anchor) {
-        if (!Utility.isEqualTo(this._anchor, value)) this.trigger_(new EventSourceObject(this, Image.events.anchorChanged));
+        if (!Utility.is(this._anchor, value)) this.trigger_(new EventSourceObject(this, Image.events.anchorChanged));
         this._anchor = value;
     }
 

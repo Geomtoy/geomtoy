@@ -28,7 +28,7 @@ export default class Chain {
         atChainHead ? this.elements.unshift(element) : this.elements.push(element);
     }
     isClosable() {
-        return Coordinates.isEqualTo(this.headCoordinates, this.tailCoordinates, eps.epsilon);
+        return Coordinates.equalTo(this.headCoordinates, this.tailCoordinates, eps.epsilon);
     }
     concat(chain2: Chain, atChainHead1: boolean, atChainHead2: boolean) {
         const chain1 = this;

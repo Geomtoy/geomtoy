@@ -66,53 +66,53 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     };
 
     private _setPoint1X(value: number) {
-        if (Utility.isEqualTo(this._point1X, value)) return;
+        if (Utility.is(this._point1X, value)) return;
         this._point1X = value;
         this.trigger_(new EventSourceObject(this, Arc.events.point1XChanged));
         this._correctAndSetRadii();
     }
     private _setPoint1Y(value: number) {
-        if (Utility.isEqualTo(this._point1Y, value)) return;
+        if (Utility.is(this._point1Y, value)) return;
         this._point1Y = value;
         this.trigger_(new EventSourceObject(this, Arc.events.point1YChanged));
         this._correctAndSetRadii();
     }
     private _setPoint2X(value: number) {
-        if (Utility.isEqualTo(this._point2X, value)) return;
+        if (Utility.is(this._point2X, value)) return;
         this._point2X = value;
         this.trigger_(new EventSourceObject(this, Arc.events.point2XChanged));
         this._correctAndSetRadii();
     }
     private _setPoint2Y(value: number) {
-        if (Utility.isEqualTo(this._point2Y, value)) return;
+        if (Utility.is(this._point2Y, value)) return;
         this._point2Y = value;
         this.trigger_(new EventSourceObject(this, Arc.events.point2YChanged));
         this._correctAndSetRadii();
     }
     private _setRadiusX(value: number) {
-        if (Utility.isEqualTo(this._inputRadiusX, value)) return;
+        if (Utility.is(this._inputRadiusX, value)) return;
         this._inputRadiusX = value;
         this.trigger_(new EventSourceObject(this, Arc.events.radiusXChanged));
         this._correctAndSetRadii();
     }
     private _setRadiusY(value: number) {
-        if (Utility.isEqualTo(this._inputRadiusY, value)) return;
+        if (Utility.is(this._inputRadiusY, value)) return;
         this._inputRadiusY = value;
         this.trigger_(new EventSourceObject(this, Arc.events.radiusYChanged));
         this._correctAndSetRadii();
     }
     private _setLargeArc(value: boolean) {
-        if (Utility.isEqualTo(this._largeArc, value)) return;
+        if (Utility.is(this._largeArc, value)) return;
         this._largeArc = value;
         this.trigger_(new EventSourceObject(this, Arc.events.largeArcChanged));
     }
     private _setPositive(value: boolean) {
-        if (Utility.isEqualTo(this._positive, value)) return;
+        if (Utility.is(this._positive, value)) return;
         this._positive = value;
         this.trigger_(new EventSourceObject(this, Arc.events.positiveChanged));
     }
     private _setRotation(value: number) {
-        if (Utility.isEqualTo(this._rotation, value)) return;
+        if (Utility.is(this._rotation, value)) return;
         this._rotation = value;
         this.trigger_(new EventSourceObject(this, Arc.events.rotationChanged));
         this._correctAndSetRadii();
@@ -141,11 +141,11 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
             } else {
                 [rx, ry] = flexCorrectRadii(_point1X, _point1Y, _point2X, _point2Y, _inputRadiusX, _inputRadiusY, _rotation);
             }
-            if (!Utility.isEqualTo(this._radiusX, rx)) {
+            if (!Utility.is(this._radiusX, rx)) {
                 this._radiusX = rx;
                 this.trigger_(new EventSourceObject(this, Arc.events.radiusXChanged));
             }
-            if (!Utility.isEqualTo(this._radiusY, ry)) {
+            if (!Utility.is(this._radiusY, ry)) {
                 this._radiusY = ry;
                 this.trigger_(new EventSourceObject(this, Arc.events.radiusYChanged));
             }
@@ -263,7 +263,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const { _radiusX: rx, _radiusY: ry, point1Coordinates: c1, point2Coordinates: c2 } = this;
         const rx0 = Maths.equalTo(rx, 0, eps.epsilon);
         const ry0 = Maths.equalTo(ry, 0, eps.epsilon);
-        const c12 = Coordinates.isEqualTo(c1, c2, eps.epsilon);
+        const c12 = Coordinates.equalTo(c1, c2, eps.epsilon);
 
         if (check) return rx0 || ry0 || c12;
 

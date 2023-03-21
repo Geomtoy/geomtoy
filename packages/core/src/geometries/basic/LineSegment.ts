@@ -47,28 +47,28 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
     };
 
     private _setPoint1X(value: number) {
-        if (!Utility.isEqualTo(this._point1X, value)) {
+        if (!Utility.is(this._point1X, value)) {
             this.trigger_(new EventSourceObject(this, LineSegment.events.point1XChanged));
             this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
         }
         this._point1X = value;
     }
     private _setPoint1Y(value: number) {
-        if (!Utility.isEqualTo(this._point1Y, value)) {
+        if (!Utility.is(this._point1Y, value)) {
             this.trigger_(new EventSourceObject(this, LineSegment.events.point1YChanged));
             this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
         }
         this._point1Y = value;
     }
     private _setPoint2X(value: number) {
-        if (!Utility.isEqualTo(this._point2X, value)) {
+        if (!Utility.is(this._point2X, value)) {
             this.trigger_(new EventSourceObject(this, LineSegment.events.point2XChanged));
             this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
         }
         this._point2X = value;
     }
     private _setPoint2Y(value: number) {
-        if (!Utility.isEqualTo(this._point2Y, value)) {
+        if (!Utility.is(this._point2Y, value)) {
             this.trigger_(new EventSourceObject(this, LineSegment.events.point2YChanged));
             this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
         }
@@ -161,7 +161,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         if (!this.initialized()) return check ? true : null;
 
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;
-        const c12 = Coordinates.isEqualTo(c1, c2, eps.epsilon);
+        const c12 = Coordinates.equalTo(c1, c2, eps.epsilon);
 
         if (check) return c12;
         return c12 ? new Point(c1) : this;

@@ -12,7 +12,7 @@ class Utility {
     constructor() {
         throw new Error("[G]`Utility` can not used as a constructor.");
     }
-    static isEqualTo(value: any, otherValue: any) {
+    static is(value: any, otherValue: any) {
         if (Object.is(value, otherValue)) return true;
         if (Type.isPlainObject(value) || Type.isArray(value)) return Utility.compareDeep(value, otherValue);
         return false;

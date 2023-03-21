@@ -57,11 +57,11 @@ export default class Polygon extends Geometry {
         this._vertices = value.map(vtx => ({ ...vtx, id: Utility.id("PolygonVertex") }));
     }
     private _setClosed(value: boolean) {
-        if (!Utility.isEqualTo(this._closed, value)) this.trigger_(new EventSourceObject(this, Polygon.events.closedChanged));
+        if (!Utility.is(this._closed, value)) this.trigger_(new EventSourceObject(this, Polygon.events.closedChanged));
         this._closed = value;
     }
     private _setFillRule(value: FillRule) {
-        if (!Utility.isEqualTo(this._fillRule, value)) this.trigger_(new EventSourceObject(this, Polygon.events.fillRuleChanged));
+        if (!Utility.is(this._fillRule, value)) this.trigger_(new EventSourceObject(this, Polygon.events.fillRuleChanged));
         this._fillRule = value;
     }
 
@@ -105,7 +105,7 @@ export default class Polygon extends Geometry {
 
         for (let i = 1, l = this._vertices.length; i < l; i++) {
             const { x: xi, y: yi } = vertices[i];
-            if (!Coordinates.isEqualTo([x0, y0], [xi, yi], eps.epsilon)) {
+            if (!Coordinates.equalTo([x0, y0], [xi, yi], eps.epsilon)) {
                 return check ? false : this;
             }
         }
@@ -278,7 +278,7 @@ export default class Polygon extends Geometry {
 
         const vtx = { ...vertex, id };
 
-        if (!Utility.isEqualTo(this._vertices[index], vtx)) {
+        if (!Utility.is(this._vertices[index], vtx)) {
             this.trigger_(new EventSourceObject(this, Polygon.events.vertexChanged, index, id));
             this._vertices[index] = vtx;
         }

@@ -43,15 +43,15 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
     };
 
     private _setX(value: number) {
-        if (!Utility.isEqualTo(this._x, value)) this.trigger_(new EventSourceObject(this, Ray.events.xChanged));
+        if (!Utility.is(this._x, value)) this.trigger_(new EventSourceObject(this, Ray.events.xChanged));
         this._x = value;
     }
     private _setY(value: number) {
-        if (!Utility.isEqualTo(this._y, value)) this.trigger_(new EventSourceObject(this, Ray.events.yChanged));
+        if (!Utility.is(this._y, value)) this.trigger_(new EventSourceObject(this, Ray.events.yChanged));
         this._y = value;
     }
     private _setAngle(value: number) {
-        if (!Utility.isEqualTo(this._angle, value)) this.trigger_(new EventSourceObject(this, Ray.events.angleChanged));
+        if (!Utility.is(this._angle, value)) this.trigger_(new EventSourceObject(this, Ray.events.angleChanged));
         this._angle = value;
     }
 
@@ -126,7 +126,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
     static fromTwoPoints(point1: [number, number] | Point, point2: [number, number] | Point) {
         const c1 = getCoordinates(point1, "point1");
         const c2 = getCoordinates(point2, "point2");
-        if (Coordinates.isEqualTo(c1, c2, eps.epsilon)) {
+        if (Coordinates.equalTo(c1, c2, eps.epsilon)) {
             console.warn("[G]The points `point1` and `point2` are the same, they can NOT determine a `Ray`.");
             return null;
         }
@@ -148,7 +148,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
 
         const { coordinates: c1 } = ray1;
         const { coordinates: c2 } = ray2;
-        if (!Coordinates.isEqualTo(c1, c2, eps.epsilon)) {
+        if (!Coordinates.equalTo(c1, c2, eps.epsilon)) {
             console.warn("[G]The endpoints of the two rays do not coincide. `null` will be returned.");
             return null;
         }

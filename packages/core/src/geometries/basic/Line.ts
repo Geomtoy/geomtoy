@@ -43,15 +43,15 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
     };
 
     private _setX(value: number) {
-        if (!Utility.isEqualTo(this._x, value)) this.trigger_(new EventSourceObject(this, Line.events.xChanged, this._x));
+        if (!Utility.is(this._x, value)) this.trigger_(new EventSourceObject(this, Line.events.xChanged, this._x));
         this._x = value;
     }
     private _setY(value: number) {
-        if (!Utility.isEqualTo(this._y, value)) this.trigger_(new EventSourceObject(this, Line.events.yChanged, this._y));
+        if (!Utility.is(this._y, value)) this.trigger_(new EventSourceObject(this, Line.events.yChanged, this._y));
         this._y = value;
     }
     private _setSlope(value: number) {
-        if (!Utility.isEqualTo(this._slope, value)) {
+        if (!Utility.is(this._slope, value)) {
             this.trigger_(new EventSourceObject(this, Line.events.slopeChanged, this._slope));
             this.trigger_(new EventSourceObject(this, Line.events.angleChanged, this.angle));
         }
@@ -172,7 +172,7 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
     static fromTwoPoints(point1: [number, number] | Point, point2: [number, number] | Point, usePoint1 = true): Line | null {
         const [x1, y1] = getCoordinates(point1, "point1");
         const [x2, y2] = getCoordinates(point2, "point2");
-        if (Coordinates.isEqualTo([x1, y1], [x2, y2], eps.epsilon)) {
+        if (Coordinates.equalTo([x1, y1], [x2, y2], eps.epsilon)) {
             console.warn("[G]The points `point1` and `point2` are the same, they can NOT determine a `Line`.");
             return null;
         }

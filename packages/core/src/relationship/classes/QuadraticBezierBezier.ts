@@ -121,7 +121,7 @@ export default class QuadraticBezierBezier extends BaseRelationship {
             const csi = this.geometry2.getPointAtTimeExtend(tsi[0]).coordinates;
             tRootsM.forEach((rm, index) => {
                 const c = this.geometry1.getPointAtTimeExtend(rm.root).coordinates;
-                if (Coordinates.isEqualTo(csi, c, eps.epsilon)) {
+                if (Coordinates.equalTo(csi, c, eps.epsilon)) {
                     if (rm.multiplicity === 2) {
                         // turn multiplicity = 2 (double strike)into two root multiplicity = 1
                         tRootsM[index].multiplicity = 1;

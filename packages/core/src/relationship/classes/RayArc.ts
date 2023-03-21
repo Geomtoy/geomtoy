@@ -71,7 +71,7 @@ export default class RayArc extends BaseRelationship {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => i.m % 2 === 1 && !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)) && !Coordinates.isEqualTo(i.c, coordinates, eps.epsilon))
+            .filter(i => i.m % 2 === 1 && !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)) && !Coordinates.equalTo(i.c, coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
@@ -79,7 +79,7 @@ export default class RayArc extends BaseRelationship {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => i.m % 2 === 0 && !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)) && !Coordinates.isEqualTo(i.c, coordinates, eps.epsilon))
+            .filter(i => i.m % 2 === 0 && !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)) && !Coordinates.equalTo(i.c, coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
@@ -87,7 +87,7 @@ export default class RayArc extends BaseRelationship {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => !Coordinates.isEqualTo(i.c, coordinates, eps.epsilon) && (Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)))
+            .filter(i => !Coordinates.equalTo(i.c, coordinates, eps.epsilon) && (Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
@@ -95,7 +95,7 @@ export default class RayArc extends BaseRelationship {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, coordinates, eps.epsilon) && !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)))
+            .filter(i => Coordinates.equalTo(i.c, coordinates, eps.epsilon) && !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
@@ -103,7 +103,7 @@ export default class RayArc extends BaseRelationship {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, coordinates, eps.epsilon) && (Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)))
+            .filter(i => Coordinates.equalTo(i.c, coordinates, eps.epsilon) && (Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)))
             .map(i => new Point(i.c));
     }
     // no coincide

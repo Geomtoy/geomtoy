@@ -54,7 +54,7 @@ export default class Processor {
                 .map(([p]) => p);
             let points = [quadraticBezier.point1, ...extrema, quadraticBezier.point2];
             const chips = [];
-            points = Utility.uniqWith(points, (a, b) => Coordinates.isEqualTo(a.coordinates, b.coordinates, eps.epsilon));
+            points = Utility.uniqWith(points, (a, b) => Coordinates.equalTo(a.coordinates, b.coordinates, eps.epsilon));
             for (let i = 0, l = points.length; i < l - 1; i++) {
                 chips.push(...this._chipLineSegment(new LineSegment(points[i], points[i + 1])));
             }
@@ -97,7 +97,7 @@ export default class Processor {
             // point2: [24.519000000000005, 124.63700000000001]
             // controlPoint1  [24.519000000000005,124.63700000000001]
             // controlPoint2   [24.519000000000005,124.63700000000001]
-            points = Utility.uniqWith(points, (a, b) => Coordinates.isEqualTo(a.coordinates, b.coordinates, eps.epsilon));
+            points = Utility.uniqWith(points, (a, b) => Coordinates.equalTo(a.coordinates, b.coordinates, eps.epsilon));
             for (let i = 0, l = points.length; i < l - 1; i++) {
                 chips.push(...this._chipLineSegment(new LineSegment(points[i], points[i + 1])));
             }
@@ -191,8 +191,8 @@ export default class Processor {
                 const [ac1, ac2] = [a.segment.point1Coordinates, a.segment.point2Coordinates];
                 const [bc1, bc2] = [b.segment.point1Coordinates, b.segment.point2Coordinates];
                 if (
-                    (Coordinates.isEqualTo(ac1, bc1, eps.epsilon) && Coordinates.isEqualTo(ac2, bc2, eps.epsilon)) || // maybe different orientation
-                    (Coordinates.isEqualTo(ac1, bc2, eps.epsilon) && Coordinates.isEqualTo(ac2, bc1, eps.epsilon))
+                    (Coordinates.equalTo(ac1, bc1, eps.epsilon) && Coordinates.equalTo(ac2, bc2, eps.epsilon)) || // maybe different orientation
+                    (Coordinates.equalTo(ac1, bc2, eps.epsilon) && Coordinates.equalTo(ac2, bc1, eps.epsilon))
                 )
                     return true;
                 return false;
@@ -257,8 +257,8 @@ export default class Processor {
                 const [ac1, ac2] = [a.segment.point1Coordinates, a.segment.point2Coordinates];
                 const [bc1, bc2] = [b.segment.point1Coordinates, b.segment.point2Coordinates];
                 if (
-                    (Coordinates.isEqualTo(ac1, bc1, eps.epsilon) && Coordinates.isEqualTo(ac2, bc2, eps.epsilon)) || // maybe different orientation
-                    (Coordinates.isEqualTo(ac1, bc2, eps.epsilon) && Coordinates.isEqualTo(ac2, bc1, eps.epsilon))
+                    (Coordinates.equalTo(ac1, bc1, eps.epsilon) && Coordinates.equalTo(ac2, bc2, eps.epsilon)) || // maybe different orientation
+                    (Coordinates.equalTo(ac1, bc2, eps.epsilon) && Coordinates.equalTo(ac2, bc1, eps.epsilon))
                 )
                     return true;
                 return false;

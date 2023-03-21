@@ -42,21 +42,21 @@ export default class Chainer {
 
                 // We expect to get long chains, so do not match single chain twice at init and term respectively, we continue if a chain get a match.
                 if (initMatch === null) {
-                    if (Coordinates.isEqualTo(init, head, eps.epsilon) && chainFill.positive !== elementFill.positive) {
+                    if (Coordinates.equalTo(init, head, eps.epsilon) && chainFill.positive !== elementFill.positive) {
                         initMatch = [i, true];
                         continue;
                     }
-                    if (Coordinates.isEqualTo(init, tail, eps.epsilon) && chainFill.positive === elementFill.positive) {
+                    if (Coordinates.equalTo(init, tail, eps.epsilon) && chainFill.positive === elementFill.positive) {
                         initMatch = [i, false];
                         continue;
                     }
                 }
                 if (termMatch === null) {
-                    if (Coordinates.isEqualTo(term, head, eps.epsilon) && chainFill.positive === elementFill.positive) {
+                    if (Coordinates.equalTo(term, head, eps.epsilon) && chainFill.positive === elementFill.positive) {
                         termMatch = [i, true];
                         continue;
                     }
-                    if (Coordinates.isEqualTo(term, tail, eps.epsilon) && chainFill.positive !== elementFill.positive) {
+                    if (Coordinates.equalTo(term, tail, eps.epsilon) && chainFill.positive !== elementFill.positive) {
                         termMatch = [i, false];
                         continue;
                     }

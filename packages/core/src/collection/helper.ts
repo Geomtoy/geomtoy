@@ -25,7 +25,7 @@ export function initArrayProxy<T>(this: EventTarget, items: T[]) {
                     return Reflect.defineProperty(target, prop, descriptor);
                 }
 
-                if (!Utility.isEqualTo(target[Number(prop)], descriptor.value)) this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, Number(prop)));
+                if (!Utility.is(target[Number(prop)], descriptor.value)) this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, Number(prop)));
                 return Reflect.defineProperty(target, prop, {
                     configurable: true,
                     enumerable: true,
@@ -71,7 +71,7 @@ export function initSealedArrayProxy<T extends any[]>(this: EventTarget, items: 
                     console.warn(`[G]You could not change the \`length\` of \`items\`.`);
                     return true;
                 }
-                if (!Utility.isEqualTo(target[Number(prop)], descriptor.value))
+                if (!Utility.is(target[Number(prop)], descriptor.value))
                     this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, target[Number(prop)], Number(prop)));
                 return Reflect.defineProperty(target, prop, {
                     configurable: true,
@@ -105,7 +105,7 @@ export function initObjectProxy<T>(this: EventTarget, items: { [key: string]: T 
                     console.warn(`[G]You could not define the property \`${prop.toString()}\` of \`items\` as an accessor.`);
                     return true;
                 }
-                if (!Utility.isEqualTo(target[String(prop)], descriptor.value)) this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, String(prop)));
+                if (!Utility.is(target[String(prop)], descriptor.value)) this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, String(prop)));
                 return Reflect.defineProperty(target, prop, {
                     configurable: true,
                     enumerable: true,
@@ -147,7 +147,7 @@ export function initSealedObjectProxy<T extends { [key: string]: any }>(this: Ev
                     console.warn(`[G]You could not define the property \`${prop.toString()}\` of \`items\` as an accessor.`);
                     return true;
                 }
-                if (!Utility.isEqualTo(target[String(prop)], descriptor.value))
+                if (!Utility.is(target[String(prop)], descriptor.value))
                     this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, target[String(prop)], String(prop)));
                 return Reflect.defineProperty(target, prop, {
                     configurable: true,
