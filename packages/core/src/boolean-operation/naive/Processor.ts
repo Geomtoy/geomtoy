@@ -53,8 +53,10 @@ export default class Processor {
                 .filter(([, t]) => Maths.between(t, 0, 1, true, true, eps.timeEpsilon))
                 .map(([p]) => p);
             let points = [quadraticBezier.point1, ...extrema, quadraticBezier.point2];
-            const chips = [];
+            // Quadratic bezier sometimes goes very ugly, the control point coincides with one of the endpoints, and it is still a double line.
+            // The extreme will be the coincident endpoint.
             points = Utility.uniqWith(points, (a, b) => Coordinates.equalTo(a.coordinates, b.coordinates, eps.epsilon));
+            const chips = [];
             for (let i = 0, l = points.length; i < l - 1; i++) {
                 chips.push(...this._chipLineSegment(new LineSegment(points[i], points[i + 1])));
             }
@@ -91,13 +93,10 @@ export default class Processor {
                 .filter(([, t]) => Maths.between(t, 0, 1, true, true, eps.timeEpsilon))
                 .map(([p]) => p);
             let points = [bezier.point1, ...extrema, bezier.point2];
-            const chips = [];
-            // bezier sometimes goes very ugly:
-            // point1: [24.519000000000005, 124.63400000000001]
-            // point2: [24.519000000000005, 124.63700000000001]
-            // controlPoint1  [24.519000000000005,124.63700000000001]
-            // controlPoint2   [24.519000000000005,124.63700000000001]
+            // Bezier sometimes goes very ugly, the control points coincide with one of the endpoints, and it is still a triple line.
+            // The extreme will be the coincident endpoint.
             points = Utility.uniqWith(points, (a, b) => Coordinates.equalTo(a.coordinates, b.coordinates, eps.epsilon));
+            const chips = [];
             for (let i = 0, l = points.length; i < l - 1; i++) {
                 chips.push(...this._chipLineSegment(new LineSegment(points[i], points[i + 1])));
             }

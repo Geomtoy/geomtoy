@@ -1,4 +1,4 @@
-import { Angle, Maths, Polynomial, Type, Utility } from "@geomtoy/util";
+import { Angle, Coordinates, Maths, Polynomial, Type, Utility } from "@geomtoy/util";
 import Arc from "../../geometries/basic/Arc";
 import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
@@ -106,7 +106,10 @@ export default class Processor {
                 .extrema()
                 .filter(([, t]) => Maths.between(t, 0, 1, true, true, eps.timeEpsilon))
                 .map(([p]) => p);
-            const points = [quadraticBezier.point1, ...extrema, quadraticBezier.point2];
+            let points = [quadraticBezier.point1, ...extrema, quadraticBezier.point2];
+            // Quadratic bezier sometimes goes very ugly, the control point coincides with one of the endpoints, and it is still a double line.
+            // The extreme will be the coincident endpoint.
+            points = Utility.uniqWith(points, (a, b) => Coordinates.equalTo(a.coordinates, b.coordinates, eps.epsilon));
             const monos = [];
             for (let i = 0, l = points.length; i < l - 1; i++) {
                 monos.push(...this._monoLineSegment(new LineSegment(points[i], points[i + 1]), isPrimary));
@@ -168,7 +171,10 @@ export default class Processor {
                 .extrema()
                 .filter(([, t]) => Maths.between(t, 0, 1, true, true, eps.timeEpsilon))
                 .map(([p]) => p);
-            const points = [bezier.point1, ...extrema, bezier.point2];
+            let points = [bezier.point1, ...extrema, bezier.point2];
+            // Bezier sometimes goes very ugly, the control points coincide with one of the endpoints, and it is still a triple line.
+            // The extreme will be the coincident endpoint.
+            points = Utility.uniqWith(points, (a, b) => Coordinates.equalTo(a.coordinates, b.coordinates, eps.epsilon));
             const monos = [];
             for (let i = 0, l = points.length; i < l - 1; i++) {
                 monos.push(...this._monoLineSegment(new LineSegment(points[i], points[i + 1]), isPrimary));
