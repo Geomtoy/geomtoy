@@ -53,8 +53,9 @@ export default class Processor {
                 .extrema()
                 .filter(([, t]) => Maths.between(t, 0, 1, true, true, epsilon))
                 .map(([p]) => p);
-            const points = [quadraticBezier.point1, ...extrema, quadraticBezier.point2];
+            let points = [quadraticBezier.point1, ...extrema, quadraticBezier.point2];
             const chips = [];
+            points = Utility.uniqWith(points, (a, b) => Coordinates.isEqualTo(a.coordinates, b.coordinates, optioner.options.epsilon));
             for (let i = 0, l = points.length; i < l - 1; i++) {
                 chips.push(...this._chipLineSegment(new LineSegment(points[i], points[i + 1])));
             }
@@ -92,8 +93,14 @@ export default class Processor {
                 .extrema()
                 .filter(([, t]) => Maths.between(t, 0, 1, true, true, epsilon))
                 .map(([p]) => p);
-            const points = [bezier.point1, ...extrema, bezier.point2];
+            let points = [bezier.point1, ...extrema, bezier.point2];
             const chips = [];
+            // bezier sometimes goes very ugly:
+            // point1: [24.519000000000005, 124.63400000000001]
+            // point2: [24.519000000000005, 124.63700000000001]
+            // controlPoint1  [24.519000000000005,124.63700000000001]
+            // controlPoint2   [24.519000000000005,124.63700000000001]
+            points = Utility.uniqWith(points, (a, b) => Coordinates.isEqualTo(a.coordinates, b.coordinates, optioner.options.epsilon));
             for (let i = 0, l = points.length; i < l - 1; i++) {
                 chips.push(...this._chipLineSegment(new LineSegment(points[i], points[i + 1])));
             }
