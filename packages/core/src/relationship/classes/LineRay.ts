@@ -2,7 +2,7 @@ import { Coordinates } from "@geomtoy/util";
 import Line from "../../geometries/basic/Line";
 import Point from "../../geometries/basic/Point";
 import Ray from "../../geometries/basic/Ray";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { Trilean } from "../../types";
 import BaseRelationship from "../BaseRelationship";
@@ -42,15 +42,13 @@ export default class LineRay extends BaseRelationship {
     }
     // no touch
     cross() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => !Coordinates.isEqualTo(i.c, this.geometry2.coordinates, epsilon))
+            .filter(i => !Coordinates.isEqualTo(i.c, this.geometry2.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     block() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, this.geometry2.coordinates, epsilon))
+            .filter(i => Coordinates.isEqualTo(i.c, this.geometry2.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     // no blockedBy

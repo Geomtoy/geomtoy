@@ -3,7 +3,7 @@ import Arc from "../../geometries/basic/Arc";
 import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import ArcArc from "../../relationship/classes/ArcArc";
 import BezierArc from "../../relationship/classes/BezierArc";
 import BezierBezier from "../../relationship/classes/BezierBezier";
@@ -133,7 +133,6 @@ function prepareRelationship(chipSegmentA: ChipSegment, chipSegmentB: ChipSegmen
 }
 // `n` degree bezier vs `n` degree bezier
 function nn(chipSegmentA: ChipSegment, chipSegmentB: ChipSegment, rs: LineSegmentLineSegment | QuadraticBezierQuadraticBezier | BezierBezier) {
-    const epsilon = optioner.options.epsilon;
     const segmentA = rs.geometry1; // chipSegmentA.segment
     const segmentB = rs.geometry2; // chipSegmentB.segment
     const paramsA: number[] = [];
@@ -146,14 +145,14 @@ function nn(chipSegmentA: ChipSegment, chipSegmentB: ChipSegment, rs: LineSegmen
         const a2t = segmentB.getTimeOfPointExtend(segmentA.point2Coordinates);
         const b1t = segmentA.getTimeOfPointExtend(segmentB.point1Coordinates);
         const b2t = segmentA.getTimeOfPointExtend(segmentB.point2Coordinates);
-        if (Maths.between(a1t, 0, 1, true, true, epsilon)) paramsB.push(a1t);
-        if (Maths.between(a2t, 0, 1, true, true, epsilon)) paramsB.push(a2t);
-        if (Maths.between(b1t, 0, 1, true, true, epsilon)) paramsA.push(b1t);
-        if (Maths.between(b2t, 0, 1, true, true, epsilon)) paramsA.push(b2t);
+        if (Maths.between(a1t, 0, 1, true, true, eps.timeEpsilon)) paramsB.push(a1t);
+        if (Maths.between(a2t, 0, 1, true, true, eps.timeEpsilon)) paramsB.push(a2t);
+        if (Maths.between(b1t, 0, 1, true, true, eps.timeEpsilon)) paramsA.push(b1t);
+        if (Maths.between(b2t, 0, 1, true, true, eps.timeEpsilon)) paramsA.push(b2t);
     } else {
         rs.intersection().forEach(i => {
-            if (Maths.between(i.t1, 0, 1, true, true, epsilon)) paramsA.push(i.t1);
-            if (Maths.between(i.t2, 0, 1, true, true, epsilon)) paramsB.push(i.t2);
+            if (Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon)) paramsA.push(i.t1);
+            if (Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon)) paramsB.push(i.t2);
         });
         // if (paramsA.length === 0 && paramsB.length === 0) return null;
         // const a = paramsA.length !== 0 ? splitChipSegment(chipSegmentA, paramsA) : [chipSegmentA];
@@ -167,34 +166,31 @@ function nn(chipSegmentA: ChipSegment, chipSegmentB: ChipSegment, rs: LineSegmen
 }
 // `m` degree bezier vs `n` degree bezier
 function mn(chipSegmentA: ChipSegment, chipSegmentB: ChipSegment, rs: LineSegmentQuadraticBezier | LineSegmentBezier | QuadraticBezierBezier, inverse: boolean) {
-    const epsilon = optioner.options.epsilon;
     const paramsA: number[] = [];
     const paramsB: number[] = [];
 
     rs.intersection().forEach(i => {
-        if (Maths.between(i.t1, 0, 1, true, true, epsilon)) inverse ? paramsB.push(i.t1) : paramsA.push(i.t1);
-        if (Maths.between(i.t2, 0, 1, true, true, epsilon)) inverse ? paramsA.push(i.t2) : paramsB.push(i.t2);
+        if (Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon)) inverse ? paramsB.push(i.t1) : paramsA.push(i.t1);
+        if (Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon)) inverse ? paramsA.push(i.t2) : paramsB.push(i.t2);
     });
     return { a: paramsA, b: paramsB };
 }
 // any degree bezier vs arc
 function ba(chipSegmentA: ChipSegment, chipSegmentB: ChipSegment, rs: LineSegmentArc | QuadraticBezierArc | BezierArc, inverse: boolean) {
-    const epsilon = optioner.options.epsilon;
     const paramsA: number[] = [];
     const paramsB: number[] = [];
 
     const [sa, ea] = rs.geometry2.getStartEndAngles();
     const positive = rs.geometry2.positive;
     rs.intersection().forEach(i => {
-        if (Maths.between(i.t1, 0, 1, true, true, epsilon)) inverse ? paramsB.push(i.t1) : paramsA.push(i.t1);
-        if (Angle.between(i.a2, sa, ea, positive, true, true, epsilon)) inverse ? paramsA.push(i.a2) : paramsB.push(i.a2);
+        if (Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon)) inverse ? paramsB.push(i.t1) : paramsA.push(i.t1);
+        if (Angle.between(i.a2, sa, ea, positive, true, true, eps.angleEpsilon)) inverse ? paramsA.push(i.a2) : paramsB.push(i.a2);
     });
 
     return { a: paramsA, b: paramsB };
 }
 // arc vs arc
 function aa(chipSegmentA: ChipSegment, chipSegmentB: ChipSegment, rs: ArcArc) {
-    const epsilon = optioner.options.epsilon;
     const segmentA = rs.geometry1; // chipSegmentA.segment
     const segmentB = rs.geometry2; // chipSegmentB.segment
     const paramsA: number[] = [];
@@ -214,14 +210,14 @@ function aa(chipSegmentA: ChipSegment, chipSegmentB: ChipSegment, rs: ArcArc) {
         const a2a = segmentB.getAngleOfPoint(segmentA.point2Coordinates);
         const b1a = segmentA.getAngleOfPoint(segmentB.point1Coordinates);
         const b2a = segmentA.getAngleOfPoint(segmentB.point2Coordinates);
-        if (Angle.between(a1a, bsa, bea, positiveB, true, true, epsilon)) paramsB.push(a1a);
-        if (Angle.between(a2a, bsa, bea, positiveB, true, true, epsilon)) paramsB.push(a2a);
-        if (Angle.between(b1a, asa, aea, positiveA, true, true, epsilon)) paramsA.push(b1a);
-        if (Angle.between(b2a, asa, aea, positiveA, true, true, epsilon)) paramsA.push(b1a);
+        if (Angle.between(a1a, bsa, bea, positiveB, true, true, eps.angleEpsilon)) paramsB.push(a1a);
+        if (Angle.between(a2a, bsa, bea, positiveB, true, true, eps.angleEpsilon)) paramsB.push(a2a);
+        if (Angle.between(b1a, asa, aea, positiveA, true, true, eps.angleEpsilon)) paramsA.push(b1a);
+        if (Angle.between(b2a, asa, aea, positiveA, true, true, eps.angleEpsilon)) paramsA.push(b1a);
     } else {
         rs.intersection().forEach(i => {
-            if (Angle.between(i.a1, asa, aea, positiveA, true, true, epsilon)) paramsA.push(i.a1);
-            if (Angle.between(i.a2, bsa, bea, positiveB, true, true, epsilon)) paramsB.push(i.a2);
+            if (Angle.between(i.a1, asa, aea, positiveA, true, true, eps.angleEpsilon)) paramsA.push(i.a1);
+            if (Angle.between(i.a2, bsa, bea, positiveB, true, true, eps.angleEpsilon)) paramsB.push(i.a2);
         });
     }
     return { a: paramsA, b: paramsB };

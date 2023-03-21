@@ -1,7 +1,7 @@
 import { Coordinates, Maths, Vector2 } from "@geomtoy/util";
 import Circle from "../../geometries/basic/Circle";
 import Point from "../../geometries/basic/Point";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { Trilean } from "../../types";
 import BaseRelationship from "../BaseRelationship";
@@ -21,8 +21,7 @@ export default class CircleCircle extends BaseRelationship {
     onSameTrajectory() {
         const { centerCoordinates: cc1, radius: r1 } = this.geometry1;
         const { centerCoordinates: cc2, radius: r2 } = this.geometry2;
-        const epsilon = optioner.options.epsilon;
-        return Coordinates.isEqualTo(cc1, cc2, epsilon) && Maths.equalTo(r1, r2, epsilon);
+        return Coordinates.isEqualTo(cc1, cc2, eps.epsilon) && Maths.equalTo(r1, r2, eps.epsilon);
     }
 
     @cached
@@ -38,9 +37,8 @@ export default class CircleCircle extends BaseRelationship {
         const ssr = (r1 + r2) ** 2;
         const sdr = (r1 - r2) ** 2;
 
-        const epsilon = optioner.options.epsilon;
         const intersection: ReturnType<typeof this.intersection> = [];
-        if (Maths.lessThan(sd, ssr, epsilon) && Maths.greaterThan(sd, sdr, epsilon)) {
+        if (Maths.lessThan(sd, ssr, eps.epsilon) && Maths.greaterThan(sd, sdr, eps.epsilon)) {
             const cosTheta = (sd + r1 ** 2 - r2 ** 2) / (2 * Maths.sqrt(sd)) / r1;
             const angle = Maths.acos(cosTheta);
             const baseAngle = Vector2.angle(v);
@@ -56,7 +54,7 @@ export default class CircleCircle extends BaseRelationship {
                 }
             );
         }
-        if (Maths.equalTo(sd, ssr, epsilon) || Maths.equalTo(sd, sdr, epsilon)) {
+        if (Maths.equalTo(sd, ssr, eps.epsilon) || Maths.equalTo(sd, sdr, eps.epsilon)) {
             intersection.push({
                 c: this.geometry1.getPointAtAngle(Vector2.angle(v)).coordinates,
                 m: 2

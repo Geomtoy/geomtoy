@@ -3,7 +3,7 @@ import Arc from "../../geometries/basic/Arc";
 import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import ArcArc from "../../relationship/classes/ArcArc";
 import BezierArc from "../../relationship/classes/BezierArc";
 import BezierBezier from "../../relationship/classes/BezierBezier";
@@ -165,14 +165,13 @@ function handleCoincident(monoSegmentsA: MonoSegment[], monoSegmentsB: MonoSegme
     // The coincident segment can only be the first segment of `monoSegmentsA`.
     // The only thing we need to consider is that their orientation may be different, then just compare the coordinates of endpoints.
     // For the segments are all monotones, so we don't even need to compare all the coordinates, just x-coordinate.
-    const epsilon = optioner.options.epsilon;
     let { point1Coordinates: a0e, point2Coordinates: a0l } = monoSegmentsA[0].segment;
     if (monoSegmentsA[0].transposed) [a0e, a0l] = [a0l, a0e];
 
     for (let i = 0, l = monoSegmentsB.length; i < l; i++) {
         let { point1Coordinates: bie, point2Coordinates: bil } = monoSegmentsB[i].segment;
         if (monoSegmentsB[i].transposed) [bie, bil] = [bil, bie];
-        if (Coordinates.isEqualTo(a0e, bie, epsilon) && Coordinates.isEqualTo(a0l, bil, epsilon)) {
+        if (Coordinates.isEqualTo(a0e, bie, eps.epsilon) && Coordinates.isEqualTo(a0l, bil, eps.epsilon)) {
             const coincident = monoSegmentsA[0];
             monoSegmentsA[0] = null as unknown as MonoSegment;
 
@@ -196,7 +195,6 @@ function handleCoincident(monoSegmentsA: MonoSegment[], monoSegmentsB: MonoSegme
 
 // `n` degree bezier vs `n` degree bezier
 function nn(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment, rs: LineSegmentLineSegment | QuadraticBezierQuadraticBezier | BezierBezier) {
-    const { timeEpsilon } = optioner.options;
     const segmentA = rs.geometry1; // monoSegmentA.segment
     const segmentB = rs.geometry2; // monoSegmentB.segment
     const paramsA: number[] = [];
@@ -213,13 +211,13 @@ function nn(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment, rs: LineSegmen
 
         const [bit, btt] = b1t > b2t ? [b2t, b1t] : [b1t, b2t];
         // same segment
-        if (Maths.equalTo(bit, 0, timeEpsilon) && Maths.equalTo(btt, 1, timeEpsilon)) {
+        if (Maths.equalTo(bit, 0, eps.timeEpsilon) && Maths.equalTo(btt, 1, eps.timeEpsilon)) {
             return handleCoincident([monoSegmentA], [monoSegmentB]);
         }
-        if (Maths.between(a1t, 0, 1, true, true, timeEpsilon)) paramsB.push(a1t);
-        if (Maths.between(a2t, 0, 1, true, true, timeEpsilon)) paramsB.push(a2t);
-        if (Maths.between(b1t, 0, 1, true, true, timeEpsilon)) paramsA.push(b1t);
-        if (Maths.between(b2t, 0, 1, true, true, timeEpsilon)) paramsA.push(b2t);
+        if (Maths.between(a1t, 0, 1, true, true, eps.timeEpsilon)) paramsB.push(a1t);
+        if (Maths.between(a2t, 0, 1, true, true, eps.timeEpsilon)) paramsB.push(a2t);
+        if (Maths.between(b1t, 0, 1, true, true, eps.timeEpsilon)) paramsA.push(b1t);
+        if (Maths.between(b2t, 0, 1, true, true, eps.timeEpsilon)) paramsA.push(b2t);
         // no overlap
         if (paramsA.length === 0 && paramsB.length === 0) return null;
         const a = paramsA.length !== 0 ? splitMonoSegment(monoSegmentA, paramsA) : [monoSegmentA];
@@ -227,8 +225,8 @@ function nn(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment, rs: LineSegmen
         return handleCoincident(a, b);
     } else {
         rs.intersection().forEach(i => {
-            if (Maths.between(i.t1, 0, 1, true, true, timeEpsilon)) paramsA.push(i.t1);
-            if (Maths.between(i.t2, 0, 1, true, true, timeEpsilon)) paramsB.push(i.t2);
+            if (Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon)) paramsA.push(i.t1);
+            if (Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon)) paramsB.push(i.t2);
         });
         if (paramsA.length === 0 && paramsB.length === 0) return null;
         const a = paramsA.length !== 0 ? splitMonoSegment(monoSegmentA, paramsA) : [monoSegmentA];
@@ -239,13 +237,12 @@ function nn(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment, rs: LineSegmen
 
 // `m` degree bezier vs `n` degree bezier
 function mn(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment, rs: LineSegmentQuadraticBezier | LineSegmentBezier | QuadraticBezierBezier, inverse: boolean) {
-    const epsilon = optioner.options.epsilon;
     const paramsA: number[] = [];
     const paramsB: number[] = [];
 
     rs.intersection().forEach(i => {
-        if (Maths.between(i.t1, 0, 1, true, true, epsilon)) inverse ? paramsB.push(i.t1) : paramsA.push(i.t1);
-        if (Maths.between(i.t2, 0, 1, true, true, epsilon)) inverse ? paramsA.push(i.t2) : paramsB.push(i.t2);
+        if (Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon)) inverse ? paramsB.push(i.t1) : paramsA.push(i.t1);
+        if (Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon)) inverse ? paramsA.push(i.t2) : paramsB.push(i.t2);
     });
 
     if (paramsA.length === 0 && paramsB.length === 0) return null;
@@ -256,7 +253,6 @@ function mn(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment, rs: LineSegmen
 
 // any degree bezier vs arc
 function ba(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment, rs: LineSegmentArc | QuadraticBezierArc | BezierArc, inverse: boolean) {
-    const { timeEpsilon, angleEpsilon } = optioner.options;
     const paramsA: number[] = [];
     const paramsB: number[] = [];
 
@@ -264,8 +260,8 @@ function ba(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment, rs: LineSegmen
     const positive = rs.geometry2.positive;
 
     rs.intersection().forEach(i => {
-        if (Maths.between(i.t1, 0, 1, true, true, timeEpsilon)) inverse ? paramsB.push(i.t1) : paramsA.push(i.t1);
-        if (Angle.between(i.a2, sa, ea, positive, true, true, angleEpsilon)) inverse ? paramsA.push(i.a2) : paramsB.push(i.a2);
+        if (Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon)) inverse ? paramsB.push(i.t1) : paramsA.push(i.t1);
+        if (Angle.between(i.a2, sa, ea, positive, true, true, eps.angleEpsilon)) inverse ? paramsA.push(i.a2) : paramsB.push(i.a2);
     });
 
     if (paramsA.length === 0 && paramsB.length === 0) return null;
@@ -276,7 +272,6 @@ function ba(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment, rs: LineSegmen
 
 // arc vs arc
 function aa(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment, rs: ArcArc) {
-    const { angleEpsilon } = optioner.options;
     const segmentA = rs.geometry1; // monoSegmentA.segment
     const segmentB = rs.geometry2; // monoSegmentB.segment
     const paramsA: number[] = [];
@@ -299,14 +294,14 @@ function aa(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment, rs: ArcArc) {
         const [aia, ata] = positiveA ? [asa, aea] : [aea, asa];
         const [bia, bta] = positiveB ? [bsa, bea] : [aea, bsa];
         // same segment
-        if (Angle.equalTo(aia, bia, angleEpsilon) && Angle.equalTo(ata, bta, angleEpsilon)) {
+        if (Angle.equalTo(aia, bia, eps.angleEpsilon) && Angle.equalTo(ata, bta, eps.angleEpsilon)) {
             return handleCoincident([monoSegmentA], [monoSegmentB]);
         }
 
-        if (Angle.between(a1a, bsa, bea, positiveB, true, true, angleEpsilon)) paramsB.push(a1a);
-        if (Angle.between(a2a, bsa, bea, positiveB, true, true, angleEpsilon)) paramsB.push(a2a);
-        if (Angle.between(b1a, asa, aea, positiveA, true, true, angleEpsilon)) paramsA.push(b1a);
-        if (Angle.between(b2a, asa, aea, positiveA, true, true, angleEpsilon)) paramsA.push(b1a);
+        if (Angle.between(a1a, bsa, bea, positiveB, true, true, eps.angleEpsilon)) paramsB.push(a1a);
+        if (Angle.between(a2a, bsa, bea, positiveB, true, true, eps.angleEpsilon)) paramsB.push(a2a);
+        if (Angle.between(b1a, asa, aea, positiveA, true, true, eps.angleEpsilon)) paramsA.push(b1a);
+        if (Angle.between(b2a, asa, aea, positiveA, true, true, eps.angleEpsilon)) paramsA.push(b1a);
         // no overlap
         if (paramsA.length === 0 && paramsB.length === 0) return null;
         const a = paramsA.length !== 0 ? splitMonoSegment(monoSegmentA, paramsA) : [monoSegmentA];
@@ -314,8 +309,8 @@ function aa(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment, rs: ArcArc) {
         return handleCoincident(a, b);
     } else {
         rs.intersection().forEach(i => {
-            if (Angle.between(i.a1, asa, aea, positiveA, true, true, angleEpsilon)) paramsA.push(i.a1);
-            if (Angle.between(i.a2, bsa, bea, positiveB, true, true, angleEpsilon)) paramsB.push(i.a2);
+            if (Angle.between(i.a1, asa, aea, positiveA, true, true, eps.angleEpsilon)) paramsA.push(i.a1);
+            if (Angle.between(i.a2, bsa, bea, positiveB, true, true, eps.angleEpsilon)) paramsB.push(i.a2);
         });
         if (paramsA.length === 0 && paramsB.length === 0) return null;
         const a = paramsA.length !== 0 ? splitMonoSegment(monoSegmentA, paramsA) : [monoSegmentA];

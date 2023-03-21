@@ -2,7 +2,7 @@ import { Coordinates, Vector2 } from "@geomtoy/util";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import Ray from "../../geometries/basic/Ray";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { Trilean } from "../../types";
 import BaseRelationship from "../BaseRelationship";
@@ -42,43 +42,38 @@ export default class RayRay extends BaseRelationship {
     }
     // no contact
     cross() {
-        const epsilon = optioner.options.epsilon;
         const c1 = this.geometry1.coordinates;
         const c2 = this.geometry2.coordinates;
         return this.intersection()
-            .filter(i => !Coordinates.isEqualTo(i.c, c1, epsilon) && !Coordinates.isEqualTo(i.c, c2, epsilon))
+            .filter(i => !Coordinates.isEqualTo(i.c, c1, eps.epsilon) && !Coordinates.isEqualTo(i.c, c2, eps.epsilon))
             .map(i => new Point(i.c));
     }
     // no touch
     block() {
-        const epsilon = optioner.options.epsilon;
         const c1 = this.geometry1.coordinates;
         const c2 = this.geometry2.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, c2, epsilon) && !Coordinates.isEqualTo(i.c, c1, epsilon))
+            .filter(i => Coordinates.isEqualTo(i.c, c2, eps.epsilon) && !Coordinates.isEqualTo(i.c, c1, eps.epsilon))
             .map(i => new Point(i.c));
     }
     blockedBy() {
-        const epsilon = optioner.options.epsilon;
         const c1 = this.geometry1.coordinates;
         const c2 = this.geometry2.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, c1, epsilon) && !Coordinates.isEqualTo(i.c, c2, epsilon))
+            .filter(i => Coordinates.isEqualTo(i.c, c1, eps.epsilon) && !Coordinates.isEqualTo(i.c, c2, eps.epsilon))
             .map(i => new Point(i.c));
     }
     connect() {
-        const epsilon = optioner.options.epsilon;
         const c1 = this.geometry1.coordinates;
         const c2 = this.geometry2.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, c1, epsilon) && Coordinates.isEqualTo(i.c, c2, epsilon))
+            .filter(i => Coordinates.isEqualTo(i.c, c1, eps.epsilon) && Coordinates.isEqualTo(i.c, c2, eps.epsilon))
             .map(i => new Point(i.c));
     }
     coincide() {
         if (!this.onSameTrajectory()) return [];
         const c1 = this.geometry1.coordinates;
         const c2 = this.geometry2.coordinates;
-        const epsilon = optioner.options.epsilon;
         const coincide: (Ray | Point | LineSegment)[] = [];
         const sameDirection = Vector2.dot(Vector2.from2(this.geometry1.angle, 1), Vector2.from2(this.geometry2.angle, 1)) > 0;
         const on = this.geometry1.isPointOn(c2);
@@ -90,7 +85,7 @@ export default class RayRay extends BaseRelationship {
             }
         } else {
             if (on) {
-                if (Coordinates.isEqualTo(c1, c2, epsilon)) {
+                if (Coordinates.isEqualTo(c1, c2, eps.epsilon)) {
                     coincide.push(new Point(c1));
                 } else {
                     coincide.push(new LineSegment(c1, c2));

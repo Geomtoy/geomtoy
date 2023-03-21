@@ -1,7 +1,7 @@
 import { Angle, Assert, Box, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
-import { optioner } from "../../geomtoy";
+import { eps, optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import ArrowGraphics from "../../helper/ArrowGraphics";
@@ -153,21 +153,20 @@ export default class Path extends Geometry {
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
 
-        const epsilon = optioner.options.epsilon;
         const commands = this._commands;
         const { x: x0, y: y0 } = commands[0];
 
         for (let i = 1, l = this._commands.length; i < l; i++) {
             const { x: xi, y: yi, type } = commands[i];
-            if (!Coordinates.isEqualTo([x0, y0], [xi, yi], epsilon)) return check ? false : this;
+            if (!Coordinates.isEqualTo([x0, y0], [xi, yi], eps.epsilon)) return check ? false : this;
 
             if (type === PathCommandType.QuadraticBezierTo) {
                 const { controlPointX: cpx, controlPointY: cpy } = commands[i] as PathQuadraticBezierToCommand;
-                if (!Coordinates.isEqualTo([x0, y0], [cpx, cpy], epsilon)) return check ? false : this;
+                if (!Coordinates.isEqualTo([x0, y0], [cpx, cpy], eps.epsilon)) return check ? false : this;
             }
             if (type === PathCommandType.BezierTo) {
                 const { controlPoint1X: cp1x, controlPoint1Y: cp1y, controlPoint2X: cp2x, controlPoint2Y: cp2y } = commands[i] as PathBezierToCommand;
-                if (!Coordinates.isEqualTo([x0, y0], [cp1x, cp1y], epsilon) || !Coordinates.isEqualTo([x0, y0], [cp2x, cp2y], epsilon)) return check ? false : this;
+                if (!Coordinates.isEqualTo([x0, y0], [cp1x, cp1y], eps.epsilon) || !Coordinates.isEqualTo([x0, y0], [cp2x, cp2y], eps.epsilon)) return check ? false : this;
             }
         }
         return check ? true : new Point(x0, y0);
@@ -360,21 +359,21 @@ export default class Path extends Geometry {
      * Get the closest point on path `this` from point `point`.
      * @param point
      */
-     @validGeometryArguments
-     getClosestPointFromPoint(point: [number, number] | Point) {
-         const c = getCoordinates(point, "point");
-         let minPoint = new Point();
-         let minSd = Infinity;
- 
-         for (const seg of this.getSegments(true)) {
-             const [p, sd] = seg.getClosestPointFromPoint(c);
-             if (sd < minSd) {
-                 minPoint = p;
-                 minSd = sd;
-             }
-         }
-         return [minPoint, minSd] as [point: Point, distanceSquare: number];
-     }
+    @validGeometryArguments
+    getClosestPointFromPoint(point: [number, number] | Point) {
+        const c = getCoordinates(point, "point");
+        let minPoint = new Point();
+        let minSd = Infinity;
+
+        for (const seg of this.getSegments(true)) {
+            const [p, sd] = seg.getClosestPointFromPoint(c);
+            if (sd < minSd) {
+                minPoint = p;
+                minSd = sd;
+            }
+        }
+        return [minPoint, minSd] as [point: Point, distanceSquare: number];
+    }
 
     // #region Segment
     /**
@@ -665,8 +664,7 @@ export default class Path extends Geometry {
     }
 
     randomPointInside() {
-        const epsilon = optioner.options.epsilon;
-        if (Maths.equalTo(this.getArea(), 0, epsilon)) return null;
+        if (Maths.equalTo(this.getArea(), 0, eps.epsilon)) return null;
         const [x, y, w, h] = this.getBoundingBox();
         let rnd: [number, number];
         do {

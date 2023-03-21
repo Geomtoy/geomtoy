@@ -2,7 +2,7 @@ import { Angle, Assert, Box, Coordinates, Maths, Size, Type, Utility, Vector2 } 
 import Geometry from "../../base/Geometry";
 import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import EventSourceObject from "../../event/EventSourceObject";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
@@ -160,8 +160,8 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
 
-        const w0 = Maths.equalTo(this._width, 0, optioner.options.epsilon);
-        const h0 = Maths.equalTo(this._height, 0, optioner.options.epsilon);
+        const w0 = Maths.equalTo(this._width, 0, eps.epsilon);
+        const h0 = Maths.equalTo(this._height, 0, eps.epsilon);
         if (check) return w0 || h0;
 
         const c = this.coordinates;
@@ -249,7 +249,6 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
     }
     @validGeometryArguments
     isPointOn(point: [number, number] | Point) {
-        const vectorEpsilon = optioner.options.vectorEpsilon;
         const c0 = getCoordinates(point, "point");
         const [c1, c2, c3, c4] = this.getVertices().map(p => p.coordinates);
         const v12 = Vector2.from(c1, c2);
@@ -261,15 +260,14 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         const v30 = Vector2.from(c3, c0);
         const v40 = Vector2.from(c4, c0);
 
-        if (Maths.equalTo(Vector2.cross(v12, v10), 0, vectorEpsilon) && Maths.between(Vector2.dot(v12, v10) / Vector2.dot(v12, v12), 0, 1, false, false, vectorEpsilon)) return true;
-        if (Maths.equalTo(Vector2.cross(v23, v20), 0, vectorEpsilon) && Maths.between(Vector2.dot(v23, v20) / Vector2.dot(v23, v23), 0, 1, false, false, vectorEpsilon)) return true;
-        if (Maths.equalTo(Vector2.cross(v34, v30), 0, vectorEpsilon) && Maths.between(Vector2.dot(v34, v30) / Vector2.dot(v34, v34), 0, 1, false, false, vectorEpsilon)) return true;
-        if (Maths.equalTo(Vector2.cross(v41, v40), 0, vectorEpsilon) && Maths.between(Vector2.dot(v41, v40) / Vector2.dot(v41, v41), 0, 1, false, false, vectorEpsilon)) return true;
+        if (Maths.equalTo(Vector2.cross(v12, v10), 0, eps.vectorEpsilon) && Maths.between(Vector2.dot(v12, v10) / Vector2.dot(v12, v12), 0, 1, false, false, eps.vectorEpsilon)) return true;
+        if (Maths.equalTo(Vector2.cross(v23, v20), 0, eps.vectorEpsilon) && Maths.between(Vector2.dot(v23, v20) / Vector2.dot(v23, v23), 0, 1, false, false, eps.vectorEpsilon)) return true;
+        if (Maths.equalTo(Vector2.cross(v34, v30), 0, eps.vectorEpsilon) && Maths.between(Vector2.dot(v34, v30) / Vector2.dot(v34, v34), 0, 1, false, false, eps.vectorEpsilon)) return true;
+        if (Maths.equalTo(Vector2.cross(v41, v40), 0, eps.vectorEpsilon) && Maths.between(Vector2.dot(v41, v40) / Vector2.dot(v41, v41), 0, 1, false, false, eps.vectorEpsilon)) return true;
         return false;
     }
     @validGeometryArguments
     isPointOutside(point: [number, number] | Point) {
-        const vectorEpsilon = optioner.options.vectorEpsilon;
         const c0 = getCoordinates(point, "point");
         const [c1, c2, c3, c4] = this.getVertices().map(p => p.coordinates);
         const v12 = Vector2.from(c1, c2);
@@ -280,15 +278,14 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         const v20 = Vector2.from(c2, c0);
         const v30 = Vector2.from(c3, c0);
         const v40 = Vector2.from(c4, c0);
-        if (Maths.lessThan(Vector2.cross(v12, v10), 0, vectorEpsilon)) return true;
-        if (Maths.lessThan(Vector2.cross(v23, v20), 0, vectorEpsilon)) return true;
-        if (Maths.lessThan(Vector2.cross(v34, v30), 0, vectorEpsilon)) return true;
-        if (Maths.lessThan(Vector2.cross(v41, v40), 0, vectorEpsilon)) return true;
+        if (Maths.lessThan(Vector2.cross(v12, v10), 0, eps.vectorEpsilon)) return true;
+        if (Maths.lessThan(Vector2.cross(v23, v20), 0, eps.vectorEpsilon)) return true;
+        if (Maths.lessThan(Vector2.cross(v34, v30), 0, eps.vectorEpsilon)) return true;
+        if (Maths.lessThan(Vector2.cross(v41, v40), 0, eps.vectorEpsilon)) return true;
         return false;
     }
     @validGeometryArguments
     isPointInside(point: [number, number] | Point) {
-        const vectorEpsilon = optioner.options.vectorEpsilon;
         const c0 = getCoordinates(point, "point");
         const [c1, c2, c3, c4] = this.getVertices().map(p => p.coordinates);
         const v12 = Vector2.from(c1, c2);
@@ -300,10 +297,10 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         const v30 = Vector2.from(c3, c0);
         const v40 = Vector2.from(c4, c0);
         if (
-            Maths.greaterThan(Vector2.cross(v12, v10), 0, vectorEpsilon) &&
-            Maths.greaterThan(Vector2.cross(v23, v20), 0, vectorEpsilon) &&
-            Maths.greaterThan(Vector2.cross(v34, v30), 0, vectorEpsilon) &&
-            Maths.greaterThan(Vector2.cross(v41, v40), 0, vectorEpsilon)
+            Maths.greaterThan(Vector2.cross(v12, v10), 0, eps.vectorEpsilon) &&
+            Maths.greaterThan(Vector2.cross(v23, v20), 0, eps.vectorEpsilon) &&
+            Maths.greaterThan(Vector2.cross(v34, v30), 0, eps.vectorEpsilon) &&
+            Maths.greaterThan(Vector2.cross(v41, v40), 0, eps.vectorEpsilon)
         )
             return true;
         return false;
@@ -410,9 +407,8 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
             scale: [sx, sy],
             skew: [kx, ky]
         } = t.decomposeQr();
-        const epsilon = optioner.options.epsilon;
 
-        if (Maths.equalTo(kx, 0, epsilon) && Maths.equalTo(ky, 0, epsilon)) {
+        if (Maths.equalTo(kx, 0, eps.epsilon) && Maths.equalTo(ky, 0, eps.epsilon)) {
             const newWidth = Maths.abs(sx);
             const newHeight = Maths.abs(sy);
             const newRotation = rotate;

@@ -1,21 +1,23 @@
 import { Maths, Utility } from "@geomtoy/util";
 import EventTarget from "./base/EventTarget";
 import Shape from "./base/Shape";
-import { Options, RecursivePartial } from "./types";
+import { Options, PointAppearance, RecursivePartial } from "./types";
 
 const SCHEDULER_FLUSH_TIMEOUT = 1000; //1000ms
 const DEFAULT_OPTIONS: Options = {
-    epsilon: 2 ** -32, // coordinates, length, size....
-    coefficientEpsilon: 2 ** -32,
-    trigonometricEpsilon: 2 ** -16,
-    curveEpsilon: 2 ** -16, // coef, coordinates,length,size
-    timeEpsilon: 2 ** -10, // nth bezier time
-    angleEpsilon: Maths.PI / 3600, // angle, circle ,ellipse
-    vectorEpsilon: 2 ** -14, // handle cross product, dot product etc. geometric vector
+    epsilon: {
+        epsilon: 2 ** -32, // coordinates, length, length square, size, etc. comparison
+        coefficientEpsilon: 2 ** -16, // polynomial, parametric equation, implicit function coefficient comparison
+        trigonometricEpsilon: 2 ** -16, // trigonometric function values comparison
+        complexEpsilon: 2 ** -16, // complex parts comparison
+        timeEpsilon: 2 ** -10, // nth bezier time comparison
+        angleEpsilon: Maths.PI / 3600, // angle comparison
+        vectorEpsilon: 2 ** -14 // cross product, dot product etc comparison
+    },
     graphics: {
         point: {
             size: 6,
-            appearance: "circle" // global default
+            appearance: "circle" as PointAppearance // global default
         },
         arrow: {
             width: 5,
@@ -33,7 +35,6 @@ const DEFAULT_OPTIONS: Options = {
 
 const optioner = {
     options: Utility.cloneDeep(DEFAULT_OPTIONS),
-
     getOptions() {
         return Utility.cloneDeep(this.options);
     },
@@ -42,8 +43,8 @@ const optioner = {
         this.applyOptionsRules();
     },
     applyOptionsRules() {
-        if (this.options.epsilon > 2 ** -16) this.options.epsilon = 2 ** -16;
-        if (this.options.epsilon < 2 ** -52) this.options.epsilon = 2 ** -52;
+        if (this.options.epsilon.epsilon > 2 ** -16) this.options.epsilon.epsilon = 2 ** -16;
+        if (this.options.epsilon.epsilon < 2 ** -52) this.options.epsilon.epsilon = 2 ** -52;
     }
 };
 
@@ -135,7 +136,9 @@ const scheduler = {
     }
 };
 
-export { optioner, scheduler };
+const eps = optioner.options.epsilon;
+
+export { optioner, eps, scheduler };
 
 const getOptions = optioner.getOptions.bind(optioner);
 const setOptions = optioner.setOptions.bind(optioner);

@@ -1,7 +1,7 @@
 import { Assert, Box, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
-import { optioner } from "../../geomtoy";
+import { eps, optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import { Cartesian } from "../../helper/CoordinateSystem";
 import PointGraphics from "../../helper/PointGraphics";
@@ -122,7 +122,7 @@ export default class Point extends Geometry {
         const c3 = getCoordinates(point3, "point3");
         const v1 = Vector2.from(c1, c2);
         const v2 = Vector2.from(c1, c3);
-        return Maths.equalTo(Vector2.cross(v1, v2), 0, optioner.options.vectorEpsilon);
+        return Maths.equalTo(Vector2.cross(v1, v2), 0, eps.vectorEpsilon);
     }
     /**
      * Whether points `point1`, `point2`, `point3`, `point4` are concyclic.
@@ -162,7 +162,7 @@ export default class Point extends Geometry {
         const bc = Vector2.magnitude(Vector2.from(loop[1], loop[2]));
         const da = Vector2.magnitude(Vector2.from(loop[3], loop[0]));
 
-        if (Maths.equalTo(ac * bd, ab * cd + bc * da, optioner.options.vectorEpsilon)) {
+        if (Maths.equalTo(ac * bd, ab * cd + bc * da, eps.epsilon)) {
             return true;
         }
         return false;
@@ -173,7 +173,7 @@ export default class Point extends Geometry {
      */
     equalTo(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
-        return Coordinates.isEqualTo(this.coordinates, c, optioner.options.epsilon);
+        return Coordinates.isEqualTo(this.coordinates, c, eps.epsilon);
     }
     /**
      * Get the distance between point `this` and point `point`.

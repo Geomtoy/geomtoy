@@ -6,7 +6,7 @@ import LineSegment from "../geometries/basic/LineSegment";
 import Point from "../geometries/basic/Point";
 import QuadraticBezier from "../geometries/basic/QuadraticBezier";
 import Ray from "../geometries/basic/Ray";
-import { optioner } from "../geomtoy";
+import { eps } from "../geomtoy";
 import { getCoordinates } from "../misc/point-like";
 import LineArc from "../relationship/classes/LineArc";
 import LineBezier from "../relationship/classes/LineBezier";
@@ -21,16 +21,15 @@ import { BasicSegment } from "../types";
 export default class FillRuleHelper {
     // line touching box vertex is also consider colliding.
     private _lineCollideBox(line: Line, box: [number, number, number, number]) {
-        const epsilon = optioner.options.epsilon;
         const [a, b, c] = line.getImplicitFunctionCoefs();
         const minX = Box.minX(box);
         const maxX = Box.maxX(box);
         const minY = Box.minY(box);
         const maxY = Box.maxY(box);
-        const sign1 = Maths.sign(a * minX + b * minY + c, epsilon);
-        const sign2 = Maths.sign(a * maxX + b * minY + c, epsilon);
-        const sign3 = Maths.sign(a * minX + b * maxY + c, epsilon);
-        const sign4 = Maths.sign(a * maxX + b * maxY + c, epsilon);
+        const sign1 = Maths.sign(a * minX + b * minY + c, eps.epsilon);
+        const sign2 = Maths.sign(a * maxX + b * minY + c, eps.epsilon);
+        const sign3 = Maths.sign(a * minX + b * maxY + c, eps.epsilon);
+        const sign4 = Maths.sign(a * maxX + b * maxY + c, eps.epsilon);
 
         if ((sign1 === 1 && sign2 === 1 && sign3 === 1 && sign4 === 1) || (sign1 === -1 && sign2 === -1 && sign3 === -1 && sign4 === -1)) {
             return false;
@@ -65,7 +64,6 @@ export default class FillRuleHelper {
     }
 
     windingNumberOfPoint(point: [number, number] | Point, angle: number, segments: BasicSegment[]) {
-        const epsilon = optioner.options.epsilon;
         const coordinates = getCoordinates(point, "point");
 
         const ray = new Ray(coordinates, angle);
@@ -87,7 +85,7 @@ export default class FillRuleHelper {
             for (const inter of intersection) {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
                 // point is on
-                if (Coordinates.isEqualTo(c, coordinates)) return undefined;
+                if (Coordinates.isEqualTo(c, coordinates, eps.epsilon)) return undefined;
                 // exclude touching point
                 if (m % 2 === 0) continue;
 
@@ -98,7 +96,9 @@ export default class FillRuleHelper {
                 // Although this situation is rarely encountered naturally, unless deliberately, we still have to deal with it.
                 // Here we do some trick, add a epsilon and push a little bit in the direction of the curve to avoid `cp` being 0 to determine the direction.
                 if (cp === 0) {
-                    seg instanceof Arc ? seg.getTangentVectorAtAngle(a2 + (seg.positive ? epsilon : -epsilon)).coordinates : seg.getTangentVectorAtTime(t2 + epsilon).coordinates;
+                    seg instanceof Arc
+                        ? seg.getTangentVectorAtAngle(a2 + (seg.positive ? eps.angleEpsilon : -eps.angleEpsilon)).coordinates
+                        : seg.getTangentVectorAtTime(t2 + eps.timeEpsilon).coordinates;
                     cp = Vector2.cross(rv, v);
                 }
                 const positiveWinding = cp > 0;
@@ -106,11 +106,11 @@ export default class FillRuleHelper {
                 if (seg instanceof Arc) {
                     const [sa, ea] = seg.getStartEndAngles();
                     // If `ray` happens to cross the vertex, count as a half.
-                    if (Angle.equalTo(a2, sa, epsilon) || Angle.equalTo(a2, ea, epsilon)) wn += positiveWinding ? 0.5 : -0.5;
+                    if (Angle.equalTo(a2, sa, eps.angleEpsilon) || Angle.equalTo(a2, ea, eps.angleEpsilon)) wn += positiveWinding ? 0.5 : -0.5;
                     else wn += positiveWinding ? 1 : -1;
                 } else {
                     // If `ray` happens to cross the vertex, count as a half.
-                    if (Maths.equalTo(t2, 0, epsilon) || Maths.equalTo(t2, 1, epsilon)) wn += positiveWinding ? 0.5 : -0.5;
+                    if (Maths.equalTo(t2, 0, eps.timeEpsilon) || Maths.equalTo(t2, 1, eps.timeEpsilon)) wn += positiveWinding ? 0.5 : -0.5;
                     else wn += positiveWinding ? 1 : -1;
                 }
             }
@@ -121,7 +121,6 @@ export default class FillRuleHelper {
     }
 
     crossingNumberOfPoint(point: [number, number] | Point, angle: number, segments: BasicSegment[]) {
-        const epsilon = optioner.options.epsilon;
         const coordinates = getCoordinates(point, "point");
 
         const ray = new Ray(coordinates, angle);
@@ -142,18 +141,18 @@ export default class FillRuleHelper {
             for (const inter of intersection) {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
                 // point is on
-                if (Coordinates.isEqualTo(c, coordinates)) return undefined;
+                if (Coordinates.isEqualTo(c, coordinates, eps.epsilon)) return undefined;
                 // exclude touching point
                 if (m % 2 === 0) continue;
 
                 if (seg instanceof Arc) {
                     const [sa, ea] = seg.getStartEndAngles();
                     // If `ray` happens to cross the vertex, count as a half.
-                    if (Angle.equalTo(a2, sa, epsilon) || Angle.equalTo(a2, ea, epsilon)) cn += 0.5;
+                    if (Angle.equalTo(a2, sa, eps.angleEpsilon) || Angle.equalTo(a2, ea, eps.angleEpsilon)) cn += 0.5;
                     else cn += 1;
                 } else {
                     // If `ray` happens to cross the vertex, count as a half.
-                    if (Maths.equalTo(t2, 0, epsilon) || Maths.equalTo(t2, 1, epsilon)) cn += 0.5;
+                    if (Maths.equalTo(t2, 0, eps.timeEpsilon) || Maths.equalTo(t2, 1, eps.timeEpsilon)) cn += 0.5;
                     else cn += 1;
                 }
             }
@@ -209,7 +208,6 @@ export default class FillRuleHelper {
     }
 
     windingNumbersOfSegment(segment: BasicSegment, segments: BasicSegment[] | { segment: BasicSegment }[]) {
-        const epsilon = optioner.options.epsilon;
         const [angle, coordinates] = this._rayAngleAndCoordinates(segment);
         const pra = angle + Maths.PI / 2; // positive ray angle
         const line = Line.fromPointAndAngle(coordinates, pra);
@@ -233,7 +231,7 @@ export default class FillRuleHelper {
             for (const inter of intersection) {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
                 // the coordinate itself
-                if (Coordinates.isEqualTo(coordinates, c, epsilon)) continue;
+                if (Coordinates.isEqualTo(coordinates, c, eps.epsilon)) continue;
                 // exclude touching points
                 if (m % 2 === 0) continue;
 
@@ -246,7 +244,9 @@ export default class FillRuleHelper {
                 // Although this situation is rarely encountered naturally, unless deliberately, we still have to deal with it.
                 // Here we do some trick, add a epsilon and push a little bit in the direction of the curve to avoid `cp` being 0 to determine the direction.
                 if (cp === 0) {
-                    seg instanceof Arc ? seg.getTangentVectorAtAngle(a2 + (seg.positive ? epsilon : -epsilon)).coordinates : seg.getTangentVectorAtTime(t2 + epsilon).coordinates;
+                    seg instanceof Arc
+                        ? seg.getTangentVectorAtAngle(a2 + (seg.positive ? eps.angleEpsilon : -eps.angleEpsilon)).coordinates
+                        : seg.getTangentVectorAtTime(t2 + eps.timeEpsilon).coordinates;
                     cp = Vector2.cross(prv, v);
                 }
                 const positiveWinding = cp > 0;
@@ -254,11 +254,11 @@ export default class FillRuleHelper {
                 if (seg instanceof Arc) {
                     const [sa, ea] = seg.getStartEndAngles();
                     // If `ray` happens to cross the vertex, count as a half(there must be another half).
-                    if (Angle.equalTo(a2, sa, epsilon) || Angle.equalTo(a2, ea, epsilon)) wn[onWhichRay] += positiveWinding ? 0.5 : -0.5;
+                    if (Angle.equalTo(a2, sa, eps.angleEpsilon) || Angle.equalTo(a2, ea, eps.angleEpsilon)) wn[onWhichRay] += positiveWinding ? 0.5 : -0.5;
                     else wn[onWhichRay] += positiveWinding ? 1 : -1;
                 } else {
                     // If `ray` happens to cross the vertex, count as a half(there must be another half).
-                    if (Maths.equalTo(t2, 0, epsilon) || Maths.equalTo(t2, 1, epsilon)) wn[onWhichRay] += positiveWinding ? 0.5 : -0.5;
+                    if (Maths.equalTo(t2, 0, eps.timeEpsilon) || Maths.equalTo(t2, 1, eps.timeEpsilon)) wn[onWhichRay] += positiveWinding ? 0.5 : -0.5;
                     else wn[onWhichRay] += positiveWinding ? 1 : -1;
                 }
             }
@@ -267,7 +267,6 @@ export default class FillRuleHelper {
     }
 
     crossingNumbersOfSegment(segment: BasicSegment, segments: BasicSegment[] | { segment: BasicSegment }[]) {
-        const epsilon = optioner.options.epsilon;
         const [angle, coordinates] = this._rayAngleAndCoordinates(segment);
         const pra = angle + Maths.PI / 2; // positive ray angle
         const line = Line.fromPointAndAngle(coordinates, pra);
@@ -293,7 +292,7 @@ export default class FillRuleHelper {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
 
                 // the coordinate itself
-                if (Coordinates.isEqualTo(coordinates, c, epsilon)) continue;
+                if (Coordinates.isEqualTo(coordinates, c, eps.epsilon)) continue;
                 // exclude the touching points
                 if (m % 2 === 0) continue;
 
@@ -302,11 +301,11 @@ export default class FillRuleHelper {
                 if (seg instanceof Arc) {
                     const [sa, ea] = seg.getStartEndAngles();
                     // If `ray` happens to cross the vertex, count as a half(there must be another half).
-                    if (Angle.equalTo(a2, sa, epsilon) || Angle.equalTo(a2, ea, epsilon)) cn[onWhichRay] += 0.5;
+                    if (Angle.equalTo(a2, sa, eps.angleEpsilon) || Angle.equalTo(a2, ea, eps.angleEpsilon)) cn[onWhichRay] += 0.5;
                     else cn[onWhichRay] += 1;
                 } else {
                     // If `ray` happens to cross the vertex, count as a half(there must be another half).
-                    if (Maths.equalTo(t2, 0, epsilon) || Maths.equalTo(t2, 1, epsilon)) cn[onWhichRay] += 0.5;
+                    if (Maths.equalTo(t2, 0, eps.timeEpsilon) || Maths.equalTo(t2, 1, eps.timeEpsilon)) cn[onWhichRay] += 0.5;
                     else cn[onWhichRay] += 1;
                 }
             }

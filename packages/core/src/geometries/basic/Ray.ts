@@ -1,7 +1,7 @@
 import { Assert, Box, Coordinates, Maths, Matrix2, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
-import { optioner } from "../../geomtoy";
+import { eps, optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import ArrowGraphics from "../../helper/ArrowGraphics";
@@ -110,13 +110,12 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
     }
 
     isPointOn(point: [number, number] | Point) {
-        const epsilon = optioner.options.epsilon;
         const c = getCoordinates(point, "point");
         const vr = Vector2.from2(this.angle, 1);
         const v = Vector2.from(this.coordinates, c);
         const dp = Vector2.dot(vr, v);
         const cp = Vector2.cross(vr, v);
-        return !Maths.lessThan(dp, 0, epsilon) && Maths.equalTo(cp, 0, epsilon);
+        return !Maths.lessThan(dp, 0, eps.vectorEpsilon) && Maths.equalTo(cp, 0, eps.vectorEpsilon);
     }
 
     move(deltaX: number, deltaY: number) {
@@ -127,8 +126,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
     static fromTwoPoints(point1: [number, number] | Point, point2: [number, number] | Point) {
         const c1 = getCoordinates(point1, "point1");
         const c2 = getCoordinates(point2, "point2");
-        const epsilon = optioner.options.epsilon;
-        if (Coordinates.isEqualTo(c1, c2, epsilon)) {
+        if (Coordinates.isEqualTo(c1, c2, eps.epsilon)) {
             console.warn("[G]The points `point1` and `point2` are the same, they can NOT determine a `Ray`.");
             return null;
         }
@@ -150,9 +148,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
 
         const { coordinates: c1 } = ray1;
         const { coordinates: c2 } = ray2;
-        const epsilon = optioner.options.epsilon;
-
-        if (!Coordinates.isEqualTo(c1, c2, epsilon)) {
+        if (!Coordinates.isEqualTo(c1, c2, eps.epsilon)) {
             console.warn("[G]The endpoints of the two rays do not coincide. `null` will be returned.");
             return null;
         }
@@ -198,7 +194,6 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         const gg = new GeometryGraphic();
         g.append(gg);
         const gbb = viewport.globalViewBox;
-        const epsilon = optioner.options.epsilon;
         const [dx, dy] = Vector2.from2(this.angle, 1);
         const [x, y] = this.coordinates;
         const [minX, minY, maxX, maxY] = [Box.minX(gbb), Box.minY(gbb), Box.maxX(gbb), Box.maxY(gbb)];
@@ -215,7 +210,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         const tMax = Maths.min(Maths.max(tMinX, tMaxX), Maths.max(tMinY, tMaxY));
 
         tMin = Maths.max(tMin, 0);
-        if (!Maths.greaterThan(tMax, tMin, epsilon)) {
+        if (!Maths.greaterThan(tMax, tMin, eps.epsilon)) {
             return g;
         }
         const c1 = [x + tMin * dx, y + tMin * dy] as [number, number];

@@ -3,7 +3,7 @@ import type Arc from "../../geometries/basic/Arc";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import type Ray from "../../geometries/basic/Ray";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
@@ -37,9 +37,8 @@ export default class RayArc extends BaseRelationship {
     }[] {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const positive = this.geometry2.positive;
-        const epsilon = optioner.options.epsilon;
         const intersection = this.supRelationship?.intersection() ?? [];
-        return intersection.filter(i => this.geometry1.isPointOn(i.c) && Angle.between(i.a2, sa, ea, positive, false, false, epsilon));
+        return intersection.filter(i => this.geometry1.isPointOn(i.c) && Angle.between(i.a2, sa, ea, positive, false, false, eps.angleEpsilon));
     }
 
     // no equal
@@ -69,47 +68,42 @@ export default class RayArc extends BaseRelationship {
     }
     @superPreprocess("handleDegeneration")
     cross() {
-        const epsilon = optioner.options.epsilon;
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => i.m % 2 === 1 && !(Angle.equalTo(i.a2, sa, epsilon) || Angle.equalTo(i.a2, ea, epsilon)) && !Coordinates.isEqualTo(i.c, coordinates, epsilon))
+            .filter(i => i.m % 2 === 1 && !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)) && !Coordinates.isEqualTo(i.c, coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
-        const epsilon = optioner.options.epsilon;
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => i.m % 2 === 0 && !(Angle.equalTo(i.a2, sa, epsilon) || Angle.equalTo(i.a2, ea, epsilon)) && !Coordinates.isEqualTo(i.c, coordinates, epsilon))
+            .filter(i => i.m % 2 === 0 && !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)) && !Coordinates.isEqualTo(i.c, coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     block() {
-        const epsilon = optioner.options.epsilon;
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => !Coordinates.isEqualTo(i.c, coordinates, epsilon) && (Angle.equalTo(i.a2, sa, epsilon) || Angle.equalTo(i.a2, ea, epsilon)))
+            .filter(i => !Coordinates.isEqualTo(i.c, coordinates, eps.epsilon) && (Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     blockedBy() {
-        const epsilon = optioner.options.epsilon;
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, coordinates, epsilon) && !(Angle.equalTo(i.a2, sa, epsilon) || Angle.equalTo(i.a2, ea, epsilon)))
+            .filter(i => Coordinates.isEqualTo(i.c, coordinates, eps.epsilon) && !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     connect() {
-        const epsilon = optioner.options.epsilon;
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, coordinates, epsilon) && (Angle.equalTo(i.a2, sa, epsilon) || Angle.equalTo(i.a2, ea, epsilon)))
+            .filter(i => Coordinates.isEqualTo(i.c, coordinates, eps.epsilon) && (Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)))
             .map(i => new Point(i.c));
     }
     // no coincide

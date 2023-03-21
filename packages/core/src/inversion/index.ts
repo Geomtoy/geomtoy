@@ -1,13 +1,11 @@
 import { Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
-import { validGeometryArguments } from "../misc/decor-geometry";
-
 import EventTarget from "../base/EventTarget";
+import EventSourceObject from "../event/EventSourceObject";
 import Circle from "../geometries/basic/Circle";
 import Line from "../geometries/basic/Line";
 import Point from "../geometries/basic/Point";
-
-import EventSourceObject from "../event/EventSourceObject";
-import { optioner } from "../geomtoy";
+import { eps } from "../geomtoy";
+import { validGeometryArguments } from "../misc/decor-geometry";
 import { getCoordinates } from "../misc/point-like";
 
 const INVERSION_DEFAULT_POWER = 10000;
@@ -99,7 +97,7 @@ export default class Inversion extends EventTarget {
     isPointSelfInverse(point: Point) {
         const c0 = getCoordinates(point, "point");
         const sd = Vector2.squaredMagnitude(Vector2.from(this.centerCoordinates, c0));
-        return Maths.equalTo(sd, this.power, optioner.options.epsilon);
+        return Maths.equalTo(sd, this.power, eps.epsilon);
     }
     /**
      * Whether line `line` is self-inverse in inversion `this`.
@@ -118,9 +116,8 @@ export default class Inversion extends EventTarget {
         const inversionBasisCircle = new Circle(this.centerCoordinates, Maths.sqrt(this.power));
         const { centerCoordinates: cc0, radius: r0 } = inversionBasisCircle;
         const { centerCoordinates: cci, radius: ri } = circle;
-        const epsilon = optioner.options.epsilon;
         // the circle is the basis circle of inversion.
-        if (Coordinates.isEqualTo(cc0, cci, epsilon) && Maths.equalTo(r0, ri, epsilon)) {
+        if (Coordinates.isEqualTo(cc0, cci, eps.epsilon) && Maths.equalTo(r0, ri, eps.epsilon)) {
             return true;
         }
         // the circle is orthogonal circle of the basis circle of inversion.
@@ -138,8 +135,7 @@ export default class Inversion extends EventTarget {
         // If `point` is the inversion center, the inverse point is the point at infinity, so we return `null`
         const cc = this.centerCoordinates;
         const c1 = getCoordinates(point, "point");
-        const epsilon = optioner.options.epsilon;
-        if (Coordinates.isEqualTo(cc, c1, epsilon)) {
+        if (Coordinates.isEqualTo(cc, c1, eps.epsilon)) {
             console.warn("[G]The `point` is same as the inversion center, `null` will be returned.");
             return null;
         }
@@ -194,12 +190,11 @@ export default class Inversion extends EventTarget {
         const c1 = circle.centerCoordinates;
         const radius = circle.radius;
         const v1 = Vector2.from(cc, c1);
-        const epsilon = optioner.options.epsilon;
 
         // The inversion center is the same as the center of `circle`, then we get a circle.
 
         // This equal to inverting all the points of `circle` individually, and we get a concentric circle.
-        if (Coordinates.isEqualTo(cc, c1, epsilon)) {
+        if (Coordinates.isEqualTo(cc, c1, eps.epsilon)) {
             return new Circle(c1, power / radius);
         }
 

@@ -1,7 +1,7 @@
 import { Angle, Assert, Box, Coordinates, Maths, Matrix2, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
-import { optioner } from "../../geomtoy";
+import { eps, optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import ArrowGraphics from "../../helper/ArrowGraphics";
@@ -172,13 +172,12 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
     static fromTwoPoints(point1: [number, number] | Point, point2: [number, number] | Point, usePoint1 = true): Line | null {
         const [x1, y1] = getCoordinates(point1, "point1");
         const [x2, y2] = getCoordinates(point2, "point2");
-        const epsilon = optioner.options.epsilon;
-        if (Coordinates.isEqualTo([x1, y1], [x2, y2], epsilon)) {
+        if (Coordinates.isEqualTo([x1, y1], [x2, y2], eps.epsilon)) {
             console.warn("[G]The points `point1` and `point2` are the same, they can NOT determine a `Line`.");
             return null;
         }
-        if (Maths.equalTo(x1, x2, epsilon)) return usePoint1 ? new Line(x1, y1, Infinity) : new Line(x2, y2, Infinity);
-        if (Maths.equalTo(y1, y2, epsilon)) return usePoint1 ? new Line(x1, y1, 0) : new Line(x2, y2, 0);
+        if (Maths.equalTo(x1, x2, eps.epsilon)) return usePoint1 ? new Line(x1, y1, Infinity) : new Line(x2, y2, Infinity);
+        if (Maths.equalTo(y1, y2, eps.epsilon)) return usePoint1 ? new Line(x1, y1, 0) : new Line(x2, y2, 0);
         const slope = (y2 - y1) / (x2 - x1);
         return usePoint1 ? new Line(x1, y1, slope) : new Line(x2, y2, slope);
     }
@@ -243,8 +242,7 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
     isPointOn(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         const [a, b, c] = this.getImplicitFunctionCoefs();
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(a * x + b * y + c, 0, epsilon);
+        return Maths.equalTo(a * x + b * y + c, 0, eps.epsilon);
     }
     isParallelToXAxis() {
         return this.slope === Infinity;
@@ -284,8 +282,7 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
     isParallelToLine(line: Line) {
         if (this === line) return true;
         if (this.slope === line.slope) return true; // for `Infinity`
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(this.slope, line.slope, epsilon);
+        return Maths.equalTo(this.slope, line.slope, eps.epsilon);
     }
     /**
      * Whether line `this` is coincident with line `line`.
@@ -293,19 +290,17 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
      */
     isCoincidentWith(line: Line) {
         if (this === line) return true;
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(this.slope, line.slope, epsilon) && Maths.equalTo(this.yIntercept, line.yIntercept, epsilon);
+        return Maths.equalTo(this.slope, line.slope, eps.epsilon) && Maths.equalTo(this.yIntercept, line.yIntercept, eps.epsilon);
     }
     /**
      * Whether line `this` is perpendicular to line `line`.
      * @param line
      */
     isPerpendicularToLine(line: Line): boolean {
-        const epsilon = optioner.options.epsilon;
-        if (this.slope === Infinity || Maths.equalTo(line.slope, 0, epsilon)) return true;
-        if (line.slope === Infinity || Maths.equalTo(this.slope, 0, epsilon)) return true;
+        if (this.slope === Infinity || Maths.equalTo(line.slope, 0, eps.epsilon)) return true;
+        if (line.slope === Infinity || Maths.equalTo(this.slope, 0, eps.epsilon)) return true;
 
-        return Maths.equalTo(this.slope * line.slope, -1, epsilon);
+        return Maths.equalTo(this.slope * line.slope, -1, eps.epsilon);
     }
     /**
      * Find the perpendicular line of line `this` from point `point`.

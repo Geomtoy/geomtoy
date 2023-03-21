@@ -3,7 +3,7 @@ import Line from "../../geometries/basic/Line";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
@@ -34,14 +34,12 @@ export default class LineQuadraticBezier extends BaseRelationship {
         const [polyX, polyY] = this.geometry2.getPolynomial();
         const tPoly = Polynomial.add(Polynomial.add(Polynomial.scalarMultiply(polyX, a), Polynomial.scalarMultiply(polyY, b)), [c]);
         const tRoots = Polynomial.roots(tPoly).filter(Type.isNumber);
-        const curveEpsilon = optioner.options.curveEpsilon;
-        const epsilon = optioner.options.epsilon;
-        const tRootsM = Polynomial.rootsMultiplicity(tRoots, curveEpsilon);
+        const tRootsM = Polynomial.rootsMultiplicity(tRoots, eps.timeEpsilon);
 
         const intersection: ReturnType<typeof this.intersection> = [];
         for (let i = 0, l = tRootsM.length; i < l; i++) {
             const t2 = tRootsM[i].root;
-            if (Maths.between(t2, 0, 1, false, false, epsilon)) {
+            if (Maths.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
                 const x = Polynomial.evaluate(polyX, t2);
                 const y = Polynomial.evaluate(polyY, t2);
                 intersection.push({ c: [x, y], t2, m: tRootsM[i].multiplicity });
@@ -77,23 +75,20 @@ export default class LineQuadraticBezier extends BaseRelationship {
     }
     @superPreprocess("handleDegeneration")
     cross() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => i.m % 2 === 1 && Maths.between(i.t2, 0, 1, true, true, epsilon))
+            .filter(i => i.m % 2 === 1 && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => i.m % 2 === 0 && Maths.between(i.t2, 0, 1, true, true, epsilon))
+            .filter(i => i.m % 2 === 0 && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     block() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => Maths.equalTo(i.t2, 0, epsilon) || Maths.equalTo(i.t2, 1, epsilon))
+            .filter(i => Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     // no blockedBy

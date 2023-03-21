@@ -1,7 +1,7 @@
 import { Coordinates, Utility } from "@geomtoy/util";
 import type Geometry from "../base/Geometry";
 import type Point from "../geometries/basic/Point";
-import { optioner } from "../geomtoy";
+import { eps } from "../geomtoy";
 import { RelationshipPredicate, type RelateResult, type Trilean } from "../types";
 
 //@see https://en.wikipedia.org/wiki/Contact_(mathematics)
@@ -71,7 +71,7 @@ export default abstract class BaseRelationship {
     }
 
     protected uniqCoordinates_(coordinatesArray: [number, number][]) {
-        return Utility.uniqWith(coordinatesArray, (a, b) => Coordinates.isEqualTo(a, b, optioner.options.epsilon));
+        return Utility.uniqWith(coordinatesArray, (a, b) => Coordinates.isEqualTo(a, b, eps.epsilon));
     }
 
     equal?(): Trilean;

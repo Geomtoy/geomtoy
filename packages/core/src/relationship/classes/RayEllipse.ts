@@ -3,7 +3,7 @@ import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import Ellipse from "../../geometries/basic/Ellipse";
 import Point from "../../geometries/basic/Point";
 import Ray from "../../geometries/basic/Ray";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { Trilean } from "../../types";
 import BaseRelationship from "../BaseRelationship";
@@ -64,10 +64,9 @@ export default class RayEllipse extends BaseRelationship {
     }
     // no block
     blockedBy() {
-        const epsilon = optioner.options.epsilon;
         const coordinates = this.geometry1.coordinates;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, coordinates, epsilon))
+            .filter(i => Coordinates.isEqualTo(i.c, coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     // no connect

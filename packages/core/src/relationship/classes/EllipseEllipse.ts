@@ -2,7 +2,7 @@ import { Angle, Complex, Maths, Polynomial, RootMultiplicity, Type } from "@geom
 import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import Ellipse from "../../geometries/basic/Ellipse";
 import Point from "../../geometries/basic/Point";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { compareImplicit } from "../../misc/compare-implicit";
 import { cached } from "../../misc/decor-cache";
 import { Trilean } from "../../types";
@@ -21,10 +21,9 @@ export default class EllipseEllipse extends BaseRelationship {
 
     @cached
     onSameTrajectory() {
-        const epsilon = optioner.options.epsilon;
         const if1 = this.geometry1.getImplicitFunctionCoefs();
         const if2 = this.geometry2.getImplicitFunctionCoefs();
-        return compareImplicit(if1, if2, epsilon);
+        return compareImplicit(if1, if2, eps.coefficientEpsilon);
     }
 
     @cached
@@ -71,14 +70,13 @@ export default class EllipseEllipse extends BaseRelationship {
                 intersectionAtPi.multiplicity++;
             }
         }
-        const curveEpsilon = optioner.options.curveEpsilon;
         const intersection: ReturnType<typeof this.intersection> = [];
         // We need to check the complex roots(particularly in touch situation) for the arctangent of a complex number may approximately to be a real number(with every small imaginary part).
         const tRoots = Polynomial.roots(tPoly)
             .map(r => {
                 if (Complex.is(r)) {
                     const atan = Complex.atan(r);
-                    if (Maths.equalTo(Complex.imag(atan), 0, curveEpsilon)) return Maths.tan(Complex.real(atan));
+                    if (Maths.equalTo(Complex.imag(atan), 0, eps.complexEpsilon)) return Maths.tan(Complex.real(atan));
                     return r;
                 }
                 return r;
@@ -94,7 +92,7 @@ export default class EllipseEllipse extends BaseRelationship {
         });
 
         // We use `Polynomial.rootsMultiplicity` to do the tricky here to find out the multiplicity of `cosTheta` and `sinTheta`.
-        const cosAndSinsM = Polynomial.rootsMultiplicity(cosAndSins, curveEpsilon);
+        const cosAndSinsM = Polynomial.rootsMultiplicity(cosAndSins, eps.trigonometricEpsilon);
         if (intersectionAtPi !== undefined) cosAndSinsM.push(intersectionAtPi);
 
         for (let i = 0, l = cosAndSinsM.length; i < l; i++) {

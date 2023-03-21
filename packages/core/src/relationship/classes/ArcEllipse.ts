@@ -4,7 +4,7 @@ import Arc from "../../geometries/basic/Arc";
 import Ellipse from "../../geometries/basic/Ellipse";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
@@ -44,9 +44,8 @@ export default class ArcEllipse extends BaseRelationship {
     }[] {
         const [sa, ea] = this.geometry1.getStartEndAngles();
         const positive = this.geometry1.positive;
-        const epsilon = optioner.options.epsilon;
         const intersection = this.supRelationship?.intersection() ?? [];
-        return intersection.filter(i => Angle.between(i.a1, sa, ea, positive, false, false, epsilon));
+        return intersection.filter(i => Angle.between(i.a1, sa, ea, positive, false, false, eps.angleEpsilon));
     }
 
     // no equal
@@ -86,26 +85,23 @@ export default class ArcEllipse extends BaseRelationship {
     @superPreprocess("handleDegeneration")
     cross() {
         const [sa, ea] = this.geometry1.getStartEndAngles();
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => i.m % 2 === 1 && !Angle.equalTo(i.a1, sa, epsilon) && !Angle.equalTo(i.a1, ea, epsilon))
+            .filter(i => i.m % 2 === 1 && !Angle.equalTo(i.a1, sa, eps.angleEpsilon) && !Angle.equalTo(i.a1, ea, eps.angleEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
         const [sa, ea] = this.geometry1.getStartEndAngles();
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => i.m % 2 === 0 && !Angle.equalTo(i.a1, sa, epsilon) && !Angle.equalTo(i.a1, ea, epsilon))
+            .filter(i => i.m % 2 === 0 && !Angle.equalTo(i.a1, sa, eps.angleEpsilon) && !Angle.equalTo(i.a1, ea, eps.angleEpsilon))
             .map(i => new Point(i.c));
     }
     // no block
     @superPreprocess("handleDegeneration")
     blockedBy() {
         const [sa, ea] = this.geometry1.getStartEndAngles();
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => Angle.equalTo(i.a1, sa, epsilon) || Angle.equalTo(i.a1, ea, epsilon))
+            .filter(i => Angle.equalTo(i.a1, sa, eps.angleEpsilon) || Angle.equalTo(i.a1, ea, eps.angleEpsilon))
             .map(i => new Point(i.c));
     }
     // no connect

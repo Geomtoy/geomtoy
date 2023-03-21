@@ -2,9 +2,8 @@ import { Coordinates, Maths } from "@geomtoy/util";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import Ray from "../../geometries/basic/Ray";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
-
-import { optioner } from "../../geomtoy";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
 import BaseRelationship from "../BaseRelationship";
@@ -61,8 +60,7 @@ export default class RayLineSegment extends BaseRelationship {
             return this.intersection().length === 0;
         }
         const { t1 } = this.perspective();
-        const epsilon = optioner.options.epsilon;
-        return !Maths.between(t1, 0, 1, false, false, epsilon);
+        return !Maths.between(t1, 0, 1, false, false, eps.timeEpsilon);
     }
 
     // no contain
@@ -79,31 +77,27 @@ export default class RayLineSegment extends BaseRelationship {
     // no contact
     @superPreprocess("handleDegeneration")
     cross() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => !Maths.equalTo(i.t2, 0, epsilon) && !Maths.equalTo(i.t2, 1, epsilon) && !Coordinates.isEqualTo(i.c, this.geometry1.coordinates, epsilon))
+            .filter(i => !Maths.equalTo(i.t2, 0, eps.timeEpsilon) && !Maths.equalTo(i.t2, 1, eps.timeEpsilon) && !Coordinates.isEqualTo(i.c, this.geometry1.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     // no touch
     @superPreprocess("handleDegeneration")
     block() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => Maths.equalTo(i.t2, 0, epsilon) || Maths.equalTo(i.t2, 1, epsilon))
+            .filter(i => Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     blockedBy() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => Coordinates.isEqualTo(i.c, this.geometry1.coordinates, epsilon))
+            .filter(i => Coordinates.isEqualTo(i.c, this.geometry1.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     connect() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => (Maths.equalTo(i.t2, 0, epsilon) || Maths.equalTo(i.t2, 1, epsilon)) && Coordinates.isEqualTo(i.c, this.geometry1.coordinates, epsilon))
+            .filter(i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && Coordinates.isEqualTo(i.c, this.geometry1.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
@@ -112,11 +106,10 @@ export default class RayLineSegment extends BaseRelationship {
         const { c2i, c2t, t1 } = this.perspective();
         const c2iOn = this.geometry1.isPointOn(c2i);
         const c2tOn = this.geometry1.isPointOn(c2t);
-        const epsilon = optioner.options.epsilon;
         const coincide: (Point | LineSegment)[] = [];
 
-        const ei = Maths.equalTo(t1, 0, epsilon);
-        const et = Maths.equalTo(t1, 1, epsilon);
+        const ei = Maths.equalTo(t1, 0, eps.timeEpsilon);
+        const et = Maths.equalTo(t1, 1, eps.timeEpsilon);
 
         if (c2iOn && c2tOn) {
             coincide.push(this.geometry2.clone());

@@ -1,22 +1,20 @@
 import { Assert, Coordinates, Maths, Matrix3, Polynomial, RootMultiplicity, Type, Utility, Vector2 } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-geometry";
-
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
-import GeometryGraphic from "../../graphics/GeometryGraphic";
-import Circle from "./Circle";
-import Point from "./Point";
-import Vector from "./Vector";
-
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { bezierLength } from "../../misc/bezier-length";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
+import { validGeometry } from "../../misc/decor-geometry";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
 import type { FiniteOpenGeometry, ViewportDescriptor } from "../../types";
 import Path from "../general/Path";
+import Circle from "./Circle";
 import LineSegment from "./LineSegment";
+import Point from "./Point";
+import Vector from "./Vector";
 
 @validGeometry
 export default class QuadraticBezier extends Geometry implements FiniteOpenGeometry {
@@ -192,10 +190,8 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         const m = [1, -2, 1, -2, 2, 0, 1, 0, 0] as Parameters<typeof Matrix3.dotVector3>[0];
         const [cx2, cx1] = Matrix3.dotVector3(m, [x0, x1, x2]);
         const [cy2, cy1] = Matrix3.dotVector3(m, [y0, y1, y2]);
-
-        const eps = optioner.options.coefficientEpsilon;
-        const d2 = Maths.equalTo(cx2, 0, eps) && Maths.equalTo(cy2, 0, eps);
-        const d1 = Maths.equalTo(cx1, 0, eps) && Maths.equalTo(cy1, 0, eps);
+        const d2 = Maths.equalTo(cx2, 0, eps.coefficientEpsilon) && Maths.equalTo(cy2, 0, eps.coefficientEpsilon);
+        const d1 = Maths.equalTo(cx1, 0, eps.coefficientEpsilon) && Maths.equalTo(cy1, 0, eps.coefficientEpsilon);
 
         if (check) return d2;
 
@@ -221,17 +217,16 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
             Polynomial.standardize(Polynomial.derivative(polyX)), 
             Polynomial.standardize(Polynomial.derivative(polyY))
         ];
-        const { epsilon, curveEpsilon } = optioner.options;
         // prettier-ignore
         let tRoots = [
             ...(!Polynomial.isConstant(polyXD) ? Polynomial.roots(polyXD) : []),
             ...(!Polynomial.isConstant(polyYD) ? Polynomial.roots(polyYD) : [])
         ].filter(Type.isNumber);
-        tRoots = Utility.uniqWith(tRoots, (a, b) => Maths.equalTo(a, b, curveEpsilon));
+        tRoots = Utility.uniqWith(tRoots, (a, b) => Maths.equalTo(a, b, eps.timeEpsilon));
 
         return tRoots
             .filter(t => {
-                return Maths.between(t, 0, 1, false, false, epsilon);
+                return Maths.between(t, 0, 1, false, false, eps.timeEpsilon);
             })
             .map(t => [new Point(this.getParametricEquation()(t)), t] as [point: Point, time: number]);
     }
@@ -250,7 +245,7 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
      * @param t
      */
     static fromThreePointsAndTime(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point, t: number) {
-        if (Maths.equalTo((1 - t) * t, 0, optioner.options.timeEpsilon)) {
+        if (Maths.equalTo((1 - t) * t, 0, eps.timeEpsilon)) {
             return null;
         }
 
@@ -329,7 +324,6 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
     isDoubleLine() {
         // This means $ax^2+bxy+cy^2+dx+ey+f=0$ can write as $(lx+my+n)^2=0$
         const coefs = this.getImplicitFunctionCoefs();
-        const curveEpsilon = optioner.options.curveEpsilon;
         if (coefs.length !== 6) return false;
         const [a, b, c, d, e, f] = coefs;
         // $$
@@ -347,9 +341,9 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         const n = Maths.sqrt(f);
         // prettier-ignore
         return (
-            Maths.equalTo(b, 2 * l * m, curveEpsilon) &&
-            Maths.equalTo(d, 2 * l * n, curveEpsilon) &&
-            Maths.equalTo(e, 2 * m * n, curveEpsilon)
+            Maths.equalTo(b, 2 * l * m, eps.coefficientEpsilon) &&
+            Maths.equalTo(d, 2 * l * n, eps.coefficientEpsilon) &&
+            Maths.equalTo(e, 2 * m * n, eps.coefficientEpsilon)
         );
     }
 
@@ -468,15 +462,13 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
      */
     getTimeOfPoint(point: [number, number] | Point) {
         const t = this.getTimeOfPointExtend(point);
-        if (Maths.between(t, 0, 1, false, false, optioner.options.epsilon)) return Maths.clamp(t, 0, 1);
+        if (Maths.between(t, 0, 1, false, false, eps.timeEpsilon)) return Maths.clamp(t, 0, 1);
         return NaN;
     }
 
     getTimesOfPointExtend(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         const [polyX, polyY] = this.getPolynomial();
-        const epsilon = optioner.options.epsilon;
-        const curveEpsilon = optioner.options.curveEpsilon;
         const xPoly = Polynomial.standardize(Polynomial.add(polyX, [-x]));
         const yPoly = Polynomial.standardize(Polynomial.add(polyY, [-y]));
 
@@ -484,16 +476,16 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         let yRootsM: RootMultiplicity<number>[] | undefined = undefined;
 
         if (Polynomial.isConstant(xPoly)) {
-            if (!Maths.equalTo(Polynomial.coef(xPoly, 0), 0, epsilon)) return [];
+            if (!Maths.equalTo(Polynomial.coef(xPoly, 0), 0, eps.coefficientEpsilon)) return [];
         } else {
-            xRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(xPoly).filter(Type.isNumber), curveEpsilon);
+            xRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(xPoly).filter(Type.isNumber), eps.timeEpsilon);
             if (xRootsM.length === 0) return [];
         }
 
         if (Polynomial.isConstant(yPoly)) {
-            if (!Maths.equalTo(Polynomial.coef(yPoly, 0), 0, epsilon)) return [];
+            if (!Maths.equalTo(Polynomial.coef(yPoly, 0), 0, eps.coefficientEpsilon)) return [];
         } else {
-            yRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(yPoly).filter(Type.isNumber), curveEpsilon);
+            yRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(yPoly).filter(Type.isNumber), eps.timeEpsilon);
             if (yRootsM.length === 0) return [];
         }
 
@@ -507,7 +499,7 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
             let ret: number[] = [];
             for (let xr of xRootsM) {
                 for (let yr of yRootsM) {
-                    if (Maths.equalTo(xr.root, yr.root, curveEpsilon)) {
+                    if (Maths.equalTo(xr.root, yr.root, eps.timeEpsilon)) {
                         ret.push(Maths.avg(xr.root, yr.root));
                     }
                 }
@@ -534,10 +526,9 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         const times = this.getTimesOfPointExtend(point);
         if (times.length === 0) return NaN;
 
-        const epsilon = optioner.options.epsilon;
         Utility.sortWith(times, (a, b) => {
-            const d1 = Maths.between(a, 0, 1, false, false, epsilon);
-            const d2 = Maths.between(b, 0, 1, false, false, epsilon);
+            const d1 = Maths.between(a, 0, 1, false, false, eps.timeEpsilon);
+            const d2 = Maths.between(b, 0, 1, false, false, eps.timeEpsilon);
             if (d1 && !d2) return -1;
             if (!d1 && d2) return 1;
             return a - b;
@@ -629,9 +620,8 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
     splitAtTimes(ts: number[]) {
         ts = ts.map(t => this._clampTime(t, "element of ts"));
         const ret: QuadraticBezier[] = [];
-        const epsilon = optioner.options.epsilon;
         ts = Utility.sortBy(
-            Utility.uniqWith(ts, (a, b) => Maths.equalTo(a, b, epsilon)),
+            Utility.uniqWith(ts, (a, b) => Maths.equalTo(a, b, eps.timeEpsilon)),
             [n => n]
         );
         [0, ...ts, 1].forEach((_, index, arr) => {

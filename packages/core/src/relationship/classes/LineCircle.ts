@@ -2,7 +2,7 @@ import { Maths, Vector2 } from "@geomtoy/util";
 import Circle from "../../geometries/basic/Circle";
 import Line from "../../geometries/basic/Line";
 import Point from "../../geometries/basic/Point";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { Trilean } from "../../types";
 import BaseRelationship from "../BaseRelationship";
@@ -26,14 +26,13 @@ export default class LineCircle extends BaseRelationship {
         const pc = this.geometry1.getClosestPointFromPoint(cc)[0].coordinates;
         const sd = Vector2.squaredMagnitude(Vector2.from(cc, pc));
         const r2 = r ** 2;
-        const epsilon = optioner.options.epsilon;
 
         const intersection: ReturnType<typeof this.intersection> = [];
 
-        if (Maths.equalTo(sd, r2, epsilon)) {
+        if (Maths.equalTo(sd, r2, eps.epsilon)) {
             intersection.push({ c: pc, m: 2 });
         }
-        if (Maths.lessThan(sd, r2, epsilon)) {
+        if (Maths.lessThan(sd, r2, eps.epsilon)) {
             const di = Maths.sqrt(r ** 2 - sd);
             const angle = this.geometry1.angle;
             const v1 = Vector2.from2(angle, di);

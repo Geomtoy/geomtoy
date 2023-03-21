@@ -2,7 +2,7 @@ import { Maths } from "@geomtoy/util";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
@@ -36,12 +36,11 @@ export default class LineSegmentQuadraticBezier extends BaseRelationship {
         m: number; // multiplicity
     }[] {
         const intersection = this.supRelationship?.intersection() ?? [];
-        const epsilon = optioner.options.epsilon;
         return intersection
             .map(i => {
                 return { ...i, t1: this.geometry1.getTimeOfPointExtend(i.c) };
             })
-            .filter(i => Maths.between(i.t1, 0, 1, false, false, epsilon));
+            .filter(i => Maths.between(i.t1, 0, 1, false, false, eps.timeEpsilon));
     }
 
     // no equal
@@ -71,37 +70,32 @@ export default class LineSegmentQuadraticBezier extends BaseRelationship {
     }
     @superPreprocess("handleDegeneration")
     cross() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => i.m % 2 === 1 && Maths.between(i.t1, 0, 1, true, true, epsilon) && Maths.between(i.t2, 0, 1, true, true, epsilon))
+            .filter(i => i.m % 2 === 1 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => i.m % 2 === 0 && Maths.between(i.t1, 0, 1, true, true, epsilon) && Maths.between(i.t2, 0, 1, true, true, epsilon))
+            .filter(i => i.m % 2 === 0 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     block() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => (Maths.equalTo(i.t2, 0, epsilon) || Maths.equalTo(i.t2, 1, epsilon)) && !(Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon)))
+            .filter(i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && !(Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     blockedBy() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => Maths.equalTo(i.t1, 0, epsilon) || (Maths.equalTo(i.t1, 1, epsilon) && !(Maths.equalTo(i.t2, 0, epsilon) || Maths.equalTo(i.t2, 1, epsilon))))
+            .filter(i => Maths.equalTo(i.t1, 0, eps.timeEpsilon) || (Maths.equalTo(i.t1, 1, eps.timeEpsilon) && !(Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon))))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     connect() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => Maths.equalTo(i.t1, 0, epsilon) || (Maths.equalTo(i.t1, 1, epsilon) && (Maths.equalTo(i.t2, 0, epsilon) || Maths.equalTo(i.t2, 1, epsilon))))
+            .filter(i => Maths.equalTo(i.t1, 0, eps.timeEpsilon) || (Maths.equalTo(i.t1, 1, eps.timeEpsilon) && (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon))))
             .map(i => new Point(i.c));
     }
     // no coincide

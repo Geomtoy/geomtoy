@@ -1,7 +1,7 @@
 import { Assert, Box, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
-import { optioner } from "../../geomtoy";
+import { eps, optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import ArrowGraphics from "../../helper/ArrowGraphics";
@@ -100,13 +100,12 @@ export default class Polygon extends Geometry {
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
 
-        const epsilon = optioner.options.epsilon;
         const vertices = this._vertices;
         const { x: x0, y: y0 } = vertices[0];
 
         for (let i = 1, l = this._vertices.length; i < l; i++) {
             const { x: xi, y: yi } = vertices[i];
-            if (!Coordinates.isEqualTo([x0, y0], [xi, yi], epsilon)) {
+            if (!Coordinates.isEqualTo([x0, y0], [xi, yi], eps.epsilon)) {
                 return check ? false : this;
             }
         }
@@ -391,7 +390,6 @@ export default class Polygon extends Geometry {
      */
     isConvex() {
         const l = this.vertexCount;
-        const epsilon = optioner.options.epsilon;
         if (this.vertexCount < 3) return false; // at least 3 segments
 
         let startWindingDirection: WindingDirection | undefined;
@@ -406,7 +404,7 @@ export default class Polygon extends Geometry {
             const angle = Vector2.angleTo(v1, v2);
             // angle is `NaN` for zero vector, v1 or v2 is zero vector
             if (Number.isNaN(angle)) continue;
-            if (Maths.equalTo(Maths.abs(angle), Maths.PI, epsilon)) return false;
+            if (Maths.equalTo(Maths.abs(angle), Maths.PI, eps.angleEpsilon)) return false;
 
             if (startWindingDirection === undefined) {
                 startWindingDirection = angle > 0 ? 1 : angle < 0 ? -1 : undefined;
@@ -416,12 +414,11 @@ export default class Polygon extends Geometry {
 
             angleSum += Maths.PI - angle;
         }
-        return Maths.equalTo(Maths.abs(angleSum), 2 * Maths.PI, epsilon);
+        return Maths.equalTo(Maths.abs(angleSum), 2 * Maths.PI, eps.angleEpsilon);
     }
 
     isConcave() {
         const l = this.vertexCount;
-        const epsilon = optioner.options.epsilon;
         if (this.vertexCount < 4) return false; // at least 4 segments
 
         let startWindingDirection: WindingDirection | undefined;
@@ -436,14 +433,14 @@ export default class Polygon extends Geometry {
             const angle = Vector2.angleTo(v1, v2);
             // angle is `NaN` for zero vector, v1 or v2 is zero vector
             if (Number.isNaN(angle)) continue;
-            if (Maths.equalTo(Maths.abs(angle), Maths.PI, epsilon)) return false;
+            if (Maths.equalTo(Maths.abs(angle), Maths.PI, eps.angleEpsilon)) return false;
 
             if (startWindingDirection === undefined) {
                 startWindingDirection = angle > 0 ? 1 : angle < 0 ? -1 : undefined;
             }
             angleSum += Maths.PI - angle;
         }
-        return Maths.equalTo(angleSum, (l - 1) * Maths.PI, epsilon);
+        return Maths.equalTo(angleSum, (l - 1) * Maths.PI, eps.angleEpsilon);
     }
     isSelfIntersecting() {
         const segments = this.getSegments(true);
@@ -516,8 +513,7 @@ export default class Polygon extends Geometry {
     }
 
     randomPointInside() {
-        const epsilon = optioner.options.epsilon;
-        if (Maths.equalTo(this.getArea(), 0, epsilon)) return null;
+        if (Maths.equalTo(this.getArea(), 0, eps.epsilon)) return null;
         const [x, y, w, h] = this.getBoundingBox();
         let rnd: [number, number];
         do {

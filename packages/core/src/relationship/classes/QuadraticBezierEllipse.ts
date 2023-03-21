@@ -4,7 +4,7 @@ import Ellipse from "../../geometries/basic/Ellipse";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
 import BaseRelationship from "../BaseRelationship";
@@ -69,10 +69,8 @@ export default class QuadraticBezierEllipse extends BaseRelationship {
             sinPhi2 * (rx2 * x2 ** 2 + ry2 * y2 ** 2);
 
         const tPoly = [t4, t3, t2, t1, t0];
-        const curveEpsilon = optioner.options.curveEpsilon;
-        const epsilon = optioner.options.epsilon;
 
-        let tRoots = Polynomial.rootsMultiplicity(Polynomial.roots(tPoly).filter(Type.isNumber), curveEpsilon);
+        let tRoots = Polynomial.rootsMultiplicity(Polynomial.roots(tPoly).filter(Type.isNumber), eps.timeEpsilon);
 
         const intersection: {
             c: [number, number]; // coordinates of intersection
@@ -82,7 +80,7 @@ export default class QuadraticBezierEllipse extends BaseRelationship {
         }[] = [];
         for (let i = 0, l = tRoots.length; i < l; i++) {
             const t1 = tRoots[i].root;
-            if (Maths.between(t1, 0, 1, false, false, epsilon)) {
+            if (Maths.between(t1, 0, 1, false, false, eps.timeEpsilon)) {
                 const x = Polynomial.evaluate(polyX, t1);
                 const y = Polynomial.evaluate(polyY, t1);
 
@@ -136,24 +134,21 @@ export default class QuadraticBezierEllipse extends BaseRelationship {
     }
     @superPreprocess("handleDegeneration")
     cross() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => i.m % 2 === 1 && Maths.between(i.t1, 0, 1, true, true, epsilon))
+            .filter(i => i.m % 2 === 1 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => i.m % 2 === 0 && Maths.between(i.t1, 0, 1, true, true, epsilon))
+            .filter(i => i.m % 2 === 0 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     // no block
     @superPreprocess("handleDegeneration")
     blockedBy() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon))
+            .filter(i => Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     // no connect

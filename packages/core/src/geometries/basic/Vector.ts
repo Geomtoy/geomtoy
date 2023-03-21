@@ -1,13 +1,12 @@
 import { Angle, Assert, Box, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
-import ArrowGraphics from "../../helper/ArrowGraphics";
-import { validGeometry } from "../../misc/decor-geometry";
-
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
+import ArrowGraphics from "../../helper/ArrowGraphics";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
+import { validGeometry } from "../../misc/decor-geometry";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
 import type { ViewportDescriptor } from "../../types";
@@ -251,12 +250,10 @@ export default class Vector extends Geometry {
     getProportionOfPoint(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;
-        const epsilon = optioner.options.epsilon;
         const l = this.toLine();
         if (l === null || l.isPointOn(c)) return NaN;
-
-        if (Coordinates.isEqualTo(c, c1, epsilon)) return 0;
-        if (Coordinates.isEqualTo(c, c2, epsilon)) return Infinity;
+        if (Coordinates.isEqualTo(c, c1, eps.epsilon)) return 0;
+        if (Coordinates.isEqualTo(c, c2, eps.epsilon)) return Infinity;
 
         const v10 = Vector2.from(c1, c);
         const v02 = Vector2.from(c, c2);

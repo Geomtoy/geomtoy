@@ -1,5 +1,5 @@
 import { Coordinates, Maths } from "@geomtoy/util";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { FillRule } from "../../types";
 import { LinkedList, LinkedListNode } from "./LinkedList";
 import MonoSegment from "./MonoSegment";
@@ -20,10 +20,9 @@ export default class SweepLine {
      * @param event
      */
     findAboveAndBelow(event: SweepEvent) {
-        const epsilon = optioner.options.epsilon;
         // Find the first sweep event satisfy the conditions, it is the below, and its `prev` if existed is the above.
         const below = this.statusList.locate(node => {
-            if (Coordinates.isEqualTo(event.coordinates, node.data.coordinates, epsilon)) {
+            if (Coordinates.isEqualTo(event.coordinates, node.data.coordinates, eps.epsilon)) {
                 return event.compareQuickY(node.data) >= 0;
             } else {
                 const p = node.data.mono.segment.getClosestPointFromPoint(event.coordinates)[0];
@@ -98,14 +97,14 @@ export default class SweepLine {
     takeSnapshot(event: SweepEvent) {
         const [x] = event.coordinates;
         // Take the horizontal snapshot first if necessary.
-        if (!Maths.equalTo(x, this.x, optioner.options.epsilon)) {
+        if (!Maths.equalTo(x, this.x, eps.epsilon)) {
             this.x = x;
             this.snapshotH = this.statusList.toArray().filter(e => {
                 // do not include the vertical segments
                 if (e.mono.isVertical) return false;
                 // do not include the enter event happened at this `x`,
                 // the enter event happened at this `x` should be ignore(it is beyond the imaginary line)
-                if (Maths.equalTo(e.coordinates[0], this.x, optioner.options.epsilon)) return false;
+                if (Maths.equalTo(e.coordinates[0], this.x, eps.epsilon)) return false;
                 return true;
             });
         }
@@ -116,7 +115,7 @@ export default class SweepLine {
                 if (e.mono.isVertical) return true;
                 // do not include the enter event happened at this `x`,
                 // the enter event happened at this `x` should be ignore(it is beyond the imaginary line)
-                if (Maths.equalTo(e.coordinates[0], this.x, optioner.options.epsilon)) return false;
+                if (Maths.equalTo(e.coordinates[0], this.x, eps.epsilon)) return false;
                 return true;
             });
 

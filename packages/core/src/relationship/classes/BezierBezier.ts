@@ -3,7 +3,7 @@ import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { compareImplicit } from "../../misc/compare-implicit";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
@@ -65,10 +65,9 @@ export default class BezierBezier extends BaseRelationship {
     @superPreprocess("handleDegeneration")
     @cached
     onSameTrajectory() {
-        const curveEpsilon = optioner.options.curveEpsilon;
         const if1 = this.geometry1.getImplicitFunctionCoefs();
         const if2 = this.geometry2.getImplicitFunctionCoefs();
-        return compareImplicit(if1, if2, curveEpsilon);
+        return compareImplicit(if1, if2, eps.coefficientEpsilon);
     }
 
     @cached
@@ -133,16 +132,14 @@ export default class BezierBezier extends BaseRelationship {
             -c0 * e0 * g0 + b * f0 * g0 + c0 * d * h0 - a * f0 * h0 - b * d * i0 + a * e0 * i0
         ])
 
-        const curveEpsilon = optioner.options.curveEpsilon;
-        const epsilon = optioner.options.epsilon;
         const tRoots = Polynomial.roots(tPoly).map(r => {
             if (Complex.is(r)) {
-                if (Maths.equalTo(Complex.imag(r), 0, curveEpsilon)) return Complex.real(r);
+                if (Maths.equalTo(Complex.imag(r), 0, eps.complexEpsilon)) return Complex.real(r);
                 return r;
             }
             return r;
         });
-        const tRootsM = Polynomial.rootsMultiplicity(tRoots.filter(Type.isNumber), curveEpsilon);
+        const tRootsM = Polynomial.rootsMultiplicity(tRoots.filter(Type.isNumber), eps.timeEpsilon);
         const intersection: ReturnType<typeof this.intersection> = [];
 
         // adjust the multiplicity when bezier1 is a triple line
@@ -160,7 +157,7 @@ export default class BezierBezier extends BaseRelationship {
             const csi = this.geometry1.getPointAtTimeExtend(tsi[0]).coordinates;
             tRootsM.forEach((rm, index) => {
                 const c = this.geometry2.getPointAtTimeExtend(rm.root).coordinates;
-                if (Coordinates.isEqualTo(csi, c, epsilon)) {
+                if (Coordinates.isEqualTo(csi, c, eps.epsilon)) {
                     if (rm.multiplicity === 2) {
                         // turn multiplicity = 2 (double strike)into two root multiplicity = 1
                         tRootsM[index].multiplicity = 1;
@@ -179,13 +176,13 @@ export default class BezierBezier extends BaseRelationship {
 
         for (let i = 0, l = tRootsM.length; i < l; i++) {
             const t2 = tRootsM[i].root;
-            if (Maths.between(t2, 0, 1, false, false, epsilon)) {
+            if (Maths.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
                 const x = Polynomial.evaluate(polyX2, t2);
                 const y = Polynomial.evaluate(polyY2, t2);
 
                 const t1s = tripleLine1 ? this.geometry1.getTimesOfPointExtend([x, y]) : [this.geometry1.getTimeOfPointExtend([x, y])];
                 t1s.forEach(t1 => {
-                    if (Maths.between(t1, 0, 1, false, false, epsilon)) {
+                    if (Maths.between(t1, 0, 1, false, false, eps.timeEpsilon)) {
                         intersection.push({
                             c: [x, y],
                             t1,
@@ -210,13 +207,12 @@ export default class BezierBezier extends BaseRelationship {
 
         const tsi = this.geometry1.selfIntersectionExtend();
         const csi = tsi.length ? this.geometry1.getPointAtTimeExtend(tsi[0]).coordinates : undefined;
-        const epsilon = optioner.options.epsilon;
 
         // Correct `t2i` and `t2t` by according to the situation of self-intersection and `bezier2`
         if (tsi.length) {
             // Note if `t2i` or `t2t` it at the times of the self-intersection, their values are always be the smaller one which is `tsi[0]`.
-            const d1 = Maths.equalTo(t2i, tsi[0], epsilon);
-            const d2 = Maths.equalTo(t2t, tsi[0], epsilon);
+            const d1 = Maths.equalTo(t2i, tsi[0], eps.timeEpsilon);
+            const d2 = Maths.equalTo(t2t, tsi[0], eps.timeEpsilon);
 
             if ((d1 && !d2) || (!d1 && d2)) {
                 let s: number = NaN;
@@ -224,19 +220,19 @@ export default class BezierBezier extends BaseRelationship {
                 if (d1) [s, r] = [t2i, t2t];
                 if (d2) [s, r] = [t2t, t2i];
 
-                if (Maths.between(r, tsi[0], tsi[1], false, false, epsilon)) {
+                if (Maths.between(r, tsi[0], tsi[1], false, false, eps.timeEpsilon)) {
                     const midT1 = (tsi[0] + r) / 2;
                     const midT2 = (tsi[1] + r) / 2;
                     const midD1 = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT1));
                     const midD2 = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT2));
                     if (midD1) s = tsi[0];
                     if (midD2) s = tsi[1];
-                } else if (Maths.lessThan(r, tsi[0], epsilon)) {
+                } else if (Maths.lessThan(r, tsi[0], eps.timeEpsilon)) {
                     const midT = (tsi[0] + tsi[1]) / 2;
                     const midD = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT));
                     if (midD) s = tsi[1];
                     else s = tsi[0];
-                } else if (Maths.greaterThan(r, tsi[1], epsilon)) {
+                } else if (Maths.greaterThan(r, tsi[1], eps.timeEpsilon)) {
                     const midT = (tsi[0] + tsi[1]) / 2;
                     const midD = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT));
                     if (midD) s = tsi[0];
@@ -265,10 +261,10 @@ export default class BezierBezier extends BaseRelationship {
             t2t: dt ? t2i : t2t, // time of `c2t` in the perspective of `bezier1`
             csi, // coordinates of self-intersection in the perspective of `bezier1`(may be not on `bezier1` nor `bezier2` but on underlying curve), `undefined` if there is no self-intersection
             tsi, // times of self-intersection in the perspective of `bezier1`, `[]` if there is no self-intersection
-            d1si1: tsi.length ? Maths.between(tsi[0], 0, 1, false, false, epsilon) : false, // determination of whether `bezier1` pass the first time of the self-intersection, `false` if there is no self-intersection
-            d1si2: tsi.length ? Maths.between(tsi[1], 0, 1, false, false, epsilon) : false, // determination of whether `bezier1` pass the second time of the self-intersection, `false` if there is no self-intersection
-            d2si1: tsi.length ? Maths.between(tsi[0], t2i, t2t, false, false, epsilon) : false, // determination of whether `bezier2` pass the first time of the self-intersection, `false` if there is no self-intersection
-            d2si2: tsi.length ? Maths.between(tsi[1], t2i, t2t, false, false, epsilon) : false // determination of whether `bezier2` pass the second time of the self-intersection, `false` if there is no self-intersection
+            d1si1: tsi.length ? Maths.between(tsi[0], 0, 1, false, false, eps.timeEpsilon) : false, // determination of whether `bezier1` pass the first time of the self-intersection, `false` if there is no self-intersection
+            d1si2: tsi.length ? Maths.between(tsi[1], 0, 1, false, false, eps.timeEpsilon) : false, // determination of whether `bezier1` pass the second time of the self-intersection, `false` if there is no self-intersection
+            d2si1: tsi.length ? Maths.between(tsi[0], t2i, t2t, false, false, eps.timeEpsilon) : false, // determination of whether `bezier2` pass the first time of the self-intersection, `false` if there is no self-intersection
+            d2si2: tsi.length ? Maths.between(tsi[1], t2i, t2t, false, false, eps.timeEpsilon) : false // determination of whether `bezier2` pass the second time of the self-intersection, `false` if there is no self-intersection
         };
     }
 
@@ -276,19 +272,17 @@ export default class BezierBezier extends BaseRelationship {
     equal(): Trilean {
         if (!this.onSameTrajectory()) return false;
         const { t2i, t2t } = this.perspective();
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(t2i, 0, epsilon) && Maths.equalTo(t2t, 1, epsilon);
+        return Maths.equalTo(t2i, 0, eps.timeEpsilon) && Maths.equalTo(t2t, 1, eps.timeEpsilon);
     }
     @superPreprocess("handleDegeneration")
     separate(): Trilean {
         if (!this.onSameTrajectory()) {
             return this.intersection().length === 0;
         }
-        const epsilon = optioner.options.epsilon;
         const { tsi, d1si1, d1si2, d2si1, d2si2, t2i, t2t } = this.perspective();
         // handle self-intersection
         if (tsi.length && (d1si1 || d1si2) && (d2si1 || d2si2)) return false;
-        return Maths.greaterThan(t2i, 1, epsilon) || Maths.lessThan(t2t, 0, epsilon);
+        return Maths.greaterThan(t2i, 1, eps.timeEpsilon) || Maths.lessThan(t2t, 0, eps.timeEpsilon);
     }
 
     // no contain
@@ -327,34 +321,33 @@ export default class BezierBezier extends BaseRelationship {
     }
     @superPreprocess("handleDegeneration")
     cross() {
-        const epsilon = optioner.options.epsilon;
         if (!this.onSameTrajectory()) {
             return this.intersection()
-                .filter(i => i.m % 2 == 1 && Maths.between(i.t1, 0, 1, true, true, epsilon) && Maths.between(i.t2, 0, 1, true, true, epsilon))
+                .filter(i => i.m % 2 == 1 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
                 .map(i => new Point(i.c));
         }
         // handle self-intersection
         const { tsi, d1si1, d1si2, d2si1, d2si2, t2i, t2t, csi } = this.perspective();
         if (tsi.length && (d1si1 || d1si2) && (d2si1 || d2si2)) {
-            const notAtEnd1 = (d1si1 && Maths.between(tsi[0], 0, 1, true, true, epsilon)) || (d1si2 && Maths.between(tsi[1], 0, 1, true, true, epsilon));
-            const notAtEnd2 = (d2si1 && Maths.between(tsi[0], t2i, t2t, true, true, epsilon)) || (d1si2 && Maths.between(tsi[1], t2i, t2t, true, true, epsilon));
+            const notAtEnd1 = (d1si1 && Maths.between(tsi[0], 0, 1, true, true, eps.timeEpsilon)) || (d1si2 && Maths.between(tsi[1], 0, 1, true, true, eps.timeEpsilon));
+            const notAtEnd2 = (d2si1 && Maths.between(tsi[0], t2i, t2t, true, true, eps.timeEpsilon)) || (d1si2 && Maths.between(tsi[1], t2i, t2t, true, true, eps.timeEpsilon));
             if (notAtEnd1 && notAtEnd2) return [new Point(csi!)];
         }
         return [];
     }
     @superPreprocess("handleDegeneration")
     touch() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => i.m % 2 === 0 && Maths.between(i.t1, 0, 1, true, true, epsilon) && Maths.between(i.t2, 0, 1, true, true, epsilon))
+            .filter(i => i.m % 2 === 0 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     block() {
-        const epsilon = optioner.options.epsilon;
         if (!this.onSameTrajectory()) {
             return this.intersection()
-                .filter(i => (Maths.equalTo(i.t2, 0, epsilon) || Maths.equalTo(i.t2, 1, epsilon)) && !(Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon)))
+                .filter(
+                    i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && !(Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon))
+                )
                 .map(i => new Point(i.c));
         }
         // handle self-intersection
@@ -363,8 +356,8 @@ export default class BezierBezier extends BaseRelationship {
             if (d2si1 && !d2si2 && !d1si1 && d1si2) {
                 if (
                     // prettier-ignore
-                    (Maths.equalTo(tsi[0], t2i, epsilon) || Maths.equalTo(tsi[0], t2t, epsilon)) &&
-                    !(Maths.equalTo(tsi[1], 0, epsilon) || Maths.equalTo(tsi[1], 1, epsilon))
+                    (Maths.equalTo(tsi[0], t2i, eps.timeEpsilon) || Maths.equalTo(tsi[0], t2t, eps.timeEpsilon)) &&
+                    !(Maths.equalTo(tsi[1], 0, eps.timeEpsilon) || Maths.equalTo(tsi[1], 1, eps.timeEpsilon))
                 ) {
                     return [new Point(csi!)];
                 }
@@ -372,8 +365,8 @@ export default class BezierBezier extends BaseRelationship {
             if (!d2si1 && d2si2 && d1si1 && !d1si2) {
                 if (
                     // prettier-ignore
-                    (Maths.equalTo(tsi[1], t2i, epsilon) || Maths.equalTo(tsi[1], t2t, epsilon)) && 
-                    !(Maths.equalTo(tsi[0], 0, epsilon) || Maths.equalTo(tsi[0], 1, epsilon))
+                    (Maths.equalTo(tsi[1], t2i, eps.timeEpsilon) || Maths.equalTo(tsi[1], t2t, eps.timeEpsilon)) && 
+                    !(Maths.equalTo(tsi[0], 0, eps.timeEpsilon) || Maths.equalTo(tsi[0], 1, eps.timeEpsilon))
                 ) {
                     return [new Point(csi!)];
                 }
@@ -383,10 +376,11 @@ export default class BezierBezier extends BaseRelationship {
     }
     @superPreprocess("handleDegeneration")
     blockedBy() {
-        const epsilon = optioner.options.epsilon;
         if (!this.onSameTrajectory()) {
             return this.intersection()
-                .filter(i => !(Maths.equalTo(i.t2, 0, epsilon) || Maths.equalTo(i.t2, 1, epsilon)) && (Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon)))
+                .filter(
+                    i => !(Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon))
+                )
                 .map(i => new Point(i.c));
         }
         // handle self-intersection
@@ -395,8 +389,8 @@ export default class BezierBezier extends BaseRelationship {
             if (d1si1 && !d1si2 && !d2si1 && d2si2) {
                 if (
                     // prettier-ignore
-                    (Maths.equalTo(tsi[0], 0, epsilon) || Maths.equalTo(tsi[0], 1, epsilon)) &&
-                    !(Maths.equalTo(tsi[1], t2i, epsilon) || Maths.equalTo(tsi[1], t2t, epsilon))
+                    (Maths.equalTo(tsi[0], 0, eps.timeEpsilon) || Maths.equalTo(tsi[0], 1, eps.timeEpsilon)) &&
+                    !(Maths.equalTo(tsi[1], t2i, eps.timeEpsilon) || Maths.equalTo(tsi[1], t2t, eps.timeEpsilon))
                 ) {
                     return [new Point(csi!)];
                 }
@@ -404,8 +398,8 @@ export default class BezierBezier extends BaseRelationship {
             if (!d1si1 && d1si2 && d2si1 && !d2si2) {
                 if (
                     // prettier-ignore
-                    (Maths.equalTo(tsi[1], 0, epsilon) || Maths.equalTo(tsi[1], 1, epsilon)) && 
-                    !(Maths.equalTo(tsi[0], t2i, epsilon) || Maths.equalTo(tsi[0], t2t, epsilon))
+                    (Maths.equalTo(tsi[1], 0, eps.timeEpsilon) || Maths.equalTo(tsi[1], 1, eps.timeEpsilon)) && 
+                    !(Maths.equalTo(tsi[0], t2i, eps.timeEpsilon) || Maths.equalTo(tsi[0], t2t, eps.timeEpsilon))
                 ) {
                     return [new Point(csi!)];
                 }
@@ -415,10 +409,11 @@ export default class BezierBezier extends BaseRelationship {
     }
     @superPreprocess("handleDegeneration")
     connect() {
-        const epsilon = optioner.options.epsilon;
         if (!this.onSameTrajectory()) {
             return this.intersection()
-                .filter(i => (Maths.equalTo(i.t2, 0, epsilon) || Maths.equalTo(i.t2, 1, epsilon)) && (Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon)))
+                .filter(
+                    i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon))
+                )
                 .map(i => new Point(i.c));
         }
         // handle self-intersection
@@ -427,8 +422,8 @@ export default class BezierBezier extends BaseRelationship {
             if (d1si1 && !d1si2 && !d2si1 && d2si2) {
                 if (
                     // prettier-ignore
-                    (Maths.equalTo(tsi[0], 0, epsilon) || Maths.equalTo(tsi[0], 1, epsilon)) &&
-                    (Maths.equalTo(tsi[1], t2i, epsilon) || Maths.equalTo(tsi[1], t2t, epsilon))
+                    (Maths.equalTo(tsi[0], 0, eps.timeEpsilon) || Maths.equalTo(tsi[0], 1, eps.timeEpsilon)) &&
+                    (Maths.equalTo(tsi[1], t2i, eps.timeEpsilon) || Maths.equalTo(tsi[1], t2t, eps.timeEpsilon))
                 ) {
                     return [new Point(csi!)];
                 }
@@ -436,8 +431,8 @@ export default class BezierBezier extends BaseRelationship {
             if (!d1si1 && d1si2 && d2si1 && !d2si2) {
                 if (
                     // prettier-ignore
-                    (Maths.equalTo(tsi[1], 0, epsilon) || Maths.equalTo(tsi[1], 1, epsilon)) && 
-                    (Maths.equalTo(tsi[0], t2i, epsilon) || Maths.equalTo(tsi[0], t2t, epsilon))
+                    (Maths.equalTo(tsi[1], 0, eps.timeEpsilon) || Maths.equalTo(tsi[1], 1, eps.timeEpsilon)) && 
+                    (Maths.equalTo(tsi[0], t2i, eps.timeEpsilon) || Maths.equalTo(tsi[0], t2t, eps.timeEpsilon))
                 ) {
                     return [new Point(csi!)];
                 }
@@ -453,21 +448,20 @@ export default class BezierBezier extends BaseRelationship {
         if (this.geometry1.isTripleLine()) return [];
 
         const { t2i, t2t, c1i, c1t } = this.perspective();
-        const epsilon = optioner.options.epsilon;
         const coincide: (Point | Bezier)[] = [];
 
         // coincide point
-        const iet = Maths.equalTo(t2i, 1, epsilon);
-        const tei = Maths.equalTo(t2t, 0, epsilon);
+        const iet = Maths.equalTo(t2i, 1, eps.timeEpsilon);
+        const tei = Maths.equalTo(t2t, 0, eps.timeEpsilon);
         if (iet) coincide.push(new Point(c1t));
         if (tei) coincide.push(new Point(c1i));
         if (iet || tei) return coincide;
 
         // coincide segment
-        const ili = Maths.lessThan(t2i, 0, epsilon);
-        const ibw = Maths.between(t2i, 0, 1, false, true, epsilon);
-        const tgt = Maths.greaterThan(t2t, 1, epsilon);
-        const tbw = Maths.between(t2t, 0, 1, true, false, epsilon);
+        const ili = Maths.lessThan(t2i, 0, eps.timeEpsilon);
+        const ibw = Maths.between(t2i, 0, 1, false, true, eps.timeEpsilon);
+        const tgt = Maths.greaterThan(t2t, 1, eps.timeEpsilon);
+        const tbw = Maths.between(t2t, 0, 1, true, false, eps.timeEpsilon);
         if (ili && tbw) coincide.push(this.geometry1.portionOf(0, t2t));
         if (tgt && ibw) coincide.push(this.geometry1.portionOf(t2i, 1));
         if (tgt && ili) coincide.push(this.geometry1.clone());

@@ -2,7 +2,7 @@ import { Box, Complex, Maths, Polynomial, Type } from "@geomtoy/util";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { compareImplicit } from "../../misc/compare-implicit";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
@@ -38,10 +38,9 @@ export default class QuadraticBezierQuadraticBezier extends BaseRelationship {
 
     @cached
     onSameTrajectory() {
-        const curveEpsilon = optioner.options.curveEpsilon;
         const if1 = this.geometry1.getImplicitFunctionCoefs();
         const if2 = this.geometry2.getImplicitFunctionCoefs();
-        return compareImplicit(if1, if2, curveEpsilon);
+        return compareImplicit(if1, if2, eps.coefficientEpsilon);
     }
 
     @cached
@@ -96,16 +95,14 @@ export default class QuadraticBezierQuadraticBezier extends BaseRelationship {
 
         // Quadratic bezier may degenerate.
         // tPoly = Polynomial.monic(Polynomial.standardize(tPoly));
-        const curveEpsilon = optioner.options.curveEpsilon;
-        const epsilon = optioner.options.epsilon;
         const tRoots = Polynomial.roots(tPoly).map(r => {
             if (Complex.is(r)) {
-                if (Maths.equalTo(Complex.imag(r), 0, curveEpsilon)) return Complex.real(r);
+                if (Maths.equalTo(Complex.imag(r), 0, eps.complexEpsilon)) return Complex.real(r);
                 return r;
             }
             return r;
         });
-        const tRootsM = Polynomial.rootsMultiplicity(tRoots.filter(Type.isNumber), curveEpsilon);
+        const tRootsM = Polynomial.rootsMultiplicity(tRoots.filter(Type.isNumber), eps.timeEpsilon);
         const intersection: ReturnType<typeof this.intersection> = [];
 
         // adjust the multiplicity when quadraticBezier1 is a double line
@@ -120,7 +117,7 @@ export default class QuadraticBezierQuadraticBezier extends BaseRelationship {
 
         for (let i = 0, l = tRootsM.length; i < l; i++) {
             const t2 = tRootsM[i].root;
-            if (Maths.between(t2, 0, 1, false, false, epsilon)) {
+            if (Maths.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
                 const x = Polynomial.evaluate(polyX2, t2);
                 const y = Polynomial.evaluate(polyY2, t2);
                 const t1 = this.geometry1.getTimeOfPoint([x, y]);
@@ -166,9 +163,8 @@ export default class QuadraticBezierQuadraticBezier extends BaseRelationship {
     @superPreprocess("handleDegeneration")
     equal(): Trilean {
         if (!this.onSameTrajectory()) return false;
-        const epsilon = optioner.options.epsilon;
         const { t2i, t2t } = this.perspective();
-        return Maths.equalTo(t2i, 0, epsilon) && Maths.equalTo(t2t, 1, epsilon);
+        return Maths.equalTo(t2i, 0, eps.timeEpsilon) && Maths.equalTo(t2t, 1, eps.timeEpsilon);
     }
     @superPreprocess("handleDegeneration")
     separate(): Trilean {
@@ -176,8 +172,7 @@ export default class QuadraticBezierQuadraticBezier extends BaseRelationship {
             return this.intersection().length === 0;
         }
         const { t2i, t2t } = this.perspective();
-        const epsilon = optioner.options.epsilon;
-        return Maths.greaterThan(t2i, 1, epsilon) || Maths.lessThan(t2t, 0, epsilon);
+        return Maths.greaterThan(t2i, 1, eps.timeEpsilon) || Maths.lessThan(t2t, 0, eps.timeEpsilon);
     }
 
     // no contain
@@ -201,37 +196,32 @@ export default class QuadraticBezierQuadraticBezier extends BaseRelationship {
     }
     @superPreprocess("handleDegeneration")
     cross() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => i.m % 2 === 1 && Maths.between(i.t1, 0, 1, true, true, epsilon) && Maths.between(i.t2, 0, 1, true, true, epsilon))
+            .filter(i => i.m % 2 === 1 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => i.m % 2 === 0 && Maths.between(i.t1, 0, 1, true, true, epsilon) && Maths.between(i.t2, 0, 1, true, true, epsilon))
+            .filter(i => i.m % 2 === 0 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     block() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => (Maths.equalTo(i.t2, 0, epsilon) || Maths.equalTo(i.t2, 1, epsilon)) && !(Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon)))
+            .filter(i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && !(Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     blockedBy() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => (Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon)) && !(Maths.equalTo(i.t2, 0, epsilon) || Maths.equalTo(i.t2, 1, epsilon)))
+            .filter(i => (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) && !(Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     connect() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => (Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon)) && (Maths.equalTo(i.t2, 0, epsilon) || Maths.equalTo(i.t2, 1, epsilon)))
+            .filter(i => (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) && (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
 
@@ -239,20 +229,19 @@ export default class QuadraticBezierQuadraticBezier extends BaseRelationship {
     coincide() {
         if (!this.onSameTrajectory()) return [];
         const { t2i, t2t, c1i, c1t } = this.perspective();
-        const epsilon = optioner.options.epsilon;
         const coincide: (Point | QuadraticBezier)[] = [];
 
         // coincide point
-        const iet = Maths.equalTo(t2i, 1, epsilon);
-        const tei = Maths.equalTo(t2t, 0, epsilon);
+        const iet = Maths.equalTo(t2i, 1, eps.timeEpsilon);
+        const tei = Maths.equalTo(t2t, 0, eps.timeEpsilon);
         if (iet) coincide.push(new Point(c1t));
         if (tei) coincide.push(new Point(c1i));
         if (iet || tei) return coincide;
 
-        const ili = Maths.lessThan(t2i, 0, epsilon);
-        const ibw = Maths.between(t2i, 0, 1, false, true, epsilon);
-        const tgt = Maths.greaterThan(t2t, 1, epsilon);
-        const tbw = Maths.between(t2t, 0, 1, true, false, epsilon);
+        const ili = Maths.lessThan(t2i, 0, eps.timeEpsilon);
+        const ibw = Maths.between(t2i, 0, 1, false, true, eps.timeEpsilon);
+        const tgt = Maths.greaterThan(t2t, 1, eps.timeEpsilon);
+        const tbw = Maths.between(t2t, 0, 1, true, false, eps.timeEpsilon);
         // overlap
         if (ili && tbw) coincide.push(this.geometry1.portionOf(0, t2t));
         // overlap

@@ -27,13 +27,15 @@ export type RecursivePartial<T> = {
     [K in keyof T]?: T[K] extends (infer U)[] ? RecursivePartial<U>[] : T[K] extends object ? RecursivePartial<T[K]> : T[K];
 };
 export type Options = {
-    epsilon: number;
-    coefficientEpsilon: number;
-    trigonometricEpsilon: number;
-    curveEpsilon: number;
-    timeEpsilon: number;
-    angleEpsilon: number;
-    vectorEpsilon: number;
+    epsilon: {
+        epsilon: number;
+        coefficientEpsilon: number;
+        trigonometricEpsilon: number;
+        complexEpsilon: number;
+        timeEpsilon: number;
+        angleEpsilon: number;
+        vectorEpsilon: number;
+    };
     graphics: {
         point: {
             size: number;

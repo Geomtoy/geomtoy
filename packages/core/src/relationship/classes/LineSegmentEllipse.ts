@@ -3,7 +3,7 @@ import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import Ellipse from "../../geometries/basic/Ellipse";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
@@ -31,13 +31,12 @@ export default class LineSegmentEllipse extends BaseRelationship {
         a2: number; // angle of `c` on `ellipse`
         m: number; // multiplicity
     }[] {
-        const epsilon = optioner.options.epsilon;
         const intersection = this.supRelationship?.intersection() ?? [];
         return intersection
             .map(i => {
                 return { ...i, t1: this.geometry1.getTimeOfPointExtend(i.c) };
             })
-            .filter(i => Maths.between(i.t1, 0, 1, false, false, epsilon));
+            .filter(i => Maths.between(i.t1, 0, 1, false, false, eps.timeEpsilon));
     }
 
     // no equal
@@ -76,24 +75,21 @@ export default class LineSegmentEllipse extends BaseRelationship {
     }
     @superPreprocess("handleDegeneration")
     cross() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => i.m % 2 === 1 && Maths.between(i.t1, 0, 1, true, true, epsilon))
+            .filter(i => i.m % 2 === 1 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => i.m % 2 === 0 && Maths.between(i.t1, 0, 1, true, true, epsilon))
+            .filter(i => i.m % 2 === 0 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     // no block
     @superPreprocess("handleDegeneration")
     blockedBy() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon))
+            .filter(i => Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     // no connect

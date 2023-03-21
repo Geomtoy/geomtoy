@@ -2,7 +2,7 @@ import { Maths, Vector2 } from "@geomtoy/util";
 import type Line from "../../geometries/basic/Line";
 import type LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { type Trilean } from "../../types";
@@ -24,8 +24,7 @@ export default class LineLineSegment extends BaseRelationship {
         const [a, b, c] = this.geometry1.getImplicitFunctionCoefs();
         const d1 = a * x1 + b * y1 + c;
         const d2 = a * x2 + b * y2 + c;
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(d1, 0, epsilon) && Maths.equalTo(d2, 0, epsilon);
+        return Maths.equalTo(d1, 0, eps.epsilon) && Maths.equalTo(d2, 0, eps.epsilon);
     }
 
     @cached
@@ -38,11 +37,10 @@ export default class LineLineSegment extends BaseRelationship {
         const [a, b, c] = this.geometry1.getImplicitFunctionCoefs();
         const d1 = a * x1 + b * y1 + c;
         const d2 = a * x2 + b * y2 + c;
-        const epsilon = optioner.options.epsilon;
-        const s1 = Maths.sign(d1, epsilon);
-        const s2 = Maths.sign(d2, epsilon);
+        const s1 = Maths.sign(d1, eps.epsilon);
+        const s2 = Maths.sign(d2, eps.epsilon);
 
-        if (Maths.equalTo(d1 - d2, 0, epsilon)) return []; // parallel
+        if (Maths.equalTo(d1 - d2, 0, eps.epsilon)) return []; // parallel
         const intersection = [];
         /*
         If `line` is crossing `lineSegment`, the signed distance of endpoints of `lineSegment` between `line` have different sign,
@@ -79,17 +77,15 @@ export default class LineLineSegment extends BaseRelationship {
     // no contact
     @superPreprocess("handleDegeneration")
     cross() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => !Maths.equalTo(i.t2, 0, epsilon) && !Maths.equalTo(i.t2, 1, epsilon))
+            .filter(i => !Maths.equalTo(i.t2, 0, eps.timeEpsilon) && !Maths.equalTo(i.t2, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     // no touch
     @superPreprocess("handleDegeneration")
     block() {
-        const epsilon = optioner.options.epsilon;
         return this.intersection()
-            .filter(i => Maths.equalTo(i.t2, 0, epsilon) || Maths.equalTo(i.t2, 1, epsilon))
+            .filter(i => Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     // no blockedBy

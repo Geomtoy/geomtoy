@@ -1,5 +1,5 @@
 import { Coordinates } from "@geomtoy/util";
-import { optioner } from "../geomtoy";
+import { eps } from "../geomtoy";
 import SegmentWithFill from "./SegmentWithFill";
 
 export default class Chain {
@@ -28,8 +28,7 @@ export default class Chain {
         atChainHead ? this.elements.unshift(element) : this.elements.push(element);
     }
     isClosable() {
-        const epsilon = optioner.options.epsilon;
-        return Coordinates.isEqualTo(this.headCoordinates, this.tailCoordinates, epsilon);
+        return Coordinates.isEqualTo(this.headCoordinates, this.tailCoordinates, eps.epsilon);
     }
     concat(chain2: Chain, atChainHead1: boolean, atChainHead2: boolean) {
         const chain1 = this;

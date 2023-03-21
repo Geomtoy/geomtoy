@@ -3,7 +3,7 @@ import Arc from "../../geometries/basic/Arc";
 import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { FillDescription, GeneralGeometry } from "../../types";
 import TrajectoryId from "../TrajectoryId";
 import MonoSegment from "./MonoSegment";
@@ -54,9 +54,8 @@ export default class Processor {
         const { rotation: phi, radiusX: rx, radiusY: ry, positive } = arc;
         const cosPhi = Maths.cos(phi);
         const sinPhi = Maths.sin(phi);
-        const epsilon = optioner.options.epsilon;
         const atanX = Maths.atan((-ry * sinPhi) / (rx * cosPhi));
-        const xARoots = [Angle.simplify(atanX), Angle.simplify(atanX + Maths.PI)].filter(a => Angle.between(a, sa, ea, positive, true, true, epsilon));
+        const xARoots = [Angle.simplify(atanX), Angle.simplify(atanX + Maths.PI)].filter(a => Angle.between(a, sa, ea, positive, true, true, eps.angleEpsilon));
         if (xARoots.length === 0) {
             return [
                 new MonoSegment({
@@ -101,12 +100,11 @@ export default class Processor {
             return this._monoLineSegment(dg, isPrimary);
         }
 
-        const epsilon = optioner.options.epsilon;
         // handle double line
         if (quadraticBezier.isDoubleLine()) {
             const extrema = quadraticBezier
                 .extrema()
-                .filter(([, t]) => Maths.between(t, 0, 1, true, true, epsilon))
+                .filter(([, t]) => Maths.between(t, 0, 1, true, true, eps.timeEpsilon))
                 .map(([p]) => p);
             const points = [quadraticBezier.point1, ...extrema, quadraticBezier.point2];
             const monos = [];
@@ -118,7 +116,7 @@ export default class Processor {
 
         const [polyX] = quadraticBezier.getPolynomial();
         const polyXD = Polynomial.standardize(Polynomial.derivative(polyX));
-        const xTRoots = Polynomial.roots(polyXD).filter((t): t is number => Type.isNumber(t) && Maths.between(t, 0, 1, true, true, epsilon));
+        const xTRoots = Polynomial.roots(polyXD).filter((t): t is number => Type.isNumber(t) && Maths.between(t, 0, 1, true, true, eps.timeEpsilon));
         if (xTRoots.length === 0) {
             return [
                 new MonoSegment({
@@ -164,12 +162,11 @@ export default class Processor {
             }
         }
 
-        const { epsilon, curveEpsilon } = optioner.options;
         // handle triple line
         if (bezier.isTripleLine()) {
             const extrema = bezier
                 .extrema()
-                .filter(([, t]) => Maths.between(t, 0, 1, true, true, curveEpsilon))
+                .filter(([, t]) => Maths.between(t, 0, 1, true, true, eps.timeEpsilon))
                 .map(([p]) => p);
             const points = [bezier.point1, ...extrema, bezier.point2];
             const monos = [];
@@ -181,7 +178,7 @@ export default class Processor {
         // common case
         const [polyX] = bezier.getPolynomial();
         const polyXD = Polynomial.standardize(Polynomial.derivative(polyX));
-        const xTRoots = Polynomial.roots(polyXD).filter((t): t is number => Type.isNumber(t) && Maths.between(t, 0, 1, true, true, epsilon));
+        const xTRoots = Polynomial.roots(polyXD).filter((t): t is number => Type.isNumber(t) && Maths.between(t, 0, 1, true, true, eps.timeEpsilon));
         if (xTRoots.length === 0) {
             return [
                 new MonoSegment({
@@ -194,7 +191,7 @@ export default class Processor {
         }
 
         Utility.sortBy(xTRoots, [n => n]);
-        if (Maths.equalTo(xTRoots[0], xTRoots[1], epsilon)) xTRoots.pop(); // handle multiplicity
+        if (Maths.equalTo(xTRoots[0], xTRoots[1], eps.timeEpsilon)) xTRoots.pop(); // handle multiplicity
 
         const times = [0, ...xTRoots, 1];
         const monos = [];

@@ -1,7 +1,7 @@
 import { Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
@@ -162,7 +162,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
     @statedWithBoolean(undefined)
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
-        const r0 = Maths.equalTo(this._radius, 0, optioner.options.epsilon);
+        const r0 = Maths.equalTo(this._radius, 0, eps.epsilon);
         if (check) return r0;
 
         if (r0) return new Point(this._centerX, this._centerY);
@@ -268,8 +268,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
             scale: [sx, sy],
             rotate
         } = transformation.decomposeQr();
-        const epsilon = optioner.options.epsilon;
-        if (Maths.equalTo(kx, 0, epsilon) && Maths.equalTo(ky, 0, epsilon) && Maths.equalTo(sx, sy, epsilon)) {
+        if (Maths.equalTo(kx, 0, eps.epsilon) && Maths.equalTo(ky, 0, eps.epsilon) && Maths.equalTo(sx, sy, eps.epsilon)) {
             const ncc = transformation.transformCoordinates(cc);
             const nr = r * sx;
             const nrt = rotate;

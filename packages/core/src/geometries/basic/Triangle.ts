@@ -1,24 +1,21 @@
 import { Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-geometry";
-
-import { Cartesian, Trilinear } from "../../helper/CoordinateSystem";
-
 import Geometry from "../../base/Geometry";
-import EventSourceObject from "../../event/EventSourceObject";
-import GeometryGraphic from "../../graphics/GeometryGraphic";
-import Circle from "./Circle";
-import Line from "./Line";
-import LineSegment from "./LineSegment";
-import Point from "./Point";
-
 import SealedGeometryArray from "../../collection/SealedGeometryArray";
-import { optioner } from "../../geomtoy";
+import EventSourceObject from "../../event/EventSourceObject";
+import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
+import { Cartesian, Trilinear } from "../../helper/CoordinateSystem";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
+import { validGeometry } from "../../misc/decor-geometry";
 import type Transformation from "../../transformation";
 import type { ClosedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
 import Path from "../general/Path";
 import Polygon from "../general/Polygon";
+import Circle from "./Circle";
+import Line from "./Line";
+import LineSegment from "./LineSegment";
+import Point from "./Point";
 
 @validGeometry
 export default class Triangle extends Geometry implements ClosedGeometry {
@@ -226,8 +223,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
         const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
-        const vectorEpsilon = optioner.options.vectorEpsilon;
-        const triangleForming = Maths.greaterThan(Maths.abs(Vector2.cross(Vector2.from(c1, c3), Vector2.from(c1, c2))), 0, vectorEpsilon);
+        const triangleForming = Maths.greaterThan(Maths.abs(Vector2.cross(Vector2.from(c1, c3), Vector2.from(c1, c2))), 0, eps.vectorEpsilon);
 
         if (check) return !triangleForming;
 
@@ -365,8 +361,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     isCongruentWithTriangle(triangle: Triangle) {
         const [al1, al2, al3] = [this.side1Length, this.side2Length, this.side3Length].sort((a, b) => a - b);
         const [bl1, bl2, bl3] = [triangle.side1Length, triangle.side2Length, triangle.side3Length].sort((a, b) => a - b);
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(al1, bl1, epsilon) && Maths.equalTo(al2, bl2, epsilon) && Maths.equalTo(al3, bl3, epsilon);
+        return Maths.equalTo(al1, bl1, eps.epsilon) && Maths.equalTo(al2, bl2, eps.epsilon) && Maths.equalTo(al3, bl3, eps.epsilon);
     }
     /**
      * Whether triangle `this` is similar with triangle `triangle`.
@@ -375,8 +370,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     isSimilarWithTriangle(triangle: Triangle) {
         const [aa1, aa2, aa3] = [this.angle1, this.angle2, this.angle3].sort((a, b) => a - b);
         const [ba1, ba2, ba3] = [triangle.angle1, triangle.angle2, triangle.angle3].sort((a, b) => a - b);
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(aa1, ba1, epsilon) && Maths.equalTo(aa2, ba2, epsilon) && Maths.equalTo(aa3, ba3, epsilon);
+        return Maths.equalTo(aa1, ba1, eps.epsilon) && Maths.equalTo(aa2, ba2, eps.epsilon) && Maths.equalTo(aa3, ba3, eps.epsilon);
     }
     /**
      * Get the similarity ratio of triangles `this` and `triangle`.
@@ -394,45 +388,43 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      */
     isAcuteTriangle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length].sort((a, b) => a - b);
-        const epsilon = optioner.options.epsilon;
-        return Maths.greaterThan(a ** 2 + b ** 2, c ** 2, epsilon);
+        return Maths.greaterThan(a ** 2 + b ** 2, c ** 2, eps.epsilon);
     }
     /**
      * Whether triangle `this` is a right triangle.
      */
     isRightTriangle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length].sort((a, b) => a - b);
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(a ** 2 + b ** 2, c ** 2, epsilon);
+        return Maths.equalTo(a ** 2 + b ** 2, c ** 2, eps.epsilon);
     }
     /**
      * Whether triangle `this` is an obtuse triangle.
      */
     isObtuseTriangle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length].sort((a, b) => a - b);
-        const epsilon = optioner.options.epsilon;
-        return Maths.lessThan(a ** 2 + b ** 2, c ** 2, epsilon);
+        return Maths.lessThan(a ** 2 + b ** 2, c ** 2, eps.epsilon);
     }
     /**
      * Whether triangle `this` is a scalene triangle(a triangle with no congruent sides).
      */
     isScaleneTriangle() {
-        const epsilon = optioner.options.epsilon;
-        return !Maths.equalTo(this.side1Length, this.side2Length, epsilon) && !Maths.equalTo(this.side1Length, this.side3Length, epsilon);
+        return !Maths.equalTo(this.side1Length, this.side2Length, eps.epsilon) && !Maths.equalTo(this.side1Length, this.side3Length, eps.epsilon);
     }
     /**
      * Whether triangle `this` is an isosceles triangle(a triangle with at least two congruent sides).
      */
     isIsoscelesTriangle() {
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(this.side1Length, this.side2Length, epsilon) || Maths.equalTo(this.side1Length, this.side3Length, epsilon) || Maths.equalTo(this.side2Length, this.side3Length, epsilon);
+        return (
+            Maths.equalTo(this.side1Length, this.side2Length, eps.epsilon) ||
+            Maths.equalTo(this.side1Length, this.side3Length, eps.epsilon) ||
+            Maths.equalTo(this.side2Length, this.side3Length, eps.epsilon)
+        );
     }
     /**
      * Whether triangle `this` is an equilateral triangle(a triangle with three congruent sides).
      */
     isEquilateralTriangle() {
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(this.side1Length, this.side2Length, epsilon) && Maths.equalTo(this.side1Length, this.side3Length, epsilon);
+        return Maths.equalTo(this.side1Length, this.side2Length, eps.epsilon) && Maths.equalTo(this.side1Length, this.side3Length, eps.epsilon);
     }
     /**
      * Get perimeter of triangle `this`.
@@ -475,8 +467,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      */
     isPointOnSideLines(point: Point) {
         const t = this.getTrilinearOfPoint(point);
-        const epsilon = optioner.options.epsilon;
-        return Maths.sign(t[0], epsilon) * Maths.sign(t[1], epsilon) * Maths.sign(t[2], epsilon) === 0;
+        return Maths.sign(t[0], eps.epsilon) * Maths.sign(t[1], eps.epsilon) * Maths.sign(t[2], eps.epsilon) === 0;
     }
     isPointOn(point: Point): boolean {
         return true;
@@ -487,8 +478,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      */
     isPointInside(point: Point) {
         const t = this.getTrilinearOfPoint(point);
-        const epsilon = optioner.options.epsilon;
-        return Maths.sign(t[0], epsilon) * Maths.sign(t[1], epsilon) * Maths.sign(t[2], epsilon) === 1;
+        return Maths.sign(t[0], eps.epsilon) * Maths.sign(t[1], eps.epsilon) * Maths.sign(t[2], eps.epsilon) === 1;
     }
     /**
      * Whether point `point` is outside triangle `this`.
@@ -496,8 +486,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      */
     isPointOutside(point: Point) {
         const t = this.getTrilinearOfPoint(point);
-        const epsilon = optioner.options.epsilon;
-        return Maths.sign(t[0], epsilon) * Maths.sign(t[1], epsilon) * Maths.sign(t[2], epsilon) === -1;
+        return Maths.sign(t[0], eps.epsilon) * Maths.sign(t[1], eps.epsilon) * Maths.sign(t[2], eps.epsilon) === -1;
     }
     /**
      * Get the isogonal conjugate point of point `point` respect to triangle `this`.

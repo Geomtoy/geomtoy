@@ -1,7 +1,7 @@
 import { Angle, Assert, Coordinates, Maths, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { centerToEndpointParameterization, endpointParameterizationTransform, endpointToCenterParameterization, flexCorrectRadii } from "../../misc/arc";
@@ -261,10 +261,9 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
         const { _radiusX: rx, _radiusY: ry, point1Coordinates: c1, point2Coordinates: c2 } = this;
-        const epsilon = optioner.options.epsilon;
-        const rx0 = Maths.equalTo(rx, 0, epsilon);
-        const ry0 = Maths.equalTo(ry, 0, epsilon);
-        const c12 = Coordinates.isEqualTo(c1, c2, epsilon);
+        const rx0 = Maths.equalTo(rx, 0, eps.epsilon);
+        const ry0 = Maths.equalTo(ry, 0, eps.epsilon);
+        const c12 = Coordinates.isEqualTo(c1, c2, eps.epsilon);
 
         if (check) return rx0 || ry0 || c12;
 
@@ -338,13 +337,11 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const xRoots = [Angle.simplify(atanX), Angle.simplify(atanX + Maths.PI)];
         const atanY = Maths.atan((ry * cosPhi) / (rx * sinPhi));
         const yRoots = [Angle.simplify(atanY), Angle.simplify(atanY + Maths.PI)];
-
-        const epsilon = optioner.options.epsilon;
         const fn = this.getParametricEquation();
-        const aRoots = Utility.uniqWith([...xRoots, ...yRoots], (a, b) => Maths.equalTo(a, b, epsilon));
+        const aRoots = Utility.uniqWith([...xRoots, ...yRoots], (a, b) => Maths.equalTo(a, b, eps.angleEpsilon));
         return aRoots
             .filter(a => {
-                return Angle.between(a, sa, ea, this.positive, false, false, epsilon);
+                return Angle.between(a, sa, ea, this.positive, false, false, eps.angleEpsilon);
             })
             .map(a => [new Point(fn(a)), a] as [point: Point, angle: number]);
     }
@@ -397,7 +394,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     }
     @stated
     isCircularArc() {
-        return Maths.equalTo(this.radiusX, this.radiusY, optioner.options.epsilon);
+        return Maths.equalTo(this.radiusX, this.radiusY, eps.epsilon);
     }
     @stated
     toCircleByRadiusX() {
@@ -436,8 +433,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         if (Number.isNaN(a)) return a;
         const [sa, ea] = this.getStartEndAngles();
         const positive = this.positive;
-        const epsilon = optioner.options.epsilon;
-        return Angle.between(a, sa, ea, positive, false, false, epsilon) ? Angle.clamp(a, sa, ea, positive) : NaN;
+        return Angle.between(a, sa, ea, positive, false, false, eps.angleEpsilon) ? Angle.clamp(a, sa, ea, positive) : NaN;
     }
     getPointAtAngle(a: number) {
         a = this._clampAngle(a, "a");
@@ -522,9 +518,8 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     splitAtAngles(as: number[]) {
         const [sa, ea] = this.getStartEndAngles();
         const ret: Arc[] = [];
-        const epsilon = optioner.options.epsilon;
         as = as.map(a => this._clampAngle(a, "element of as"));
-        as = this._anglesOrder(Utility.uniqWith(as, (a, b) => Angle.equalTo(a, b, epsilon)));
+        as = this._anglesOrder(Utility.uniqWith(as, (a, b) => Angle.equalTo(a, b, eps.angleEpsilon)));
         const cc = this.getCenterPoint().coordinates;
         [sa, ...as, ea].forEach((_, index, arr) => {
             if (index !== arr.length - 1) {
@@ -576,8 +571,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         tPoly = Polynomial.monic(tPoly);
 
         const roots = Polynomial.roots(tPoly).filter(Type.isNumber);
-        const epsilon = optioner.options.epsilon;
-        const as = roots.map(r => Angle.simplify(Maths.atan(r) * 2)).filter(a => Angle.between(a, sa, ea, this.positive, true, true, epsilon));
+        const as = roots.map(r => Angle.simplify(Maths.atan(r) * 2)).filter(a => Angle.between(a, sa, ea, this.positive, true, true, eps.angleEpsilon));
         // Take endpoints into account.
         as.push(sa, ea);
 

@@ -1,20 +1,18 @@
 import { Assert, Box, Coordinates, Maths, Matrix2, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
-import { validGeometry } from "../../misc/decor-geometry";
-
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
-import GeometryGraphic from "../../graphics/GeometryGraphic";
-import Line from "./Line";
-import Point from "./Point";
-import Vector from "./Vector";
-
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
+import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
+import { validGeometry } from "../../misc/decor-geometry";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
 import type { FiniteOpenGeometry, ViewportDescriptor } from "../../types";
 import Path from "../general/Path";
+import Line from "./Line";
+import Point from "./Point";
+import Vector from "./Vector";
 
 @validGeometry
 export default class LineSegment extends Geometry implements FiniteOpenGeometry {
@@ -163,7 +161,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         if (!this.initialized()) return check ? true : null;
 
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;
-        const c12 = Coordinates.isEqualTo(c1, c2, optioner.options.epsilon);
+        const c12 = Coordinates.isEqualTo(c1, c2, eps.epsilon);
 
         if (check) return c12;
         return c12 ? new Point(c1) : this;
@@ -175,7 +173,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         return this;
     }
     static fromPointAndAngleAndLength(point: [number, number] | Point, angle: number, length: number) {
-        if (Maths.equalTo(length, 0, optioner.options.epsilon)) return null;
+        if (Maths.equalTo(length, 0, eps.epsilon)) return null;
         const c1 = getCoordinates(point, "point");
         const c2 = Vector2.add(c1, Vector2.from2(angle, length));
         return new LineSegment(c1, c2);
@@ -192,8 +190,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         const cp = Vector2.cross(v10, v12);
         const dp = Vector2.dot(v10, v12);
         const sm = Vector2.squaredMagnitude(v12);
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(cp, 0, epsilon) && !Maths.lessThan(dp, 0, epsilon) && !Maths.greaterThan(dp, sm, epsilon);
+        return Maths.equalTo(cp, 0, eps.vectorEpsilon) && !Maths.lessThan(dp, 0, eps.vectorEpsilon) && !Maths.greaterThan(dp, sm, eps.vectorEpsilon);
     }
     reverse() {
         [this.point1Coordinates, this.point2Coordinates] = [this.point2Coordinates, this.point1Coordinates];
@@ -300,7 +297,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         const v12 = Vector2.from(c1, c2);
         const v34 = Vector2.from(c3, c4);
         const dp = Vector2.dot(v12, v34);
-        return Maths.equalTo(dp, 0, optioner.options.epsilon);
+        return Maths.equalTo(dp, 0, eps.vectorEpsilon);
     }
     /**
      * Whether line segment `this` is parallel to line segment `lineSegment`.
@@ -312,7 +309,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         const v12 = Vector2.from(c1, c2);
         const v34 = Vector2.from(c3, c4);
         const cp = Vector2.cross(v12, v34);
-        return Maths.equalTo(cp, 0, optioner.options.epsilon);
+        return Maths.equalTo(cp, 0, eps.vectorEpsilon);
     }
     /**
      * Whether line segment `this` is collinear with line segment `lineSegment`.
@@ -326,18 +323,17 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         const v32 = Vector2.from(c3, c2);
         const cp1 = Vector2.cross(v12, v34);
         const cp2 = Vector2.cross(v32, v34);
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(cp1, 0, epsilon) && Maths.equalTo(cp2, 0, epsilon);
+        return Maths.equalTo(cp1, 0, eps.vectorEpsilon) && Maths.equalTo(cp2, 0, eps.vectorEpsilon);
     }
 
     splitAtTimes(times: number[]) {
         Assert.condition(
-            times.every(t => Maths.greaterThan(t, 0, optioner.options.epsilon) && Maths.lessThan(t, 1, optioner.options.epsilon)),
+            times.every(t => Maths.greaterThan(t, 0, eps.timeEpsilon) && Maths.lessThan(t, 1, eps.timeEpsilon)),
             "[G]The `times` should all be a number between 0(not including) and 1(not including)."
         );
         const ret: LineSegment[] = [];
         times = Utility.sortBy(
-            Utility.uniqWith(times, (a, b) => Maths.equalTo(a, b, optioner.options.epsilon)),
+            Utility.uniqWith(times, (a, b) => Maths.equalTo(a, b, eps.timeEpsilon)),
             [n => n]
         );
         [0, ...times, 1].forEach((_, index, arr) => {
@@ -349,22 +345,21 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
     }
 
     splitAtTime(t: number) {
-        Assert.condition(Maths.between(t, 0, 1, true, true, optioner.options.epsilon), "[G]The `t` should be a number between 0(not including) and 1(not including).");
+        Assert.condition(Maths.between(t, 0, 1, true, true, eps.timeEpsilon), "[G]The `t` should be a number between 0(not including) and 1(not including).");
         return [this.portionOfExtend(0, t), this.portionOfExtend(t, 1)] as [LineSegment, LineSegment];
     }
 
     portionOf(t1: number, t2: number) {
-        const epsilon = optioner.options.epsilon;
-        Assert.condition(Maths.between(t1, 0, 1, false, false, epsilon), "[G]The `t1` should be a number between 0(including) and 1(including).");
-        Assert.condition(Maths.between(t2, 0, 1, false, false, epsilon), "[G]The `t2` should be a number between 0(including) and 1(including).");
-        Assert.condition(!Maths.equalTo(t1, t2, epsilon), "[G]The `t1` and `t2` should not be equal.");
+        Assert.condition(Maths.between(t1, 0, 1, false, false, eps.timeEpsilon), "[G]The `t1` should be a number between 0(including) and 1(including).");
+        Assert.condition(Maths.between(t2, 0, 1, false, false, eps.timeEpsilon), "[G]The `t2` should be a number between 0(including) and 1(including).");
+        Assert.condition(!Maths.equalTo(t1, t2, eps.timeEpsilon), "[G]The `t1` and `t2` should not be equal.");
         return this.portionOfExtend(t1, t2);
     }
 
     portionOfExtend(t1: number, t2: number) {
         Assert.isRealNumber(t1, "t1");
         Assert.isRealNumber(t2, "t2");
-        Assert.condition(!Maths.equalTo(t1, t2, optioner.options.epsilon), "[G]The `t1` and `t2` should not be equal.");
+        Assert.condition(!Maths.equalTo(t1, t2, eps.timeEpsilon), "[G]The `t1` and `t2` should not be equal.");
 
         if (t1 > t2) [t1, t2] = [t2, t1];
         const [polyX, polyY] = this.getPolynomial();
@@ -479,7 +474,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
      */
     getTimeOfPoint(point: [number, number] | Point) {
         const t = this.getTimeOfPointExtend(point);
-        if (Maths.between(t, 0, 1, false, false, optioner.options.epsilon)) return Maths.clamp(t, 0, 1);
+        if (Maths.between(t, 0, 1, false, false, eps.timeEpsilon)) return Maths.clamp(t, 0, 1);
         return NaN;
     }
     /**
@@ -497,7 +492,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         const v10 = Vector2.from(c1, [x, y]);
         const v12 = Vector2.from(c1, c2);
         const cp = Vector2.cross(v10, v12);
-        if (!Maths.equalTo(cp, 0, optioner.options.vectorEpsilon)) {
+        if (!Maths.equalTo(cp, 0, eps.vectorEpsilon)) {
             return NaN;
         }
         const dp = Vector2.dot(v10, v12);

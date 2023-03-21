@@ -6,7 +6,7 @@ import QuadraticBezier from "../geometries/basic/QuadraticBezier";
 import Compound from "../geometries/general/Compound";
 import Path from "../geometries/general/Path";
 import Polygon from "../geometries/general/Polygon";
-import { optioner } from "../geomtoy";
+import { eps } from "../geomtoy";
 import Chain from "./Chain";
 
 import type { FillDescription, FillRule } from "../types";
@@ -14,7 +14,6 @@ import type { FillDescription, FillRule } from "../types";
 export default class Chainer {
     public chain(description: FillDescription) {
         const chains: Chain[] = [];
-        const epsilon = optioner.options.epsilon;
 
         for (const element of description.segmentWithFills) {
             const init = element.segment.point1Coordinates;
@@ -43,21 +42,21 @@ export default class Chainer {
 
                 // We expect to get long chains, so do not match single chain twice at init and term respectively, we continue if a chain get a match.
                 if (initMatch === null) {
-                    if (Coordinates.isEqualTo(init, head, epsilon) && chainFill.positive !== elementFill.positive) {
+                    if (Coordinates.isEqualTo(init, head, eps.epsilon) && chainFill.positive !== elementFill.positive) {
                         initMatch = [i, true];
                         continue;
                     }
-                    if (Coordinates.isEqualTo(init, tail, epsilon) && chainFill.positive === elementFill.positive) {
+                    if (Coordinates.isEqualTo(init, tail, eps.epsilon) && chainFill.positive === elementFill.positive) {
                         initMatch = [i, false];
                         continue;
                     }
                 }
                 if (termMatch === null) {
-                    if (Coordinates.isEqualTo(term, head, epsilon) && chainFill.positive === elementFill.positive) {
+                    if (Coordinates.isEqualTo(term, head, eps.epsilon) && chainFill.positive === elementFill.positive) {
                         termMatch = [i, true];
                         continue;
                     }
-                    if (Coordinates.isEqualTo(term, tail, epsilon) && chainFill.positive !== elementFill.positive) {
+                    if (Coordinates.isEqualTo(term, tail, eps.epsilon) && chainFill.positive !== elementFill.positive) {
                         termMatch = [i, false];
                         continue;
                     }

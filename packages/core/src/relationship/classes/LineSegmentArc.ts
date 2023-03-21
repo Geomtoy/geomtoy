@@ -2,7 +2,7 @@ import { Angle, Maths } from "@geomtoy/util";
 import type Arc from "../../geometries/basic/Arc";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
@@ -38,13 +38,12 @@ export default class LineSegmentArc extends BaseRelationship {
     }[] {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const positive = this.geometry2.positive;
-        const epsilon = optioner.options.epsilon;
         const intersection = this.supRelationship?.intersection() ?? [];
         return intersection
             .map(i => {
                 return { ...i, t1: this.geometry1.getTimeOfPointExtend(i.c) };
             })
-            .filter(i => Maths.between(i.t1, 0, 1, false, false, epsilon) && Angle.between(i.a2, sa, ea, positive, false, false, epsilon));
+            .filter(i => Maths.between(i.t1, 0, 1, false, false, eps.timeEpsilon) && Angle.between(i.a2, sa, ea, positive, false, false, eps.angleEpsilon));
     }
 
     // no equal
@@ -74,42 +73,53 @@ export default class LineSegmentArc extends BaseRelationship {
     }
     @superPreprocess("handleDegeneration")
     cross() {
-        const epsilon = optioner.options.epsilon;
         const [sa, ea] = this.geometry2.getStartEndAngles();
         return this.intersection()
-            .filter(i => i.m % 2 === 1 && !(Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon)) && !(Angle.equalTo(i.a2, sa, epsilon) || Angle.equalTo(i.a2, ea, epsilon)))
+            .filter(
+                i =>
+                    i.m % 2 === 1 &&
+                    !(Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) &&
+                    !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon))
+            )
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
-        const epsilon = optioner.options.epsilon;
         const [sa, ea] = this.geometry2.getStartEndAngles();
         return this.intersection()
-            .filter(i => i.m % 2 === 0 && !(Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon)) && !(Angle.equalTo(i.a2, sa, epsilon) || Angle.equalTo(i.a2, ea, epsilon)))
+            .filter(
+                i =>
+                    i.m % 2 === 0 &&
+                    !(Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) &&
+                    !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon))
+            )
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     block() {
-        const epsilon = optioner.options.epsilon;
         const [sa, ea] = this.geometry2.getStartEndAngles();
         return this.intersection()
-            .filter(i => (Angle.equalTo(i.a2, sa, epsilon) || Angle.equalTo(i.a2, ea, epsilon)) && !(Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon)))
+            .filter(
+                i => (Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)) && !(Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon))
+            )
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     blockedBy() {
-        const epsilon = optioner.options.epsilon;
         const [sa, ea] = this.geometry2.getStartEndAngles();
         return this.intersection()
-            .filter(i => (Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon)) && !(Angle.equalTo(i.a2, sa, epsilon) || Angle.equalTo(i.a2, ea, epsilon)))
+            .filter(
+                i => (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) && !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon))
+            )
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     connect() {
-        const epsilon = optioner.options.epsilon;
         const [sa, ea] = this.geometry2.getStartEndAngles();
         return this.intersection()
-            .filter(i => (Maths.equalTo(i.t1, 0, epsilon) || Maths.equalTo(i.t1, 1, epsilon)) && (Angle.equalTo(i.a2, sa, epsilon) || Angle.equalTo(i.a2, ea, epsilon)))
+            .filter(
+                i => (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) && (Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon))
+            )
             .map(i => new Point(i.c));
     }
     // no coincide

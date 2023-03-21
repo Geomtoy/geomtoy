@@ -1,10 +1,10 @@
-import { Coordinates, Maths, Utility } from "@geomtoy/util";
+import { Angle, Coordinates, Maths, Utility } from "@geomtoy/util";
 import Arc from "../../geometries/basic/Arc";
 import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import Polygon from "../../geometries/general/Polygon";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import FillRuleHelper from "../../helper/FillRuleHelper";
 import { FillDescription, FillRule, GeneralGeometry } from "../../types";
 import TrajectoryId from "../TrajectoryId";
@@ -46,16 +46,15 @@ export default class Processor {
             return this._chipLineSegment(dg);
         }
 
-        const epsilon = optioner.options.epsilon;
         // handle double line
         if (quadraticBezier.isDoubleLine()) {
             const extrema = quadraticBezier
                 .extrema()
-                .filter(([, t]) => Maths.between(t, 0, 1, true, true, epsilon))
+                .filter(([, t]) => Maths.between(t, 0, 1, true, true, eps.timeEpsilon))
                 .map(([p]) => p);
             let points = [quadraticBezier.point1, ...extrema, quadraticBezier.point2];
             const chips = [];
-            points = Utility.uniqWith(points, (a, b) => Coordinates.isEqualTo(a.coordinates, b.coordinates, optioner.options.epsilon));
+            points = Utility.uniqWith(points, (a, b) => Coordinates.isEqualTo(a.coordinates, b.coordinates, eps.epsilon));
             for (let i = 0, l = points.length; i < l - 1; i++) {
                 chips.push(...this._chipLineSegment(new LineSegment(points[i], points[i + 1])));
             }
@@ -77,10 +76,8 @@ export default class Processor {
             return this._chipQuadraticBezier(dg);
         }
 
-        const epsilon = optioner.options.epsilon;
-
         // handle bezier self-intersection
-        const tsi = bezier.selfIntersection().filter(t => Maths.between(t, 0, 1, true, true, epsilon));
+        const tsi = bezier.selfIntersection().filter(t => Maths.between(t, 0, 1, true, true, eps.timeEpsilon));
         if (tsi.length !== 0) {
             const chips = bezier.splitAtTimes(tsi).map(bezier => {
                 return new ChipSegment({ segment: bezier, trajectoryId: new TrajectoryId(bezier.id) });
@@ -91,7 +88,7 @@ export default class Processor {
         if (bezier.isTripleLine()) {
             const extrema = bezier
                 .extrema()
-                .filter(([, t]) => Maths.between(t, 0, 1, true, true, epsilon))
+                .filter(([, t]) => Maths.between(t, 0, 1, true, true, eps.timeEpsilon))
                 .map(([p]) => p);
             let points = [bezier.point1, ...extrema, bezier.point2];
             const chips = [];
@@ -100,7 +97,7 @@ export default class Processor {
             // point2: [24.519000000000005, 124.63700000000001]
             // controlPoint1  [24.519000000000005,124.63700000000001]
             // controlPoint2   [24.519000000000005,124.63700000000001]
-            points = Utility.uniqWith(points, (a, b) => Coordinates.isEqualTo(a.coordinates, b.coordinates, optioner.options.epsilon));
+            points = Utility.uniqWith(points, (a, b) => Coordinates.isEqualTo(a.coordinates, b.coordinates, eps.epsilon));
             for (let i = 0, l = points.length; i < l - 1; i++) {
                 chips.push(...this._chipLineSegment(new LineSegment(points[i], points[i + 1])));
             }
@@ -171,12 +168,13 @@ export default class Processor {
             }
         }
 
-        const epsilon = optioner.options.epsilon;
         let ret: ChipSegment[] = [];
         // Step 2: portion and determine fill.
         chips.forEach(chip => {
             if (chip.params.length !== 0) {
-                const params = Utility.uniqWith(chip.params, (a, b) => Maths.equalTo(a, b, epsilon));
+                const params = Utility.uniqWith(chip.params, (a, b) => {
+                    return chip.segment instanceof Arc ? Angle.equalTo(a, b, eps.angleEpsilon) : Maths.equalTo(a, b, eps.timeEpsilon);
+                });
                 const portions = this._splitChipSegment(chip, params);
                 portions.forEach(portion => {
                     portion.thisFill = this._determineFill(portion, chips, gg.fillRule);
@@ -193,8 +191,8 @@ export default class Processor {
                 const [ac1, ac2] = [a.segment.point1Coordinates, a.segment.point2Coordinates];
                 const [bc1, bc2] = [b.segment.point1Coordinates, b.segment.point2Coordinates];
                 if (
-                    (Coordinates.isEqualTo(ac1, bc1, epsilon) && Coordinates.isEqualTo(ac2, bc2, epsilon)) || // maybe different orientation
-                    (Coordinates.isEqualTo(ac1, bc2, epsilon) && Coordinates.isEqualTo(ac2, bc1, epsilon))
+                    (Coordinates.isEqualTo(ac1, bc1, eps.epsilon) && Coordinates.isEqualTo(ac2, bc2, eps.epsilon)) || // maybe different orientation
+                    (Coordinates.isEqualTo(ac1, bc2, eps.epsilon) && Coordinates.isEqualTo(ac2, bc1, eps.epsilon))
                 )
                     return true;
                 return false;
@@ -206,8 +204,6 @@ export default class Processor {
     }
 
     private _combine(chipsA: ChipSegment[], fillRuleA: FillRule, chipsB: ChipSegment[], fillRuleB: FillRule) {
-        const epsilon = optioner.options.epsilon;
-
         for (let i = 0, m = chipsA.length; i < m; i++) {
             const a = chipsA[i];
             for (let j = 0, n = chipsB.length; j < n; j++) {
@@ -220,7 +216,9 @@ export default class Processor {
         let ret: ChipSegment[] = [];
         chipsA.forEach(chip => {
             if (chip.params.length !== 0) {
-                const params = Utility.uniqWith(chip.params, (a, b) => Maths.equalTo(a, b, epsilon));
+                const params = Utility.uniqWith(chip.params, (a, b) => {
+                    return chip.segment instanceof Arc ? Angle.equalTo(a, b, eps.angleEpsilon) : Maths.equalTo(a, b, eps.timeEpsilon);
+                });
                 const portions = this._splitChipSegment(chip, params);
                 portions.forEach(portion => {
                     portion.thisFill = { ...chip.thisFill };
@@ -235,7 +233,9 @@ export default class Processor {
 
         chipsB.forEach(chip => {
             if (chip.params.length !== 0) {
-                const params = Utility.uniqWith(chip.params, (a, b) => Maths.equalTo(a, b, epsilon));
+                const params = Utility.uniqWith(chip.params, (a, b) => {
+                    return chip.segment instanceof Arc ? Angle.equalTo(a, b, eps.angleEpsilon) : Maths.equalTo(a, b, eps.timeEpsilon);
+                });
                 const portions = this._splitChipSegment(chip, params);
                 portions.forEach(portion => {
                     // swap the fill
@@ -257,8 +257,8 @@ export default class Processor {
                 const [ac1, ac2] = [a.segment.point1Coordinates, a.segment.point2Coordinates];
                 const [bc1, bc2] = [b.segment.point1Coordinates, b.segment.point2Coordinates];
                 if (
-                    (Coordinates.isEqualTo(ac1, bc1, epsilon) && Coordinates.isEqualTo(ac2, bc2, epsilon)) || // maybe different orientation
-                    (Coordinates.isEqualTo(ac1, bc2, epsilon) && Coordinates.isEqualTo(ac2, bc1, epsilon))
+                    (Coordinates.isEqualTo(ac1, bc1, eps.epsilon) && Coordinates.isEqualTo(ac2, bc2, eps.epsilon)) || // maybe different orientation
+                    (Coordinates.isEqualTo(ac1, bc2, eps.epsilon) && Coordinates.isEqualTo(ac2, bc1, eps.epsilon))
                 )
                     return true;
                 return false;

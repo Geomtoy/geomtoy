@@ -2,7 +2,7 @@ import { Angle, Maths, Polynomial, Type } from "@geomtoy/util";
 import Arc from "../../geometries/basic/Arc";
 import Bezier from "../../geometries/basic/Bezier";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { LinkedListNode } from "./LinkedList";
 import MonoSegment from "./MonoSegment";
 import { compareX, compareY } from "./util";
@@ -57,7 +57,7 @@ export default class SweepEvent {
      * @param that
      */
     compareQuickY(that: SweepEvent) {
-        const testLineOffset = optioner.options.curveEpsilon;
+        const testLineOffset = eps.epsilon * 2;
         const y1 = Number.isNaN(this.quickY) ? (this.quickY = quickY(this, testLineOffset)) : this.quickY;
         const y2 = Number.isNaN(that.quickY) ? (that.quickY = quickY(that, testLineOffset)) : that.quickY;
         // If `quickY` is equal,there are two situations:
@@ -115,10 +115,9 @@ function quickQuadraticBezierY(event: SweepEvent, testLineOffset: number) {
     const [polyX, polyY] = (event.mono.segment as QuadraticBezier).getPolynomial();
     const tPoly = Polynomial.add(polyX, [-x]);
     const tRoots = Polynomial.roots(tPoly).filter(Type.isNumber);
-    const epsilon = optioner.options.epsilon;
 
     for (const t of tRoots) {
-        if (Maths.between(t, 0, 1, false, false, epsilon)) {
+        if (Maths.between(t, 0, 1, false, false, eps.timeEpsilon)) {
             return Polynomial.evaluate(polyY, t);
         }
     }
@@ -133,10 +132,9 @@ function quickBezierY(event: SweepEvent, testLineOffset: number) {
     const [polyX, polyY] = (event.mono.segment as Bezier).getPolynomial();
     const tPoly = Polynomial.add(polyX, [-x]);
     const tRoots = Polynomial.roots(tPoly).filter(Type.isNumber);
-    const epsilon = optioner.options.epsilon;
 
     for (const t of tRoots) {
-        if (Maths.between(t, 0, 1, false, false, epsilon)) {
+        if (Maths.between(t, 0, 1, false, false, eps.timeEpsilon)) {
             return Polynomial.evaluate(polyY, t);
         }
     }
@@ -165,12 +163,11 @@ function quickArcY(event: SweepEvent, testLineOffset: number) {
         return y;
     }
     const tRoots = Polynomial.roots(tPoly).filter(Type.isNumber);
-    const epsilon = optioner.options.epsilon;
     for (const t of tRoots) {
         const cosTheta = (1 - t ** 2) / (1 + t ** 2);
         const sinTheta = (2 * t) / (1 + t ** 2);
         const a = Angle.simplify(Maths.atan2(sinTheta, cosTheta));
-        if (Angle.between(a, sa, ea, positive, false, false, epsilon)) {
+        if (Angle.between(a, sa, ea, positive, false, false, eps.angleEpsilon)) {
             return py1 * cosTheta + py2 * sinTheta + py3;
         }
     }

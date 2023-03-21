@@ -1,7 +1,7 @@
 import { Maths } from "@geomtoy/util";
 import Line from "../../geometries/basic/Line";
 import Point from "../../geometries/basic/Point";
-import { optioner } from "../../geomtoy";
+import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
 import { Trilean } from "../../types";
 import BaseRelationship from "../BaseRelationship";
@@ -17,8 +17,7 @@ export default class LineLine extends BaseRelationship {
         const [a2, b2, c2] = this.geometry2.getImplicitFunctionCoefs();
         const m = a1 * b2 - a2 * b1;
         const n = a1 * c2 - a2 * c1;
-        const epsilon = optioner.options.epsilon;
-        return Maths.equalTo(m, 0, epsilon) && Maths.equalTo(n, 0, epsilon);
+        return Maths.equalTo(m, 0, eps.epsilon) && Maths.equalTo(n, 0, eps.epsilon);
     }
     @cached
     intersection(): {
@@ -28,9 +27,8 @@ export default class LineLine extends BaseRelationship {
         const [a1, b1, c1] = this.geometry1.getImplicitFunctionCoefs();
         const [a2, b2, c2] = this.geometry2.getImplicitFunctionCoefs();
         const m = a1 * b2 - a2 * b1;
-        const epsilon = optioner.options.epsilon;
         const intersection: ReturnType<typeof this.intersection> = [];
-        if (!Maths.equalTo(m, 0, epsilon)) {
+        if (!Maths.equalTo(m, 0, eps.epsilon)) {
             const x = (c2 * b1 - c1 * b2) / m;
             const y = (c1 * a2 - c2 * a1) / m;
             intersection.push({ c: [x, y] });
