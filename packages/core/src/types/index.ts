@@ -368,15 +368,10 @@ export type PolygonVertex = {
 
 // #endregion
 
-// #region Relationship
-export enum RelationshipPredicate {
-    // Basic relationships
+// #region Intersection
+export enum IntersectionPredicate {
     Equal = "equal",
     Separate = "separate",
-    // 2D relationships
-    Contain = "contain",
-    ContainedBy = "containedBy",
-    // 1D relationships
     Intersect = "intersect",
     Strike = "strike",
     Contact = "contact",
@@ -388,21 +383,21 @@ export enum RelationshipPredicate {
     Coincide = "coincide"
 }
 
-type Intersection<U> = (U extends any ? (arg: U) => void : never) extends (arg: infer I) => void ? I : never;
+type TypeIntersection<U> = (U extends any ? (arg: U) => void : never) extends (arg: infer I) => void ? I : never;
 
-export type RelateResult<R extends Partial<Record<RelationshipPredicate, any>>> = {
-    [K in RelationshipPredicate as R[K] extends (...args: any[]) => any ? K : never]: R[K] extends (...args: any[]) => any ? ReturnType<R[K]> : never;
+export type AllResult<R extends Partial<Record<IntersectionPredicate, any>>> = {
+    [K in IntersectionPredicate as R[K] extends (...args: any[]) => any ? K : never]: R[K] extends (...args: any[]) => any ? ReturnType<R[K]> : never;
 };
 
-export type RelationshipMethodsOfCollection<T extends RelationshipPredicate | "relate", U extends { [key: string]: { new (...args: any[]): any } }> = {
+export type IntersectionMethodsOfCollection<T extends IntersectionPredicate | "all", U extends { [key: string]: { new (...args: any[]): any } }> = {
     [K in keyof U as InstanceType<U[K]>[T] extends (...args: any[]) => any ? K : never]: InstanceType<U[K]>[T] extends (...args: any[]) => any
-        ? T extends "relate"
-            ? (geometry1: InstanceType<U[K]>["geometry1"], geometry2: InstanceType<U[K]>["geometry2"], predicates?: RelationshipPredicate[]) => ReturnType<InstanceType<U[K]>[T]>
+        ? T extends "all"
+            ? (geometry1: InstanceType<U[K]>["geometry1"], geometry2: InstanceType<U[K]>["geometry2"], predicates?: IntersectionPredicate[]) => ReturnType<InstanceType<U[K]>[T]>
             : (geometry1: InstanceType<U[K]>["geometry1"], geometry2: InstanceType<U[K]>["geometry2"]) => ReturnType<InstanceType<U[K]>[T]>
         : never;
 };
-export type RelationshipMethodOverloads<T extends RelationshipPredicate | "relate", U extends { [key: string]: { new (...args: any[]): any } }> = Intersection<
-    RelationshipMethodsOfCollection<T, U>[keyof RelationshipMethodsOfCollection<T, U>]
+export type IntersectionMethodOverloads<T extends IntersectionPredicate | "all", U extends { [key: string]: { new (...args: any[]): any } }> = TypeIntersection<
+    IntersectionMethodsOfCollection<T, U>[keyof IntersectionMethodsOfCollection<T, U>]
 >;
 
 // #endregion

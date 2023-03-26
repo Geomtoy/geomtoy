@@ -12,7 +12,7 @@ import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry
 import { next } from "../../misc/loop";
 import { getCoordinates } from "../../misc/point-like";
 import { parseSvgPolygon } from "../../misc/svg-polygon";
-import LineSegmentLineSegment from "../../relationship/classes/LineSegmentLineSegment";
+import LineSegmentLineSegment from "../../intersection/classes/LineSegmentLineSegment";
 import type Transformation from "../../transformation";
 import type { FillRule, PolygonVertex, ViewportDescriptor, WindingDirection } from "../../types";
 import LineSegment from "../basic/LineSegment";
@@ -447,7 +447,7 @@ export default class Polygon extends Geometry {
         for (let i = 0; i < segments.length - 1; i++) {
             for (let j = i + 1; j < segments.length; j++) {
                 if (j === i + 1) continue;
-                const intersection = new LineSegmentLineSegment(segments[i], segments[j]).intersection();
+                const intersection = new LineSegmentLineSegment(segments[i], segments[j]).properIntersection();
                 if (intersection.length !== 0) return true;
             }
         }

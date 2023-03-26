@@ -8,14 +8,14 @@ import QuadraticBezier from "../geometries/basic/QuadraticBezier";
 import Ray from "../geometries/basic/Ray";
 import { eps } from "../geomtoy";
 import { getCoordinates } from "../misc/point-like";
-import LineArc from "../relationship/classes/LineArc";
-import LineBezier from "../relationship/classes/LineBezier";
-import LineLineSegment from "../relationship/classes/LineLineSegment";
-import LineQuadraticBezier from "../relationship/classes/LineQuadraticBezier";
-import RayArc from "../relationship/classes/RayArc";
-import RayBezier from "../relationship/classes/RayBezier";
-import RayLineSegment from "../relationship/classes/RayLineSegment";
-import RayQuadraticBezier from "../relationship/classes/RayQuadraticBezier";
+import LineArc from "../intersection/classes/LineArc";
+import LineBezier from "../intersection/classes/LineBezier";
+import LineLineSegment from "../intersection/classes/LineLineSegment";
+import LineQuadraticBezier from "../intersection/classes/LineQuadraticBezier";
+import RayArc from "../intersection/classes/RayArc";
+import RayBezier from "../intersection/classes/RayBezier";
+import RayLineSegment from "../intersection/classes/RayLineSegment";
+import RayQuadraticBezier from "../intersection/classes/RayQuadraticBezier";
 import { BasicSegment } from "../types";
 
 export default class FillRuleHelper {
@@ -75,12 +75,12 @@ export default class FillRuleHelper {
             if (!this._rayCollideBox(ray, seg.getBoundingBox())) continue;
             const intersection: { c: [number, number]; t2?: number; a2?: number; m?: number }[] =
                 seg instanceof LineSegment
-                    ? new RayLineSegment(ray, seg).intersection()
+                    ? new RayLineSegment(ray, seg).properIntersection()
                     : seg instanceof Bezier
-                    ? new RayBezier(ray, seg).intersection()
+                    ? new RayBezier(ray, seg).properIntersection()
                     : seg instanceof QuadraticBezier
-                    ? new RayQuadraticBezier(ray, seg).intersection()
-                    : new RayArc(ray, seg).intersection();
+                    ? new RayQuadraticBezier(ray, seg).properIntersection()
+                    : new RayArc(ray, seg).properIntersection();
 
             for (const inter of intersection) {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
@@ -131,12 +131,12 @@ export default class FillRuleHelper {
             if (!this._rayCollideBox(ray, seg.getBoundingBox())) continue;
             const intersection: { c: [number, number]; t2?: number; a2?: number; m?: number }[] =
                 seg instanceof LineSegment
-                    ? new RayLineSegment(ray, seg).intersection()
+                    ? new RayLineSegment(ray, seg).properIntersection()
                     : seg instanceof Bezier
-                    ? new RayBezier(ray, seg).intersection()
+                    ? new RayBezier(ray, seg).properIntersection()
                     : seg instanceof QuadraticBezier
-                    ? new RayQuadraticBezier(ray, seg).intersection()
-                    : new RayArc(ray, seg).intersection();
+                    ? new RayQuadraticBezier(ray, seg).properIntersection()
+                    : new RayArc(ray, seg).properIntersection();
 
             for (const inter of intersection) {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
@@ -221,12 +221,12 @@ export default class FillRuleHelper {
 
             const intersection: { c: [number, number]; t2?: number; a2?: number; m?: number }[] =
                 seg instanceof LineSegment
-                    ? new LineLineSegment(line, seg).intersection()
+                    ? new LineLineSegment(line, seg).properIntersection()
                     : seg instanceof Bezier
-                    ? new LineBezier(line, seg).intersection()
+                    ? new LineBezier(line, seg).properIntersection()
                     : seg instanceof QuadraticBezier
-                    ? new LineQuadraticBezier(line, seg).intersection()
-                    : new LineArc(line, seg).intersection();
+                    ? new LineQuadraticBezier(line, seg).properIntersection()
+                    : new LineArc(line, seg).properIntersection();
 
             for (const inter of intersection) {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
@@ -281,12 +281,12 @@ export default class FillRuleHelper {
 
             const intersection: { c: [number, number]; t2?: number; a2?: number; m?: number }[] =
                 seg instanceof LineSegment
-                    ? new LineLineSegment(line, seg).intersection()
+                    ? new LineLineSegment(line, seg).properIntersection()
                     : seg instanceof Bezier
-                    ? new LineBezier(line, seg).intersection()
+                    ? new LineBezier(line, seg).properIntersection()
                     : seg instanceof QuadraticBezier
-                    ? new LineQuadraticBezier(line, seg).intersection()
-                    : new LineArc(line, seg).intersection();
+                    ? new LineQuadraticBezier(line, seg).properIntersection()
+                    : new LineArc(line, seg).properIntersection();
 
             for (const inter of intersection) {
                 const { t2 = NaN, a2 = NaN, m = NaN, c } = inter;
