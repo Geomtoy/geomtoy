@@ -69,10 +69,8 @@ export default class CircleCircle extends BaseIntersection {
     }
     @superPreprocess("handleDegeneration")
     separate(): Trilean {
-        if (!this.geometry1.isPointOutside(this.geometry2.centerCoordinates)) return false;
-        if (!this.geometry2.isPointOutside(this.geometry1.centerCoordinates)) return false;
-        if (this.properIntersection().length !== 0) return false;
-        return true;
+        if (this.onSameTrajectory()) return false;
+        return this.properIntersection().length === 0;
     }
     @superPreprocess("handleDegeneration")
     intersect() {
