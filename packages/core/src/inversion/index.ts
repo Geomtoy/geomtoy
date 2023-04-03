@@ -230,14 +230,13 @@ export default class Inversion extends EventTarget {
             }
         }
     }
-    override toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.id}){`,
-            `\tcenterX: ${this._centerX}`,
-            `\tcenterY: ${this._centerY}`,
-            `\tpower: ${this.power}`, 
-            `}`
-        ].join("\n")
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            centerX: this._centerX,
+            centerY: this._centerY,
+            power: this._power
+        };
     }
 }

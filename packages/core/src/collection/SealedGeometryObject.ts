@@ -70,14 +70,14 @@ export default class SealedGeometryObject<T extends { [key: string]: Geometry }>
         return g;
     }
 
-    override toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.id}){`,
-            `\titems: {`,
-            ...Object.entries(this._items).map(([key,item])=> `\t\t${key}: ${item.name}(${item.id})`),
-            `\t}`,
-            `}`
-        ].join("\n")
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            items: Object.entries(this._items).reduce((acc, [key, item]) => {
+                acc[key] = item.toJSON();
+                return acc;
+            }, {} as any)
+        };
     }
 }

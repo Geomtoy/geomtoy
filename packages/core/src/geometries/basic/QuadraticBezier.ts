@@ -712,16 +712,16 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         this._setControlPointY(shape._controlPointY);
         return this;
     }
-    override toString() {
-        return [
-            `${this.name}(${this.id}){`,
-            `\tpoint1X: ${this.point1X}`,
-            `\tpoint1Y: ${this.point1Y}`,
-            `\tpoint2X: ${this.point2X}`,
-            `\tpoint2Y: ${this.point2Y}`,
-            `\tcontrolPointX: ${this.controlPointX}`,
-            `\tcontrolPointY: ${this.controlPointY}`,
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            point1X: this._point1X,
+            point1Y: this._point1Y,
+            point2X: this._point2X,
+            point2Y: this._point2Y,
+            controlPointX: this._controlPointX,
+            controlPointY: this._controlPointY
+        };
     }
 }

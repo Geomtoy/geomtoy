@@ -1010,16 +1010,16 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         this._setPoint3Y(shape._point3Y);
         return this;
     }
-    override toString() {
-        return [
-            `${this.name}(${this.id}){`,
-            `\tpoint1X: ${this.point1X}`,
-            `\tpoint1Y: ${this.point1Y}`,
-            `\tpoint2X: ${this.point2X}`,
-            `\tpoint2Y: ${this.point2Y}`,
-            `\tpoint3X: ${this.point3X}`,
-            `\tpoint3Y: ${this.point3Y}`,
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            point1X: this._point1X,
+            point1Y: this._point1Y,
+            point2X: this._point2X,
+            point2Y: this._point2Y,
+            point3X: this._point3X,
+            point3Y: this._point3Y
+        };
     }
 }

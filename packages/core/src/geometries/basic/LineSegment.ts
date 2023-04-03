@@ -545,15 +545,14 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         this._setPoint2Y(shape._point2Y);
         return this;
     }
-    override toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.id}){`,
-            `\tpoint1X: ${this.point1X},`,
-            `\tpoint1Y: ${this.point1Y},`,
-            `\tpoint2X: ${this.point2X},`,
-            `\tpoint2Y: ${this.point2Y}`,
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            point1X: this._point1X,
+            point1Y: this._point1Y,
+            point2X: this._point2X,
+            point2Y: this._point2Y
+        };
     }
 }

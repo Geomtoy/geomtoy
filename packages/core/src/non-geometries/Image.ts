@@ -372,21 +372,21 @@ export default class Image extends Shape {
         this._setAnchor(shape._anchor);
         return this;
     }
-    override toString() {
-        return [
-            `${this.name}(${this.id}){`,
-            `\tx: ${this._x}`,
-            `\ty: ${this._y}`,
-            `\twidth: ${this._width}`,
-            `\theight: ${this._height}`,
-            `\tsourceX: ${this._sourceX}`,
-            `\tsourceY: ${this._sourceY}`,
-            `\tsourceWidth: ${this._sourceWidth}`,
-            `\tsourceHeight: ${this._sourceHeight}`,
-            `\tsource: ${this._source}`,
-            `\tconsistent: ${this._consistent}`,
-            `\tanchor: ${this._anchor}`,
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            x: this._x,
+            y: this._y,
+            width: this._width,
+            height: this._height,
+            sourceX: this._sourceX,
+            sourceY: this._sourceY,
+            sourceWidth: this._sourceWidth,
+            sourceHeight: this._sourceHeight,
+            source: this._source,
+            consistent: this._consistent,
+            anchor: this._anchor
+        };
     }
 }

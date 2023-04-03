@@ -243,14 +243,13 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         this._setAngle(shape._angle);
         return this;
     }
-    override toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.id}){`,
-            `\tx: ${this.x}`,
-            `\ty: ${this.y}`,
-            `\tangle: ${this.angle}`,
-            `}`
-        ].join("\n")
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            x: this._x,
+            y: this._y,
+            angle: this._angle
+        };
     }
 }

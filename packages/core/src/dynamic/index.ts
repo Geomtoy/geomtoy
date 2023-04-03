@@ -11,8 +11,7 @@ function getPublicPropertyNames(object: object) {
 // "id"
 // "data"
 // "toString"
-// "toArray"
-// "toObject"
+// "toJSON"
 const excludeKeysFromBaseObject = getPublicPropertyNames(BaseObject.prototype);
 // "muted"
 // "mute"
@@ -62,13 +61,15 @@ export default class Dynamic extends BaseObject {
 
             static override events = events;
 
-            override toString() {
-                // prettier-ignore
-                return [
-                    `${this.name}(${this.id}){`,
-                    ...filteredKeys.map(key => `\t${key as string}: ${this._object[key]}`), 
-                    `}`
-                ].join("\n");
+            override toJSON() {
+                return {
+                    name: this.name,
+                    id: this.id,
+                    ...filteredKeys.reduce((acc, key) => {
+                        acc[key] = this._object[key];
+                        return acc;
+                    }, {} as any)
+                };
             }
         };
 

@@ -600,14 +600,13 @@ export default class Polygon extends Geometry {
         this._setVertices(shape.vertices);
         return this;
     }
-    override toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.id}){`,
-            `\tclosed: ${this.closed},`,
-            `\tfillRule: ${this.fillRule}`,
-            `\tvertices: ${JSON.stringify(this._vertices)}`, 
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            closed: this._closed,
+            fillRule: this._fillRule,
+            vertices: this.vertices
+        };
     }
 }

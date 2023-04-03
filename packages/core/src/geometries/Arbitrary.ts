@@ -79,12 +79,11 @@ export default class Arbitrary extends Geometry {
         return this._geometry!.getGraphics(viewport);
     }
 
-    toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.id}){`,
-             `\tgeometry: ${this._geometry}(${this._geometry?.id})`, 
-             `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            geometry: this._geometry === null ? null : this._geometry.toJSON()
+        };
     }
 }

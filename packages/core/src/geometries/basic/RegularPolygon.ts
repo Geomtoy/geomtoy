@@ -305,15 +305,15 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         this._setRotation(shape._rotation);
         return this;
     }
-    override toString() {
-        return [
-            `${this.name}(${this.id}){`,
-            `\tcenterX: ${this.centerX}`,
-            `\tcenterY: ${this.centerY}`,
-            `\tradius: ${this.radius}`,
-            `\tsideCount: ${this.sideCount}`,
-            `\trotation: ${this.rotation}`,
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            centerX: this._centerX,
+            centerY: this._centerY,
+            radius: this._radius,
+            sideCount: this._sideCount,
+            rotation: this._rotation
+        };
     }
 }

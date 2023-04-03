@@ -446,16 +446,15 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         this._setRotation(shape._rotation);
         return this;
     }
-    override toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.id}){`,
-            `\tx: ${this._x}`,
-            `\ty: ${this._y}`,
-            `\twidth: ${this._width}`,
-            `\theight: ${this._height}`,
-            `\trotation: ${this._rotation}`,
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            x: this._x,
+            y: this._y,
+            width: this._width,
+            height: this._height,
+            rotation: this._rotation
+        };
     }
 }

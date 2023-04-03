@@ -378,15 +378,14 @@ export default class Vector extends Geometry {
         this._setPoint1Y(shape._point1Y);
         return this;
     }
-    override toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.id}){`,
-            `\tx: ${this.x}`,
-            `\ty: ${this.y}`,
-            `\tpoint1X: ${this.point1X}`,
-            `\tpoint1Y: ${this.point1Y}`,
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            x: this._x,
+            y: this._y,
+            point1X: this._point1X,
+            point1Y: this._point1Y
+        };
     }
 }

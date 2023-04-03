@@ -51,14 +51,11 @@ export default class ShapeArray<T extends Shape> extends Shape implements Parent
         }
         return g;
     }
-    override toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.id}){`,
-            `\titems: [`,
-            ...this._items.map((item)=> `\t\t${item.name}(${item.id})`),
-            `\t]`,
-            `}`
-        ].join("\n")
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            items: this._items.map(item => item.toJSON())
+        };
     }
 }

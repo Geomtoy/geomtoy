@@ -874,14 +874,13 @@ export default class Path extends Geometry {
         this._setCommands(shape.commands);
         return this;
     }
-    override toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.id}){`,
-            `\tclosed: ${this.closed},`,
-            `\tfillRule: ${this.fillRule}`,
-            `\tcommands: ${JSON.stringify(this._commands)}`, 
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            closed: this._closed,
+            fillRule: this._fillRule,
+            commands: this.commands
+        };
     }
 }

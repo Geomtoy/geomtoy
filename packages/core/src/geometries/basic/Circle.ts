@@ -552,14 +552,13 @@ export default class Circle extends Geometry implements ClosedGeometry {
         this._setRadius(shape._radius);
         return this;
     }
-    override toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.id}){`,
-            `\tcenterX: ${this.centerX}`,
-            `\tcenterY: ${this.centerY}`,
-            `\tradius: ${this.radius}`,
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            centerX: this._centerX,
+            centerY: this._centerY,
+            radius: this._radius
+        };
     }
 }

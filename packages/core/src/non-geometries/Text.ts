@@ -180,18 +180,17 @@ export default class Text extends Shape {
         this._setAnchor(shape._anchor);
         return this;
     }
-    override toString() {
-        return [
-            `${this.name}(${this.id}){`,
-            `\tx: ${this.x}`,
-            `\ty: ${this.y}`,
-            `\toffsetX: ${this.offsetX}`,
-            `\toffsetY: ${this.offsetY}`,
-            `\tcontent: ${this.content}`,
-            `\tfont: ${JSON.stringify(this._font)}`,
-            `\tanchor: ${this.anchor}`,
-            `\t}`,
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            x: this._x,
+            y: this._y,
+            offsetX: this._offsetX,
+            offsetY: this._offsetY,
+            content: this._content,
+            font: this.font,
+            anchor: this._anchor
+        };
     }
 }

@@ -666,15 +666,15 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         this._setRotation(shape._rotation);
         return this;
     }
-    override toString() {
-        return [
-            `${this.name}(${this.id}){`,
-            `\tcenterX: ${this.centerX}`,
-            `\tcenterY: ${this.centerY}`,
-            `\tradiusX: ${this.radiusX}`,
-            `\tradiusY: ${this.radiusY}`,
-            `\trotation: ${this.rotation}`,
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            centerX: this._centerX,
+            centerY: this._centerY,
+            radiusX: this._radiusX,
+            radiusY: this._radiusY,
+            rotation: this._rotation
+        };
     }
 }

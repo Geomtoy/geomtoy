@@ -40,7 +40,14 @@ export default abstract class BaseObject {
         this._data[key] = value;
         return this;
     }
+
+    toJSON() {
+        return {
+            name: this.name,
+            id: this.id
+        };
+    }
     toString() {
-        return `${this.name}(${this.id})`;
+        return JSON.stringify(this.toJSON(), null, 4);
     }
 }

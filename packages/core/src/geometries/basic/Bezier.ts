@@ -930,18 +930,18 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         this._setControlPoint2Y(shape._controlPoint2Y);
         return this;
     }
-    override toString() {
-        return [
-            `${this.name}(${this.id}){`,
-            `\tpoint1X: ${this.point1X},`,
-            `\tpoint1Y: ${this.point1Y},`,
-            `\tpoint2X: ${this.point2X},`,
-            `\tpoint2Y: ${this.point2Y},`,
-            `\tcontrolPoint1X: ${this.controlPoint1X},`,
-            `\tcontrolPoint1Y: ${this.controlPoint1Y},`,
-            `\tcontrolPoint2X: ${this.controlPoint2X},`,
-            `\tcontrolPoint2Y: ${this.controlPoint2Y}`,
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            point1X: this._point1X,
+            point1Y: this._point1Y,
+            point2X: this._point2X,
+            point2Y: this._point2Y,
+            controlPoint1X: this._controlPoint1X,
+            controlPoint1Y: this._controlPoint1Y,
+            controlPoint2X: this._controlPoint2X,
+            controlPoint2Y: this._controlPoint2Y
+        };
     }
 }

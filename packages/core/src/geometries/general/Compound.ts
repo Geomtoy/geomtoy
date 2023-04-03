@@ -276,14 +276,12 @@ export default class Compound extends Geometry implements ParentShape {
         this._setItems(shape.items);
         return this;
     }
-    override toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.id}){`, 
-            `\titems: [`,
-            ...this.items.map(item => `\t\t${item.name}(${item.id})`),
-            `\t]`,
-            `}`
-        ].join("\n");
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            fillRule: this._fillRule,
+            items: this._items.map(item => item.toJSON())
+        };
     }
 }

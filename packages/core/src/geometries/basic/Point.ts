@@ -264,13 +264,13 @@ export default class Point extends Geometry {
         this._setY(shape._y);
         return this;
     }
-    override toString() {
-        // prettier-ignore
-        return [
-            `${this.name}(${this.id}){`,
-            `\tx: ${this._x}`,
-            `\ty: ${this._y}`,
-            `}`
-        ].join("\n")
+    override toJSON() {
+        return {
+            name: this.name,
+            id: this.id,
+            x: this._x,
+            y: this._y,
+            appearance: this.appearance
+        };
     }
 }
