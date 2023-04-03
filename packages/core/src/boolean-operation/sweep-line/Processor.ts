@@ -66,30 +66,16 @@ export default class Processor {
                 })
             ];
         }
-        Utility.sortBy(xARoots, [
-            n => {
-                if (positive) {
-                    if (sa > ea) return n < sa ? n + Maths.PI * 2 : n;
-                    return n;
-                } else {
-                    if (ea > sa) return n < ea ? -(n + Maths.PI * 2) : -n;
-                    return -n;
-                }
-            }
-        ]);
 
-        const angles = [sa, ...xARoots, ea];
-        const monos = [];
-        for (let i = 0, l = angles.length; i < l - 1; i++) {
-            monos.push(
-                new MonoSegment({
-                    segment: arc.portionOf(angles[i], angles[i + 1]),
-                    isPrimary,
-                    origin: arc,
-                    trajectoryId: new TrajectoryId(arc.id)
-                })
-            );
-        }
+        // splitAtAngles will handle the multiplicity and order
+        const monos = arc.splitAtAngles(xARoots).map(segment => {
+            return new MonoSegment({
+                segment,
+                isPrimary,
+                origin: arc,
+                trajectoryId: new TrajectoryId(arc.id)
+            });
+        });
         return monos;
     }
 
@@ -130,19 +116,16 @@ export default class Processor {
                 })
             ];
         }
-        Utility.sortBy(xTRoots, [n => n]);
-        const times = [0, ...xTRoots, 1];
-        const monos = [];
-        for (let i = 0, l = times.length; i < l - 1; i++) {
-            monos.push(
-                new MonoSegment({
-                    segment: quadraticBezier.portionOf(times[i], times[i + 1]),
-                    isPrimary,
-                    origin: quadraticBezier,
-                    trajectoryId: new TrajectoryId(quadraticBezier.id)
-                })
-            );
-        }
+
+        // splitAtTimes will handle the multiplicity and order
+        const monos = quadraticBezier.splitAtTimes(xTRoots).map(segment => {
+            return new MonoSegment({
+                segment,
+                isPrimary,
+                origin: quadraticBezier,
+                trajectoryId: new TrajectoryId(quadraticBezier.id)
+            });
+        });
         return monos;
     }
 
@@ -196,24 +179,17 @@ export default class Processor {
             ];
         }
 
-        Utility.sortBy(xTRoots, [n => n]);
-        if (Maths.equalTo(xTRoots[0], xTRoots[1], eps.timeEpsilon)) xTRoots.pop(); // handle multiplicity
-
-        const times = [0, ...xTRoots, 1];
-        const monos = [];
-        for (let i = 0, l = times.length; i < l - 1; i++) {
-            monos.push(
-                new MonoSegment({
-                    segment: bezier.portionOf(times[i], times[i + 1]),
-                    isPrimary,
-                    origin: bezier,
-                    trajectoryId: new TrajectoryId(bezier.id)
-                })
-            );
-        }
+        // splitAtTimes will handle the multiplicity and order
+        const monos = bezier.splitAtTimes(xTRoots).map(segment => {
+            return new MonoSegment({
+                segment,
+                isPrimary,
+                origin: bezier,
+                trajectoryId: new TrajectoryId(bezier.id)
+            });
+        });
         return monos;
     }
-
     describe(ggA: GeneralGeometry, ggB?: GeneralGeometry): FillDescription {
         const monosA = this._preprocess(ggA, true);
         const sl = new SweepLine();

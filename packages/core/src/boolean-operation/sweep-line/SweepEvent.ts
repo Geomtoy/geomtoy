@@ -1,31 +1,135 @@
-import { Angle, Maths, Polynomial, Type } from "@geomtoy/util";
-import Arc from "../../geometries/basic/Arc";
-import Bezier from "../../geometries/basic/Bezier";
-import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
+import { Coordinates, Maths } from "@geomtoy/util";
 import { eps } from "../../geomtoy";
+import Transformation from "../../transformation";
+import { BasicSegment } from "../../types";
 import { LinkedListNode } from "./LinkedList";
 import MonoSegment from "./MonoSegment";
-import { compareX, compareY } from "./util";
+import { compareX, compareY, derivativeValueAtEnd } from "./util";
+
+const ROTATION_FOR_INF_DERIVATIVE = Maths.PI / 4;
+
+/**
+ * What to do when the first derivative start to be infinity:
+ * 1. According to the sign of the first infinity derivative, determine whether the segment is curving up or down at `this.coordinates`.
+ * 2. Assuming a rotation performing on the segments. Since the rotation does not change the relative relationship between segments, but
+ * it allows us to calculate the derivatives without encountering infinity.
+ * - If the segment is curving up with first derivative being positive infinity, then rotate the mono segment `-ROTATION`.
+ * - If the segment is curving down with first derivative being negative infinity, then rotate the mono segment `ROTATION`.
+ * @param segment
+ * @param sign
+ * @param origin
+ */
+function rotateSegment(segment: BasicSegment, sign: number, origin: [number, number]) {
+    let t = new Transformation();
+    if (sign > 0) {
+        t.setRotate(-ROTATION_FOR_INF_DERIVATIVE, origin);
+    } else {
+        t.setRotate(ROTATION_FOR_INF_DERIVATIVE, origin);
+    }
+    return segment.apply(t);
+}
 
 export default class SweepEvent {
     // the `LinkedListNode` wrap outside this sweep event, reverse reference, only existed on leave event
     status?: LinkedListNode<SweepEvent>;
 
     constructor(
-        // the coordinates of this sweep event
-        public coordinates: [number, number],
         // the mono segment this sweep event belongs to
         public mono: MonoSegment,
         // is the coordinates of this sweep event, the enter coordinates of the mono segment?
         // if `true`, this sweep event is the enter event of the mono segment
         // if `false`, this sweep event is the leave event of the mono segment
-        public isEnter: boolean,
+        public readonly isEnter: boolean,
         // the other event of this sweep event, for the enter event, it's its leave event, for the leave event, it's its enter event
-        public otherEvent: SweepEvent,
-        // a solid/static value to compare sweep events, when coordinates of sweep events are equal
-        public quickY: number = NaN
+        public otherEvent: SweepEvent
     ) {}
 
+    private _derivativeInfo: {
+        first: number; //the fist derivative value of `y` respect to `x` of this.mono.segment, could be ±infinity
+        // If the first derivative is already ±infinity, and it is still impossible to draw a conclusion,
+        // we need a higher derivative to compare, but since the first derivative is already infinity,
+        // directly calculating the higher derivatives will still get infinity, and cannot be compared.
+        // So we rotate the segment so that its second derivative starts to be calculated on the rotated segment.
+        rotatedSegment: undefined | BasicSegment;
+        second: number; //the second derivative value of `y` respect to `x` of this.mono.segment
+        rotatedSecond: number; // the second derivative value of `y` respect to `x` of rotatedSegment
+        third: number; //the third derivative value of `y` respect to `x` of this.mono.segment
+        rotatedThird: number; // the third derivative value of `y` respect to `x` of rotatedSegment
+    } = {
+        first: NaN,
+        rotatedSegment: undefined,
+        second: NaN,
+        rotatedSecond: NaN,
+        third: NaN,
+        rotatedThird: NaN
+    };
+
+    get segment() {
+        return this.mono.segment;
+    }
+    // the coordinates of this sweep event
+    get coordinates() {
+        return this.isEnter ? this.mono.enterCoordinates : this.mono.leaveCoordinates;
+    }
+    get isInit() {
+        return this.isEnter !== this.mono.transposed;
+    }
+
+    private _resetDerivativeInfo() {
+        this._derivativeInfo.first = NaN;
+        this._derivativeInfo.rotatedSegment = undefined;
+        this._derivativeInfo.second = NaN;
+        this._derivativeInfo.rotatedSecond = NaN;
+        this._derivativeInfo.third = NaN;
+        this._derivativeInfo.rotatedThird = NaN;
+    }
+
+    update(mono: MonoSegment) {
+        if (this.isEnter) {
+            if (!Coordinates.equalTo(this.mono.enterCoordinates, mono.enterCoordinates, eps.epsilon)) this._resetDerivativeInfo();
+        } else {
+            if (!Coordinates.equalTo(this.mono.leaveCoordinates, mono.leaveCoordinates, eps.epsilon)) this._resetDerivativeInfo();
+        }
+        this.mono = mono;
+    }
+
+    private _getDerivativeValue(n: 1 | 2 | 3) {
+        if (n === 1) {
+            if (Number.isNaN(this._derivativeInfo.first)) {
+                const value = derivativeValueAtEnd(this.mono.segment, this.isInit, 1);
+                // Change the sign of first derivative for infinity, if transposed.
+                if (!Number.isFinite(value)) {
+                    this._derivativeInfo.first = (this.mono.transposed ? -1 : 1) * value;
+                } else {
+                    this._derivativeInfo.first = value;
+                }
+            }
+            return this._derivativeInfo.first;
+        }
+        if (n === 2) {
+            if (Number.isFinite(this._derivativeInfo.first)) {
+                if (Number.isNaN(this._derivativeInfo.second)) this._derivativeInfo.second = derivativeValueAtEnd(this.mono.segment, this.isInit, 2);
+                return this._derivativeInfo.second;
+            } else {
+                if (this._derivativeInfo.rotatedSegment === undefined) {
+                    this._derivativeInfo.rotatedSegment = rotateSegment(this.mono.segment, Maths.sign(this._derivativeInfo.first), this.coordinates);
+                }
+                if (Number.isNaN(this._derivativeInfo.rotatedSecond)) this._derivativeInfo.rotatedSecond = derivativeValueAtEnd(this._derivativeInfo.rotatedSegment!, this.isInit, 2);
+                return this._derivativeInfo.rotatedSecond;
+            }
+        }
+        if (n === 3) {
+            if (Number.isFinite(this._derivativeInfo.first)) {
+                if (Number.isNaN(this._derivativeInfo.third)) this._derivativeInfo.third = derivativeValueAtEnd(this.mono.segment, this.isInit, 3);
+                return this._derivativeInfo.third;
+            } else {
+                // this._derivativeInfo.rotatedSegment !== undefined, we must have done it.
+                if (Number.isNaN(this._derivativeInfo.rotatedThird)) this._derivativeInfo.rotatedThird = derivativeValueAtEnd(this._derivativeInfo.rotatedSegment!, this.isInit, 3);
+                return this._derivativeInfo.rotatedThird;
+            }
+        }
+        throw new Error("[G]Impossible.");
+    }
     /**
      * Whether the coordinates of `this` smaller than `that`.
      * @description
@@ -34,142 +138,64 @@ export default class SweepEvent {
      * @param that
      */
     compareCoordinates(that: SweepEvent) {
-        let comp: -1 | 0 | 1 = compareX(this.coordinates, that.coordinates);
+        let comp = compareX(this.coordinates, that.coordinates);
         if (comp === 0) comp = compareY(this.coordinates, that.coordinates);
         return comp;
     }
-    /**
-     * Whether the quick-y of `this` smaller than `that`.
-     * @description
-     * Quick-y is a trick, in order to determine the priority of the sweep event on the y-axis.
-     * * Note
-     * If the coordinates of the two sweep events are the same, which sweep event is above and which segment is below(higher priority)?
-     * The above and blow we are talking about here are near the coordinates.
-     * If you look at the whole segment, then the two may intersect many times,
-     * so it is impossible to tell who is the above and who is the below.
-     * This is the core of the sweep line algorithm, even if they will intersect many times later,
-     * that is in the future, but at this moment, when the sweep event occurs, their situation near the sweep event coordinates is more important.
-     * The specific logic may be more, I will not expand it here.
-     * Why not use the tangent vector or derivatives?
-     * Because after many attempts, in the tangent situation, they cannot effectively determining this priority.
-     * And according to the information I have collected, there is no other way to determine this priority.
-     * And we need a result that can be stored in the sweep event without repeated calculation, then this quick-y is a very good answer.
-     * @param that
-     */
-    compareQuickY(that: SweepEvent) {
-        const testLineOffset = eps.epsilon * 2;
-        const y1 = Number.isNaN(this.quickY) ? (this.quickY = quickY(this, testLineOffset)) : this.quickY;
-        const y2 = Number.isNaN(that.quickY) ? (that.quickY = quickY(that, testLineOffset)) : that.quickY;
-        // If `quickY` is equal,there are two situations:
-        // - two segments happen to intersect at the tested x-coordinate, this does't matter, the intersecting is in the future(although every near future), we will handle it later.
-        // - two segment are equal, so the priority also does't matter.
-        return Maths.sign(y1 - y2) as -1 | 0 | 1;
+
+    compareDerivativeValues(that: SweepEvent) {
+        const thisFDV = this._getDerivativeValue(1);
+        const thatFDV = that._getDerivativeValue(1);
+        if (!Maths.equalTo(thisFDV, thatFDV, eps.epsilon)) {
+            const result = thisFDV > thatFDV ? 1 : -1;
+            // For enter coordinates, the greater derivative means upper location,
+            // but for the leave coordinates, the greater derivative means lower location.
+            return this.isEnter ? result : -result;
+        }
+
+        const thisSDV = this._getDerivativeValue(2);
+        const thatSDV = that._getDerivativeValue(2);
+        if (!Maths.equalTo(thisSDV, thatSDV, eps.epsilon)) {
+            const result = thisSDV > thatSDV ? 1 : -1;
+            return this.isEnter ? result : -result;
+        }
+
+        const thisTDV = this._getDerivativeValue(3);
+        const thatTDV = that._getDerivativeValue(3);
+        if (!Maths.equalTo(thisTDV, thatTDV, eps.epsilon)) {
+            const result = thisTDV > thatTDV ? 1 : -1;
+            return this.isEnter ? result : -result;
+        }
+        return 0;
     }
 
+    /**
+     * The main purpose of this method is to determine the sequence of events,
+     * This order of events is very important for the sweep line algorithm.
+     * - Basically, events with smaller coordinates (first x, then y) happen first.
+     * - If two different typed(enter or leave) events have the same coordinates, the leave event happens first.
+     * - If two events have the same coordinates and their event types are the same, then the derivative is needed to determine exactly who is above and who is below,
+     *   and the below one happens first.
+     *
+     * Why does this order matter?
+     * Because this order determines the processing of events - the order of intersecting.
+     * The sweep line algorithm is from x-infi to x+infi, and at each x from y-infi to y+infi, finding the intersection and splitting process.
+     *
+     * @param e1
+     * @param e2
+     */
     static compare(e1: SweepEvent, e2: SweepEvent) {
-        let comp: -1 | 0 | 1;
-        comp = e1.compareCoordinates(e2);
-        if (comp !== 0) return comp;
+        // for a mono, its enter event happen first
+        if (e1.mono === e2.mono) return e1.isEnter ? -1 : 1;
+        // now different monos
+        const comp1 = e1.compareCoordinates(e2);
+        // smaller coordinates event happen first
+        if (comp1 !== 0) return comp1;
         // now they have the same coordinates
         // leave event happens first
-        if (e1.isEnter !== e2.isEnter) {
-            comp = e1.isEnter ? 1 : -1;
-            return comp;
-        }
-        // now they are the same type (enter or leave) and have the same coordinates
-        comp = e1.compareQuickY(e2);
-        return comp;
+        if (e1.isEnter !== e2.isEnter) return e1.isEnter ? 1 : -1;
+        // now they are at the same coordinates with the same type (enter or leave)
+        const comp2 = e1.compareDerivativeValues(e2);
+        return comp2;
     }
-}
-
-function quickY(event: SweepEvent, testLineOffset: number) {
-    return event.mono.segment instanceof Bezier
-        ? quickBezierY(event, testLineOffset)
-        : event.mono.segment instanceof QuadraticBezier
-        ? quickQuadraticBezierY(event, testLineOffset)
-        : event.mono.segment instanceof Arc
-        ? quickArcY(event, testLineOffset)
-        : quickLineSegmentY(event, testLineOffset);
-}
-function quickLineSegmentY(event: SweepEvent, testLineOffset: number) {
-    const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = event.mono.segment;
-    if (event.mono.isVertical) {
-        // Although they are vertical, but in this case they may be thought as slightly sloping to the right or to the left, so returns the other coordinate's y
-        if (event.isEnter !== event.mono.transposed) return y2;
-        else return y1;
-    }
-
-    let x = event.coordinates[0];
-    x = event.isEnter ? x + testLineOffset : x - testLineOffset;
-    // a=1, b=0, c=-x
-    const d1 = x1 - x;
-    const d2 = x2 - x;
-    const t = d1 / (d1 - d2);
-    return Maths.lerp(y1, y2, t);
-}
-function quickQuadraticBezierY(event: SweepEvent, testLineOffset: number) {
-    let x = event.coordinates[0];
-    x = event.isEnter ? x + testLineOffset : x - testLineOffset;
-
-    // a=1, b=0, c=-x
-    const [polyX, polyY] = (event.mono.segment as QuadraticBezier).getPolynomial();
-    const tPoly = Polynomial.add(polyX, [-x]);
-    const tRoots = Polynomial.roots(tPoly).filter(Type.isNumber);
-
-    for (const t of tRoots) {
-        if (Maths.between(t, 0, 1, false, false, eps.timeEpsilon)) {
-            return Polynomial.evaluate(polyY, t);
-        }
-    }
-
-    throw new Error("[G]The segment is too tiny to intersect with.");
-}
-function quickBezierY(event: SweepEvent, testLineOffset: number) {
-    let x = event.coordinates[0];
-    x = event.isEnter ? x + testLineOffset : x - testLineOffset;
-
-    // a=1, b=0, c = -x
-    const [polyX, polyY] = (event.mono.segment as Bezier).getPolynomial();
-    const tPoly = Polynomial.add(polyX, [-x]);
-    const tRoots = Polynomial.roots(tPoly).filter(Type.isNumber);
-
-    for (const t of tRoots) {
-        if (Maths.between(t, 0, 1, false, false, eps.timeEpsilon)) {
-            return Polynomial.evaluate(polyY, t);
-        }
-    }
-    throw new Error("[G]The segment is too tiny to intersect with.");
-}
-function quickArcY(event: SweepEvent, testLineOffset: number) {
-    let x = event.coordinates[0];
-    x = event.isEnter ? x + testLineOffset : x - testLineOffset;
-
-    // a=1, b=0, c = -x
-    const arc = event.mono.segment as Arc;
-    const { radiusX: rx, radiusY: ry, rotation: phi, positive } = arc;
-    const [cx, cy] = arc.getCenterPoint().coordinates;
-    const [sa, ea] = arc.getStartEndAngles();
-    const cosPhi = Maths.cos(phi);
-    const sinPhi = Maths.sin(phi);
-    // coefs of parametric equation of `ellipse`
-    const [px1, px2, px3] = [rx * cosPhi, -ry * sinPhi, cx]; // $[\cos(\theta),\sin(\theta),1]$
-    const [py1, py2, py3] = [rx * sinPhi, ry * cosPhi, cy]; // $[\cos(\theta),\sin(\theta),1]$
-    const tPoly = [-x + (-px1 + px3), 2 * px2, -x + (px1 + px3)];
-    //@see https://en.wikipedia.org/wiki/Tangent_half-angle_substitution#Geometry
-    if (tPoly[0] === 0) {
-        const cosPi = Maths.cos(Maths.PI);
-        const sinPi = Maths.sin(Maths.PI);
-        const y = py1 * cosPi + py2 * sinPi + py3;
-        return y;
-    }
-    const tRoots = Polynomial.roots(tPoly).filter(Type.isNumber);
-    for (const t of tRoots) {
-        const cosTheta = (1 - t ** 2) / (1 + t ** 2);
-        const sinTheta = (2 * t) / (1 + t ** 2);
-        const a = Angle.simplify(Maths.atan2(sinTheta, cosTheta));
-        if (Angle.between(a, sa, ea, positive, false, false, eps.angleEpsilon)) {
-            return py1 * cosTheta + py2 * sinTheta + py3;
-        }
-    }
-    throw new Error("[G]The segment is too tiny to intersect with.");
 }

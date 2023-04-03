@@ -3,28 +3,37 @@ import SegmentWithFill from "../SegmentWithFill";
 import TrajectoryId from "../TrajectoryId";
 import { compareX, compareY } from "./util";
 
-// This like a segment data wile we do sweep line algorithm.
+// This like a segment data while we do sweep line algorithm.
 export default class MonoSegment extends SegmentWithFill {
     readonly isPrimary: boolean;
-    // How to determine the winding?
-    // The winding view through the sweep line, left(init)->right(term) is -1, left(term)<-right(init) is 1, vertical is 0
 
-    // Under normal circumstances, `thisWinding` should be -1 or 1 or 0(if `isVertical` = true).
+    /**
+     *              y positive
+     *              ^
+     *              |
+     *     init-----|---->term   winding -1
+     *              |
+     *     term<----|-----init   winding 1
+     *              |
+     *  ------------|----------->  x positive
+     */
+    // Under normal circumstances, `thisWinding` should be -1 or 1.
     // If the primary or secondary general geometry itself has coincident segments, it will be superimposed here.
     thisWinding: number = 0;
-    // Also under normal circumstances, this value should be 0.
-    // But we will discard the coincident segments when calculating relation, and the discarded segment may not belongs to the same general geometry,
+    // Also under normal circumstances, this value should be -1 or 1.
+    // But we will discard the coincident segments when calculating intersection, and the discarded segment may not belongs to the same general geometry,
     // then, at this time, current remaining segment needs to carry the winding of discarded segments.
     thatWinding: number = 0;
+
     // Record the splitting information: which segment this is splitted from.
-    // The sweep line class will remember the relation-calculation of all the initial mono segment(the ancestor) to avoid repeated calculation.
-    // In this way, the next time when encounter two segments, if their initial parent has relation-calculated, then we can skip.
-    // Why? There can no longer be a relation between the children of two segments that have already been calculated.
+    // The sweep line class will remember the intersection-calculation of all the initial mono segment(the ancestor) to avoid repeated calculation.
+    // In this way, the next time when encounter two segments, if their initial parent has intersection-calculated, then we can skip.
+    // Why? There can no longer be a intersection between the children of two segments that have already been calculated.
     // This is "already done? - OK, skip"
     readonly parent: MonoSegment | null = null;
     // Record the birth information, the origin segment this from.
-    // If we are relation-calculating two segments with the same origin, we can skip it directly and consider it has done.
-    // Why? If all special cases have been handled, then there cannot be any relation between two segments originating from the same segment.
+    // If we are intersection-calculating two segments with the same origin, we can skip it directly and consider it has done.
+    // Why? If all special cases have been handled, then there cannot be any intersection between two segments originating from the same segment.
     // This is "needn't ? - mark done - already done? - OK, skip"
     readonly origin: BasicSegment;
     // Whether the segment is vertical.
@@ -32,97 +41,86 @@ export default class MonoSegment extends SegmentWithFill {
     readonly isVertical: boolean;
     // Whether the enter coordinates = init coordinates or = term coordinates, (so is leave coordinates).
     readonly transposed: boolean;
-    // The left coordinates to enter.
+    // The left(or bottom if isVertical) coordinates to enter.
     readonly enterCoordinates: [number, number];
-    // The right coordinates to leave.
+    // The right(or top if is isVertical) coordinates to leave.
     readonly leaveCoordinates: [number, number];
 
     get ancestorIdList() {
         const ret: string[] = [];
-        let curr: MonoSegment = this;
-        ret.unshift(curr.segment.id); //unshift so the first element will be the most top parent, and it's more likely to have done some relation calculations.
-        let parent = this.parent;
-        while (parent !== null) {
-            ret.unshift(parent.segment.id);
-            parent = parent.parent;
+        let iter: MonoSegment | null = this;
+        while (iter !== null) {
+            //unshift so the first element will be the most top parent, and it's more likely to have done some intersection calculations.
+            ret.unshift(iter.segment.id);
+            iter = iter.parent;
         }
         return ret;
     }
 
     constructor({
         segment,
+        trajectoryId,
         isPrimary,
         origin,
+
+        parent,
         thisWinding,
         thatWinding,
-        trajectoryId,
-        parent
+        transposed,
+        isVertical
     }: {
         segment: BasicSegment;
+        trajectoryId: TrajectoryId;
         isPrimary: boolean;
+        origin: BasicSegment;
+
+        parent?: MonoSegment;
         thisWinding?: number;
         thatWinding?: number;
-        origin: BasicSegment;
-        trajectoryId: TrajectoryId;
-        parent?: MonoSegment;
+        transposed?: boolean;
+        isVertical?: boolean;
     }) {
         super(segment, trajectoryId);
-
         this.isPrimary = isPrimary;
-        thisWinding !== undefined && (this.thisWinding = thisWinding);
-        thatWinding !== undefined && (this.thatWinding = thatWinding);
         this.origin = origin;
-        parent !== undefined && (this.parent = parent);
 
-        const { point1Coordinates: c1, point2Coordinates: c2 } = segment;
-        const compX = compareX(c1, c2);
-        const compY = compareY(c1, c2);
-
-        if (compX === 0 && compY === 0) {
-            throw new Error("[G]The `segment` is too tiny.");
-        }
-
-        if (compX === 0) {
-            this.isVertical = true;
-            // thisWinding === undefined && (this.thisWinding = 0);
-            // sort the endpoint coordinates in left->right/bottom->top order
-            // term
-            //  ^
-            //  |
-            // init
-            if (compY < 0) {
-                this.enterCoordinates = c1;
-                this.leaveCoordinates = c2;
-                this.transposed = false;
-                thisWinding === undefined && (this.thisWinding = 1);
-            }
-            // init
-            //  ^
-            //  |
-            // term
-            else {
-                this.enterCoordinates = c2;
-                this.leaveCoordinates = c1;
-                this.transposed = true;
-                thisWinding === undefined && (this.thisWinding = -1);
-            }
+        if (parent !== undefined) {
+            this.parent = parent;
+            this.thisWinding = thisWinding!;
+            this.thatWinding = thatWinding!;
+            this.transposed = transposed!;
+            this.isVertical = isVertical!;
+            const { point1Coordinates: c1, point2Coordinates: c2 } = segment;
+            this.enterCoordinates = transposed ? c2 : c1;
+            this.leaveCoordinates = transposed ? c1 : c2;
         } else {
-            this.isVertical = false;
-            // sort the endpoint coordinates in left->right/bottom->top order
-            // init->term
-            if (compX < 0) {
-                this.enterCoordinates = c1;
-                this.leaveCoordinates = c2;
-                this.transposed = false;
-                thisWinding === undefined && (this.thisWinding = -1);
+            const { point1Coordinates: c1, point2Coordinates: c2 } = segment;
+            const compX = compareX(c1, c2);
+            const compY = compareY(c1, c2);
+
+            if (compX === 0 && compY === 0) throw new Error("[G]The `segment` is too tiny.");
+
+            if (compX === 0) {
+                this.isVertical = true;
+                // sort the endpoint coordinates in bottom->top order
+                // term
+                //  ↑
+                // init
+                if (compY < 0) (this.transposed = false), (this.thisWinding = 1);
+                // init
+                //  ↓
+                // term
+                else (this.transposed = true), (this.thisWinding = -1);
+            } else {
+                this.isVertical = false;
+                // sort the endpoint coordinates in left->right order
+                // init → term
+                if (compX < 0) (this.transposed = false), (this.thisWinding = -1);
+                // term ← init
+                else (this.transposed = true), (this.thisWinding = 1);
             }
-            // term<-init
-            else {
-                this.enterCoordinates = c2;
-                this.leaveCoordinates = c1;
-                this.transposed = true;
-                thisWinding === undefined && (this.thisWinding = 1);
-            }
+            this.enterCoordinates = this.transposed ? c2 : c1;
+            this.leaveCoordinates = this.transposed ? c1 : c2;
         }
     }
 

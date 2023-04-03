@@ -3,15 +3,16 @@ import Arc from "../../geometries/basic/Arc";
 import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
-import Polygon from "../../geometries/general/Polygon";
 import { eps } from "../../geomtoy";
 import FillRuleHelper from "../../helper/FillRuleHelper";
 import { FillDescription, FillRule, GeneralGeometry } from "../../types";
 import TrajectoryId from "../TrajectoryId";
 import ChipSegment from "./ChipSegment";
-import { relationResult } from "./relation";
+import Intersector from "./Intersector";
 
 export default class Processor {
+    intersector = new Intersector();
+
     private _preprocess(gg: GeneralGeometry) {
         const segments = gg.getSegments(true, true);
         const ret: ChipSegment[] = [];
@@ -139,86 +140,81 @@ export default class Processor {
         }
         return ret;
     }
-    private _splitChipSegment(chipSegment: ChipSegment, params: number[]) {
-        const segment = chipSegment.segment;
-        const segments = segment instanceof Arc ? segment.splitAtAngles(params) : segment.splitAtTimes(params);
-        const chipSegments = segments.map(
-            seg =>
-                new ChipSegment({
-                    segment: seg,
-                    trajectoryId: chipSegment.trajectoryId
-                })
-        );
-        return chipSegments;
+
+    private _sortCoordinates(c1: [number, number], c2: [number, number]) {
+        const [x1, y1] = c1;
+        const [x2, y2] = c2;
+        if (x1 === x2) {
+            return y1 < y2 ? [c1, c2] : [c2, c1];
+        } else {
+            return x1 < x2 ? [c1, c2] : [c2, c1];
+        }
+    }
+    private _deduplicate(chips: ChipSegment[]) {
+        return Utility.uniqWith(chips, (a, b) => {
+            if (a.trajectoryId.equalTo(b.trajectoryId)) {
+                const [acn, acm] = this._sortCoordinates(a.segment.point1Coordinates, a.segment.point2Coordinates);
+                const [bcn, bcm] = this._sortCoordinates(b.segment.point1Coordinates, b.segment.point2Coordinates);
+                return Coordinates.equalTo(acn, bcn, eps.epsilon) && Coordinates.equalTo(acm, bcm, eps.epsilon);
+            }
+            return false;
+        });
     }
 
-    private _express(gg: GeneralGeometry) {
-        const chips = this._preprocess(gg);
-        const isPolygon = gg instanceof Polygon;
-        // Step 1: Get all portion params.
+    private _express(chips: ChipSegment[], fillRule: FillRule) {
+        let aIsLineSegment = false;
+        let bIsLineSegment = false;
+        // Step 1: Get all split params.
         for (let i = 0, m = chips.length - 1; i < m; i++) {
             const a = chips[i];
-            // skip i + 1, if is polygon
-            for (let j = isPolygon ? i + 2 : i + 1, n = chips.length; j < n; j++) {
+            aIsLineSegment = a.segment instanceof LineSegment;
+            for (let j = i + 1, n = chips.length; j < n; j++) {
                 const b = chips[j];
-                const { a: paramsA, b: paramsB } = relationResult(a, b);
+                bIsLineSegment = a.segment instanceof LineSegment;
+                // Two consecutive line segments do not need to checked.
+                if (aIsLineSegment && bIsLineSegment) continue;
+                const { paramsA, paramsB } = this.intersector.result(a, b);
                 a.params.push(...paramsA);
                 b.params.push(...paramsB);
             }
         }
 
         let ret: ChipSegment[] = [];
-        // Step 2: portion and determine fill.
+        // Step 2: split and determine fill.
         chips.forEach(chip => {
             if (chip.params.length !== 0) {
                 const params = Utility.uniqWith(chip.params, (a, b) => {
                     return chip.segment instanceof Arc ? Angle.equalTo(a, b, eps.angleEpsilon) : Maths.equalTo(a, b, eps.timeEpsilon);
                 });
-                const portions = this._splitChipSegment(chip, params);
+                const portions = this.intersector.splitChipSegment(chip, params);
                 portions.forEach(portion => {
-                    portion.thisFill = this._determineFill(portion, chips, gg.fillRule);
+                    portion.thisFill = this._determineFill(portion, chips, fillRule);
                     ret.push(portion);
                 });
             } else {
-                chip.thisFill = this._determineFill(chip, chips, gg.fillRule);
+                chip.thisFill = this._determineFill(chip, chips, fillRule);
                 ret.push(chip);
             }
         });
-        // Step 3: deduplicate coincident chip segments.
-        ret = Utility.uniqWith(ret, (a, b) => {
-            if (a.trajectoryId.equalTo(b.trajectoryId)) {
-                const [ac1, ac2] = [a.segment.point1Coordinates, a.segment.point2Coordinates];
-                const [bc1, bc2] = [b.segment.point1Coordinates, b.segment.point2Coordinates];
-                if (
-                    (Coordinates.equalTo(ac1, bc1, eps.epsilon) && Coordinates.equalTo(ac2, bc2, eps.epsilon)) || // maybe different orientation
-                    (Coordinates.equalTo(ac1, bc2, eps.epsilon) && Coordinates.equalTo(ac2, bc1, eps.epsilon))
-                )
-                    return true;
-                return false;
-            }
-            return false;
-        });
-
         return ret;
     }
-
-    private _combine(chipsA: ChipSegment[], fillRuleA: FillRule, chipsB: ChipSegment[], fillRuleB: FillRule) {
-        for (let i = 0, m = chipsA.length; i < m; i++) {
-            const a = chipsA[i];
-            for (let j = 0, n = chipsB.length; j < n; j++) {
-                const b = chipsB[j];
-                const { a: paramsA, b: paramsB } = relationResult(a, b);
+    private _combine(chipsA: ChipSegment[], expressedChipsA: ChipSegment[], fillRuleA: FillRule, chipsB: ChipSegment[], expressedChipsB: ChipSegment[], fillRuleB: FillRule) {
+        for (let i = 0, m = expressedChipsA.length; i < m; i++) {
+            const a = expressedChipsA[i];
+            for (let j = 0, n = expressedChipsB.length; j < n; j++) {
+                const b = expressedChipsB[j];
+                const { paramsA, paramsB } = this.intersector.result(a, b);
                 a.params.push(...paramsA);
                 b.params.push(...paramsB);
             }
         }
         let ret: ChipSegment[] = [];
-        chipsA.forEach(chip => {
+        expressedChipsA.forEach(chip => {
             if (chip.params.length !== 0) {
                 const params = Utility.uniqWith(chip.params, (a, b) => {
                     return chip.segment instanceof Arc ? Angle.equalTo(a, b, eps.angleEpsilon) : Maths.equalTo(a, b, eps.timeEpsilon);
                 });
-                const portions = this._splitChipSegment(chip, params);
+                const portions = this.intersector.splitChipSegment(chip, params);
                 portions.forEach(portion => {
                     portion.thisFill = { ...chip.thisFill };
                     portion.thatFill = this._determineFill(portion, chipsB, fillRuleB);
@@ -230,12 +226,12 @@ export default class Processor {
             }
         });
 
-        chipsB.forEach(chip => {
+        expressedChipsB.forEach(chip => {
             if (chip.params.length !== 0) {
                 const params = Utility.uniqWith(chip.params, (a, b) => {
                     return chip.segment instanceof Arc ? Angle.equalTo(a, b, eps.angleEpsilon) : Maths.equalTo(a, b, eps.timeEpsilon);
                 });
-                const portions = this._splitChipSegment(chip, params);
+                const portions = this.intersector.splitChipSegment(chip, params);
                 portions.forEach(portion => {
                     // swap the fill
                     portion.thatFill = { ...chip.thisFill };
@@ -249,40 +245,28 @@ export default class Processor {
                 ret.push(chip);
             }
         });
-
-        // deduplicate coincident chip segments
-        ret = Utility.uniqWith(ret, (a, b) => {
-            if (a.trajectoryId.equalTo(b.trajectoryId)) {
-                const [ac1, ac2] = [a.segment.point1Coordinates, a.segment.point2Coordinates];
-                const [bc1, bc2] = [b.segment.point1Coordinates, b.segment.point2Coordinates];
-                if (
-                    (Coordinates.equalTo(ac1, bc1, eps.epsilon) && Coordinates.equalTo(ac2, bc2, eps.epsilon)) || // maybe different orientation
-                    (Coordinates.equalTo(ac1, bc2, eps.epsilon) && Coordinates.equalTo(ac2, bc1, eps.epsilon))
-                )
-                    return true;
-                return false;
-            }
-            return false;
-        });
-
         return ret;
     }
-
+    private _log: [] = [];
+    getLog() {
+        return this._log;
+    }
     describe(ggA: GeneralGeometry, ggB?: GeneralGeometry): FillDescription {
-        const chipsA = this._express(ggA);
+        const chipsA = this._preprocess(ggA);
+        const expressedA = this._express(chipsA, ggA.fillRule);
 
         if (ggB === undefined) {
             return {
                 fillRule: ggA.fillRule,
-                segmentWithFills: chipsA
-            };
-        } else {
-            const chipsB = this._express(ggB);
-            const chips = this._combine(chipsA, ggA.fillRule, chipsB, ggB.fillRule);
-            return {
-                fillRule: ggA.fillRule,
-                segmentWithFills: chips
+                segmentWithFills: this._deduplicate(expressedA)
             };
         }
+        const chipsB = this._preprocess(ggB);
+        const expressedB = this._express(chipsB, ggB.fillRule);
+        const combined = this._combine(chipsA, expressedA, ggA.fillRule, chipsB, expressedB, ggB.fillRule);
+        return {
+            fillRule: ggA.fillRule,
+            segmentWithFills: this._deduplicate(combined)
+        };
     }
 }

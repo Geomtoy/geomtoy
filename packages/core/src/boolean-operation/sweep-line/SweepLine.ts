@@ -1,16 +1,17 @@
 import { Coordinates, Maths } from "@geomtoy/util";
 import { eps } from "../../geomtoy";
 import { FillRule } from "../../types";
-import { LinkedList, LinkedListNode } from "./LinkedList";
+import Intersector from "./Intersector";
+import { LinkedList, type LinkedListNode } from "./LinkedList";
 import MonoSegment from "./MonoSegment";
 import PriorityQueue from "./PriorityQueue";
-import { relationResult } from "./relation";
 import SweepEvent from "./SweepEvent";
+import { quickY } from "./util";
 
 export default class SweepLine {
     statusList = new LinkedList<SweepEvent>();
-    eventQueue = new PriorityQueue<SweepEvent>([], SweepEvent.compare);
-    relationSet = new Set<string>();
+    eventQueue = new PriorityQueue<SweepEvent>(SweepEvent.compare);
+    intersector = new Intersector();
 
     primaryFillRule: FillRule = "nonzero";
     secondaryFillRule: FillRule = "nonzero";
@@ -21,12 +22,11 @@ export default class SweepLine {
      */
     findAboveAndBelow(event: SweepEvent) {
         // Find the first sweep event satisfy the conditions, it is the below, and its `prev` if existed is the above.
-        const below = this.statusList.locate(node => {
+        const below = this.statusList.find(node => {
             if (Coordinates.equalTo(event.coordinates, node.data.coordinates, eps.epsilon)) {
-                return event.compareQuickY(node.data) >= 0;
+                return event.compareDerivativeValues(node.data) > 0;
             } else {
-                const p = node.data.mono.segment.getClosestPointFromPoint(event.coordinates)[0];
-                return event.coordinates[1] >= p.coordinates[1];
+                return event.coordinates[1] > quickY(node.data, event.coordinates);
             }
         });
         return {
@@ -50,7 +50,7 @@ export default class SweepLine {
      * Mono segments has winding info: `thisWinding` and `thatWinding` to mark the winding number provided by the mono segment itself.
      * `thisWinding` represents winding number in its own general geometry;
      * `thatWinding` represents winding number in other general geometry;
-     * When a mono segment do relation-calculating with other mono segment and coincidence occurs, the winding info will merge as the mono segments will merge.
+     * When a mono segment do intersection-calculating with other mono segment and coincidence occurs, the winding info will merge as the mono segments will merge.
      * This ensures that even if the duplicated mono segment is removed, we still get the complete winding number info.
      *
      * 2. snapshot:
@@ -207,88 +207,82 @@ export default class SweepLine {
     clearEvents() {
         this.eventQueue.clear();
     }
-    fillEvents(mss: MonoSegment[]) {
-        for (const ms of mss) {
-            this.addSegmentEvents(ms);
-        }
+    fillEvents(monos: MonoSegment[]) {
+        for (const mono of monos) this.addEventPair(mono);
     }
-    addSegmentEvents(ms: MonoSegment) {
-        const enterEvent = new SweepEvent(ms.enterCoordinates, ms, true, null as unknown as SweepEvent);
-        const leaveEvent = new SweepEvent(ms.leaveCoordinates, ms, false, null as unknown as SweepEvent);
+
+    addEventPair(mono: MonoSegment) {
+        const enterEvent = new SweepEvent(mono, true, null as unknown as SweepEvent);
+        const leaveEvent = new SweepEvent(mono, false, null as unknown as SweepEvent);
         enterEvent.otherEvent = leaveEvent;
         leaveEvent.otherEvent = enterEvent;
         this.eventQueue.enqueue(enterEvent);
         this.eventQueue.enqueue(leaveEvent);
     }
-
-    updateSegmentEvents(event: SweepEvent, splittedMss: [null, ...MonoSegment[]] | MonoSegment[]) {
-        // The first mono segment's enterCoordinates must equal to this event's coordinates.
-        const [first, ...rest] = splittedMss;
-        if (first === null) {
-            // The `curr` is coincident with event in status, and the first part have been discarded, so remove it from the `eventQueue`.
-            this.eventQueue.remove(event);
-            this.eventQueue.remove(event.otherEvent);
-        } else {
-            // update the first mono segment's enter event
-            event.mono = first;
-            // update the first mono segment's leave event
-            event.otherEvent.coordinates = first.leaveCoordinates;
-            event.otherEvent.mono = first;
-            event.otherEvent.quickY = NaN;
-            // coordinates changed, so update the event in the `eventQueue`
-            this.eventQueue.update(event.otherEvent);
-        }
-
-        // add the rest mono segments' events into `eventQueue`
-        for (const ms of rest) {
-            this.addSegmentEvents(ms!);
-        }
+    updateEventPair(event: SweepEvent, mono: MonoSegment) {
+        event.update(mono);
+        event.otherEvent.update(mono);
+        this.eventQueue.update(event);
+        this.eventQueue.update(event.otherEvent);
     }
-    relationId(idA: string, idB: string) {
-        return idA > idB ? idA + "-" + idB : idB + "-" + idA;
+    removeEventPair(event: SweepEvent) {
+        this.eventQueue.remove(event);
+        this.eventQueue.remove(event.otherEvent);
     }
 
-    calculateRelation(eventA: SweepEvent, eventB: SweepEvent) {
-        // Check if their parents/or parents of parents... have already be relation-calculated, this is very important.
-        // Do this to avoid redundant calculation to speed up.
-        const aList = eventA.mono.ancestorIdList;
-        const bList = eventB.mono.ancestorIdList;
-        for (const a of aList) {
-            for (const b of bList) {
-                if (this.relationSet.has(this.relationId(a, b))) return null;
+    intersectorResult(eventA: SweepEvent, eventB: SweepEvent) {
+        return this.intersector.result(eventA.mono, eventB.mono);
+    }
+
+    private handleIntersectorResult(eventA: SweepEvent, eventB: SweepEvent, result: ReturnType<typeof this.intersectorResult>) {
+        const { a, b } = result;
+        if (a!.length !== 0) {
+            const [head, ...tail] = a!;
+            // remove
+            if (head === null) {
+                this.removeEventPair(eventA);
+            }
+            // update
+            else {
+                this.updateEventPair(eventA, head!);
+            }
+            // add
+            for (const mono of tail) {
+                this.addEventPair(mono);
             }
         }
-        const id = this.relationId(eventA.mono.segment.id, eventB.mono.segment.id);
-        const result = relationResult(eventA.mono, eventB.mono);
-        this.relationSet.add(id);
-        return result;
-    }
+        if (b!.length !== 0) {
+            const [head, ...tail] = b!;
+            // update
+            this.updateEventPair(eventB, head!);
 
-    private handleRelationResult(eventA: SweepEvent, eventB: SweepEvent, result: NonNullable<ReturnType<typeof this.calculateRelation>>) {
-        const { a: splittedMssA, b: splittedMssB } = result;
-        this.updateSegmentEvents(eventA, splittedMssA);
-        this.updateSegmentEvents(eventB, splittedMssB);
+            for (const mono of tail) {
+                this.addEventPair(mono);
+            }
+        }
     }
 
     launch() {
         const segments: MonoSegment[] = [];
-
-        while (this.eventQueue.length !== 0) {
+        while (this.eventQueue.size !== 0) {
             const curr = this.eventQueue.peek();
+
             if (curr.isEnter) {
                 const { above, below } = this.findAboveAndBelow(curr);
 
-                let result = null;
+                let result: ReturnType<typeof this.intersectorResult> = { intersectionType: "none" };
                 if (above !== null) {
-                    result = this.calculateRelation(curr, above.data);
-                    if (result !== null) this.handleRelationResult(curr, above.data, result);
+                    result = this.intersectorResult(curr, above.data);
+                    if (result.intersectionType !== "none") {
+                        this.handleIntersectorResult(curr, above.data, result);
+                    }
                 }
-                if (below !== null) {
-                    // if `curr` has no relation with `above`
-                    // or `curr` has a relation with `above`, but not coincident with `above`
-                    if (result === null || result.a[0] !== null) {
-                        result = this.calculateRelation(curr, below.data);
-                        if (result !== null) this.handleRelationResult(curr, below.data, result);
+                // if `curr` has no intersection with `above`
+                // or `curr` has a intersection with `above`, but not coincident with `above`
+                if (below !== null && result.intersectionType !== "coincidental") {
+                    result = this.intersectorResult(curr, below.data);
+                    if (result.intersectionType !== "none") {
+                        this.handleIntersectorResult(curr, below.data, result);
                     }
                 }
 
@@ -297,11 +291,11 @@ export default class SweepLine {
                 }
 
                 // Now add a new status of `curr` to `statusList` and let `curr.otherEvent.status` point to it.
-                const status = new LinkedListNode(curr, this.statusList);
+                const status = this.statusList.createNode(curr);
                 if (below !== null) {
-                    below.before(status);
+                    this.statusList.insertBefore(below, status);
                 } else if (above !== null) {
-                    above.after(status);
+                    this.statusList.insertAfter(above, status);
                 } else {
                     this.statusList.push(status);
                 }
@@ -311,13 +305,16 @@ export default class SweepLine {
                 const status = curr.status!;
                 // Removing the status from `statusList` will create two new adjacent mono segments, so we'll need to check them.
                 if (status.prev !== null && status.next !== null) {
-                    const result = this.calculateRelation(status.prev.data, status.next.data);
-                    if (result !== null) this.handleRelationResult(status.prev.data, status.next.data, result);
+                    const result = this.intersectorResult(status.prev.data, status.next.data);
+
+                    if (result.intersectionType !== "none") {
+                        this.handleIntersectorResult(status.prev.data, status.next.data, result);
+                    }
                 }
 
                 this.determineFill(status);
                 // now remove it from `statusList`
-                status.detach();
+                this.statusList.remove(status);
                 segments.push(curr.mono);
             }
 
