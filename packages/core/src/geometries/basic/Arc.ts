@@ -534,6 +534,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         for (let i = 1, l = ret.length; i < l; i++) {
             ret[i].point1Coordinates = ret[i - 1].point2Coordinates;
         }
+        return ret;
     }
     portionOf(a1: number, a2: number) {
         a1 = this._clampAngle(a1, "a1");
