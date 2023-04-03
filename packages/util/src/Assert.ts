@@ -4,9 +4,7 @@ import Coordinates from "./Coordinates";
 import Length from "./Length";
 import Size from "./Size";
 import Type from "./Type";
-
 import type { StaticClass } from "./types";
-import Vector2 from "./Vector2";
 
 interface Assert extends StaticClass {}
 class Assert {
