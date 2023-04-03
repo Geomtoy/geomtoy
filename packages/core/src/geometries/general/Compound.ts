@@ -266,7 +266,10 @@ export default class Compound extends Geometry implements ParentShape {
         return g;
     }
     clone() {
-        return new Compound(this._items);
+        const ret = new Compound();
+        ret._items = this._items.map(item => item.clone());
+        ret._fillRule = this._fillRule;
+        return ret;
     }
     copyFrom(shape: Compound | null) {
         if (shape === null) shape = new Compound();
