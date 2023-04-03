@@ -110,7 +110,8 @@ export default class Chainer {
 
             if (!chain.fill.positive) chain.reverse();
             if (!chain.isClosable()) {
-                console.warn("[G]Unclosable chain found.", chain);
+                // Due to precision issues, very small chains will be unclosable, lowering the grade of this report.
+                console.info("[G]Unclosable chain found.");
             }
         });
 
