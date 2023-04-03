@@ -66,7 +66,9 @@ export default class Arbitrary extends Geometry {
         return this;
     }
     clone() {
-        return new Arbitrary(this._geometry!);
+        const ret = new Arbitrary();
+        ret._geometry = this._geometry === null ? null : (this._geometry.clone() as Geometry);
+        return ret;
     }
     copyFrom(geometry: Geometry | null): this {
         this._setGeometry(geometry);
