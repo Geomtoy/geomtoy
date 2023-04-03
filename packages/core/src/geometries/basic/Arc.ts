@@ -261,9 +261,9 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
         const { _radiusX: rx, _radiusY: ry, point1Coordinates: c1, point2Coordinates: c2 } = this;
-        const rx0 = Maths.equalTo(rx, 0, eps.epsilon);
-        const ry0 = Maths.equalTo(ry, 0, eps.epsilon);
-        const c12 = Coordinates.equalTo(c1, c2, eps.epsilon);
+        const rx0 = Maths.equalTo(rx, 0, Number.EPSILON);
+        const ry0 = Maths.equalTo(ry, 0, Number.EPSILON);
+        const c12 = Coordinates.equalTo(c1, c2, Number.EPSILON);
 
         if (check) return rx0 || ry0 || c12;
 

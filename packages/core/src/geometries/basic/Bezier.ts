@@ -235,9 +235,9 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         const m = [-1, 3, -3, 1, 3, -6, 3, 0, -3, 3, 0, 0, 1, 0, 0, 0] as Parameters<typeof Matrix4.dotVector4>[0];
         const [cx3, cx2, cx1] = Matrix4.dotVector4(m, [x0, x1, x2, x3]);
         const [cy3, cy2, cy1] = Matrix4.dotVector4(m, [y0, y1, y2, y3]);
-        const d3 = Maths.equalTo(cx3, 0, eps.coefficientEpsilon) && Maths.equalTo(cy3, 0, eps.coefficientEpsilon);
-        const d2 = Maths.equalTo(cx2, 0, eps.coefficientEpsilon) && Maths.equalTo(cy2, 0, eps.coefficientEpsilon);
-        const d1 = Maths.equalTo(cx1, 0, eps.coefficientEpsilon) && Maths.equalTo(cy1, 0, eps.coefficientEpsilon);
+        const d3 = Maths.equalTo(cx3, 0, Number.EPSILON) && Maths.equalTo(cy3, 0, Number.EPSILON);
+        const d2 = Maths.equalTo(cx2, 0, Number.EPSILON) && Maths.equalTo(cy2, 0, Number.EPSILON);
+        const d1 = Maths.equalTo(cx1, 0, Number.EPSILON) && Maths.equalTo(cy1, 0, Number.EPSILON);
 
         if (check) return d3;
 

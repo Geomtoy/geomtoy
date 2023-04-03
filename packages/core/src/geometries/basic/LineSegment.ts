@@ -161,7 +161,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         if (!this.initialized()) return check ? true : null;
 
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;
-        const c12 = Coordinates.equalTo(c1, c2, eps.epsilon);
+        const c12 = Coordinates.equalTo(c1, c2, Number.EPSILON);
 
         if (check) return c12;
         return c12 ? new Point(c1) : this;

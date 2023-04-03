@@ -105,7 +105,7 @@ export default class Polygon extends Geometry {
 
         for (let i = 1, l = this._vertices.length; i < l; i++) {
             const { x: xi, y: yi } = vertices[i];
-            if (!Coordinates.equalTo([x0, y0], [xi, yi], eps.epsilon)) {
+            if (!Coordinates.equalTo([x0, y0], [xi, yi], Number.EPSILON)) {
                 return check ? false : this;
             }
         }

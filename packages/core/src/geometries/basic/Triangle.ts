@@ -223,7 +223,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
         const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
-        const triangleForming = Maths.greaterThan(Maths.abs(Vector2.cross(Vector2.from(c1, c3), Vector2.from(c1, c2))), 0, eps.vectorEpsilon);
+        const triangleForming = Maths.greaterThan(Maths.abs(Vector2.cross(Vector2.from(c1, c3), Vector2.from(c1, c2))), 0, Number.EPSILON);
 
         if (check) return !triangleForming;
 

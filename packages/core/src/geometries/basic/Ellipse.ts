@@ -143,8 +143,8 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         if (!this.initialized()) return check ? true : null;
 
         const { radiusX: rx, radiusY: ry, centerCoordinates: cc, rotation: phi } = this;
-        const rx0 = Maths.equalTo(rx, 0, eps.epsilon);
-        const ry0 = Maths.equalTo(ry, 0, eps.epsilon);
+        const rx0 = Maths.equalTo(rx, 0, Number.EPSILON);
+        const ry0 = Maths.equalTo(ry, 0, Number.EPSILON);
         if (check) return rx0 || ry0;
 
         if (rx0 && !ry0) {

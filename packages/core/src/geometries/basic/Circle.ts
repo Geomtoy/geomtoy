@@ -111,7 +111,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
 
-        const r0 = Maths.equalTo(this._radius, 0, eps.epsilon);
+        const r0 = Maths.equalTo(this._radius, 0, Number.EPSILON);
         if (check) return r0;
 
         if (r0) return new Point(this._centerX, this._centerY);

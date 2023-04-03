@@ -190,8 +190,8 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         const m = [1, -2, 1, -2, 2, 0, 1, 0, 0] as Parameters<typeof Matrix3.dotVector3>[0];
         const [cx2, cx1] = Matrix3.dotVector3(m, [x0, x1, x2]);
         const [cy2, cy1] = Matrix3.dotVector3(m, [y0, y1, y2]);
-        const d2 = Maths.equalTo(cx2, 0, eps.coefficientEpsilon) && Maths.equalTo(cy2, 0, eps.coefficientEpsilon);
-        const d1 = Maths.equalTo(cx1, 0, eps.coefficientEpsilon) && Maths.equalTo(cy1, 0, eps.coefficientEpsilon);
+        const d2 = Maths.equalTo(cx2, 0, Number.EPSILON) && Maths.equalTo(cy2, 0, Number.EPSILON);
+        const d1 = Maths.equalTo(cx1, 0, Number.EPSILON) && Maths.equalTo(cy1, 0, Number.EPSILON);
 
         if (check) return d2;
 

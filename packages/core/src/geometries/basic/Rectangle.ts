@@ -160,8 +160,8 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
 
-        const w0 = Maths.equalTo(this._width, 0, eps.epsilon);
-        const h0 = Maths.equalTo(this._height, 0, eps.epsilon);
+        const w0 = Maths.equalTo(this._width, 0, Number.EPSILON);
+        const h0 = Maths.equalTo(this._height, 0, Number.EPSILON);
         if (check) return w0 || h0;
 
         const c = this.coordinates;
