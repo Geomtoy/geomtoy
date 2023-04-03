@@ -1,25 +1,34 @@
-export class LinkedList<E extends object> {
-    head: LinkedListNode<E> | null = null;
-    tail: LinkedListNode<E> | null = null;
-    size = 0;
+import { Assert } from "@geomtoy/util";
 
-    static fromArray<SE extends object>(arr: SE[]) {
-        const list = new LinkedList<SE>();
-        arr.forEach(elem => list.push(new LinkedListNode(elem, list)));
-        return list;
+export type LinkedListNode<T extends object> = {
+    prev: LinkedListNode<T> | null;
+    next: LinkedListNode<T> | null;
+    data: T;
+    list: LinkedList<T>;
+};
+
+// Doubly Linked List
+export class LinkedList<T extends object> {
+    head: LinkedListNode<T> | null = null;
+    tail: LinkedListNode<T> | null = null;
+
+    static fromArray<ST extends object>(arr: ST[]) {
+        const ret = new LinkedList<ST>();
+        arr.forEach(elem => ret.push(ret.createNode(elem)));
+        return ret;
     }
 
     toArray() {
-        const head = this.head;
-        const tail = this.tail;
-
-        let node = head;
-        const ret = [];
-        while (node !== null) {
+        const ret: T[] = [];
+        for (const node of this) {
             ret.push(node.data);
-            node = node !== tail ? node.next : null;
         }
         return ret;
+    }
+
+    private _size = 0;
+    get size() {
+        return this._size;
     }
 
     [Symbol.iterator]() {
@@ -27,7 +36,7 @@ export class LinkedList<E extends object> {
         const tail = this.tail;
         let node = head;
         return {
-            next(): { value: LinkedListNode<E>; done: false } | { value: null; done: true } {
+            next(): { value: LinkedListNode<T>; done: false } | { value: null; done: true } {
                 if (node === null) return { value: null, done: true };
                 const ret = {
                     value: node,
@@ -38,13 +47,29 @@ export class LinkedList<E extends object> {
             }
         };
     }
-
-    forEach(fn: (value: LinkedListNode<E>, index: number, list: LinkedList<E>) => void, thisArg?: any) {
-        let i = 0;
-        for (const node of this) {
-            fn.call(thisArg, node, i, this);
-            i++;
+    /**
+     * Find the first node satisfies the provided predicate function.
+     * @param predicate
+     */
+    find(predicate: (node: LinkedListNode<T>) => boolean) {
+        let curr: LinkedListNode<T> | null = this.head;
+        while (curr !== null) {
+            if (predicate(curr)) {
+                break;
+            }
+            curr = curr.next;
         }
+        return curr;
+    }
+
+    filter(predicate: (node: LinkedListNode<T>) => boolean) {
+        const ret = new LinkedList<T>();
+        for (const node of this) {
+            if (predicate(node)) {
+                ret.push({ ...node });
+            }
+        }
+        return ret;
     }
 
     reverse() {
@@ -60,11 +85,13 @@ export class LinkedList<E extends object> {
         return this;
     }
 
-    isEmpty() {
-        return this.head === null || this.tail === null; // or this.size === 0
+    private _assertIsProperNode(value: LinkedListNode<T>, p: string) {
+        Assert.condition(value.list === this, `[G]The \`${p}\` should be a \`LinkedListNode\` properly affiliated with the list.`);
     }
 
-    push(node: LinkedListNode<E>): LinkedListNode<E> {
+    push(node: LinkedListNode<T>): LinkedListNode<T> {
+        this._assertIsProperNode(node, "node");
+
         if (this.head === null || this.tail === null) {
             node.prev = null;
             node.next = null;
@@ -76,14 +103,16 @@ export class LinkedList<E extends object> {
             this.tail.next = node;
             this.tail = node;
         }
-        this.size++;
+        this._size++;
         return node;
     }
     pop() {
         if (this.head === null || this.tail === null) return undefined;
-        return this.tail.detach();
+        this._size--;
+        return this.remove(this.tail);
     }
-    unshift(node: LinkedListNode<E>): LinkedListNode<E> {
+    unshift(node: LinkedListNode<T>): LinkedListNode<T> {
+        this._assertIsProperNode(node, "node");
         if (this.head === null || this.tail === null) {
             node.prev = null;
             node.next = null;
@@ -95,26 +124,13 @@ export class LinkedList<E extends object> {
             this.head.prev = node;
             this.head = node;
         }
-        this.size++;
+        this._size++;
         return node;
     }
     shift() {
         if (this.head === null || this.tail === null) return undefined;
-        return this.head.detach();
-    }
-    /**
-     * Find the first node matches `locateFn`(`locateFn` returns true)
-     * @param locateFn
-     */
-    locate(locateFn: (node: LinkedListNode<E>) => boolean) {
-        let curr: LinkedListNode<E> | null = this.head;
-        while (curr !== null) {
-            if (locateFn(curr)) {
-                break;
-            }
-            curr = curr.next;
-        }
-        return curr;
+        this._size--;
+        return this.remove(this.head);
     }
 
     clear() {
@@ -131,60 +147,67 @@ export class LinkedList<E extends object> {
         }
         this.head = null;
         this.tail = null;
-        this.size = 0;
-    }
-}
-
-export class LinkedListNode<E extends object> {
-    prev: LinkedListNode<E> | null = null;
-    next: LinkedListNode<E> | null = null;
-
-    constructor(public data: E, public list: LinkedList<E>) {}
-
-    before(node: LinkedListNode<E>): LinkedListNode<E> {
-        node.prev = this.prev;
-        node.next = this;
-
-        this.prev !== null && (this.prev.next = node);
-        this.prev = node;
-
-        if (this === this.list.head) this.list.head = node;
-
-        this.list.size++;
-        return node;
+        this._size = 0;
     }
 
-    after(node: LinkedListNode<E>): LinkedListNode<E> {
-        node.next = this.next;
-        node.prev = this;
-
-        this.next !== null && (this.next.prev = node);
-        this.next = node;
-
-        if (this === this.list.tail) this.list.tail = node;
-
-        this.list.size++;
-        return node;
+    createNode(data: T) {
+        return {
+            data,
+            prev: null,
+            next: null,
+            list: this
+        } as LinkedListNode<T>;
     }
 
-    detach(): LinkedListNode<E> {
-        this.prev !== null && (this.prev.next = this.next);
-        this.next !== null && (this.next.prev = this.prev);
+    insertBefore(node: LinkedListNode<T>, insertion: LinkedListNode<T>) {
+        this._assertIsProperNode(node, "node");
+        this._assertIsProperNode(insertion, "insertion");
 
-        if (this.list.size === 1) {
-            this.list.head = null;
-            this.list.tail = null;
+        insertion.prev = node.prev;
+        insertion.next = node;
+
+        node.prev !== null && (node.prev.next = insertion);
+        node.prev = insertion;
+
+        if (node === this.head) this.head = insertion;
+
+        this._size++;
+        return insertion;
+    }
+    insertAfter(node: LinkedListNode<T>, insertion: LinkedListNode<T>) {
+        this._assertIsProperNode(node, "node");
+        this._assertIsProperNode(insertion, "insertion");
+
+        insertion.next = node.next;
+        insertion.prev = node;
+
+        node.next !== null && (node.next.prev = insertion);
+        node.next = insertion;
+
+        if (node === this.tail) this.tail = insertion;
+
+        this._size++;
+        return insertion;
+    }
+    remove(node: LinkedListNode<T>) {
+        this._assertIsProperNode(node, "node");
+        node.prev !== null && (node.prev.next = node.next);
+        node.next !== null && (node.next.prev = node.prev);
+
+        if (this.size === 1) {
+            this.head = null;
+            this.tail = null;
         } else {
-            if (this === this.list.head) {
-                this.list.head = this.next;
+            if (node === this.head) {
+                this.head = node.next;
             }
-            if (this === this.list.tail) {
-                this.list.tail = this.prev;
+            if (node === this.tail) {
+                this.tail = node.prev;
             }
         }
-        this.list.size--;
-        this.prev = null;
-        this.next = null;
-        return this;
+        this._size--;
+        node.prev = null;
+        node.next = null;
+        return node;
     }
 }
