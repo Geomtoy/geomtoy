@@ -1,7 +1,5 @@
-import Angle from "./Angle";
 import Box from "./Box";
 import Coordinates from "./Coordinates";
-import Length from "./Length";
 import Size from "./Size";
 import Type from "./Type";
 import type { StaticClass } from "./types";
@@ -80,22 +78,7 @@ class Assert {
     }
     // #endregion
 
-    // #region Concept
-    static isAngle(v: any, p: string): asserts v is number {
-        if (!Angle.is(v)) {
-            throw new TypeError(`[G]The \`${p}\` should be an angle representing as a real number but got \`${v}\`.`);
-        }
-    }
-    static isLength(v: any, p: string): asserts v is number {
-        if (!Length.is(v)) {
-            throw new TypeError(`[G]The \`${p}\` should be a length representing as a non-negative real number but got \`${v}\`.`);
-        }
-    }
-    static isNonZeroLength(v: any, p: string): asserts v is number {
-        if (!Length.isNonZero(v)) {
-            throw new TypeError(`[G]The \`${p}\` should be a non-zero length representing as a positive real number but got \`${v}\`.`);
-        }
-    }
+    // #region Concept array structure
     static isCoordinates(v: any, p: string): asserts v is [number, number] {
         if (!Coordinates.is(v)) {
             throw new TypeError(`[G]The \`${p}\` should be a coordinates like \`[real number, real number]\` but got ${v}.`);

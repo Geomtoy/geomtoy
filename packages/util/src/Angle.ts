@@ -19,13 +19,6 @@ class Angle {
     static RAD2DEG = 180 / Maths.PI;
 
     /**
-     * Whether `v` is a valid angle.
-     * @param v
-     */
-    static is(v: any): v is number {
-        return Type.isRealNumber(v);
-    }
-    /**
      * Simplify angle `a` into $[0,2\pi)$.
      * @param a
      */

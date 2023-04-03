@@ -254,14 +254,14 @@ export default class Image extends Shape {
         return this._width;
     }
     set width(value) {
-        Assert.isNonZeroLength(value, "width");
+        Assert.isPositiveNumber(value, "width");
         this._setWidth(value);
     }
     get height() {
         return this._height;
     }
     set height(value) {
-        Assert.isNonZeroLength(value, "height");
+        Assert.isPositiveNumber(value, "height");
         this._setHeight(value);
     }
     get size() {
@@ -306,14 +306,14 @@ export default class Image extends Shape {
         return this._sourceWidth;
     }
     set sourceWidth(value) {
-        Assert.isNonZeroLength(value, "sourceWidth");
+        Assert.isPositiveNumber(value, "sourceWidth");
         this._setSourceWidth(value);
     }
     get sourceHeight() {
         return this._sourceHeight;
     }
     set sourceHeight(value) {
-        Assert.isNonZeroLength(value, "sourceHeight");
+        Assert.isPositiveNumber(value, "sourceHeight");
         this._setSourceHeight(value);
     }
     get sourceSize() {
