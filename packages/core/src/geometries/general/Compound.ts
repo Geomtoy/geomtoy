@@ -248,12 +248,21 @@ export default class Compound extends Geometry implements ParentShape {
         const g = new Graphics();
         const gg = new GeometryGraphic();
         gg.fillRule = this.fillRule;
-
-        this._items.forEach(item => {
-            const ig = item.getGraphics(viewport).graphics[0] as GeometryGraphic;
-            gg.commands.push(...ig.commands);
-        });
         g.append(gg);
+
+        for (const item of this._items) {
+            const ig = item.getGraphics(viewport).graphics;
+            if (ig.length === 0) continue;
+            else {
+                for (let i = 0, l = ig.length; i < l; i++) {
+                    if (i === 0) {
+                        gg.commands.push(...(ig[0] as GeometryGraphic).commands);
+                    } else {
+                        g.append(ig[i] as GeometryGraphic);
+                    }
+                }
+            }
+        }
         return g;
     }
     clone() {
