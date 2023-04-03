@@ -1,13 +1,21 @@
-import Maths from "./Maths";
 import Complex from "./Complex";
 import Float from "./Float";
 import Maths from "./Maths";
-import Type from "./Type";
-import Utility from "./Utility";
-import type { StaticClass, RootMultiplicity } from "./types";
 import { solve } from "./Polynomial.root";
+import Type from "./Type";
+import type { RootMultiplicity, StaticClass } from "./types";
+import Utility from "./Utility";
 
 const MAX_ROOT_FINDING_DEGREE = 100;
+
+function trimLeadingZero(p: number[]) {
+    while (p[0] === 0) p.shift();
+    return p;
+}
+function findFirstNonZero(p: number[]) {
+    return p.findIndex(n => n !== 0);
+}
+
 /*
 The polynomial here refers to the "univariate real polynomial". 
 */
@@ -23,31 +31,27 @@ class Polynomial {
     static is(v: any): v is number[] {
         return Type.isArray(v) && v.length > 0 && v.every(elem => Type.isRealNumber(elem));
     }
-
-    private static _standardize(p: number[]) {
-        while (p[0] === 0) p.shift();
-        if (p.length === 0) p[0] = 0;
-        return p;
-    }
     /**
      * Returns an empty array representing zero polynomial.
      */
     static zero() {
-        return [0];
+        return [];
     }
     /**
      * Whether polynomial `p` is a zero polynomial.
      * @param p
      */
     static isZero(p: number[]) {
-        return p.length === 1 && p[0] === 0;
+        const index = findFirstNonZero(p);
+        return index === -1;
     }
     /**
      * Whether polynomial `p` is a constant polynomial(including zero polynomial).
      * @param p
      */
     static isConstant(p: number[]) {
-        return p.length === 1;
+        const index = findFirstNonZero(p);
+        return index === -1 || index === p.length - 1;
     }
     /**
      * The coefficient of the term at `degree`(the exponent on the variable).
@@ -72,6 +76,11 @@ class Polynomial {
     static degree(p: number[]) {
         return p.length - 1;
     }
+
+    static standardizedDegree(p: number[]) {
+        const index = findFirstNonZero(p);
+        return index === -1 ? -1 : p.length - 1 - index;
+    }
     /**
      * Return a new polynomial of polynomial `p` with leading 0 trimmed.
      * @description
@@ -79,7 +88,7 @@ class Polynomial {
      * @param p
      */
     static standardize(p: number[]) {
-        return Polynomial._standardize([...p]);
+        return trimLeadingZero([...p]);
     }
     /**
      * Returns a new polynomial from `roots`.
@@ -94,17 +103,31 @@ class Polynomial {
      */
     static from(roots: (number | [number, number])[]) {
         const pc: [number, number][] = [[1, 0]];
-        const complexRoots = Utility.sortBy(
+
+        const complexRootsWithMultiplicity = Utility.sortBy(
             roots.filter((r): r is [number, number] => Complex.is(r) && Complex.imag(r) !== 0),
             [Complex.real, Complex.imag]
-        );
-        while (complexRoots.length > 0) {
-            const [a, b] = complexRoots;
-            if (b === undefined || !Utility.is(a, Complex.conjugate(b))) {
+        ).reduce((acc, c) => {
+            const [r, i] = c;
+            const index = acc.findIndex(ck => ck[0] === r && ck[1] === i);
+            if (index === -1) {
+                acc.push([r, i, 1]);
+            } else {
+                acc[index][2] += 1;
+            }
+            return acc;
+        }, [] as [real: number, imag: number, multiplicity: number][]);
+
+        while (complexRootsWithMultiplicity.length > 0) {
+            const [a, b] = complexRootsWithMultiplicity;
+            if (b === undefined) {
                 throw new Error("[G]The complex roots of a polynomial should be conjugate pairs.");
             }
-            complexRoots.shift();
-            complexRoots.shift();
+            if (a[0] !== b[0] || a[1] !== -b[1] || a[2] !== b[2]) {
+                throw new Error("[G]The complex roots of a polynomial should be conjugate pairs.");
+            }
+            complexRootsWithMultiplicity.shift();
+            complexRootsWithMultiplicity.shift();
         }
 
         roots.forEach((root, i) => {
@@ -132,7 +155,7 @@ class Polynomial {
         for (let j = 0; j <= d2; j++) {
             s[dm - d2 + j] += p2[j];
         }
-        return Polynomial._standardize(s);
+        return trimLeadingZero(s);
     }
     /**
      * Returns a new polynomial of subtracting `p1` by `p2`.
@@ -150,7 +173,7 @@ class Polynomial {
         for (let j = 0; j <= d2; j++) {
             d[dm - d2 + j] -= p2[j];
         }
-        return Polynomial._standardize(d);
+        return trimLeadingZero(d);
     }
     /**
      * Returns a new polynomial of multiplying `p1` by `p2`.
@@ -166,7 +189,7 @@ class Polynomial {
                 p[i + j] += p1[i] * p2[j];
             }
         }
-        return Polynomial._standardize(p);
+        return trimLeadingZero(p);
     }
     /**
      * Returns the quotient polynomial and remainder polynomial of dividing `p1` by `p2`.
@@ -188,7 +211,7 @@ class Polynomial {
                 r[i + j] -= q[i] * p2[j];
             }
         }
-        return [Polynomial._standardize(q), Polynomial._standardize(r.slice(dd))];
+        return [trimLeadingZero(q), trimLeadingZero(r.slice(dd))];
     }
 
     static pow(p: number[], n: number) {
@@ -245,7 +268,7 @@ class Polynomial {
             }
         }
         p.length--;
-        return p;
+        return trimLeadingZero(p);
     }
 
     /**
@@ -254,7 +277,7 @@ class Polynomial {
      * @param s
      */
     static scalarMultiply(p: number[], s: number) {
-        return Polynomial._standardize(p.map(c => c * s));
+        return trimLeadingZero(p.map(c => c * s));
     }
     /**
      * Returns the monic polynomial of polynomial `p`, in which the leading coefficient is 1.
@@ -390,9 +413,9 @@ class Polynomial {
      * - If the degree of polynomial of `p` is greater than 100, an `Error` will be thrown.
      * @param p
      */
-    static roots(p: number[]) {
+    static roots(p: number[], epsilon?: number) {
         if (Polynomial.isConstant(p)) {
-            console.warn("[G]Constant or zero polynomial does not have discrete roots.");
+            console.warn("[G]Constant polynomial does not have discrete roots.");
             return [];
         }
         const d = Polynomial.degree(p);
@@ -402,13 +425,17 @@ class Polynomial {
         const solutions: [number, number][] = [];
         solve(p, solutions);
         const roots: (number | [number, number])[] = [];
+
         for (let i = 1; i <= d; i++) {
-            if (Complex.imag(solutions[i]) === 0) roots.push(Complex.real(solutions[i]));
-            else roots.push(solutions[i]);
+            if (epsilon === undefined) {
+                if (Complex.imag(solutions[i]) === 0) roots.push(Complex.real(solutions[i]));
+                else roots.push(solutions[i]);
+            } else {
+                if (Float.equalTo(Complex.imag(solutions[i]), 0, epsilon)) roots.push(Complex.real(solutions[i]));
+                else roots.push(solutions[i]);
+            }
         }
         return Utility.sortBy(roots, [Complex.is, r => r]);
     }
-
-    // static interpolate() {}
 }
 export default Polynomial;
