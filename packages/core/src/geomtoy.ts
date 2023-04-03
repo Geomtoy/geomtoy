@@ -6,12 +6,12 @@ import { Options, PointAppearance, RecursivePartial } from "./types";
 const SCHEDULER_FLUSH_TIMEOUT = 1000; //1000ms
 const DEFAULT_OPTIONS: Options = {
     epsilon: {
-        epsilon: 2 ** -32, // coordinates, length, length square, size, etc. comparison
-        coefficientEpsilon: 2 ** -16, // polynomial, parametric equation, implicit function coefficient comparison
+        epsilon: 2 ** -26, // coordinates, length, length square, size, etc. comparison
+        coefficientEpsilon: 2 ** -22, // polynomial, parametric equation, implicit function coefficient comparison
         trigonometricEpsilon: 2 ** -16, // trigonometric function values comparison
         complexEpsilon: 2 ** -16, // complex parts comparison
-        timeEpsilon: 2 ** -10, // nth bezier time comparison
-        angleEpsilon: Maths.PI / 3600, // angle comparison
+        timeEpsilon: 2 ** -16, // nth bezier time comparison
+        angleEpsilon: Maths.PI / 72000, // angle comparison
         vectorEpsilon: 2 ** -14 // cross product, dot product etc comparison
     },
     graphics: {
