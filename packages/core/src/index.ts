@@ -54,12 +54,12 @@ export { SealedShapeArray, SealedShapeObject, ShapeArray, ShapeObject, SealedGeo
 
 import Dynamic from "./dynamic";
 import Inversion from "./inversion";
-import Relationship from "./relationship";
+import Intersection from "./intersection";
 import Transformation from "./transformation";
 import BooleanOperation from "./boolean-operation";
 
 /** @category Tool */
-export { Dynamic, Inversion, Relationship, Transformation, BooleanOperation };
+export { Dynamic, Inversion, Intersection, Transformation, BooleanOperation };
 
 import Graphics from "./graphics";
 import GeometryGraphic from "./graphics/GeometryGraphic";
