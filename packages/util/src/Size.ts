@@ -1,6 +1,5 @@
+import Float from "./Float";
 import Type from "./Type";
-import Maths from "./Maths";
-
 import type { StaticClass } from "./types";
 
 interface Size extends StaticClass {}
@@ -32,7 +31,7 @@ class Size {
      */
     static equalTo(s1: [number, number], s2: [number, number], epsilon?: number) {
         if (epsilon === undefined) return s1[0] === s2[0] && s1[1] === s2[1];
-        return Maths.equalTo(s1[0], s2[0], epsilon) && Maths.equalTo(s1[1], s2[1], epsilon);
+        return Float.equalTo(s1[0], s2[0], epsilon) && Float.equalTo(s1[1], s2[1], epsilon);
     }
     /**
      * The `width` parameter of size `s`.

@@ -1,9 +1,9 @@
-import type { StaticClass } from "./types";
-import Matrix3 from "./Matrix3";
+import Float from "./Float";
 import Maths from "./Maths";
-import Utility from "./Utility";
 import Matrix2 from "./Matrix2";
-import Coordinates from "./Coordinates";
+import Matrix3 from "./Matrix3";
+import type { StaticClass } from "./types";
+import Utility from "./Utility";
 import Vector2 from "./Vector2";
 
 interface TransformationMatrix extends StaticClass {}
@@ -26,7 +26,7 @@ class TransformationMatrix {
             // rank 0
             return 0;
         }
-        if (Maths.equalTo(Vector2.cross([a, b], [c, d]), 0, Number.EPSILON)) {
+        if (Float.equalTo(Vector2.cross([a, b], [c, d]), 0, Float.MACHINE_EPSILON)) {
             // rank 1
             return 1;
         }

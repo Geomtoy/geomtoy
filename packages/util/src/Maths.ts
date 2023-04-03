@@ -38,27 +38,6 @@ class Maths {
      * The square root of 2.
      */
     static SQRT2 = Math.SQRT2;
-    /**
-     * Unit roundoff
-     * @see https://en.wikipedia.org/wiki/Machine_epsilon
-     * "The IEEE standard does not define the terms machine epsilon and unit roundoff, so differing definitions of these terms are in use, which can cause some confusion."
-     * "This alternative definition is much more widespread outside academia: machine epsilon is the difference between 1 and the next larger floating point number."
-     * "By this definition, $\varepsilon$ equals the value of the unit in the last place relative to 1, i.e. $b^{-(p-1)}$ (where $b$ is the base of the floating point system and $p$ is the precision)
-     * and the unit roundoff is $u=\varepsilon/2$, assuming round-to-nearest mode, and $u=\varepsilon$, assuming round-by-chop."
-     * @see https://en.wikipedia.org/wiki/Round-off_error#Roundoff_error_under_different_rounding_rules
-     * "There are two common rounding rules, round-by-chop and round-to-nearest. The IEEE standard uses round-to-nearest."
-     */
-    static U = Number.EPSILON / 2;
-    // /**
-    //  * The tangent of the half of $\pi$, it is considered to be the maximum absolute value returned by a trigonometric functions to avoid `Infinity`.
-    //  * @note New added constant, not existed in `Math`.
-    //  */
-    // static TAN90 = Math.tan(Math.PI / 2); //16331239353195370
-    // /**
-    //  * The cotangent of the half of $\pi$, it is considered to be the minium absolute value returned by a trigonometric functions to avoid 0.
-    //  * @note New added constant, not existed in `Math`.
-    //  */
-    // static COT90 = 1 / Math.tan(Math.PI / 2); // 6.123233995736766e-17, and it is less than Number.EPSILON(=2.220446049250313e-16)
 
     // #region Trigonometric functions
     /*
@@ -255,19 +234,12 @@ class Maths {
 
     /**
      * Returns the arctangent with two numbers: `y` and `x`.
-     * @note Modified method, different from the one in `Math`.
+     * @see https://tc39.es/ecma262/#sec-math.atan2
+     * When `y` and `x` are respectively equal to `±0`, the value of `Math.atan2` is specified rather than calculated.
      * @param y
      * @param x
      */
-    /*
-    @see https://tc39.es/ecma262/#sec-math.atan2
-    When `y` and `x` are respectively equal to `±0`, the value of `Math.atan2` is specified rather than calculated,
-    but whether the result is 0 or `Math.PI`, these results are meaningless for the angle of zero vector.
-    The zero vector has no direction, so there is no angle.
-    So when `y` and `x` are respectively equal to `±0`, `Math.atan2` need return `NaN`(even there is an underflow).
-    */
     static atan2(y: number, x: number) {
-        // return y === 0 && x === 0 ? NaN : Math.atan2(y, x);
         return Math.atan2(y, x);
     }
     /**
@@ -399,24 +371,10 @@ class Maths {
     }
     /**
      * Returns the sign of number `n`.
-     * @note Modified method, different from the one in `Math`.
-     * @summary
-     * - If `epsilon` = `undefined`:
-     *      - If `n` < 0, then -1.
-     *      - If `n` = -0, then -0.
-     *      - If `n` = 0, then 0.
-     *      - If `n` > 0, then 1.
-     * - If `epsilon` != `undefined`:
-     *      - If `n` is in $[-\infty, -\varepsilon)$, then -1.
-     *      - If `n` is in $[-\varepsilon, 0)$, then -0.
-     *      - If `n` is in $[0, \varepsilon]$, then 0.
-     *      - If `n` is in $(\varepsilon, +\infty]$, then 1.
      * @param n
-     * @param epsilon
      */
-    static sign(n: number, epsilon?: number) {
-        if (epsilon === undefined) return Math.sign(n);
-        return (n < 0 ? -1 : 1) * Number(Math.abs(n) > epsilon);
+    static sign(n: number) {
+        return Math.sign(n);
     }
     /**
      * Returns the nearest 32-bit single precision float representation of number `n`.
@@ -470,10 +428,19 @@ class Maths {
         b = Math.abs(b);
         return (a * b) / Maths.gcd(a, b);
     }
-
+    /**
+     * Returns the sum of supplied numeric expressions `values`.
+     * @note New added method, not existed in `Math`.
+     * @param values
+     */
     static sum(...values: number[]) {
         return values.reduce((acc, v) => acc + v, 0);
     }
+    /**
+     * Returns the average of supplied numeric expressions `values`.
+     * @note New added method, not existed in `Math`.
+     * @param values
+     */
     static avg(...values: number[]) {
         return Maths.sum(...values) / values.length;
     }
@@ -502,99 +469,6 @@ class Maths {
     static clamp(n: number, l: number, u: number): number {
         if (l > u) [l, u] = [u, l];
         return n < l ? l : n > u ? u : n;
-    }
-    /**
-     * Whether number `n` between the lower bound `l` and the upper bound `u`.
-     * @note New added method, not existed in `Math`.
-     * @summary
-     * Interval description:
-     * - If `lowerOpen` = `false`, `upperOpen` = `false`, then the interval to check is $[l,u]$.
-     * - If `lowerOpen` = `true`, `upperOpen` = `false`, then the interval to check is $(l,u]$.
-     * - If `lowerOpen` = `false`, `upperOpen` = `true`, then the interval to check is $[l,u)$.
-     * - If `lowerOpen` = `true`, `upperOpen` = `true`, then the interval to check is $(l,u)$.
-     * @param n
-     * @param l
-     * @param u
-     */
-    static between(n: number, l: number, u: number, lowerOpen: boolean, upperOpen: boolean, epsilon: number) {
-        if (l > u) [l, u] = [u, l];
-        if (Number.isNaN(n)) return false;
-        return (lowerOpen ? Maths.greaterThan(n, l, epsilon) : !Maths.lessThan(n, l, epsilon)) && (upperOpen ? Maths.lessThan(n, u, epsilon) : !Maths.greaterThan(n, u, epsilon));
-    }
-    /**
-     * Floating point number comparison reference
-     * @see https://www.learncpp.com/cpp-tutorial/relational-operators-and-floating-point-comparisons/comment-page-2/
-     * @see https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
-     * @see http://stackoverflow.com/questions/17333/most-effective-way-for-float-and-double-comparison
-     * @see https://realtimecollisiondetection.net/blog/?p=89
-     *
-     * Conclusion:
-     * - Set parameter `epsilon` as `absEpsilon` and as `relEpsilon`, `absEpsilon` === `relEpsilon`.
-     * - Use `absEpsilon = epsilon`, check whether the difference between the two numbers is very close to 0(`[-epsilon, epsilon]`), mainly deal with the difference of the decimal part.
-     * - Use `relEpsilon = magnitude * epsilon`, mainly dealing with the difference of the integer part.
-     * - If two numbers is two small, if they are `equal`, but may not past the `relEpsilon` test.
-     * - If two numbers is two large, if they are `equal`, but may not past the `absEpsilon` test.
-     */
-
-    /**
-     * Whether number `a` is approximately equal to number `b`.
-     * @note New added method, not existed in `Math`.
-     * @param a
-     * @param b
-     * @param epsilon
-     */
-    static equalTo(a: number, b: number, epsilon: number) {
-        if (Number.isNaN(a) || Number.isNaN(b)) return false;
-        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a === b;
-        const diffAbs = Math.abs(a - b);
-        if (diffAbs <= epsilon) return true;
-        return diffAbs < Math.max(Math.abs(a), Math.abs(b)) * epsilon;
-    }
-    /**
-     * Whether number `a` is definitely greater than number `b`.
-     * @note New added method, not existed in `Math`.
-     * @param a
-     * @param b
-     * @param epsilon
-     */
-    static greaterThan(a: number, b: number, epsilon: number) {
-        if (Number.isNaN(a) || Number.isNaN(b)) return false;
-        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a > b;
-        const diff = a - b;
-        if (Math.abs(diff) <= epsilon) return false;
-        return a - b > Math.max(Math.abs(a), Math.abs(b)) * epsilon;
-    }
-    /**
-     * Whether number `a` is definitely less than number `b`.
-     * @note New added method, not existed in `Math`.
-     * @param a
-     * @param b
-     * @param epsilon
-     */
-    static lessThan(a: number, b: number, epsilon: number) {
-        if (Number.isNaN(a) || Number.isNaN(b)) return false;
-        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a < b;
-        const diff = b - a;
-        if (Math.abs(diff) <= epsilon) return false;
-        return b - a > Math.max(Math.abs(a), Math.abs(b)) * epsilon;
-    }
-    /**
-     * Approximately compare number `a` and number `b` with `epsilon`.
-     * @note New added method, not existed in `Math`.
-     * @summary
-     * - If number `a` is definitely less than number `b`, return -1.
-     * - If number `a` is approximately equal to number `b`, return 0.
-     * - If number `a` is definitely greater than number `b`, return 1.
-     * @param a
-     * @param b
-     * @param epsilon
-     */
-    static compare(a: number, b: number, epsilon: number) {
-        if (Number.isNaN(a) || Number.isNaN(b)) return NaN;
-        if (Math.abs(a) === Infinity || Math.abs(b) === Infinity) return a < b ? -1 : a > b ? 1 : 0;
-        const diff = a - b;
-        const r = Math.max(Math.abs(a), Math.abs(b)) * epsilon;
-        return Math.abs(diff) <= epsilon ? 0 : diff > r ? 1 : -diff > r ? -1 : 0;
     }
 }
 export default Maths;

@@ -1,5 +1,7 @@
 import Maths from "./Maths";
 import Complex from "./Complex";
+import Float from "./Float";
+import Maths from "./Maths";
 import Type from "./Type";
 import Utility from "./Utility";
 import type { StaticClass, RootMultiplicity } from "./types";
@@ -343,17 +345,17 @@ class Polynomial {
             const elem = rsCopy.shift()!;
 
             if (Complex.is(elem)) {
-                for (let i = 0, l = multipleComplex.length; i < l; i++) {
-                    if (Maths.equalTo(Complex.real(multipleComplex[i][0]), Complex.real(elem), epsilon) && Maths.equalTo(Complex.imag(multipleComplex[i][0]), Complex.imag(elem), epsilon)) {
-                        multipleComplex[i].push(elem as [number, number]);
+                for (let mc of multipleComplex) {
+                    if (Float.equalTo(Complex.real(mc[0]), Complex.real(elem), epsilon) && Float.equalTo(Complex.imag(mc[0]), Complex.imag(elem), epsilon)) {
+                        mc.push(elem as [number, number]);
                         continue main;
                     }
                 }
                 multipleComplex.push([elem]);
             } else {
-                for (let i = 0, l = multipleReal.length; i < l; i++) {
-                    if (Maths.equalTo(multipleReal[i][0], elem, epsilon)) {
-                        multipleReal[i].push(elem as number);
+                for (let mr of multipleReal) {
+                    if (Float.equalTo(mr[0], elem, epsilon)) {
+                        mr.push(elem as number);
                         continue main;
                     }
                 }

@@ -1,7 +1,6 @@
-import Type from "./Type";
 import Maths from "./Maths";
-import Coordinates from "./Coordinates";
-
+import Type from "./Type";
+import Float from "./Float";
 import type { StaticClass } from "./types";
 
 interface Box extends StaticClass {}
@@ -33,7 +32,7 @@ class Box {
      */
     static equalTo(b1: [number, number, number, number], b2: [number, number, number, number], epsilon?: number) {
         if (epsilon === undefined) return b1[0] === b2[0] && b1[1] === b2[1] && b1[2] === b2[2] && b1[3] === b2[3];
-        return Maths.equalTo(b1[0], b2[0], epsilon) && Maths.equalTo(b1[1], b2[1], epsilon) && Maths.equalTo(b1[2], b2[2], epsilon) && Maths.equalTo(b1[3], b2[3], epsilon);
+        return Float.equalTo(b1[0], b2[0], epsilon) && Float.equalTo(b1[1], b2[1], epsilon) && Float.equalTo(b1[2], b2[2], epsilon) && Float.equalTo(b1[3], b2[3], epsilon);
     }
     /**
      * The `x` parameter of box `b`.
@@ -146,7 +145,7 @@ class Box {
         if (epsilon === undefined) {
             return x > minX && x < maxX && y > minY && y < maxY;
         }
-        return Maths.between(x, minX, maxX, true, true, epsilon) && Maths.between(y, minY, maxY, true, true, epsilon);
+        return Float.between(x, minX, maxX, true, true, epsilon) && Float.between(y, minY, maxY, true, true, epsilon);
     }
     static coordinatesOutside(c: [number, number], b: [number, number, number, number], epsilon?: number) {
         if (Box.isZero(b)) return false;
@@ -155,7 +154,7 @@ class Box {
         if (epsilon === undefined) {
             return x < minX || x > maxX || y < minY || y > maxY;
         }
-        return Maths.lessThan(x, minX, epsilon) || Maths.greaterThan(x, maxX, epsilon) || Maths.lessThan(y, minY, epsilon) || Maths.greaterThan(y, maxY, epsilon);
+        return Float.lessThan(x, minX, epsilon) || Float.greaterThan(x, maxX, epsilon) || Float.lessThan(y, minY, epsilon) || Float.greaterThan(y, maxY, epsilon);
     }
     static coordinatesOn(c: [number, number], b: [number, number, number, number], epsilon?: number) {
         if (Box.isZero(b)) return false;
@@ -187,10 +186,10 @@ class Box {
         } else {
             //prettier-ignore
             if (
-                !Maths.greaterThan(nx1, nx2,epsilon) &&
-                !Maths.greaterThan(ny1, ny2, epsilon) &&
-                !Maths.lessThan(mx1, mx2, epsilon) &&
-                !Maths.lessThan(my1, my2, epsilon)
+                !Float.greaterThan(nx1, nx2,epsilon) &&
+                !Float.greaterThan(ny1, ny2, epsilon) &&
+                !Float.lessThan(mx1, mx2, epsilon) &&
+                !Float.lessThan(my1, my2, epsilon)
             )  
                 return true;
             return false;
@@ -211,10 +210,10 @@ class Box {
         } else {
             //prettier-ignore
             if (
-                !Maths.greaterThan(nx1, mx2,epsilon) &&
-                !Maths.lessThan(mx1, nx2, epsilon) &&
-                !Maths.greaterThan(ny1, my2, epsilon) &&
-                !Maths.lessThan(my1, ny2, epsilon)
+                !Float.greaterThan(nx1, mx2,epsilon) &&
+                !Float.lessThan(mx1, nx2, epsilon) &&
+                !Float.greaterThan(ny1, my2, epsilon) &&
+                !Float.lessThan(my1, ny2, epsilon)
             )  
                 return true;
             return false;

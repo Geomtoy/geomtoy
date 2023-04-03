@@ -1,6 +1,5 @@
+import Float from "./Float";
 import Type from "./Type";
-import Maths from "./Maths";
-
 import type { StaticClass } from "./types";
 
 interface Coordinates extends StaticClass {}
@@ -26,7 +25,7 @@ class Coordinates {
      */
     static equalTo(c1: [number, number], c2: [number, number], epsilon?: number) {
         if (epsilon === undefined) return c1[0] === c2[0] && c1[1] === c2[1];
-        return Maths.equalTo(c1[0], c2[0], epsilon) && Maths.equalTo(c1[1], c2[1], epsilon);
+        return Float.equalTo(c1[0], c2[0], epsilon) && Float.equalTo(c1[1], c2[1], epsilon);
     }
     /**
      * The `x` coordinate of coordinates `c`.

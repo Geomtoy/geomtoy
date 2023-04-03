@@ -1,3 +1,4 @@
+import Float from "./Float";
 import Maths from "./Maths";
 import Type from "./Type";
 
@@ -30,7 +31,7 @@ class Angle {
      */
     static simplify(a: number) {
         const t = a % (2 * Maths.PI);
-        return t < -Number.EPSILON ? t + 2 * Maths.PI : Maths.abs(t) < Number.EPSILON ? 0 : t; // - Number.EPSILON / 2 + 2 * Maths.PI === 2 * Maths.PI
+        return t < -Float.MACHINE_EPSILON ? t + 2 * Maths.PI : Maths.abs(t) <= Float.MACHINE_EPSILON ? 0 : t; // - (2 ** -52) + 2 * Maths.PI === 2 * Maths.PI
     }
     /**
      * Simplify angle `a` into $(-\pi,\pi]$.
@@ -101,7 +102,7 @@ class Angle {
         a = Angle.simplify(a);
         b = Angle.simplify(b);
         if (epsilon === undefined) return a === b;
-        return Maths.equalTo(a, b, epsilon);
+        return Float.absEqualTo(a, b, epsilon);
     }
     /**
      * Clamp angle `a` into the `positive`(or not) sweep interval between start angle `s` and end angle `e`.
@@ -142,9 +143,9 @@ class Angle {
         }
 
         if (s > e) {
-            return (startOpen ? Maths.greaterThan(a, s, epsilon) : !Maths.lessThan(a, s, epsilon)) || (endOpen ? Maths.lessThan(a, e, epsilon) : !Maths.greaterThan(a, e, epsilon));
+            return (startOpen ? Float.absGreaterThan(a, s, epsilon) : !Float.absLessThan(a, s, epsilon)) || (endOpen ? Float.absLessThan(a, e, epsilon) : !Float.absGreaterThan(a, e, epsilon));
         } else {
-            return Maths.between(a, s, e, startOpen, endOpen, epsilon);
+            return (startOpen ? Float.absGreaterThan(a, s, epsilon) : !Float.absLessThan(a, s, epsilon)) && (endOpen ? Float.absLessThan(a, e, epsilon) : !Float.absGreaterThan(a, e, epsilon));
         }
     }
 }

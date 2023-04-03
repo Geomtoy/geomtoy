@@ -1,4 +1,3 @@
-import Maths from "./Maths";
 import type { StaticClass } from "./types";
 
 interface Matrix2 extends StaticClass {}
