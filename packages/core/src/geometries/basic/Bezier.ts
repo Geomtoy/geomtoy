@@ -269,8 +269,8 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         ];
         // prettier-ignore
         let tRoots = [
-            ...(!Polynomial.isConstant(polyXD) ? Polynomial.roots(polyXD) : []),
-            ...(!Polynomial.isConstant(polyYD) ? Polynomial.roots(polyYD) : [])
+            ...(!Polynomial.isConstant(polyXD) ? Polynomial.roots(polyXD, eps.complexEpsilon) : []),
+            ...(!Polynomial.isConstant(polyYD) ? Polynomial.roots(polyYD, eps.complexEpsilon) : [])
         ].filter(Type.isNumber);
         tRoots = Utility.uniqWith(tRoots, (a, b) => Maths.equalTo(a, b, eps.timeEpsilon));
 
@@ -683,14 +683,14 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         if (Polynomial.isConstant(xPoly)) {
             if (!Maths.equalTo(Polynomial.coef(xPoly, 0), 0, eps.coefficientEpsilon)) return [];
         } else {
-            xRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(xPoly).filter(Type.isNumber), eps.timeEpsilon);
+            xRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(xPoly, eps.complexEpsilon).filter(Type.isNumber), eps.timeEpsilon);
             if (xRootsM.length === 0) return [];
         }
 
         if (Polynomial.isConstant(yPoly)) {
             if (!Maths.equalTo(Polynomial.coef(yPoly, 0), 0, eps.coefficientEpsilon)) return [];
         } else {
-            yRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(yPoly).filter(Type.isNumber), eps.timeEpsilon);
+            yRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(yPoly, eps.complexEpsilon).filter(Type.isNumber), eps.timeEpsilon);
             if (yRootsM.length === 0) return [];
         }
 
@@ -828,7 +828,12 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
     }
     splitAtTime(t: number) {
         t = this._clampTime(t, "t");
-        return [this.portionOfExtend(0, t), this.portionOfExtend(t, 1)] as [Bezier, Bezier];
+        const portion1 = this.portionOfExtend(0, t);
+        const portion2 = this.portionOfExtend(t, 1);
+        // Do this to get better precision.
+        portion1.point1Coordinates = this.point1Coordinates;
+        portion2.point2Coordinates = this.point2Coordinates;
+        return [portion1, portion2] as [Bezier, Bezier];
     }
     splitAtTimes(ts: number[]) {
         ts = ts.map(t => this._clampTime(t, "element of ts"));
@@ -842,6 +847,12 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
                 ret.push(this.portionOfExtend(arr[index], arr[index + 1]));
             }
         });
+        // Do this to get better precision.
+        ret[0].point1Coordinates = this.point1Coordinates;
+        ret[ret.length - 1].point2Coordinates = this.point2Coordinates;
+        for (let i = 1, l = ret.length; i < l; i++) {
+            ret[i].point1Coordinates = ret[i - 1].point2Coordinates;
+        }
         return ret;
     }
     portionOf(t1: number, t2: number) {

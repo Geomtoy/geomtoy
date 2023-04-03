@@ -510,10 +510,12 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     splitAtAngle(a: number) {
         a = this._clampAngle(a, "a");
         const { centerX, centerY, startAngle, endAngle } = this._centerParameterization();
-        return [
-            Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, startAngle, a, this.positive, this.rotation),
-            Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a, endAngle, this.positive, this.rotation)
-        ];
+        const portion1 = Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, startAngle, a, this.positive, this.rotation);
+        const portion2 = Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a, endAngle, this.positive, this.rotation);
+        // Do this to get better precision.
+        portion1.point1Coordinates = this.point1Coordinates;
+        portion2.point2Coordinates = this.point2Coordinates;
+        return [portion1, portion2] as [Arc, Arc];
     }
     splitAtAngles(as: number[]) {
         const [sa, ea] = this.getStartEndAngles();
@@ -526,7 +528,12 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
                 ret.push(Arc.fromCenterPointAndStartEndAnglesEtc(cc, this.radiusX, this.radiusY, arr[index], arr[index + 1], this.positive, this.rotation));
             }
         });
-        return ret;
+        // Do this to get better precision.
+        ret[0].point1Coordinates = this.point1Coordinates;
+        ret[ret.length - 1].point2Coordinates = this.point2Coordinates;
+        for (let i = 1, l = ret.length; i < l; i++) {
+            ret[i].point1Coordinates = ret[i - 1].point2Coordinates;
+        }
     }
     portionOf(a1: number, a2: number) {
         a1 = this._clampAngle(a1, "a1");
@@ -536,6 +543,8 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         return Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a1, a2, this.positive, this.rotation);
     }
     portionOfExtend(a1: number, a2: number) {
+        Assert.isRealNumber(a1, "t1");
+        Assert.isRealNumber(a2, "t2");
         const { centerX, centerY } = this._centerParameterization();
         [a1, a2] = this._anglesOrder([a1, a2]);
         return Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a1, a2, this.positive, this.rotation);

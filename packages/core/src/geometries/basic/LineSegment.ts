@@ -341,25 +341,34 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
                 ret.push(this.portionOfExtend(arr[index], arr[index + 1]));
             }
         });
+        // Do this to get better precision.
+        ret[0].point1Coordinates = this.point1Coordinates;
+        ret[ret.length - 1].point2Coordinates = this.point2Coordinates;
+        for (let i = 1, l = ret.length; i < l; i++) {
+            ret[i].point1Coordinates = ret[i - 1].point2Coordinates;
+        }
         return ret;
     }
 
     splitAtTime(t: number) {
-        Assert.condition(Maths.between(t, 0, 1, true, true, eps.timeEpsilon), "[G]The `t` should be a number between 0(not including) and 1(not including).");
-        return [this.portionOfExtend(0, t), this.portionOfExtend(t, 1)] as [LineSegment, LineSegment];
+        t = this._clampTime(t, "t");
+        const portion1 = this.portionOfExtend(0, t);
+        const portion2 = this.portionOfExtend(t, 1);
+        // Do this to get better precision.
+        portion1.point1Coordinates = this.point1Coordinates;
+        portion2.point2Coordinates = this.point2Coordinates;
+        return [portion1, portion2] as [LineSegment, LineSegment];
     }
 
     portionOf(t1: number, t2: number) {
-        Assert.condition(Maths.between(t1, 0, 1, false, false, eps.timeEpsilon), "[G]The `t1` should be a number between 0(including) and 1(including).");
-        Assert.condition(Maths.between(t2, 0, 1, false, false, eps.timeEpsilon), "[G]The `t2` should be a number between 0(including) and 1(including).");
-        Assert.condition(!Maths.equalTo(t1, t2, eps.timeEpsilon), "[G]The `t1` and `t2` should not be equal.");
+        t1 = this._clampTime(t1, "t1");
+        t2 = this._clampTime(t2, "t2");
         return this.portionOfExtend(t1, t2);
     }
 
     portionOfExtend(t1: number, t2: number) {
         Assert.isRealNumber(t1, "t1");
         Assert.isRealNumber(t2, "t2");
-        Assert.condition(!Maths.equalTo(t1, t2, eps.timeEpsilon), "[G]The `t1` and `t2` should not be equal.");
 
         if (t1 > t2) [t1, t2] = [t2, t1];
         const [polyX, polyY] = this.getPolynomial();
