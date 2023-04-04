@@ -156,7 +156,7 @@ export default class Intersector {
             segment =>
                 new MonoSegment({
                     segment,
-                    trajectoryId: monoSegment.trajectoryId,
+                    trajectoryID: monoSegment.trajectoryID,
                     isPrimary: monoSegment.isPrimary,
                     origin: monoSegment.origin,
 

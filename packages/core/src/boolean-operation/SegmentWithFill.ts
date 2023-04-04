@@ -1,5 +1,5 @@
 import { BasicSegment } from "../types";
-import TrajectoryId from "./TrajectoryId";
+import TrajectoryID from "./TrajectoryID";
 
 export default class SegmentWithFill {
     thisFill = {
@@ -16,11 +16,14 @@ export default class SegmentWithFill {
         // Record the coincident segment with common trajectory.
         // Then when chaining, they are considered to be on the same trajectory and can be combined if their fill are the same.
         // Note: segments that do not originate from the same origin can be on the same trajectory.
-        public readonly trajectoryId: TrajectoryId
+        public readonly trajectoryID: TrajectoryID
     ) {}
 
-    superClone(): SegmentWithFill {
-        throw new Error("[G]This method should be implemented by the derivative classes.");
+    superClone() {
+        const ret = new SegmentWithFill(this.segment.clone(), this.trajectoryID.clone());
+        ret.thisFill = { ...this.thisFill };
+        ret.thatFill = { ...this.thatFill };
+        return ret;
     }
 
     reverse() {

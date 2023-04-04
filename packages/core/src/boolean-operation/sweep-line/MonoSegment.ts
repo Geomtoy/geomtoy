@@ -1,6 +1,6 @@
 import { BasicSegment } from "../../types";
 import SegmentWithFill from "../SegmentWithFill";
-import TrajectoryId from "../TrajectoryId";
+import TrajectoryID from "../TrajectoryID";
 import { compareX, compareY } from "./util";
 
 // This like a segment data while we do sweep line algorithm.
@@ -59,7 +59,7 @@ export default class MonoSegment extends SegmentWithFill {
 
     constructor({
         segment,
-        trajectoryId,
+        trajectoryID,
         isPrimary,
         origin,
 
@@ -70,7 +70,7 @@ export default class MonoSegment extends SegmentWithFill {
         isVertical
     }: {
         segment: BasicSegment;
-        trajectoryId: TrajectoryId;
+        trajectoryID: TrajectoryID;
         isPrimary: boolean;
         origin: BasicSegment;
 
@@ -80,7 +80,7 @@ export default class MonoSegment extends SegmentWithFill {
         transposed?: boolean;
         isVertical?: boolean;
     }) {
-        super(segment, trajectoryId);
+        super(segment, trajectoryID);
         this.isPrimary = isPrimary;
         this.origin = origin;
 
@@ -122,12 +122,5 @@ export default class MonoSegment extends SegmentWithFill {
             this.enterCoordinates = this.transposed ? c2 : c1;
             this.leaveCoordinates = this.transposed ? c1 : c2;
         }
-    }
-
-    override superClone() {
-        const ret = new SegmentWithFill(this.segment.clone(), this.trajectoryId.clone());
-        ret.thisFill = { ...this.thisFill };
-        ret.thatFill = { ...this.thatFill };
-        return ret;
     }
 }

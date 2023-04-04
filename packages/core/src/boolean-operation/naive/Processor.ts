@@ -1,4 +1,4 @@
-import { Angle, Coordinates, Maths, Utility } from "@geomtoy/util";
+import { Angle, Coordinates, Float, Utility } from "@geomtoy/util";
 import Arc from "../../geometries/basic/Arc";
 import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
@@ -6,7 +6,7 @@ import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import { eps } from "../../geomtoy";
 import FillRuleHelper from "../../helper/FillRuleHelper";
 import { FillDescription, FillRule, GeneralGeometry } from "../../types";
-import TrajectoryId from "../TrajectoryId";
+import TrajectoryID from "../TrajectoryID";
 import ChipSegment from "./ChipSegment";
 import Intersector from "./Intersector";
 
@@ -37,11 +37,12 @@ export default class Processor {
         return [
             new ChipSegment({
                 segment: lineSegment,
-                trajectoryId: new TrajectoryId(lineSegment.id)
+                trajectoryID: new TrajectoryID(lineSegment.id)
             })
         ];
     }
     private _chipQuadraticBezier(quadraticBezier: QuadraticBezier) {
+        // handle degenerate
         const dg = quadraticBezier.degenerate(false);
         if (dg instanceof LineSegment) {
             return this._chipLineSegment(dg);
@@ -51,7 +52,7 @@ export default class Processor {
         if (quadraticBezier.isDoubleLine()) {
             const extrema = quadraticBezier
                 .extrema()
-                .filter(([, t]) => Maths.between(t, 0, 1, true, true, eps.timeEpsilon))
+                .filter(([, t]) => Float.between(t, 0, 1, true, true, eps.timeEpsilon))
                 .map(([p]) => p);
             let points = [quadraticBezier.point1, ...extrema, quadraticBezier.point2];
             // Quadratic bezier sometimes goes very ugly, the control point coincides with one of the endpoints, and it is still a double line.
@@ -66,11 +67,13 @@ export default class Processor {
         return [
             new ChipSegment({
                 segment: quadraticBezier,
-                trajectoryId: new TrajectoryId(quadraticBezier.id)
+                trajectoryID: new TrajectoryID(quadraticBezier.id)
             })
         ];
     }
+
     private _chipBezier(bezier: Bezier) {
+        // handle degenerate
         const dg = bezier.degenerate(false);
         if (dg instanceof LineSegment) {
             return this._chipLineSegment(dg);
@@ -80,10 +83,13 @@ export default class Processor {
         }
 
         // handle bezier self-intersection
-        const tsi = bezier.selfIntersection().filter(t => Maths.between(t, 0, 1, true, true, eps.timeEpsilon));
+        const tsi = bezier.selfIntersection().filter(t => Float.between(t, 0, 1, true, true, eps.timeEpsilon));
         if (tsi.length !== 0) {
             const chips = bezier.splitAtTimes(tsi).map(bezier => {
-                return new ChipSegment({ segment: bezier, trajectoryId: new TrajectoryId(bezier.id) });
+                return new ChipSegment({
+                    segment: bezier,
+                    trajectoryID: new TrajectoryID(bezier.id)
+                });
             });
             return chips;
         }
@@ -91,7 +97,7 @@ export default class Processor {
         if (bezier.isTripleLine()) {
             const extrema = bezier
                 .extrema()
-                .filter(([, t]) => Maths.between(t, 0, 1, true, true, eps.timeEpsilon))
+                .filter(([, t]) => Float.between(t, 0, 1, true, true, eps.timeEpsilon))
                 .map(([p]) => p);
             let points = [bezier.point1, ...extrema, bezier.point2];
             // Bezier sometimes goes very ugly, the control points coincide with one of the endpoints, and it is still a triple line.
@@ -106,11 +112,12 @@ export default class Processor {
         return [
             new ChipSegment({
                 segment: bezier,
-                trajectoryId: new TrajectoryId(bezier.id)
+                trajectoryID: new TrajectoryID(bezier.id)
             })
         ];
     }
     private _chipArc(arc: Arc) {
+        // handle degenerate
         const dg = arc.degenerate(false);
         if (dg instanceof LineSegment) {
             return this._chipLineSegment(dg);
@@ -118,7 +125,7 @@ export default class Processor {
         return [
             new ChipSegment({
                 segment: arc,
-                trajectoryId: new TrajectoryId(arc.id)
+                trajectoryID: new TrajectoryID(arc.id)
             })
         ];
     }
@@ -152,7 +159,7 @@ export default class Processor {
     }
     private _deduplicate(chips: ChipSegment[]) {
         return Utility.uniqWith(chips, (a, b) => {
-            if (a.trajectoryId.equalTo(b.trajectoryId)) {
+            if (a.trajectoryID.equalTo(b.trajectoryID)) {
                 const [acn, acm] = this._sortCoordinates(a.segment.point1Coordinates, a.segment.point2Coordinates);
                 const [bcn, bcm] = this._sortCoordinates(b.segment.point1Coordinates, b.segment.point2Coordinates);
                 return Coordinates.equalTo(acn, bcn, eps.epsilon) && Coordinates.equalTo(acm, bcm, eps.epsilon);
@@ -162,17 +169,11 @@ export default class Processor {
     }
 
     private _express(chips: ChipSegment[], fillRule: FillRule) {
-        let aIsLineSegment = false;
-        let bIsLineSegment = false;
         // Step 1: Get all split params.
         for (let i = 0, m = chips.length - 1; i < m; i++) {
             const a = chips[i];
-            aIsLineSegment = a.segment instanceof LineSegment;
             for (let j = i + 1, n = chips.length; j < n; j++) {
                 const b = chips[j];
-                bIsLineSegment = a.segment instanceof LineSegment;
-                // Two consecutive line segments do not need to checked.
-                if (aIsLineSegment && bIsLineSegment) continue;
                 const { paramsA, paramsB } = this.intersector.result(a, b);
                 a.params.push(...paramsA);
                 b.params.push(...paramsB);
@@ -184,7 +185,7 @@ export default class Processor {
         chips.forEach(chip => {
             if (chip.params.length !== 0) {
                 const params = Utility.uniqWith(chip.params, (a, b) => {
-                    return chip.segment instanceof Arc ? Angle.equalTo(a, b, eps.angleEpsilon) : Maths.equalTo(a, b, eps.timeEpsilon);
+                    return chip.segment instanceof Arc ? Angle.equalTo(a, b, eps.angleEpsilon) : Float.equalTo(a, b, eps.timeEpsilon);
                 });
                 const portions = this.intersector.splitChipSegment(chip, params);
                 portions.forEach(portion => {
@@ -212,7 +213,7 @@ export default class Processor {
         expressedChipsA.forEach(chip => {
             if (chip.params.length !== 0) {
                 const params = Utility.uniqWith(chip.params, (a, b) => {
-                    return chip.segment instanceof Arc ? Angle.equalTo(a, b, eps.angleEpsilon) : Maths.equalTo(a, b, eps.timeEpsilon);
+                    return chip.segment instanceof Arc ? Angle.equalTo(a, b, eps.angleEpsilon) : Float.equalTo(a, b, eps.timeEpsilon);
                 });
                 const portions = this.intersector.splitChipSegment(chip, params);
                 portions.forEach(portion => {
@@ -229,7 +230,7 @@ export default class Processor {
         expressedChipsB.forEach(chip => {
             if (chip.params.length !== 0) {
                 const params = Utility.uniqWith(chip.params, (a, b) => {
-                    return chip.segment instanceof Arc ? Angle.equalTo(a, b, eps.angleEpsilon) : Maths.equalTo(a, b, eps.timeEpsilon);
+                    return chip.segment instanceof Arc ? Angle.equalTo(a, b, eps.angleEpsilon) : Float.equalTo(a, b, eps.timeEpsilon);
                 });
                 const portions = this.intersector.splitChipSegment(chip, params);
                 portions.forEach(portion => {
@@ -247,10 +248,7 @@ export default class Processor {
         });
         return ret;
     }
-    private _log: [] = [];
-    getLog() {
-        return this._log;
-    }
+
     describe(ggA: GeneralGeometry, ggB?: GeneralGeometry): FillDescription {
         const chipsA = this._preprocess(ggA);
         const expressedA = this._express(chipsA, ggA.fillRule);

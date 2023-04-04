@@ -1,11 +1,11 @@
-import { Angle, Coordinates, Maths, Polynomial, Type, Utility } from "@geomtoy/util";
+import { Angle, Coordinates, Float, Maths, Polynomial, Type, Utility } from "@geomtoy/util";
 import Arc from "../../geometries/basic/Arc";
 import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import { eps } from "../../geomtoy";
 import { FillDescription, GeneralGeometry } from "../../types";
-import TrajectoryId from "../TrajectoryId";
+import TrajectoryID from "../TrajectoryID";
 import MonoSegment from "./MonoSegment";
 import SweepLine from "./SweepLine";
 
@@ -38,7 +38,7 @@ export default class Processor {
                 segment: lineSegment,
                 isPrimary,
                 origin: lineSegment,
-                trajectoryId: new TrajectoryId(lineSegment.id)
+                trajectoryID: new TrajectoryID(lineSegment.id)
             })
         ];
     }
@@ -62,7 +62,7 @@ export default class Processor {
                     segment: arc,
                     isPrimary,
                     origin: arc,
-                    trajectoryId: new TrajectoryId(arc.id)
+                    trajectoryID: new TrajectoryID(arc.id)
                 })
             ];
         }
@@ -73,7 +73,7 @@ export default class Processor {
                 segment,
                 isPrimary,
                 origin: arc,
-                trajectoryId: new TrajectoryId(arc.id)
+                trajectoryID: new TrajectoryID(arc.id)
             });
         });
         return monos;
@@ -90,7 +90,7 @@ export default class Processor {
         if (quadraticBezier.isDoubleLine()) {
             const extrema = quadraticBezier
                 .extrema()
-                .filter(([, t]) => Maths.between(t, 0, 1, true, true, eps.timeEpsilon))
+                .filter(([, t]) => Float.between(t, 0, 1, true, true, eps.timeEpsilon))
                 .map(([p]) => p);
             let points = [quadraticBezier.point1, ...extrema, quadraticBezier.point2];
             // Quadratic bezier sometimes goes very ugly, the control point coincides with one of the endpoints, and it is still a double line.
@@ -105,14 +105,14 @@ export default class Processor {
 
         const [polyX] = quadraticBezier.getPolynomial();
         const polyXD = Polynomial.standardize(Polynomial.derivative(polyX));
-        const xTRoots = Polynomial.roots(polyXD).filter((t): t is number => Type.isNumber(t) && Maths.between(t, 0, 1, true, true, eps.timeEpsilon));
+        const xTRoots = Polynomial.roots(polyXD).filter((t): t is number => Type.isNumber(t) && Float.between(t, 0, 1, true, true, eps.timeEpsilon));
         if (xTRoots.length === 0) {
             return [
                 new MonoSegment({
                     segment: quadraticBezier,
                     isPrimary,
                     origin: quadraticBezier,
-                    trajectoryId: new TrajectoryId(quadraticBezier.id)
+                    trajectoryID: new TrajectoryID(quadraticBezier.id)
                 })
             ];
         }
@@ -123,7 +123,7 @@ export default class Processor {
                 segment,
                 isPrimary,
                 origin: quadraticBezier,
-                trajectoryId: new TrajectoryId(quadraticBezier.id)
+                trajectoryID: new TrajectoryID(quadraticBezier.id)
             });
         });
         return monos;
@@ -141,7 +141,7 @@ export default class Processor {
 
         if (!selfIntersectionHandled) {
             const ret: MonoSegment[] = [];
-            const tsi = bezier.selfIntersection();
+            const tsi = bezier.selfIntersection().filter(t => Float.between(t, 0, 1, true, true, eps.timeEpsilon));
             if (tsi.length !== 0) {
                 bezier.splitAtTimes(tsi).forEach(s => ret.push(...this._monoBezier(s, isPrimary, true)));
                 return ret;
@@ -152,7 +152,7 @@ export default class Processor {
         if (bezier.isTripleLine()) {
             const extrema = bezier
                 .extrema()
-                .filter(([, t]) => Maths.between(t, 0, 1, true, true, eps.timeEpsilon))
+                .filter(([, t]) => Float.between(t, 0, 1, true, true, eps.timeEpsilon))
                 .map(([p]) => p);
             let points = [bezier.point1, ...extrema, bezier.point2];
             // Bezier sometimes goes very ugly, the control points coincide with one of the endpoints, and it is still a triple line.
@@ -167,14 +167,14 @@ export default class Processor {
         // common case
         const [polyX] = bezier.getPolynomial();
         const polyXD = Polynomial.standardize(Polynomial.derivative(polyX));
-        const xTRoots = Polynomial.roots(polyXD).filter((t): t is number => Type.isNumber(t) && Maths.between(t, 0, 1, true, true, eps.timeEpsilon));
+        const xTRoots = Polynomial.roots(polyXD).filter((t): t is number => Type.isNumber(t) && Float.between(t, 0, 1, true, true, eps.timeEpsilon));
         if (xTRoots.length === 0) {
             return [
                 new MonoSegment({
                     segment: bezier,
                     isPrimary,
                     origin: bezier,
-                    trajectoryId: new TrajectoryId(bezier.id)
+                    trajectoryID: new TrajectoryID(bezier.id)
                 })
             ];
         }
@@ -185,7 +185,7 @@ export default class Processor {
                 segment,
                 isPrimary,
                 origin: bezier,
-                trajectoryId: new TrajectoryId(bezier.id)
+                trajectoryID: new TrajectoryID(bezier.id)
             });
         });
         return monos;

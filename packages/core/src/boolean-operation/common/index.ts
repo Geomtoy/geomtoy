@@ -1,4 +1,4 @@
-import { Angle, Coordinates, Maths } from "@geomtoy/util";
+import { Angle, Coordinates, Float } from "@geomtoy/util";
 import Arc from "../../geometries/basic/Arc";
 import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
@@ -27,7 +27,7 @@ export function calcIntersection(
     const inter = prepareIntersection(swfA, swfB);
     // [n] degree bezier vs [n] degree bezier
     if (inter.type === "nn") {
-        return nn(inter.intersection, () => swfA.trajectoryId.negotiate(swfB.trajectoryId));
+        return nn(inter.intersection, () => swfA.trajectoryID.negotiate(swfB.trajectoryID));
     }
     // [m] degree bezier vs [n] degree bezier
     if (inter.type === "mn") {
@@ -39,7 +39,7 @@ export function calcIntersection(
     }
     // [a]rc vs [a]rc
     if (inter.type === "aa") {
-        return aa(inter.intersection, () => swfA.trajectoryId.negotiate(swfB.trajectoryId));
+        return aa(inter.intersection, () => swfA.trajectoryID.negotiate(swfB.trajectoryID));
     }
     throw new Error("[G]Impossible.");
 }
@@ -175,7 +175,7 @@ function nn(inter: LineSegmentLineSegment | QuadraticBezierQuadraticBezier | Bez
         if (inter instanceof BezierBezier) {
             const ahc = inter.geometry1.getPointAtTime(0.5).coordinates;
             const bhc = inter.geometry2.getPointAtTime(0.5).coordinates;
-            if (Maths.equalTo(ait, 0, eps.timeEpsilon) && Maths.equalTo(att, 1, eps.timeEpsilon)) {
+            if (Float.equalTo(ait, 0, eps.timeEpsilon) && Float.equalTo(att, 1, eps.timeEpsilon)) {
                 if (Coordinates.equalTo(ahc, bhc, eps.epsilon)) {
                     return ret; //equal
                 } else {
@@ -184,20 +184,20 @@ function nn(inter: LineSegmentLineSegment | QuadraticBezierQuadraticBezier | Bez
                 }
             }
         } else {
-            if (Maths.equalTo(ait, 0, eps.timeEpsilon) && Maths.equalTo(att, 1, eps.timeEpsilon)) {
+            if (Float.equalTo(ait, 0, eps.timeEpsilon) && Float.equalTo(att, 1, eps.timeEpsilon)) {
                 return ret; //equal
             }
         }
 
-        if (Maths.between(a1t, 0, 1, true, true, eps.timeEpsilon)) ret.paramsB.push(a1t);
-        if (Maths.between(a2t, 0, 1, true, true, eps.timeEpsilon)) ret.paramsB.push(a2t);
-        if (Maths.between(b1t, 0, 1, true, true, eps.timeEpsilon)) ret.paramsA.push(b1t);
-        if (Maths.between(b2t, 0, 1, true, true, eps.timeEpsilon)) ret.paramsA.push(b2t);
+        if (Float.between(a1t, 0, 1, true, true, eps.timeEpsilon)) ret.paramsB.push(a1t);
+        if (Float.between(a2t, 0, 1, true, true, eps.timeEpsilon)) ret.paramsB.push(a2t);
+        if (Float.between(b1t, 0, 1, true, true, eps.timeEpsilon)) ret.paramsA.push(b1t);
+        if (Float.between(b2t, 0, 1, true, true, eps.timeEpsilon)) ret.paramsA.push(b2t);
     } else {
         ret.intersectionType = "proper";
         inter.properIntersection().forEach(i => {
-            if (Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon)) ret.paramsA.push(i.t1);
-            if (Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon)) ret.paramsB.push(i.t2);
+            if (Float.between(i.t1, 0, 1, true, true, eps.timeEpsilon)) ret.paramsA.push(i.t1);
+            if (Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon)) ret.paramsB.push(i.t2);
         });
     }
     if (ret.paramsA.length === 0 && ret.paramsB.length === 0) ret.intersectionType = "none";
@@ -212,8 +212,8 @@ function mn(inter: LineSegmentQuadraticBezier | LineSegmentBezier | QuadraticBez
     } as ReturnType<typeof calcIntersection>;
 
     inter.properIntersection().forEach(i => {
-        if (Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon)) inverse ? ret.paramsB.push(i.t1) : ret.paramsA.push(i.t1);
-        if (Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon)) inverse ? ret.paramsA.push(i.t2) : ret.paramsB.push(i.t2);
+        if (Float.between(i.t1, 0, 1, true, true, eps.timeEpsilon)) inverse ? ret.paramsB.push(i.t1) : ret.paramsA.push(i.t1);
+        if (Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon)) inverse ? ret.paramsA.push(i.t2) : ret.paramsB.push(i.t2);
     });
     if (ret.paramsA.length === 0 && ret.paramsB.length === 0) ret.intersectionType = "none";
     return ret;
@@ -231,7 +231,7 @@ function ba(inter: LineSegmentArc | QuadraticBezierArc | BezierArc, inverse: boo
     const positive = inter.geometry2.positive;
 
     inter.properIntersection().forEach(i => {
-        if (Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon)) inverse ? ret.paramsB.push(i.t1) : ret.paramsA.push(i.t1);
+        if (Float.between(i.t1, 0, 1, true, true, eps.timeEpsilon)) inverse ? ret.paramsB.push(i.t1) : ret.paramsA.push(i.t1);
         if (Angle.between(i.a2, sa, ea, positive, true, true, eps.angleEpsilon)) inverse ? ret.paramsA.push(i.a2) : ret.paramsB.push(i.a2);
     });
     if (ret.paramsA.length === 0 && ret.paramsB.length === 0) ret.intersectionType = "none";
