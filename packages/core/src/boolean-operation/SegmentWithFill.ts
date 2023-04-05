@@ -16,11 +16,14 @@ export default class SegmentWithFill {
         // Record the coincident segment with common trajectory.
         // Then when chaining, they are considered to be on the same trajectory and can be merged if their fill are the same.
         // Note: segments that do not originate from the same origin can be on the same trajectory.
-        public readonly trajectoryID: TrajectoryID
-    ) {}
+        public trajectoryID: TrajectoryID
+    ) {
+        // disable the event handling, it's not necessary.
+        segment.mute();
+    }
 
     superClone() {
-        const ret = new SegmentWithFill(this.segment.clone(), this.trajectoryID.clone());
+        const ret = new SegmentWithFill(this.segment.clone(), this.trajectoryID);
         ret.thisFill = { ...this.thisFill };
         ret.thatFill = { ...this.thatFill };
         return ret;

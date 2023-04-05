@@ -2,7 +2,6 @@ import { Coordinates } from "@geomtoy/util";
 import { eps } from "../geomtoy";
 import Merger from "./Merger";
 import SegmentWithFill from "./SegmentWithFill";
-import TrajectoryID from "./TrajectoryID";
 
 export default class Chain {
     merger = new Merger();
@@ -33,12 +32,10 @@ export default class Chain {
     }
     mergeRedundant() {
         const newElements: SegmentWithFill[] = [this.elements[0]];
-        let currentTrajectoryID: TrajectoryID = this.elements[0].trajectoryID;
         for (let i = 1, l = this.elements.length; i < l; i++) {
             const result = this.merger.merge(newElements[newElements.length - 1], this.elements[i]);
             if (result === null) {
                 newElements.push(this.elements[i]);
-                currentTrajectoryID = this.elements[i].trajectoryID;
             } else {
                 newElements[newElements.length - 1] = result;
             }

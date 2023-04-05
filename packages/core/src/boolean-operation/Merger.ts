@@ -15,7 +15,7 @@ export default class Merger {
         if (swfA.segment instanceof LineSegment && swfB.segment instanceof LineSegment) {
             const { point1Coordinates: ac1 } = swfA.segment;
             const { point2Coordinates: bc2 } = swfB.segment;
-            const ret = new SegmentWithFill(new LineSegment(ac1, bc2), swfA.trajectoryID.clone());
+            const ret = new SegmentWithFill(new LineSegment(ac1, bc2), swfA.trajectoryID);
             ret.thisFill = { ...swfA.thisFill };
             ret.thatFill = { ...swfA.thatFill };
             return ret;
@@ -36,7 +36,7 @@ export default class Merger {
                     : 2 * Maths.PI - (ea - sa);
             const la = deltaTheta > Maths.PI ? true : false;
 
-            const ret = new SegmentWithFill(new Arc(ac1, bc2, rx, ry, la, pos, phi), swfA.trajectoryID.clone());
+            const ret = new SegmentWithFill(new Arc(ac1, bc2, rx, ry, la, pos, phi), swfA.trajectoryID);
             ret.thisFill = { ...swfA.thisFill };
             ret.thatFill = { ...swfA.thatFill };
             return ret;
@@ -52,7 +52,7 @@ export default class Merger {
             const cpc = Vector2.add(ac1, Vector2.scalarMultiply(Vector2.from(ac1, acc), 1 / t));
             // the calculation from `bc2` is the same.
 
-            const ret = new SegmentWithFill(new QuadraticBezier(ac1, bc2, cpc), swfA.trajectoryID.clone());
+            const ret = new SegmentWithFill(new QuadraticBezier(ac1, bc2, cpc), swfA.trajectoryID);
             ret.thisFill = { ...swfA.thisFill };
             ret.thatFill = { ...swfA.thatFill };
             return ret;
@@ -68,7 +68,7 @@ export default class Merger {
             const cpc1 = Vector2.add(ac1, Vector2.scalarMultiply(Vector2.from(ac1, acc1), 1 / t));
             const cpc2 = Vector2.add(bc2, Vector2.scalarMultiply(Vector2.from(bc2, bcc2), 1 / (1 - t)));
 
-            const ret = new SegmentWithFill(new Bezier(ac1, bc2, cpc1, cpc2), swfA.trajectoryID.clone());
+            const ret = new SegmentWithFill(new Bezier(ac1, bc2, cpc1, cpc2), swfA.trajectoryID);
             ret.thisFill = { ...swfA.thisFill };
             ret.thatFill = { ...swfA.thatFill };
             return ret;

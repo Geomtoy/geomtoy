@@ -1,30 +1,32 @@
-const ID_SYMBOL = Symbol("TrajectoryID.id");
+import Arc from "../geometries/basic/Arc";
+import Bezier from "../geometries/basic/Bezier";
+import LineSegment from "../geometries/basic/LineSegment";
+import QuadraticBezier from "../geometries/basic/QuadraticBezier";
+import { BasicSegment } from "../types";
 
 export default class TrajectoryID {
-    private _id: { [ID_SYMBOL]: string };
+    private _number: number;
+    private _type: string;
 
-    constructor(id: string) {
-        this._id = { [ID_SYMBOL]: id };
+    constructor(segment: BasicSegment) {
+        this._type = segment.name;
+        this._number = TrajectoryID._trajectoryNumberPool[segment.name]++;
     }
+
+    private static _trajectoryNumberPool = {
+        [LineSegment.name]: 0,
+        [QuadraticBezier.name]: 0,
+        [Bezier.name]: 0,
+        [Arc.name]: 0
+    };
+
     negotiate(that: TrajectoryID) {
-        const [thisType, thisNum] = this._id[ID_SYMBOL].split("-");
-        const [thatType, thatNum] = that._id[ID_SYMBOL].split("-");
-        if (thisType !== thatType) {
+        if (this._type !== that._type) {
             throw new Error("[G]They are not the same type segments.");
         }
-
-        if (parseInt(thisNum, 16) < parseInt(thatNum, 16)) {
-            that._id = this._id;
-        } else {
-            this._id = that._id;
-        }
+        return this._number < that._number ? this : that;
     }
     equalTo(that: TrajectoryID) {
-        return this._id === that._id;
-    }
-    clone() {
-        const ret = new TrajectoryID("");
-        ret._id = this._id;
-        return ret;
+        return this === that;
     }
 }

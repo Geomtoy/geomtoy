@@ -21,9 +21,7 @@ export default class Intersector {
 
     result(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment): IntersectorResult {
         // If they are from the same origin, do nothing.
-        if (monoSegmentA.origin === monoSegmentB.origin) {
-            return { intersectionType: "none" };
-        }
+        if (monoSegmentA.origin === monoSegmentB.origin) return { intersectionType: "none" };
 
         // Check if their parents/or parents of parents... have already be intersection-calculated, this is very important.
         // Do this to avoid redundant calculation to speed up.
