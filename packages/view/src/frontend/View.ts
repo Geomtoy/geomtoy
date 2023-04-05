@@ -538,13 +538,13 @@ export default class View {
                         if (e.getModifierState(this.modifierKey)) {
                             if (!this._activeElements.includes(foundElement)) {
                                 this._activateInternal(foundElement);
-                                this._currentActivationElement = foundElement;
+                                // this._currentActivationElement = foundElement;
                                 this._trigger(ViewEventType.Activate, withElement(veo, foundElement));
                                 this._dispatch([foundElement], ViewElementEventType.Activate, withElement(veo, foundElement));
                                 this.requestRender();
                             } else {
                                 this._deactivateInternal(foundElement);
-                                this._currentActivationElement = foundElement;
+                                // this._currentActivationElement = foundElement;
                                 this._trigger(ViewEventType.Deactivate, withElement(veo, foundElement));
                                 this._dispatch([foundElement], ViewElementEventType.Deactivate, withElement(veo, foundElement));
                                 this.requestRender();
@@ -624,13 +624,13 @@ export default class View {
                             if (e.getModifierState(this.modifierKey)) {
                                 if (!this._activeElements.includes(foundElement)) {
                                     this._activateInternal(foundElement);
-                                    this._currentActivationElement = foundElement;
+                                    // this._currentActivationElement = foundElement;
                                     this._trigger(ViewEventType.Activate, withElement(veo, foundElement));
                                     this._dispatch([foundElement], ViewElementEventType.Activate, withElement(veo, foundElement));
                                     this.requestRender();
                                 } else {
                                     this._deactivateInternal(foundElement);
-                                    this._currentActivationElement = foundElement;
+                                    // this._currentActivationElement = foundElement;
                                     this._trigger(ViewEventType.Deactivate, withElement(veo, foundElement));
                                     this._dispatch([foundElement], ViewElementEventType.Deactivate, withElement(veo, foundElement));
                                     this.requestRender();
