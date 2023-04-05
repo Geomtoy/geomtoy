@@ -13,7 +13,7 @@ export default class Selector {
             index += sf.thatFill.positive ? 2 : 0;
             index += sf.thatFill.negative ? 1 : 0;
             if (selection[index] !== 0) {
-                // We must have a deep copy here, or will mess up the combined description.
+                // We must have a deep copy here, or will mess up during the next chaining stage.
                 // This is the fill description of the boolean operation result geometry, so `thatFill` is gone, and `thisFill` will be set according to the operation.
                 const copy = sf.superClone();
                 copy.thisFill.positive = selection[index] === 1;

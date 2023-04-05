@@ -1,5 +1,5 @@
 /**
- * Reference:
+ * Reference
  * @see https://www.codeproject.com/Articles/566614/Elliptic-integrals
  */
 

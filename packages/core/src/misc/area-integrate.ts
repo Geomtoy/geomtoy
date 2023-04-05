@@ -1,5 +1,5 @@
 /**
- * Reference:
+ * Reference
  * @see https://en.wikipedia.org/wiki/Green%27s_theorem#Area_calculation
  * @see http://ich.deanmcnamee.com/graphics/2016/03/30/CurveArea.html
  *

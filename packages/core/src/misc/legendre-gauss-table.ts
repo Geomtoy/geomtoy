@@ -1,5 +1,5 @@
 /**
- * Reference:
+ * Reference
  * @see https://pomax.github.io/bezierinfo/legendre-gauss.html
  */
 // Legendre-Gauss abscissae and weights

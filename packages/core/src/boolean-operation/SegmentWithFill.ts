@@ -14,7 +14,7 @@ export default class SegmentWithFill {
     constructor(
         public readonly segment: BasicSegment,
         // Record the coincident segment with common trajectory.
-        // Then when chaining, they are considered to be on the same trajectory and can be combined if their fill are the same.
+        // Then when chaining, they are considered to be on the same trajectory and can be merged if their fill are the same.
         // Note: segments that do not originate from the same origin can be on the same trajectory.
         public readonly trajectoryID: TrajectoryID
     ) {}
