@@ -187,11 +187,6 @@ export default class BezierBezier extends BaseIntersection {
                 });
             }
         }
-        if (intersection.length === 0) {
-            console.log(0);
-        } else {
-            console.log(1);
-        }
         return intersection;
     }
 

@@ -1,9 +1,10 @@
-import { Angle, Maths, Polynomial, Type } from "@geomtoy/util";
+import { Angle, Float, Maths, Polynomial, Type } from "@geomtoy/util";
 import Arc from "../../geometries/basic/Arc";
 import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import { eps } from "../../geomtoy";
+import { mapComplexAtanImagZeroToReal, rootMultiplicityAtPi } from "../../misc/tangent-half-angle-substitution";
 import { BasicSegment } from "../../types";
 import SweepEvent from "./SweepEvent";
 
@@ -73,18 +74,17 @@ function quickArcY(event: SweepEvent, coordinates: [number, number]) {
     const [sa, ea] = arc.getStartEndAngles();
     const cosPhi = Maths.cos(phi);
     const sinPhi = Maths.sin(phi);
-    // coefs of parametric equation of `ellipse`
     const [px1, px2, px3] = [rx * cosPhi, -ry * sinPhi, cx]; // $[\cos(\theta),\sin(\theta),1]$
     const [py1, py2, py3] = [rx * sinPhi, ry * cosPhi, cy]; // $[\cos(\theta),\sin(\theta),1]$
     const tPoly = [-x + (-px1 + px3), 2 * px2, -x + (px1 + px3)];
-    //@see https://en.wikipedia.org/wiki/Tangent_half-angle_substitution#Geometry
-    if (Maths.equalTo(tPoly[0], 0, Number.EPSILON)) {
+
+    if (rootMultiplicityAtPi(tPoly) > 0) {
         const cosPi = Maths.cos(Maths.PI);
         const sinPi = Maths.sin(Maths.PI);
         const y = py1 * cosPi + py2 * sinPi + py3;
         return y;
     }
-    const tRoots = Polynomial.roots(tPoly).filter(Type.isNumber);
+    const tRoots = Polynomial.roots(tPoly).map(mapComplexAtanImagZeroToReal).filter(Type.isNumber);
 
     for (const t of tRoots) {
         const cosTheta = (1 - t ** 2) / (1 + t ** 2);

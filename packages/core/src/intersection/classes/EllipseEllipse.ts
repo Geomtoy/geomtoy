@@ -1,4 +1,4 @@
-import { Angle, Complex, Maths, Polynomial, RootMultiplicity, Type } from "@geomtoy/util";
+import { Angle, Complex, Float, Maths, Polynomial, RootMultiplicity, Type } from "@geomtoy/util";
 import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import Ellipse from "../../geometries/basic/Ellipse";
 import Point from "../../geometries/basic/Point";
@@ -6,6 +6,7 @@ import { eps } from "../../geomtoy";
 import { compareImplicit } from "../../misc/compare-implicit";
 import { cached } from "../../misc/decor-cache";
 import { superPreprocess } from "../../misc/decor-super-preprocess";
+import { mapComplexAtanImagZeroToReal, rootMultiplicityAtPi } from "../../misc/tangent-half-angle-substitution";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 
@@ -60,31 +61,9 @@ export default class EllipseEllipse extends BaseIntersection {
             2 * d * px2 + 4 * a * px1 * px2 + 4 * a * px2 * px3 + 2 * b * px2 * py1 + 2 * e * py2 + 2 * b * px1 * py2 + 2 * b * px3 * py2 + 4 * c * py1 * py2 + 2 * b * px2 * py3 + 4 * c * py2 * py3,
             f + d * px1 + a * px12 + d * px3 + 2 * a * px1 * px3 + a * px32 + e * py1 + b * px1 * py1 + b * px3 * py1 + c * py12 + e * py3 + b * px1 * py3 + b * px3 * py3 + 2 * c * py1 * py3 + c * py32
         ]
-        //@see https://en.wikipedia.org/wiki/Tangent_half-angle_substitution#Geometry
-        let intersectionAtPi: undefined | RootMultiplicity<[number, number]> = undefined;
-        if (tPoly[0] === 0) {
-            intersectionAtPi = {
-                multiplicity: 1,
-                root: [Maths.cos(Maths.PI), Maths.sin(Maths.PI)]
-            };
-            if (tPoly[1] === 0) {
-                intersectionAtPi.multiplicity++;
-            }
-        }
+
         const intersection: ReturnType<typeof this.properIntersection> = [];
-        // We need to check the complex roots(particularly in touch situation) for the arctangent of a complex number may approximately to be a real number(with every small imaginary part).
-        const tRoots = Polynomial.roots(tPoly)
-            .map(r => {
-                if (Complex.is(r)) {
-                    const atan = Complex.atan(r);
-                    if (Maths.equalTo(Complex.imag(atan), 0, eps.complexEpsilon)) return Maths.tan(Complex.real(atan));
-                    return r;
-                }
-                return r;
-            })
-            .filter((r): r is number => {
-                return Type.isRealNumber(r);
-            }); //filter the `±Infinity` and complex
+        const tRoots = Polynomial.roots(tPoly).map(mapComplexAtanImagZeroToReal).filter(Type.isNumber);
 
         const cosAndSins = tRoots.map(t => {
             const cosTheta = (1 - t ** 2) / (1 + t ** 2);
@@ -94,7 +73,13 @@ export default class EllipseEllipse extends BaseIntersection {
 
         // We use `Polynomial.rootsMultiplicity` to do the tricky here to find out the multiplicity of `cosTheta` and `sinTheta`.
         const cosAndSinsM = Polynomial.rootsMultiplicity(cosAndSins, eps.trigonometricEpsilon);
-        if (intersectionAtPi !== undefined) cosAndSinsM.push(intersectionAtPi);
+        let atPi = rootMultiplicityAtPi(tPoly);
+        if (atPi > 0) {
+            cosAndSinsM.push({
+                multiplicity: atPi,
+                root: [Maths.cos(Maths.PI), Maths.sin(Maths.PI)]
+            });
+        }
 
         for (let i = 0, l = cosAndSinsM.length; i < l; i++) {
             const [cosTheta, sinTheta] = cosAndSinsM[i].root;
