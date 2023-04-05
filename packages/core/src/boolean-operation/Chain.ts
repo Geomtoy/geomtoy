@@ -40,10 +40,12 @@ export default class Chain {
                 newElements[newElements.length - 1] = result;
             }
         }
-        const result = this.merger.merge(newElements[newElements.length - 1], newElements[0]);
-        if (result !== null) {
-            newElements[newElements.length - 1] = result;
-            newElements.shift();
+        if (newElements.length > 1) {
+            const result = this.merger.merge(newElements[newElements.length - 1], newElements[0]);
+            if (result !== null) {
+                newElements[newElements.length - 1] = result;
+                newElements.shift();
+            }
         }
         this.elements = newElements;
     }
