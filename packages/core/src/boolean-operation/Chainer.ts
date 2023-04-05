@@ -107,7 +107,7 @@ export default class Chainer {
             // Then we were surprised to find that, whether it is the inner or outer chain, in the end we only need to make their fill to be:
             // positive fill=true and negative fill=false.
             // And our `SegmentWithFill` records everything, we just need reverse the chain whose positive fill is not true.
-
+            chain.mergeRedundant();
             if (!chain.fill.positive) chain.reverse();
             if (!chain.isClosable()) {
                 // Due to precision issues, very small chains will be unclosable, lowering the grade of this report.

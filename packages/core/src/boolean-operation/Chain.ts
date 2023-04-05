@@ -1,8 +1,12 @@
 import { Coordinates } from "@geomtoy/util";
 import { eps } from "../geomtoy";
+import Merger from "./Merger";
 import SegmentWithFill from "./SegmentWithFill";
+import TrajectoryID from "./TrajectoryID";
 
 export default class Chain {
+    merger = new Merger();
+
     constructor(initialElement: SegmentWithFill) {
         this.elements.push(initialElement);
     }
@@ -27,6 +31,26 @@ export default class Chain {
         if (atChainHead === atElementInit) element.reverse();
         atChainHead ? this.elements.unshift(element) : this.elements.push(element);
     }
+    mergeRedundant() {
+        const newElements: SegmentWithFill[] = [this.elements[0]];
+        let currentTrajectoryID: TrajectoryID = this.elements[0].trajectoryID;
+        for (let i = 1, l = this.elements.length; i < l; i++) {
+            const result = this.merger.merge(newElements[newElements.length - 1], this.elements[i]);
+            if (result === null) {
+                newElements.push(this.elements[i]);
+                currentTrajectoryID = this.elements[i].trajectoryID;
+            } else {
+                newElements[newElements.length - 1] = result;
+            }
+        }
+        const result = this.merger.merge(newElements[newElements.length - 1], newElements[0]);
+        if (result !== null) {
+            newElements[newElements.length - 1] = result;
+            newElements.shift();
+        }
+        this.elements = newElements;
+    }
+
     isClosable() {
         return Coordinates.equalTo(this.headCoordinates, this.tailCoordinates, eps.epsilon);
     }
