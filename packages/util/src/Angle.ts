@@ -1,7 +1,5 @@
 import Float from "./Float";
 import Maths from "./Maths";
-import Type from "./Type";
-
 import type { StaticClass } from "./types";
 
 interface Angle extends StaticClass {}
@@ -95,7 +93,7 @@ class Angle {
         a = Angle.simplify(a);
         b = Angle.simplify(b);
         if (epsilon === undefined) return a === b;
-        return Float.absEqualTo(a, b, epsilon);
+        return Float.equalTo(a - b, 0, epsilon);
     }
     /**
      * Clamp angle `a` into the `positive`(or not) sweep interval between start angle `s` and end angle `e`.
@@ -136,9 +134,9 @@ class Angle {
         }
 
         if (s > e) {
-            return (startOpen ? Float.absGreaterThan(a, s, epsilon) : !Float.absLessThan(a, s, epsilon)) || (endOpen ? Float.absLessThan(a, e, epsilon) : !Float.absGreaterThan(a, e, epsilon));
+            return (startOpen ? Float.greaterThan(a - s, 0, epsilon) : !Float.lessThan(a - s, 0, epsilon)) || (endOpen ? Float.lessThan(a - e, 0, epsilon) : !Float.greaterThan(a - e, 0, epsilon));
         } else {
-            return (startOpen ? Float.absGreaterThan(a, s, epsilon) : !Float.absLessThan(a, s, epsilon)) && (endOpen ? Float.absLessThan(a, e, epsilon) : !Float.absGreaterThan(a, e, epsilon));
+            return (startOpen ? Float.greaterThan(a - s, 0, epsilon) : !Float.lessThan(a - s, 0, epsilon)) && (endOpen ? Float.lessThan(a - e, 0, epsilon) : !Float.greaterThan(a - e, 0, epsilon));
         }
     }
 }
