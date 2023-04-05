@@ -1,8 +1,8 @@
-import { Maths } from "../../src";
+import { Float } from "../../src";
 
 export function diffFlatNumberArray(arr1: number[], arr2: number[], tolerance = 1e-10) {
     if (arr1.length !== arr2.length) return true;
-    return arr1.some((_, i) => !Maths.equalTo(arr1[i], arr2[i], tolerance));
+    return arr1.some((_, i) => !Float.equalTo(arr1[i], arr2[i], tolerance));
 }
 
 export function diffDepth1NumberArray(arr1: (number | number[])[], arr2: (number | number[])[], tolerance = 1e-10) {

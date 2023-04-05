@@ -418,6 +418,7 @@ class Polynomial {
             console.warn("[G]Constant polynomial does not have discrete roots.");
             return [];
         }
+        p = Polynomial.standardize(p);
         const d = Polynomial.degree(p);
         if (d > MAX_ROOT_FINDING_DEGREE) {
             throw new Error(`[G]The degree of polynomial \`p\` should not be greater than ${MAX_ROOT_FINDING_DEGREE}.`);
