@@ -1,4 +1,4 @@
-import { Angle, Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Angle, Assert, Coordinates, Float, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
 import { eps } from "../../geomtoy";
@@ -111,7 +111,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
 
-        const r0 = Maths.equalTo(this._radius, 0, Number.EPSILON);
+        const r0 = Float.equalTo(this._radius, 0, Float.MACHINE_EPSILON);
         if (check) return r0;
 
         if (r0) return new Point(this._centerX, this._centerY);
@@ -215,19 +215,19 @@ export default class Circle extends Geometry implements ClosedGeometry {
         const c = getCoordinates(point, "point");
         const sd = Vector2.squaredMagnitude(Vector2.from(this.centerCoordinates, c));
         const sr = this.radius ** 2;
-        return Maths.equalTo(sd, sr, eps.epsilon);
+        return Float.equalTo(sd, sr, eps.epsilon);
     }
     isPointOutside(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const sd = Vector2.squaredMagnitude(Vector2.from(this.centerCoordinates, c));
         const sr = this.radius ** 2;
-        return Maths.greaterThan(sd, sr, eps.epsilon);
+        return Float.greaterThan(sd, sr, eps.epsilon);
     }
     isPointInside(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const sd = Vector2.squaredMagnitude(Vector2.from(this.centerCoordinates, c));
         const sr = this.radius ** 2;
-        return Maths.lessThan(sd, sr, eps.epsilon);
+        return Float.lessThan(sd, sr, eps.epsilon);
     }
 
     getClosestPointFromPoint(point: [number, number] | Point) {
@@ -295,7 +295,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
         const { centerCoordinates: cc1, radius: r1 } = this;
         const { centerCoordinates: cc2, radius: r2 } = circle;
         const sd = Vector2.squaredMagnitude(Vector2.from(cc1, cc2));
-        return Maths.equalTo(r1 ** 2 + r2 ** 2, sd, eps.epsilon);
+        return Float.equalTo(r1 ** 2 + r2 ** 2, sd, eps.epsilon);
     }
     /**
      * Returns the common tangent lines of circle `circle1` and circle `circle2`
@@ -323,17 +323,17 @@ export default class Circle extends Geometry implements ClosedGeometry {
         const dr = Maths.abs(r1 - r2);
 
         // condition 0
-        if (Maths.equalTo(d, 0, eps.epsilon) && Maths.equalTo(dr, 0, eps.epsilon)) {
+        if (Float.equalTo(d, 0, eps.epsilon) && Float.equalTo(dr, 0, eps.epsilon)) {
             return data;
         }
 
         const drCosine = dr / d;
-        if (Maths.equalTo(drCosine, 1, eps.trigonometricEpsilon)) {
+        if (Float.equalTo(drCosine, 1, eps.trigonometricEpsilon)) {
             const a = r1 > r2 ? angle1 : angle2;
             const c = r1 > r2 ? circle1 : circle2;
             const p = c.getPointAtAngle(a);
             data.push([c.getTangentVectorAtAngle(a).toLine()!, [p, p]]);
-        } else if (Maths.lessThan(drCosine, 1, eps.trigonometricEpsilon)) {
+        } else if (Float.lessThan(drCosine, 1, eps.trigonometricEpsilon)) {
             const da = Maths.acos(drCosine);
             const a = r1 > r2 ? angle1 : angle2;
             const p1p = circle1.getPointAtAngle(a + da);
@@ -347,10 +347,10 @@ export default class Circle extends Geometry implements ClosedGeometry {
         }
 
         const srCosine = sr / d;
-        if (Maths.equalTo(srCosine, 1, eps.trigonometricEpsilon)) {
+        if (Float.equalTo(srCosine, 1, eps.trigonometricEpsilon)) {
             const p = circle1.getPointAtAngle(angle1);
             data.push([circle1.getTangentVectorAtAngle(angle1).toLine()!, [p, p]]);
-        } else if (Maths.lessThan(srCosine, 1, eps.trigonometricEpsilon)) {
+        } else if (Float.lessThan(srCosine, 1, eps.trigonometricEpsilon)) {
             const da = Maths.acos(srCosine);
             const p1p = circle1.getPointAtAngle(angle1 + da);
             const p2p = circle2.getPointAtAngle(angle2 + da);
@@ -385,7 +385,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
      */
     static getCommonTangentCirclesOfTwoCirclesThroughPoint(circle1: Circle, circle2: Circle, point: [number, number] | Point): Circle[] | [] {
         if (circle1.isPointOn(point) && circle2.isPointOn(point)) return [];
-        if (Maths.equalTo(circle1.radius, circle2.radius, eps.epsilon) && Coordinates.equalTo(circle1.centerCoordinates, circle2.centerCoordinates, eps.epsilon)) return [];
+        if (Float.equalTo(circle1.radius, circle2.radius, eps.epsilon) && Coordinates.equalTo(circle1.centerCoordinates, circle2.centerCoordinates, eps.epsilon)) return [];
 
         const c = getCoordinates(point, "point");
         const inversion = new Inversion(c);
@@ -534,7 +534,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
             scale: [sx, sy]
         } = transformation.decomposeQr();
 
-        if (Maths.equalTo(kx, 0, eps.epsilon) && Maths.equalTo(ky, 0, eps.epsilon) && Maths.equalTo(sx, sy, eps.epsilon)) {
+        if (Float.equalTo(kx, 0, eps.epsilon) && Float.equalTo(ky, 0, eps.epsilon) && Float.equalTo(sx, sy, eps.epsilon)) {
             const ncc = transformation.transformCoordinates(cc);
             const nr = r * sx;
             return new Circle(ncc, nr);

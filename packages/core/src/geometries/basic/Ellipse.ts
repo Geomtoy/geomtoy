@@ -1,4 +1,4 @@
-import { Angle, Assert, Coordinates, Maths, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Angle, Assert, Coordinates, Float, Maths, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import EventSourceObject from "../../event/EventSourceObject";
@@ -143,8 +143,8 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         if (!this.initialized()) return check ? true : null;
 
         const { radiusX: rx, radiusY: ry, centerCoordinates: cc, rotation: phi } = this;
-        const rx0 = Maths.equalTo(rx, 0, Number.EPSILON);
-        const ry0 = Maths.equalTo(ry, 0, Number.EPSILON);
+        const rx0 = Float.equalTo(rx, 0, Float.MACHINE_EPSILON);
+        const ry0 = Float.equalTo(ry, 0, Float.MACHINE_EPSILON);
         if (check) return rx0 || ry0;
 
         if (rx0 && !ry0) {
@@ -262,7 +262,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const v = Vector2.from(c1, c2);
         const c = Vector2.magnitude(v) / 2;
         const a = distanceSum / 2;
-        if (Maths.lessThan(a, c, eps.epsilon)) {
+        if (Float.lessThan(a, c, eps.epsilon)) {
             console.warn("[G]The `distanceSum` should greater than or equal to the distance between two foci.");
             return null;
         }
@@ -313,7 +313,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         }
         const v01 = Vector2.from(cc, c1);
         const v02 = Vector2.from(cc, c2);
-        if (Maths.equalTo(Vector2.cross(v01, v02), 0, eps.vectorEpsilon)) {
+        if (Float.equalTo(Vector2.cross(v01, v02), 0, eps.vectorEpsilon)) {
             console.warn("[G]The `centerPoint`, `endpoint1` and `endpoint2` can not be collinear, `null` will be returned");
             return null;
         }
@@ -338,7 +338,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const dx = x - cx;
         const dy = y - cy;
         const f = (dx * cosPhi + dy * sinPhi) ** 2 / rx ** 2 + (dx * sinPhi - dy * cosPhi) ** 2 / ry ** 2;
-        return Maths.equalTo(f, 1, eps.epsilon);
+        return Float.equalTo(f, 1, eps.epsilon);
     }
     isPointOutside(point: [number, number] | Point): boolean {
         const [x, y] = getCoordinates(point, "point");
@@ -348,7 +348,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const dx = x - cx;
         const dy = y - cy;
         const f = (dx * cosPhi + dy * sinPhi) ** 2 / rx ** 2 + (dx * sinPhi - dy * cosPhi) ** 2 / ry ** 2;
-        return Maths.greaterThan(f, 1, eps.epsilon);
+        return Float.equalTo(f, 1, eps.epsilon);
     }
     isPointInside(point: [number, number] | Point): boolean {
         const [x, y] = getCoordinates(point, "point");
@@ -358,7 +358,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const dx = x - cx;
         const dy = y - cy;
         const f = (dx * cosPhi + dy * sinPhi) ** 2 / rx ** 2 + (dx * sinPhi - dy * cosPhi) ** 2 / ry ** 2;
-        return Maths.lessThan(f, 1, eps.epsilon);
+        return Float.equalTo(f, 1, eps.epsilon);
     }
 
     @validGeometryArguments
@@ -455,7 +455,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         // rx*cosTheta*sinPhi+ry*sinTheta*cosPhi+cy==y
         const cosTheta = (cosPhi * (x - cx) + sinPhi * (y - cy)) / rx;
         const sinTheta = (cosPhi * (y - cy) - sinPhi * (x - cx)) / ry;
-        if (Maths.equalTo(sinTheta ** 2 + cosTheta ** 2, 1, eps.trigonometricEpsilon)) {
+        if (Float.equalTo(sinTheta ** 2 + cosTheta ** 2, 1, eps.trigonometricEpsilon)) {
             return Angle.simplify(Maths.atan2(sinTheta, cosTheta));
         }
         return NaN;

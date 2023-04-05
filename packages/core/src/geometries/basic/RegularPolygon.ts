@@ -1,4 +1,4 @@
-import { Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Assert, Coordinates, Float, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
 import { eps } from "../../geomtoy";
@@ -162,7 +162,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
     @statedWithBoolean(undefined)
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
-        const r0 = Maths.equalTo(this._radius, 0, Number.EPSILON);
+        const r0 = Float.equalTo(this._radius, 0, Float.MACHINE_EPSILON);
         if (check) return r0;
 
         if (r0) return new Point(this._centerX, this._centerY);
@@ -268,7 +268,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
             scale: [sx, sy],
             rotate
         } = transformation.decomposeQr();
-        if (Maths.equalTo(kx, 0, eps.epsilon) && Maths.equalTo(ky, 0, eps.epsilon) && Maths.equalTo(sx, sy, eps.epsilon)) {
+        if (Float.equalTo(kx, 0, eps.epsilon) && Float.equalTo(ky, 0, eps.epsilon) && Float.equalTo(sx, sy, eps.epsilon)) {
             const ncc = transformation.transformCoordinates(cc);
             const nr = r * sx;
             const nrt = rotate;

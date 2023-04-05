@@ -1,4 +1,4 @@
-import { Coordinates, Maths } from "@geomtoy/util";
+import { Coordinates, Float } from "@geomtoy/util";
 import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
@@ -72,35 +72,35 @@ export default class RayBezier extends BaseIntersection {
     cross() {
         const coordinates = this.geometry1.coordinates;
         return this.properIntersection()
-            .filter(i => i.m % 2 === 1 && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon) && !Coordinates.equalTo(i.c, coordinates, eps.epsilon))
+            .filter(i => i.m % 2 === 1 && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon) && !Coordinates.equalTo(i.c, coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
         const coordinates = this.geometry1.coordinates;
         return this.properIntersection()
-            .filter(i => i.m % 2 === 0 && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon) && !Coordinates.equalTo(i.c, coordinates, eps.epsilon))
+            .filter(i => i.m % 2 === 0 && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon) && !Coordinates.equalTo(i.c, coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     block() {
         const coordinates = this.geometry1.coordinates;
         return this.properIntersection()
-            .filter(i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && !Coordinates.equalTo(i.c, coordinates, eps.epsilon))
+            .filter(i => (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)) && !Coordinates.equalTo(i.c, coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     blockedBy() {
         const coordinates = this.geometry1.coordinates;
         return this.properIntersection()
-            .filter(i => Coordinates.equalTo(i.c, coordinates, eps.epsilon) && !(Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
+            .filter(i => Coordinates.equalTo(i.c, coordinates, eps.epsilon) && !(Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     connect() {
         const coordinates = this.geometry1.coordinates;
         return this.properIntersection()
-            .filter(i => Coordinates.equalTo(i.c, coordinates, eps.epsilon) && (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
+            .filter(i => Coordinates.equalTo(i.c, coordinates, eps.epsilon) && (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")

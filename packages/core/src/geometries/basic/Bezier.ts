@@ -1,4 +1,4 @@
-import { Assert, Coordinates, Maths, Matrix2, Matrix4, Polynomial, RootMultiplicity, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Assert, Coordinates, Float, Maths, Matrix2, Matrix4, Polynomial, RootMultiplicity, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
 import { eps } from "../../geomtoy";
@@ -235,9 +235,9 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         const m = [-1, 3, -3, 1, 3, -6, 3, 0, -3, 3, 0, 0, 1, 0, 0, 0] as Parameters<typeof Matrix4.dotVector4>[0];
         const [cx3, cx2, cx1] = Matrix4.dotVector4(m, [x0, x1, x2, x3]);
         const [cy3, cy2, cy1] = Matrix4.dotVector4(m, [y0, y1, y2, y3]);
-        const d3 = Maths.equalTo(cx3, 0, Number.EPSILON) && Maths.equalTo(cy3, 0, Number.EPSILON);
-        const d2 = Maths.equalTo(cx2, 0, Number.EPSILON) && Maths.equalTo(cy2, 0, Number.EPSILON);
-        const d1 = Maths.equalTo(cx1, 0, Number.EPSILON) && Maths.equalTo(cy1, 0, Number.EPSILON);
+        const d3 = Float.equalTo(cx3, 0, Float.MACHINE_EPSILON) && Float.equalTo(cy3, 0, Float.MACHINE_EPSILON);
+        const d2 = Float.equalTo(cx2, 0, Float.MACHINE_EPSILON) && Float.equalTo(cy2, 0, Float.MACHINE_EPSILON);
+        const d1 = Float.equalTo(cx1, 0, Float.MACHINE_EPSILON) && Float.equalTo(cy1, 0, Float.MACHINE_EPSILON);
 
         if (check) return d3;
 
@@ -271,14 +271,10 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         let tRoots = [
             ...(!Polynomial.isConstant(polyXD) ? Polynomial.roots(polyXD, eps.complexEpsilon) : []),
             ...(!Polynomial.isConstant(polyYD) ? Polynomial.roots(polyYD, eps.complexEpsilon) : [])
-        ].filter(Type.isNumber);
-        tRoots = Utility.uniqWith(tRoots, (a, b) => Maths.equalTo(a, b, eps.timeEpsilon));
+        ].filter((t) : t is number => Type.isNumber(t) &&  Float.between(t, 0, 1, false, false, eps.timeEpsilon) );
+        tRoots = Utility.uniqWith(tRoots, (a, b) => Float.equalTo(a, b, eps.timeEpsilon));
 
-        return tRoots
-            .filter(t => {
-                return Maths.between(t, 0, 1, false, false, eps.timeEpsilon);
-            })
-            .map(t => [new Point(this.getParametricEquation()(t)), t] as [point: Point, time: number]);
+        return tRoots.map(t => [new Point(this.getParametricEquation()(t)), t] as [point: Point, time: number]);
     }
 
     move(deltaX: number, deltaY: number) {
@@ -299,11 +295,12 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
     static fromFourPointsAndTimes(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point, point4: [number, number] | Point, ts: [number, number]) {
         // t1!==t2!==0 or 1
         const [t1, t2] = ts;
+        // todo if t1, t2 can be out of the interval [0, 1]
         // prettier-ignore
         if (
-            Maths.equalTo(t1, t2, eps.timeEpsilon) || 
-            Maths.equalTo((1 - t1) * t1, 0, eps.timeEpsilon) || 
-            Maths.equalTo((1 - t2) * t2, 0, eps.timeEpsilon)) 
+            Float.equalTo(t1, t2, eps.timeEpsilon) ||
+            Float.equalTo((1 - t1) * t1, 0, eps.timeEpsilon) || 
+            Float.equalTo((1 - t2) * t2, 0, eps.timeEpsilon)) 
         {
             return null;
         }
@@ -401,13 +398,13 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         const m = Maths.cbrt(d);
         const n = Maths.cbrt(j);
         return (
-            Maths.equalTo(b, 3 * l ** 2 * m, eps.coefficientEpsilon) &&
-            Maths.equalTo(c, 3 * l * m ** 2, eps.coefficientEpsilon) &&
-            Maths.equalTo(e, 3 * l ** 2 * n, eps.coefficientEpsilon) &&
-            Maths.equalTo(f, 6 * l * m * n, eps.coefficientEpsilon) &&
-            Maths.equalTo(g, 3 * m ** 2 * n, eps.coefficientEpsilon) &&
-            Maths.equalTo(h, 3 * l * n ** 2, eps.coefficientEpsilon) &&
-            Maths.equalTo(i, 3 * m * n ** 2, eps.coefficientEpsilon)
+            Float.equalTo(b, 3 * l ** 2 * m, eps.coefficientEpsilon) &&
+            Float.equalTo(c, 3 * l * m ** 2, eps.coefficientEpsilon) &&
+            Float.equalTo(e, 3 * l ** 2 * n, eps.coefficientEpsilon) &&
+            Float.equalTo(f, 6 * l * m * n, eps.coefficientEpsilon) &&
+            Float.equalTo(g, 3 * m ** 2 * n, eps.coefficientEpsilon) &&
+            Float.equalTo(h, 3 * l * n ** 2, eps.coefficientEpsilon) &&
+            Float.equalTo(i, 3 * m * n ** 2, eps.coefficientEpsilon)
         );
     }
 
@@ -560,7 +557,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
     selfIntersection(): [] | [number, number] {
         const [t1, t2] = this.selfIntersectionExtend();
         if (!t1 || !t2) return [];
-        if (Maths.between(t1, 0, 1, false, false, eps.timeEpsilon) && Maths.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
+        if (Float.between(t1, 0, 1, false, false, eps.timeEpsilon) && Float.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
             // Self-intersection is on underlying curve not on bezier `this`.
             return [t1, t2] as [number, number];
         }
@@ -589,7 +586,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         const tRoots = Polynomial.roots(poly).filter(Type.isNumber);
         if (tRoots.length === 0) return [];
         // violate the supposition that `t1` and `t2` are distinct(The case where self-intersection degenerates to a cusp is not taken into account)
-        if (Maths.equalTo(tRoots[0], tRoots[1], eps.timeEpsilon)) return [];
+        if (Float.equalTo(tRoots[0], tRoots[1], eps.timeEpsilon)) return [];
         return [tRoots[0], tRoots[1]] as [number, number];
     }
 
@@ -667,7 +664,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      */
     getTimeOfPoint(point: [number, number] | Point): number {
         const t = this.getTimeOfPointExtend(point);
-        if (Maths.between(t, 0, 1, false, false, eps.timeEpsilon)) return Maths.clamp(t, 0, 1);
+        if (Float.between(t, 0, 1, false, false, eps.timeEpsilon)) return Maths.clamp(t, 0, 1);
         return NaN;
     }
 
@@ -681,14 +678,14 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         let yRootsM: RootMultiplicity<number>[] | undefined = undefined;
 
         if (Polynomial.isConstant(xPoly)) {
-            if (!Maths.equalTo(Polynomial.coef(xPoly, 0), 0, eps.coefficientEpsilon)) return [];
+            if (!Float.equalTo(Polynomial.coef(xPoly, 0), 0, eps.coefficientEpsilon)) return [];
         } else {
             xRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(xPoly, eps.complexEpsilon).filter(Type.isNumber), eps.timeEpsilon);
             if (xRootsM.length === 0) return [];
         }
 
         if (Polynomial.isConstant(yPoly)) {
-            if (!Maths.equalTo(Polynomial.coef(yPoly, 0), 0, eps.coefficientEpsilon)) return [];
+            if (!Float.equalTo(Polynomial.coef(yPoly, 0), 0, eps.coefficientEpsilon)) return [];
         } else {
             yRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(yPoly, eps.complexEpsilon).filter(Type.isNumber), eps.timeEpsilon);
             if (yRootsM.length === 0) return [];
@@ -704,7 +701,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
             let ret: number[] = [];
             for (let xr of xRootsM) {
                 for (let yr of yRootsM) {
-                    if (Maths.equalTo(xr.root, yr.root, eps.timeEpsilon)) {
+                    if (Float.equalTo(xr.root, yr.root, eps.timeEpsilon)) {
                         ret.push(Maths.avg(xr.root, yr.root));
                     }
                 }
@@ -730,9 +727,10 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
     getTimeOfPointExtend(point: [number, number] | Point): number {
         const times = this.getTimesOfPointExtend(point);
         if (times.length === 0) return NaN;
+
         Utility.sortWith(times, (a, b) => {
-            const d1 = Maths.between(a, 0, 1, false, false, eps.timeEpsilon);
-            const d2 = Maths.between(b, 0, 1, false, false, eps.timeEpsilon);
+            const d1 = Float.between(a, 0, 1, false, false, eps.timeEpsilon);
+            const d2 = Float.between(b, 0, 1, false, false, eps.timeEpsilon);
             if (d1 && !d2) return -1;
             if (!d1 && d2) return 1;
             return a - b;
@@ -839,7 +837,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         ts = ts.map(t => this._clampTime(t, "element of ts"));
         const ret: Bezier[] = [];
         ts = Utility.sortBy(
-            Utility.uniqWith(ts, (a, b) => Maths.equalTo(a, b, eps.timeEpsilon)),
+            Utility.uniqWith(ts, (a, b) => Float.equalTo(a, b, eps.timeEpsilon)),
             [n => n]
         );
         [0, ...ts, 1].forEach((_, index, arr) => {

@@ -1,4 +1,4 @@
-import { Angle, Box, Coordinates, Maths, Vector2 } from "@geomtoy/util";
+import { Angle, Box, Coordinates, Float, Maths, Vector2 } from "@geomtoy/util";
 import Arc from "../geometries/basic/Arc";
 import Bezier from "../geometries/basic/Bezier";
 import Line from "../geometries/basic/Line";
@@ -7,7 +7,6 @@ import Point from "../geometries/basic/Point";
 import QuadraticBezier from "../geometries/basic/QuadraticBezier";
 import Ray from "../geometries/basic/Ray";
 import { eps } from "../geomtoy";
-import { getCoordinates } from "../misc/point-like";
 import LineArc from "../intersection/classes/LineArc";
 import LineBezier from "../intersection/classes/LineBezier";
 import LineLineSegment from "../intersection/classes/LineLineSegment";
@@ -16,6 +15,7 @@ import RayArc from "../intersection/classes/RayArc";
 import RayBezier from "../intersection/classes/RayBezier";
 import RayLineSegment from "../intersection/classes/RayLineSegment";
 import RayQuadraticBezier from "../intersection/classes/RayQuadraticBezier";
+import { getCoordinates } from "../misc/point-like";
 import { BasicSegment } from "../types";
 
 export default class FillRuleHelper {
@@ -26,10 +26,10 @@ export default class FillRuleHelper {
         const maxX = Box.maxX(box);
         const minY = Box.minY(box);
         const maxY = Box.maxY(box);
-        const sign1 = Maths.sign(a * minX + b * minY + c, eps.epsilon);
-        const sign2 = Maths.sign(a * maxX + b * minY + c, eps.epsilon);
-        const sign3 = Maths.sign(a * minX + b * maxY + c, eps.epsilon);
-        const sign4 = Maths.sign(a * maxX + b * maxY + c, eps.epsilon);
+        const sign1 = Float.sign(a * minX + b * minY + c, eps.epsilon);
+        const sign2 = Float.sign(a * maxX + b * minY + c, eps.epsilon);
+        const sign3 = Float.sign(a * minX + b * maxY + c, eps.epsilon);
+        const sign4 = Float.sign(a * maxX + b * maxY + c, eps.epsilon);
 
         if ((sign1 === 1 && sign2 === 1 && sign3 === 1 && sign4 === 1) || (sign1 === -1 && sign2 === -1 && sign3 === -1 && sign4 === -1)) {
             return false;
@@ -110,7 +110,7 @@ export default class FillRuleHelper {
                     else wn += positiveWinding ? 1 : -1;
                 } else {
                     // If `ray` happens to cross the vertex, count as a half.
-                    if (Maths.equalTo(t2, 0, eps.timeEpsilon) || Maths.equalTo(t2, 1, eps.timeEpsilon)) wn += positiveWinding ? 0.5 : -0.5;
+                    if (Float.equalTo(t2, 0, eps.timeEpsilon) || Float.equalTo(t2, 1, eps.timeEpsilon)) wn += positiveWinding ? 0.5 : -0.5;
                     else wn += positiveWinding ? 1 : -1;
                 }
             }
@@ -152,7 +152,7 @@ export default class FillRuleHelper {
                     else cn += 1;
                 } else {
                     // If `ray` happens to cross the vertex, count as a half.
-                    if (Maths.equalTo(t2, 0, eps.timeEpsilon) || Maths.equalTo(t2, 1, eps.timeEpsilon)) cn += 0.5;
+                    if (Float.equalTo(t2, 0, eps.timeEpsilon) || Float.equalTo(t2, 1, eps.timeEpsilon)) cn += 0.5;
                     else cn += 1;
                 }
             }
@@ -258,7 +258,7 @@ export default class FillRuleHelper {
                     else wn[onWhichRay] += positiveWinding ? 1 : -1;
                 } else {
                     // If `ray` happens to cross the vertex, count as a half(there must be another half).
-                    if (Maths.equalTo(t2, 0, eps.timeEpsilon) || Maths.equalTo(t2, 1, eps.timeEpsilon)) wn[onWhichRay] += positiveWinding ? 0.5 : -0.5;
+                    if (Float.equalTo(t2, 0, eps.timeEpsilon) || Float.equalTo(t2, 1, eps.timeEpsilon)) wn[onWhichRay] += positiveWinding ? 0.5 : -0.5;
                     else wn[onWhichRay] += positiveWinding ? 1 : -1;
                 }
             }
@@ -305,7 +305,7 @@ export default class FillRuleHelper {
                     else cn[onWhichRay] += 1;
                 } else {
                     // If `ray` happens to cross the vertex, count as a half(there must be another half).
-                    if (Maths.equalTo(t2, 0, eps.timeEpsilon) || Maths.equalTo(t2, 1, eps.timeEpsilon)) cn[onWhichRay] += 0.5;
+                    if (Float.equalTo(t2, 0, eps.timeEpsilon) || Float.equalTo(t2, 1, eps.timeEpsilon)) cn[onWhichRay] += 0.5;
                     else cn[onWhichRay] += 1;
                 }
             }

@@ -8,11 +8,11 @@ import { BasicSegment } from "../../types";
 import SweepEvent from "./SweepEvent";
 
 export function compareX(c1: [number, number], c2: [number, number]) {
-    if (Maths.equalTo(c1[0], c2[0], eps.epsilon)) return 0;
+    if (Float.equalTo(c1[0], c2[0], eps.epsilon)) return 0;
     return c1[0] < c2[0] ? -1 : 1;
 }
 export function compareY(c1: [number, number], c2: [number, number]) {
-    if (Maths.equalTo(c1[1], c2[1], eps.epsilon)) return 0;
+    if (Float.equalTo(c1[1], c2[1], eps.epsilon)) return 0;
     return c1[1] < c2[1] ? -1 : 1;
 }
 
@@ -37,7 +37,7 @@ function quickLineSegmentY(event: SweepEvent, coordinates: [number, number]) {
         return y; // else the y it self
     }
     const t = (x - x1) / (x2 - x1);
-    if (Maths.between(t, 0, 1, false, false, eps.timeEpsilon)) return Maths.lerp(y1, y2, t);
+    if (Float.between(t, 0, 1, false, false, eps.timeEpsilon)) return Maths.lerp(y1, y2, t);
     throw new Error("[G]This should never happen.");
 }
 // Return the `y` on the quadratic bezier mono when `x = coordinates[0]`
@@ -47,7 +47,7 @@ function quickQuadraticBezierY(event: SweepEvent, coordinates: [number, number])
     const tPoly = Polynomial.add(polyX, [-x]);
     const tRoots = Polynomial.roots(tPoly, eps.complexEpsilon).filter(Type.isNumber);
     for (const t of tRoots) {
-        if (Maths.between(t, 0, 1, false, false, eps.timeEpsilon)) return Polynomial.evaluate(polyY, t);
+        if (Float.between(t, 0, 1, false, false, eps.timeEpsilon)) return Polynomial.evaluate(polyY, t);
     }
     throw new Error("[G]This should never happen.");
 }
@@ -59,7 +59,7 @@ function quickBezierY(event: SweepEvent, coordinates: [number, number]) {
     const tPoly = Polynomial.add(polyX, [-x]);
     const tRoots = Polynomial.roots(tPoly, eps.complexEpsilon).filter(Type.isNumber);
     for (const t of tRoots) {
-        if (Maths.between(t, 0, 1, false, false, eps.timeEpsilon)) return Polynomial.evaluate(polyY, t);
+        if (Float.between(t, 0, 1, false, false, eps.timeEpsilon)) return Polynomial.evaluate(polyY, t);
     }
     throw new Error("[G]This should never happen.");
 }
@@ -106,7 +106,7 @@ function firstDerivativeValue(dx1: number, dy1: number) {
     const num = dy1;
     const den = dx1;
     const frac = num / den;
-    if (Maths.equalTo(den, 0, eps.epsilon)) {
+    if (Float.equalTo(den, 0, eps.epsilon)) {
         const negative = Object.is(num, -0) || Maths.sign(num) < 0;
         return negative ? -Infinity : Infinity;
     }
@@ -116,7 +116,7 @@ function secondDerivativeValue(dx1: number, dx2: number, dy1: number, dy2: numbe
     const num = dx1 * dy2 - dy1 * dx2;
     const den = dx1 ** 3;
     const frac = num / den;
-    if (Maths.equalTo(den, 0, eps.epsilon)) {
+    if (Float.equalTo(den, 0, eps.epsilon)) {
         const negative = Object.is(num, -0) || Maths.sign(num) < 0;
         return negative ? -Infinity : Infinity;
     }
@@ -126,7 +126,7 @@ function thirdDerivativeValue(dx1: number, dx2: number, dx3: number, dy1: number
     const num = dx1 * (dy3 * dx1 - 3 * dx2 * dy2) + dy1 * (3 * dx2 * dx2 - dx3 * dx1);
     const den = dx1 ** 5;
     const frac = num / den;
-    if (Maths.equalTo(den, 0, eps.epsilon)) {
+    if (Float.equalTo(den, 0, eps.epsilon)) {
         const negative = Object.is(num, -0) || Maths.sign(num) < 0;
         return negative ? -Infinity : Infinity;
     }

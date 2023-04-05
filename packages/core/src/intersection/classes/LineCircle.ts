@@ -1,4 +1,4 @@
-import { Maths, Vector2 } from "@geomtoy/util";
+import { Float, Maths, Vector2 } from "@geomtoy/util";
 import Circle from "../../geometries/basic/Circle";
 import Line from "../../geometries/basic/Line";
 import Point from "../../geometries/basic/Point";
@@ -30,10 +30,10 @@ export default class LineCircle extends BaseIntersection {
 
         const intersection: ReturnType<typeof this.properIntersection> = [];
 
-        if (Maths.equalTo(sd, r2, eps.epsilon)) {
+        if (Float.equalTo(sd, r2, eps.epsilon)) {
             intersection.push({ c: pc, m: 2 });
         }
-        if (Maths.lessThan(sd, r2, eps.epsilon)) {
+        if (Float.lessThan(sd, r2, eps.epsilon)) {
             const di = Maths.sqrt(r ** 2 - sd);
             const angle = this.geometry1.angle;
             const v1 = Vector2.from2(angle, di);

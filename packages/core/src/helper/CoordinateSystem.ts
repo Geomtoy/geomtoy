@@ -1,4 +1,4 @@
-import { Maths, Vector2 } from "@geomtoy/util";
+import { Float, Maths, Vector2 } from "@geomtoy/util";
 
 class Cartesian {
     constructor(public x: number, public y: number) {}
@@ -51,7 +51,7 @@ class Barycentric {
     simplify() {
         const { lambda1, lambda2, lambda3 } = this;
         const sum = lambda1 + lambda2 + lambda3;
-        if (!Maths.equalTo(sum, 1, Number.EPSILON)) {
+        if (!Float.equalTo(sum, 1, Float.MACHINE_EPSILON)) {
             this.lambda1 /= sum;
             this.lambda2 /= sum;
             this.lambda3 /= sum;
@@ -74,7 +74,7 @@ class Trilinear {
     simplify() {
         const { lambda1, lambda2, lambda3 } = this;
         const sum = lambda1 + lambda2 + lambda3;
-        if (!Maths.equalTo(sum, 1, Number.EPSILON)) {
+        if (!Float.equalTo(sum, 1, Float.MACHINE_EPSILON)) {
             this.lambda1 /= sum;
             this.lambda2 /= sum;
             this.lambda3 /= sum;

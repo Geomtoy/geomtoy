@@ -1,4 +1,4 @@
-import { Assert, Box, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Assert, Box, Coordinates, Float, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
 import { eps, optioner } from "../../geomtoy";
@@ -6,13 +6,13 @@ import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import ArrowGraphics from "../../helper/ArrowGraphics";
 import FillRuleHelper from "../../helper/FillRuleHelper";
+import LineSegmentLineSegment from "../../intersection/classes/LineSegmentLineSegment";
 import { lineSegmentPathIntegral } from "../../misc/area-integrate";
 import { stated, statedWithBoolean } from "../../misc/decor-cache";
 import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { next } from "../../misc/loop";
 import { getCoordinates } from "../../misc/point-like";
 import { parseSvgPolygon } from "../../misc/svg-polygon";
-import LineSegmentLineSegment from "../../intersection/classes/LineSegmentLineSegment";
 import type Transformation from "../../transformation";
 import type { FillRule, PolygonVertex, ViewportDescriptor, WindingDirection } from "../../types";
 import LineSegment from "../basic/LineSegment";
@@ -105,7 +105,7 @@ export default class Polygon extends Geometry {
 
         for (let i = 1, l = this._vertices.length; i < l; i++) {
             const { x: xi, y: yi } = vertices[i];
-            if (!Coordinates.equalTo([x0, y0], [xi, yi], Number.EPSILON)) {
+            if (!Coordinates.equalTo([x0, y0], [xi, yi], Float.MACHINE_EPSILON)) {
                 return check ? false : this;
             }
         }
@@ -404,7 +404,7 @@ export default class Polygon extends Geometry {
             const angle = Vector2.angleTo(v1, v2);
             // angle is `NaN` for zero vector, v1 or v2 is zero vector
             if (Number.isNaN(angle)) continue;
-            if (Maths.equalTo(Maths.abs(angle), Maths.PI, eps.angleEpsilon)) return false;
+            if (Float.equalTo(Maths.abs(angle), Maths.PI, eps.angleEpsilon)) return false;
 
             if (startWindingDirection === undefined) {
                 startWindingDirection = angle > 0 ? 1 : angle < 0 ? -1 : undefined;
@@ -414,7 +414,7 @@ export default class Polygon extends Geometry {
 
             angleSum += Maths.PI - angle;
         }
-        return Maths.equalTo(Maths.abs(angleSum), 2 * Maths.PI, eps.angleEpsilon);
+        return Float.equalTo(Maths.abs(angleSum), 2 * Maths.PI, eps.angleEpsilon);
     }
 
     isConcave() {
@@ -433,14 +433,14 @@ export default class Polygon extends Geometry {
             const angle = Vector2.angleTo(v1, v2);
             // angle is `NaN` for zero vector, v1 or v2 is zero vector
             if (Number.isNaN(angle)) continue;
-            if (Maths.equalTo(Maths.abs(angle), Maths.PI, eps.angleEpsilon)) return false;
+            if (Float.equalTo(Maths.abs(angle), Maths.PI, eps.angleEpsilon)) return false;
 
             if (startWindingDirection === undefined) {
                 startWindingDirection = angle > 0 ? 1 : angle < 0 ? -1 : undefined;
             }
             angleSum += Maths.PI - angle;
         }
-        return Maths.equalTo(angleSum, (l - 1) * Maths.PI, eps.angleEpsilon);
+        return Float.equalTo(angleSum, (l - 1) * Maths.PI, eps.angleEpsilon);
     }
     isSelfIntersecting() {
         const segments = this.getSegments(true);
@@ -513,7 +513,7 @@ export default class Polygon extends Geometry {
     }
 
     randomPointInside() {
-        if (Maths.equalTo(this.getArea(), 0, eps.epsilon)) return null;
+        if (Float.equalTo(this.getArea(), 0, eps.epsilon)) return null;
         const [x, y, w, h] = this.getBoundingBox();
         let rnd: [number, number];
         do {

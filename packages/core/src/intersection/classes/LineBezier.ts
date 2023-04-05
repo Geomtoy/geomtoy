@@ -1,4 +1,4 @@
-import { Maths, Polynomial, Type } from "@geomtoy/util";
+import { Float, Polynomial, Type } from "@geomtoy/util";
 import Bezier from "../../geometries/basic/Bezier";
 import type Line from "../../geometries/basic/Line";
 import LineSegment from "../../geometries/basic/LineSegment";
@@ -44,7 +44,7 @@ export default class LineBezier extends BaseIntersection {
         const intersection: ReturnType<typeof this.properIntersection> = [];
         for (let i = 0, l = tRootsM.length; i < l; i++) {
             const t2 = tRootsM[i].root;
-            if (Maths.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
+            if (Float.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
                 const x = Polynomial.evaluate(polyX, t2);
                 const y = Polynomial.evaluate(polyY, t2);
                 intersection.push({ c: [x, y], t2, m: tRootsM[i].multiplicity });
@@ -80,19 +80,19 @@ export default class LineBezier extends BaseIntersection {
     @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
-            .filter(i => i.m % 2 == 1 && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
+            .filter(i => i.m % 2 == 1 && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
         return this.properIntersection()
-            .filter(i => i.m % 2 == 0 && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
+            .filter(i => i.m % 2 == 0 && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     block() {
         return this.properIntersection()
-            .filter(i => Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon))
+            .filter(i => Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")

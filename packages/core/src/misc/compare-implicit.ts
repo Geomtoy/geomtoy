@@ -1,4 +1,4 @@
-import { Maths } from "@geomtoy/util";
+import { Float, Maths } from "@geomtoy/util";
 
 /**
  * The coefficients of the implicit function will have rounding errors due to the calculation,
@@ -23,19 +23,19 @@ export function compareImplicit(coefs1: number[], coefs2: number[], epsilon: num
     const maxCoef2 = Maths.max(...coefs2.map(Maths.abs));
 
     // If all the coefs are too small, scale them slightly
-    if (Maths.equalTo(maxCoef1, 0, epsilon)) {
+    if (Float.equalTo(maxCoef1, 0, epsilon)) {
         // maxCoef1 < epsilon
         const scalar = (2 * epsilon) / maxCoef1;
         coefs1 = coefs1.map(c => c * scalar);
     }
-    if (Maths.equalTo(maxCoef2, 0, epsilon)) {
+    if (Float.equalTo(maxCoef2, 0, epsilon)) {
         // maxCoef2 < epsilon
         const scalar = (2 * epsilon) / maxCoef2;
         coefs2 = coefs2.map(c => c * scalar);
     }
 
     // Find the first approximately non-zero coef index
-    const i = coefs1.findIndex(c => !Maths.equalTo(c, 0, epsilon));
+    const i = coefs1.findIndex(c => !Float.equalTo(c, 0, epsilon));
     // The corresponding coef of coefs2 is 0, or underflow to 0
     if (coefs2[i] === 0) return false;
 
@@ -44,7 +44,7 @@ export function compareImplicit(coefs1: number[], coefs2: number[], epsilon: num
     coefs2 = coefs2.map(c => c / coefs2[i]);
 
     for (let i = 0, l = coefs1.length; i < l; i++) {
-        if (!Maths.equalTo(coefs1[i], coefs2[i], epsilon)) return false;
+        if (!Float.equalTo(coefs1[i], coefs2[i], epsilon)) return false;
     }
     return true;
 }

@@ -1,4 +1,4 @@
-import { Coordinates, Maths } from "@geomtoy/util";
+import { Coordinates, Float, Maths } from "@geomtoy/util";
 import { eps } from "../../geomtoy";
 import Transformation from "../../transformation";
 import { BasicSegment } from "../../types";
@@ -146,7 +146,7 @@ export default class SweepEvent {
     compareDerivativeValues(that: SweepEvent) {
         const thisFDV = this._getDerivativeValue(1);
         const thatFDV = that._getDerivativeValue(1);
-        if (!Maths.equalTo(thisFDV, thatFDV, eps.epsilon)) {
+        if (!Float.equalTo(thisFDV, thatFDV, eps.epsilon)) {
             const result = thisFDV > thatFDV ? 1 : -1;
             // For enter coordinates, the greater derivative means upper location,
             // but for the leave coordinates, the greater derivative means lower location.
@@ -155,14 +155,14 @@ export default class SweepEvent {
 
         const thisSDV = this._getDerivativeValue(2);
         const thatSDV = that._getDerivativeValue(2);
-        if (!Maths.equalTo(thisSDV, thatSDV, eps.epsilon)) {
+        if (!Float.equalTo(thisSDV, thatSDV, eps.epsilon)) {
             const result = thisSDV > thatSDV ? 1 : -1;
             return this.isEnter ? result : -result;
         }
 
         const thisTDV = this._getDerivativeValue(3);
         const thatTDV = that._getDerivativeValue(3);
-        if (!Maths.equalTo(thisTDV, thatTDV, eps.epsilon)) {
+        if (!Float.equalTo(thisTDV, thatTDV, eps.epsilon)) {
             const result = thisTDV > thatTDV ? 1 : -1;
             return this.isEnter ? result : -result;
         }

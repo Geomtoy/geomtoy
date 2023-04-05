@@ -1,4 +1,4 @@
-import { Box, Complex, Coordinates, Maths, Polynomial, Type } from "@geomtoy/util";
+import { Box, Coordinates, Float, Polynomial, Type } from "@geomtoy/util";
 import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
@@ -96,13 +96,7 @@ export default class QuadraticBezierBezier extends BaseIntersection {
             -c0 * e0 * g0 + b * f0 * g0 + c0 * d * h0 - a * f0 * h0 - b * d * i0 + a * e0 * i0
         ]);
 
-        const tRoots = Polynomial.roots(tPoly).map(r => {
-            if (Complex.is(r)) {
-                if (Maths.equalTo(Complex.imag(r), 0, eps.complexEpsilon)) return Complex.real(r);
-                return r;
-            }
-            return r;
-        });
+        const tRoots = Polynomial.roots(tPoly, eps.complexEpsilon);
         const tRootsM = Polynomial.rootsMultiplicity(tRoots.filter(Type.isNumber), eps.timeEpsilon);
         const intersection: ReturnType<typeof this.properIntersection> = [];
 
@@ -140,13 +134,13 @@ export default class QuadraticBezierBezier extends BaseIntersection {
 
         for (let i = 0, l = tRootsM.length; i < l; i++) {
             const t1 = tRootsM[i].root;
-            if (Maths.between(t1, 0, 1, false, false, eps.timeEpsilon)) {
+            if (Float.between(t1, 0, 1, false, false, eps.timeEpsilon)) {
                 const x = Polynomial.evaluate(polyX1, t1);
                 const y = Polynomial.evaluate(polyY1, t1);
 
                 const t2s = tripleLine2 ? this.geometry2.getTimesOfPointExtend([x, y]) : [this.geometry2.getTimeOfPointExtend([x, y])];
                 t2s.forEach(t2 => {
-                    if (Maths.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
+                    if (Float.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
                         intersection.push({
                             c: [x, y],
                             t1,
@@ -187,31 +181,31 @@ export default class QuadraticBezierBezier extends BaseIntersection {
     @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
-            .filter(i => i.m % 2 === 1 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
+            .filter(i => i.m % 2 === 1 && Float.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
         return this.properIntersection()
-            .filter(i => i.m % 2 === 0 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
+            .filter(i => i.m % 2 === 0 && Float.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     block() {
         return this.properIntersection()
-            .filter(i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && !(Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)))
+            .filter(i => (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)) && !(Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     blockedBy() {
         return this.properIntersection()
-            .filter(i => (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) && !(Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
+            .filter(i => (Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) && !(Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     connect() {
         return this.properIntersection()
-            .filter(i => (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) && (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
+            .filter(i => (Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) && (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")

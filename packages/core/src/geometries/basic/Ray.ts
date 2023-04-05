@@ -1,4 +1,4 @@
-import { Assert, Box, Coordinates, Maths, Matrix2, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Assert, Box, Coordinates, Float, Maths, Matrix2, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
 import { eps, optioner } from "../../geomtoy";
@@ -115,7 +115,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         const v = Vector2.from(this.coordinates, c);
         const dp = Vector2.dot(vr, v);
         const cp = Vector2.cross(vr, v);
-        return !Maths.lessThan(dp, 0, eps.vectorEpsilon) && Maths.equalTo(cp, 0, eps.vectorEpsilon);
+        return !Float.lessThan(dp, 0, eps.vectorEpsilon) && Float.equalTo(cp, 0, eps.vectorEpsilon);
     }
 
     move(deltaX: number, deltaY: number) {
@@ -210,7 +210,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         const tMax = Maths.min(Maths.max(tMinX, tMaxX), Maths.max(tMinY, tMaxY));
 
         tMin = Maths.max(tMin, 0);
-        if (!Maths.greaterThan(tMax, tMin, eps.epsilon)) {
+        if (!Float.greaterThan(tMax, tMin, eps.epsilon)) {
             return g;
         }
         const c1 = [x + tMin * dx, y + tMin * dy] as [number, number];

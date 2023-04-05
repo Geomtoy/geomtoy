@@ -1,4 +1,4 @@
-import { Maths, Vector2 } from "@geomtoy/util";
+import { Float, Vector2 } from "@geomtoy/util";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import { eps } from "../../geomtoy";
@@ -28,7 +28,7 @@ export default class LineSegmentLineSegment extends BaseIntersection {
         const v13 = Vector2.from(c1, c3);
         const cp1 = Vector2.cross(v12, v34);
         const cp2 = Vector2.cross(v13, v12);
-        return Maths.equalTo(cp1, 0, eps.vectorEpsilon) && Maths.equalTo(cp2, 0, eps.vectorEpsilon);
+        return Float.equalTo(cp1, 0, eps.vectorEpsilon) && Float.equalTo(cp2, 0, eps.vectorEpsilon);
     }
 
     @cached
@@ -49,11 +49,11 @@ export default class LineSegmentLineSegment extends BaseIntersection {
         const cp3 = Vector2.cross(v13, v34);
 
         const intersection: ReturnType<typeof this.properIntersection> = [];
-        if (!Maths.equalTo(cp1, 0, eps.vectorEpsilon)) {
+        if (!Float.equalTo(cp1, 0, eps.vectorEpsilon)) {
             const t1 = cp3 / cp1;
             const t2 = cp2 / cp1;
 
-            if (Maths.between(t1, 0, 1, false, false, eps.timeEpsilon) && Maths.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
+            if (Float.between(t1, 0, 1, false, false, eps.timeEpsilon) && Float.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
                 const [x, y] = Vector2.add(c1, Vector2.scalarMultiply(v12, t1));
                 intersection.push({ c: [x, y], t1, t2 });
             }
@@ -90,7 +90,7 @@ export default class LineSegmentLineSegment extends BaseIntersection {
     equal(): Trilean {
         if (!this.onSameTrajectory()) return false;
         const { t2i, t2t } = this.perspective();
-        return Maths.equalTo(t2i, 0, eps.timeEpsilon) && Maths.equalTo(t2t, 1, eps.timeEpsilon);
+        return Float.equalTo(t2i, 0, eps.timeEpsilon) && Float.equalTo(t2t, 1, eps.timeEpsilon);
     }
     @superPreprocess("handleDegeneration")
     separate(): Trilean {
@@ -98,7 +98,7 @@ export default class LineSegmentLineSegment extends BaseIntersection {
             return this.properIntersection().length === 0;
         }
         const { t2i, t2t } = this.perspective();
-        return Maths.greaterThan(t2i, 1, eps.timeEpsilon) || Maths.lessThan(t2t, 0, eps.timeEpsilon);
+        return Float.greaterThan(t2i, 1, eps.timeEpsilon) || Float.lessThan(t2t, 0, eps.timeEpsilon);
     }
     @superPreprocess("handleDegeneration")
     intersect() {
@@ -115,7 +115,7 @@ export default class LineSegmentLineSegment extends BaseIntersection {
     @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
-            .filter(i => Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
+            .filter(i => Float.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
@@ -125,19 +125,19 @@ export default class LineSegmentLineSegment extends BaseIntersection {
     @superPreprocess("handleDegeneration")
     block() {
         return this.properIntersection()
-            .filter(i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && !(Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)))
+            .filter(i => (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)) && !(Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     blockedBy() {
         return this.properIntersection()
-            .filter(i => (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) && !(Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
+            .filter(i => (Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) && !(Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     connect() {
         return this.properIntersection()
-            .filter(i => (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) && (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
+            .filter(i => (Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) && (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
@@ -146,17 +146,17 @@ export default class LineSegmentLineSegment extends BaseIntersection {
         const { t2i, t2t, c1i, c1t } = this.perspective();
         const coincide: (Point | LineSegment)[] = [];
         // coincide point
-        const iet = Maths.equalTo(t2i, 1, eps.timeEpsilon);
-        const tei = Maths.equalTo(t2t, 0, eps.timeEpsilon);
+        const iet = Float.equalTo(t2i, 1, eps.timeEpsilon);
+        const tei = Float.equalTo(t2t, 0, eps.timeEpsilon);
         if (iet) coincide.push(new Point(c1t));
         if (tei) coincide.push(new Point(c1i));
         if (iet || tei) return coincide;
 
         // coincide segment
-        const ili = Maths.lessThan(t2i, 0, eps.timeEpsilon);
-        const ibw = Maths.between(t2i, 0, 1, false, true, eps.timeEpsilon);
-        const tgt = Maths.greaterThan(t2t, 1, eps.timeEpsilon);
-        const tbw = Maths.between(t2t, 0, 1, true, false, eps.timeEpsilon);
+        const ili = Float.lessThan(t2i, 0, eps.timeEpsilon);
+        const ibw = Float.between(t2i, 0, 1, false, true, eps.timeEpsilon);
+        const tgt = Float.greaterThan(t2t, 1, eps.timeEpsilon);
+        const tbw = Float.between(t2t, 0, 1, true, false, eps.timeEpsilon);
         // overlap
         if (ili && tbw) coincide.push(this.geometry1.portionOf(0, t2t));
         // overlap

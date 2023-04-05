@@ -1,4 +1,4 @@
-import { Coordinates, Maths, Vector2 } from "@geomtoy/util";
+import { Coordinates, Float, Maths, Vector2 } from "@geomtoy/util";
 import Circle from "../../geometries/basic/Circle";
 import Point from "../../geometries/basic/Point";
 import { eps } from "../../geomtoy";
@@ -22,7 +22,7 @@ export default class CircleCircle extends BaseIntersection {
     onSameTrajectory() {
         const { centerCoordinates: cc1, radius: r1 } = this.geometry1;
         const { centerCoordinates: cc2, radius: r2 } = this.geometry2;
-        return Coordinates.equalTo(cc1, cc2, eps.epsilon) && Maths.equalTo(r1, r2, eps.epsilon);
+        return Coordinates.equalTo(cc1, cc2, eps.epsilon) && Float.equalTo(r1, r2, eps.epsilon);
     }
 
     @cached
@@ -39,7 +39,7 @@ export default class CircleCircle extends BaseIntersection {
         const sdr = (r1 - r2) ** 2;
 
         const intersection: ReturnType<typeof this.properIntersection> = [];
-        if (Maths.lessThan(sd, ssr, eps.epsilon) && Maths.greaterThan(sd, sdr, eps.epsilon)) {
+        if (Float.lessThan(sd, ssr, eps.epsilon) && Float.greaterThan(sd, sdr, eps.epsilon)) {
             const cosTheta = (sd + r1 ** 2 - r2 ** 2) / (2 * Maths.sqrt(sd)) / r1;
             const angle = Maths.acos(cosTheta);
             const baseAngle = Vector2.angle(v);
@@ -55,7 +55,7 @@ export default class CircleCircle extends BaseIntersection {
                 }
             );
         }
-        if (Maths.equalTo(sd, ssr, eps.epsilon) || Maths.equalTo(sd, sdr, eps.epsilon)) {
+        if (Float.equalTo(sd, ssr, eps.epsilon) || Float.equalTo(sd, sdr, eps.epsilon)) {
             intersection.push({
                 c: this.geometry1.getPointAtAngle(Vector2.angle(v)).coordinates,
                 m: 2

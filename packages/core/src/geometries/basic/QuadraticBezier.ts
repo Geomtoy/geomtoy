@@ -1,4 +1,4 @@
-import { Assert, Coordinates, Maths, Matrix3, Polynomial, RootMultiplicity, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Assert, Coordinates, Float, Maths, Matrix3, Polynomial, RootMultiplicity, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
 import { eps } from "../../geomtoy";
@@ -190,8 +190,8 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         const m = [1, -2, 1, -2, 2, 0, 1, 0, 0] as Parameters<typeof Matrix3.dotVector3>[0];
         const [cx2, cx1] = Matrix3.dotVector3(m, [x0, x1, x2]);
         const [cy2, cy1] = Matrix3.dotVector3(m, [y0, y1, y2]);
-        const d2 = Maths.equalTo(cx2, 0, Number.EPSILON) && Maths.equalTo(cy2, 0, Number.EPSILON);
-        const d1 = Maths.equalTo(cx1, 0, Number.EPSILON) && Maths.equalTo(cy1, 0, Number.EPSILON);
+        const d2 = Float.equalTo(cx2, 0, Float.MACHINE_EPSILON) && Float.equalTo(cy2, 0, Float.MACHINE_EPSILON);
+        const d1 = Float.equalTo(cx1, 0, Float.MACHINE_EPSILON) && Float.equalTo(cy1, 0, Float.MACHINE_EPSILON);
 
         if (check) return d2;
 
@@ -221,14 +221,10 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         let tRoots = [
             ...(!Polynomial.isConstant(polyXD) ? Polynomial.roots(polyXD, eps.complexEpsilon) : []),
             ...(!Polynomial.isConstant(polyYD) ? Polynomial.roots(polyYD, eps.complexEpsilon) : [])
-        ].filter(Type.isNumber);
-        tRoots = Utility.uniqWith(tRoots, (a, b) => Maths.equalTo(a, b, eps.timeEpsilon));
+        ].filter((t) : t is number => Type.isNumber(t) &&  Float.between(t, 0, 1, false, false, eps.timeEpsilon) );
+        tRoots = Utility.uniqWith(tRoots, (a, b) => Float.equalTo(a, b, eps.timeEpsilon));
 
-        return tRoots
-            .filter(t => {
-                return Maths.between(t, 0, 1, false, false, eps.timeEpsilon);
-            })
-            .map(t => [new Point(this.getParametricEquation()(t)), t] as [point: Point, time: number]);
+        return tRoots.map(t => [new Point(this.getParametricEquation()(t)), t] as [point: Point, time: number]);
     }
 
     move(deltaX: number, deltaY: number) {
@@ -245,7 +241,9 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
      * @param t
      */
     static fromThreePointsAndTime(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point, t: number) {
-        if (Maths.equalTo((1 - t) * t, 0, eps.timeEpsilon)) {
+        // todo if t can be out of the interval [0, 1]
+
+        if (Float.equalTo((1 - t) * t, 0, eps.timeEpsilon)) {
             return null;
         }
 
@@ -341,9 +339,9 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         const n = Maths.sqrt(f);
         // prettier-ignore
         return (
-            Maths.equalTo(b, 2 * l * m, eps.coefficientEpsilon) &&
-            Maths.equalTo(d, 2 * l * n, eps.coefficientEpsilon) &&
-            Maths.equalTo(e, 2 * m * n, eps.coefficientEpsilon)
+            Float.equalTo(b, 2 * l * m, eps.coefficientEpsilon) &&
+            Float.equalTo(d, 2 * l * n, eps.coefficientEpsilon) &&
+            Float.equalTo(e, 2 * m * n, eps.coefficientEpsilon)
         );
     }
 
@@ -462,7 +460,7 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
      */
     getTimeOfPoint(point: [number, number] | Point) {
         const t = this.getTimeOfPointExtend(point);
-        if (Maths.between(t, 0, 1, false, false, eps.timeEpsilon)) return Maths.clamp(t, 0, 1);
+        if (Float.between(t, 0, 1, false, false, eps.timeEpsilon)) return Maths.clamp(t, 0, 1);
         return NaN;
     }
 
@@ -476,14 +474,14 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         let yRootsM: RootMultiplicity<number>[] | undefined = undefined;
 
         if (Polynomial.isConstant(xPoly)) {
-            if (!Maths.equalTo(Polynomial.coef(xPoly, 0), 0, eps.coefficientEpsilon)) return [];
+            if (!Float.equalTo(Polynomial.coef(xPoly, 0), 0, eps.coefficientEpsilon)) return [];
         } else {
             xRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(xPoly, eps.complexEpsilon).filter(Type.isNumber), eps.timeEpsilon);
             if (xRootsM.length === 0) return [];
         }
 
         if (Polynomial.isConstant(yPoly)) {
-            if (!Maths.equalTo(Polynomial.coef(yPoly, 0), 0, eps.coefficientEpsilon)) return [];
+            if (!Float.equalTo(Polynomial.coef(yPoly, 0), 0, eps.coefficientEpsilon)) return [];
         } else {
             yRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(yPoly, eps.complexEpsilon).filter(Type.isNumber), eps.timeEpsilon);
             if (yRootsM.length === 0) return [];
@@ -499,7 +497,7 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
             const ret: number[] = [];
             for (let xr of xRootsM) {
                 for (let yr of yRootsM) {
-                    if (Maths.equalTo(xr.root, yr.root, eps.timeEpsilon)) {
+                    if (Float.equalTo(xr.root, yr.root, eps.timeEpsilon)) {
                         ret.push(Maths.avg(xr.root, yr.root));
                     }
                 }
@@ -527,8 +525,8 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         if (times.length === 0) return NaN;
 
         Utility.sortWith(times, (a, b) => {
-            const d1 = Maths.between(a, 0, 1, false, false, eps.timeEpsilon);
-            const d2 = Maths.between(b, 0, 1, false, false, eps.timeEpsilon);
+            const d1 = Float.between(a, 0, 1, false, false, eps.timeEpsilon);
+            const d2 = Float.between(b, 0, 1, false, false, eps.timeEpsilon);
             if (d1 && !d2) return -1;
             if (!d1 && d2) return 1;
             return a - b;
@@ -621,7 +619,7 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         ts = ts.map(t => this._clampTime(t, "element of ts"));
         const ret: QuadraticBezier[] = [];
         ts = Utility.sortBy(
-            Utility.uniqWith(ts, (a, b) => Maths.equalTo(a, b, eps.timeEpsilon)),
+            Utility.uniqWith(ts, (a, b) => Float.equalTo(a, b, eps.timeEpsilon)),
             [n => n]
         );
         [0, ...ts, 1].forEach((_, index, arr) => {

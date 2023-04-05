@@ -1,4 +1,4 @@
-import { Angle, Assert, Coordinates, Maths, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Angle, Assert, Coordinates, Float, Maths, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
 import { eps } from "../../geomtoy";
@@ -261,9 +261,9 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
         const { _radiusX: rx, _radiusY: ry, point1Coordinates: c1, point2Coordinates: c2 } = this;
-        const rx0 = Maths.equalTo(rx, 0, Number.EPSILON);
-        const ry0 = Maths.equalTo(ry, 0, Number.EPSILON);
-        const c12 = Coordinates.equalTo(c1, c2, Number.EPSILON);
+        const rx0 = Float.equalTo(rx, 0, Float.MACHINE_EPSILON);
+        const ry0 = Float.equalTo(ry, 0, Float.MACHINE_EPSILON);
+        const c12 = Coordinates.equalTo(c1, c2, Float.MACHINE_EPSILON);
 
         if (check) return rx0 || ry0 || c12;
 
@@ -338,7 +338,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const atanY = Maths.atan((ry * cosPhi) / (rx * sinPhi));
         const yRoots = [Angle.simplify(atanY), Angle.simplify(atanY + Maths.PI)];
         const fn = this.getParametricEquation();
-        const aRoots = Utility.uniqWith([...xRoots, ...yRoots], (a, b) => Maths.equalTo(a, b, eps.angleEpsilon));
+        const aRoots = Utility.uniqWith([...xRoots, ...yRoots], (a, b) => Angle.equalTo(a, b, eps.angleEpsilon));
         return aRoots
             .filter(a => {
                 return Angle.between(a, sa, ea, this.positive, false, false, eps.angleEpsilon);
@@ -394,7 +394,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     }
     @stated
     isCircularArc() {
-        return Maths.equalTo(this.radiusX, this.radiusY, eps.epsilon);
+        return Float.equalTo(this.radiusX, this.radiusY, eps.epsilon);
     }
     @stated
     toCircleByRadiusX() {

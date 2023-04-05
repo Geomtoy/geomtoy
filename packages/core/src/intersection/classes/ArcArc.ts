@@ -1,4 +1,4 @@
-import { Angle, Box, Maths } from "@geomtoy/util";
+import { Angle, Box, Float } from "@geomtoy/util";
 import Arc from "../../geometries/basic/Arc";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
@@ -81,7 +81,7 @@ export default class ArcArc extends BaseIntersection {
     @superPreprocess("handleDegeneration")
     equal(): Trilean {
         const { a1i, a1t, a2i, a2t } = this.perspective();
-        return this.onSameTrajectory() && Maths.equalTo(a1i, a2i, eps.angleEpsilon) && Maths.equalTo(a1t, a2t, eps.angleEpsilon);
+        return this.onSameTrajectory() && Angle.equalTo(a1i, a2i, eps.angleEpsilon) && Angle.equalTo(a1t, a2t, eps.angleEpsilon);
     }
     @superPreprocess("handleDegeneration")
     separate(): Trilean {
@@ -89,9 +89,9 @@ export default class ArcArc extends BaseIntersection {
         const { a1i, a1t, a2i, a2t } = this.perspective();
         const dt = a1i < a1t === a2i < a2t;
         if (dt) {
-            return Maths.greaterThan(a2i, a1t, eps.angleEpsilon) || Maths.lessThan(a2t, a1i, eps.angleEpsilon);
+            return Float.greaterThan(a2i, a1t, eps.angleEpsilon) || Float.lessThan(a2t, a1i, eps.angleEpsilon);
         } else {
-            return Maths.greaterThan(a2i, a1t, eps.angleEpsilon) && Maths.lessThan(a2t, a1i, eps.angleEpsilon);
+            return Float.greaterThan(a2i, a1t, eps.angleEpsilon) && Float.lessThan(a2t, a1i, eps.angleEpsilon);
         }
     }
     @superPreprocess("handleDegeneration")
@@ -171,9 +171,9 @@ export default class ArcArc extends BaseIntersection {
 
         // coincide segment
         const dt = a1i < a1t === a2i < a2t;
-        const ili = dt ? Maths.lessThan(a2i, a1i, eps.angleEpsilon) : Maths.greaterThan(a2i, a1t, eps.angleEpsilon);
+        const ili = dt ? Float.lessThan(a2i, a1i, eps.angleEpsilon) : Float.greaterThan(a2i, a1t, eps.angleEpsilon);
         const ibw = Angle.between(a2i, a1i, a1t, true, false, true, eps.angleEpsilon);
-        const tgt = dt ? Maths.greaterThan(a2t, a1t, eps.angleEpsilon) : Maths.lessThan(a2t, a1i, eps.angleEpsilon);
+        const tgt = dt ? Float.greaterThan(a2t, a1t, eps.angleEpsilon) : Float.lessThan(a2t, a1i, eps.angleEpsilon);
         const tbw = Angle.between(a2t, a1i, a1t, true, true, false, eps.angleEpsilon);
         const ellipse = this.geometry1.toEllipse();
 

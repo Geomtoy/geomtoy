@@ -1,4 +1,4 @@
-import { Maths } from "@geomtoy/util";
+import { Float } from "@geomtoy/util";
 import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import Ellipse from "../../geometries/basic/Ellipse";
 import LineSegment from "../../geometries/basic/LineSegment";
@@ -36,7 +36,7 @@ export default class LineSegmentEllipse extends BaseIntersection {
             .map(i => {
                 return { ...i, t1: this.geometry1.getTimeOfPointExtend(i.c) };
             })
-            .filter(i => Maths.between(i.t1, 0, 1, false, false, eps.timeEpsilon));
+            .filter(i => Float.between(i.t1, 0, 1, false, false, eps.timeEpsilon));
     }
 
     @superPreprocess("handleDegeneration")
@@ -69,13 +69,13 @@ export default class LineSegmentEllipse extends BaseIntersection {
     @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
-            .filter(i => i.m % 2 === 1 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon))
+            .filter(i => i.m % 2 === 1 && Float.between(i.t1, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
         return this.properIntersection()
-            .filter(i => i.m % 2 === 0 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon))
+            .filter(i => i.m % 2 === 0 && Float.between(i.t1, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
@@ -85,7 +85,7 @@ export default class LineSegmentEllipse extends BaseIntersection {
     @superPreprocess("handleDegeneration")
     blockedBy() {
         return this.properIntersection()
-            .filter(i => Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon))
+            .filter(i => Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")

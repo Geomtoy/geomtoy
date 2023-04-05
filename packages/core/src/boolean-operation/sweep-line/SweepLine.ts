@@ -1,4 +1,4 @@
-import { Coordinates, Maths } from "@geomtoy/util";
+import { Coordinates, Float, Maths } from "@geomtoy/util";
 import { eps } from "../../geomtoy";
 import { FillRule } from "../../types";
 import Intersector from "./Intersector";
@@ -97,14 +97,14 @@ export default class SweepLine {
     takeSnapshot(event: SweepEvent) {
         const [x] = event.coordinates;
         // Take the horizontal snapshot first if necessary.
-        if (!Maths.equalTo(x, this.x, eps.epsilon)) {
+        if (!Float.equalTo(x, this.x, eps.epsilon)) {
             this.x = x;
             this.snapshotH = this.statusList.toArray().filter(e => {
                 // do not include the vertical segments
                 if (e.mono.isVertical) return false;
                 // do not include the enter event happened at this `x`,
                 // the enter event happened at this `x` should be ignore(it is beyond the imaginary line)
-                if (Maths.equalTo(e.coordinates[0], this.x, eps.epsilon)) return false;
+                if (Float.equalTo(e.coordinates[0], this.x, eps.epsilon)) return false;
                 return true;
             });
         }
@@ -115,7 +115,7 @@ export default class SweepLine {
                 if (e.mono.isVertical) return true;
                 // do not include the enter event happened at this `x`,
                 // the enter event happened at this `x` should be ignore(it is beyond the imaginary line)
-                if (Maths.equalTo(e.coordinates[0], this.x, eps.epsilon)) return false;
+                if (Float.equalTo(e.coordinates[0], this.x, eps.epsilon)) return false;
                 return true;
             });
 

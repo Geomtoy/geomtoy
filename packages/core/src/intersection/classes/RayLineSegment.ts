@@ -1,4 +1,4 @@
-import { Coordinates, Maths } from "@geomtoy/util";
+import { Coordinates, Float } from "@geomtoy/util";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import Ray from "../../geometries/basic/Ray";
@@ -62,7 +62,7 @@ export default class RayLineSegment extends BaseIntersection {
             return this.properIntersection().length === 0;
         }
         const { t1 } = this.perspective();
-        return !Maths.between(t1, 0, 1, false, false, eps.timeEpsilon);
+        return !Float.between(t1, 0, 1, false, false, eps.timeEpsilon);
     }
     @superPreprocess("handleDegeneration")
     intersect() {
@@ -79,7 +79,7 @@ export default class RayLineSegment extends BaseIntersection {
     @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
-            .filter(i => !Maths.equalTo(i.t2, 0, eps.timeEpsilon) && !Maths.equalTo(i.t2, 1, eps.timeEpsilon) && !Coordinates.equalTo(i.c, this.geometry1.coordinates, eps.epsilon))
+            .filter(i => !Float.equalTo(i.t2, 0, eps.timeEpsilon) && !Float.equalTo(i.t2, 1, eps.timeEpsilon) && !Coordinates.equalTo(i.c, this.geometry1.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
@@ -89,7 +89,7 @@ export default class RayLineSegment extends BaseIntersection {
     @superPreprocess("handleDegeneration")
     block() {
         return this.properIntersection()
-            .filter(i => Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon))
+            .filter(i => Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
@@ -101,7 +101,7 @@ export default class RayLineSegment extends BaseIntersection {
     @superPreprocess("handleDegeneration")
     connect() {
         return this.properIntersection()
-            .filter(i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && Coordinates.equalTo(i.c, this.geometry1.coordinates, eps.epsilon))
+            .filter(i => (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)) && Coordinates.equalTo(i.c, this.geometry1.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
@@ -112,8 +112,8 @@ export default class RayLineSegment extends BaseIntersection {
         const c2tOn = this.geometry1.isPointOn(c2t);
         const coincide: (Point | LineSegment)[] = [];
 
-        const ei = Maths.equalTo(t1, 0, eps.timeEpsilon);
-        const et = Maths.equalTo(t1, 1, eps.timeEpsilon);
+        const ei = Float.equalTo(t1, 0, eps.timeEpsilon);
+        const et = Float.equalTo(t1, 1, eps.timeEpsilon);
 
         if (c2iOn && c2tOn) {
             coincide.push(this.geometry2.clone());

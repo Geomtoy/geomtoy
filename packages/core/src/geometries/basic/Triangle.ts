@@ -1,4 +1,4 @@
-import { Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Assert, Coordinates, Float, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import EventSourceObject from "../../event/EventSourceObject";
@@ -223,7 +223,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     degenerate(check: boolean) {
         if (!this.initialized()) return check ? true : null;
         const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
-        const triangleForming = Maths.greaterThan(Maths.abs(Vector2.cross(Vector2.from(c1, c3), Vector2.from(c1, c2))), 0, Number.EPSILON);
+        const triangleForming = Float.greaterThan(Maths.abs(Vector2.cross(Vector2.from(c1, c3), Vector2.from(c1, c2))), 0, Float.MACHINE_EPSILON);
 
         if (check) return !triangleForming;
 
@@ -361,7 +361,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     isCongruentWithTriangle(triangle: Triangle) {
         const [al1, al2, al3] = [this.side1Length, this.side2Length, this.side3Length].sort((a, b) => a - b);
         const [bl1, bl2, bl3] = [triangle.side1Length, triangle.side2Length, triangle.side3Length].sort((a, b) => a - b);
-        return Maths.equalTo(al1, bl1, eps.epsilon) && Maths.equalTo(al2, bl2, eps.epsilon) && Maths.equalTo(al3, bl3, eps.epsilon);
+        return Float.equalTo(al1, bl1, eps.epsilon) && Float.equalTo(al2, bl2, eps.epsilon) && Float.equalTo(al3, bl3, eps.epsilon);
     }
     /**
      * Whether triangle `this` is similar with triangle `triangle`.
@@ -370,7 +370,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     isSimilarWithTriangle(triangle: Triangle) {
         const [aa1, aa2, aa3] = [this.angle1, this.angle2, this.angle3].sort((a, b) => a - b);
         const [ba1, ba2, ba3] = [triangle.angle1, triangle.angle2, triangle.angle3].sort((a, b) => a - b);
-        return Maths.equalTo(aa1, ba1, eps.epsilon) && Maths.equalTo(aa2, ba2, eps.epsilon) && Maths.equalTo(aa3, ba3, eps.epsilon);
+        return Float.equalTo(aa1, ba1, eps.epsilon) && Float.equalTo(aa2, ba2, eps.epsilon) && Float.equalTo(aa3, ba3, eps.epsilon);
     }
     /**
      * Get the similarity ratio of triangles `this` and `triangle`.
@@ -388,43 +388,43 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      */
     isAcuteTriangle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length].sort((a, b) => a - b);
-        return Maths.greaterThan(a ** 2 + b ** 2, c ** 2, eps.epsilon);
+        return Float.greaterThan(a ** 2 + b ** 2, c ** 2, eps.epsilon);
     }
     /**
      * Whether triangle `this` is a right triangle.
      */
     isRightTriangle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length].sort((a, b) => a - b);
-        return Maths.equalTo(a ** 2 + b ** 2, c ** 2, eps.epsilon);
+        return Float.equalTo(a ** 2 + b ** 2, c ** 2, eps.epsilon);
     }
     /**
      * Whether triangle `this` is an obtuse triangle.
      */
     isObtuseTriangle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length].sort((a, b) => a - b);
-        return Maths.lessThan(a ** 2 + b ** 2, c ** 2, eps.epsilon);
+        return Float.lessThan(a ** 2 + b ** 2, c ** 2, eps.epsilon);
     }
     /**
      * Whether triangle `this` is a scalene triangle(a triangle with no congruent sides).
      */
     isScaleneTriangle() {
-        return !Maths.equalTo(this.side1Length, this.side2Length, eps.epsilon) && !Maths.equalTo(this.side1Length, this.side3Length, eps.epsilon);
+        return !Float.equalTo(this.side1Length, this.side2Length, eps.epsilon) && !Float.equalTo(this.side1Length, this.side3Length, eps.epsilon);
     }
     /**
      * Whether triangle `this` is an isosceles triangle(a triangle with at least two congruent sides).
      */
     isIsoscelesTriangle() {
         return (
-            Maths.equalTo(this.side1Length, this.side2Length, eps.epsilon) ||
-            Maths.equalTo(this.side1Length, this.side3Length, eps.epsilon) ||
-            Maths.equalTo(this.side2Length, this.side3Length, eps.epsilon)
+            Float.equalTo(this.side1Length, this.side2Length, eps.epsilon) ||
+            Float.equalTo(this.side1Length, this.side3Length, eps.epsilon) ||
+            Float.equalTo(this.side2Length, this.side3Length, eps.epsilon)
         );
     }
     /**
      * Whether triangle `this` is an equilateral triangle(a triangle with three congruent sides).
      */
     isEquilateralTriangle() {
-        return Maths.equalTo(this.side1Length, this.side2Length, eps.epsilon) && Maths.equalTo(this.side1Length, this.side3Length, eps.epsilon);
+        return Float.equalTo(this.side1Length, this.side2Length, eps.epsilon) && Float.equalTo(this.side1Length, this.side3Length, eps.epsilon);
     }
     /**
      * Get perimeter of triangle `this`.
@@ -467,7 +467,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      */
     isPointOnSideLines(point: Point) {
         const t = this.getTrilinearOfPoint(point);
-        return Maths.sign(t[0], eps.epsilon) * Maths.sign(t[1], eps.epsilon) * Maths.sign(t[2], eps.epsilon) === 0;
+        return Float.sign(t[0], eps.epsilon) * Float.sign(t[1], eps.epsilon) * Float.sign(t[2], eps.epsilon) === 0;
     }
     isPointOn(point: Point): boolean {
         return true;
@@ -478,7 +478,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      */
     isPointInside(point: Point) {
         const t = this.getTrilinearOfPoint(point);
-        return Maths.sign(t[0], eps.epsilon) * Maths.sign(t[1], eps.epsilon) * Maths.sign(t[2], eps.epsilon) === 1;
+        return Float.sign(t[0], eps.epsilon) * Float.sign(t[1], eps.epsilon) * Float.sign(t[2], eps.epsilon) === 1;
     }
     /**
      * Whether point `point` is outside triangle `this`.
@@ -486,7 +486,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      */
     isPointOutside(point: Point) {
         const t = this.getTrilinearOfPoint(point);
-        return Maths.sign(t[0], eps.epsilon) * Maths.sign(t[1], eps.epsilon) * Maths.sign(t[2], eps.epsilon) === -1;
+        return Float.sign(t[0], eps.epsilon) * Float.sign(t[1], eps.epsilon) * Float.sign(t[2], eps.epsilon) === -1;
     }
     /**
      * Get the isogonal conjugate point of point `point` respect to triangle `this`.

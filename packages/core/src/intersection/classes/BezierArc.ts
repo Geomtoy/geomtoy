@@ -1,4 +1,4 @@
-import { Angle, Box, Maths } from "@geomtoy/util";
+import { Angle, Box, Float } from "@geomtoy/util";
 import Arc from "../../geometries/basic/Arc";
 import Bezier from "../../geometries/basic/Bezier";
 import LineSegment from "../../geometries/basic/LineSegment";
@@ -97,7 +97,7 @@ export default class BezierArc extends BaseIntersection {
             .filter(
                 i =>
                     i.m % 2 === 1 &&
-                    !(Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) &&
+                    !(Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) &&
                     !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon))
             )
             .map(i => new Point(i.c));
@@ -109,7 +109,7 @@ export default class BezierArc extends BaseIntersection {
             .filter(
                 i =>
                     i.m % 2 === 0 &&
-                    !(Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) &&
+                    !(Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) &&
                     !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon))
             )
             .map(i => new Point(i.c));
@@ -119,7 +119,7 @@ export default class BezierArc extends BaseIntersection {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         return this.properIntersection()
             .filter(
-                i => (Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)) && !(Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon))
+                i => (Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon)) && !(Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon))
             )
             .map(i => new Point(i.c));
     }
@@ -128,7 +128,7 @@ export default class BezierArc extends BaseIntersection {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         return this.properIntersection()
             .filter(
-                i => (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) && !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon))
+                i => (Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) && !(Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon))
             )
             .map(i => new Point(i.c));
     }
@@ -137,7 +137,7 @@ export default class BezierArc extends BaseIntersection {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         return this.properIntersection()
             .filter(
-                i => (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) && (Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon))
+                i => (Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) && (Angle.equalTo(i.a2, sa, eps.angleEpsilon) || Angle.equalTo(i.a2, ea, eps.angleEpsilon))
             )
             .map(i => new Point(i.c));
     }

@@ -1,4 +1,4 @@
-import { Assert, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Assert, Coordinates, Float, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import EventTarget from "../base/EventTarget";
 import EventSourceObject from "../event/EventSourceObject";
 import Circle from "../geometries/basic/Circle";
@@ -97,7 +97,7 @@ export default class Inversion extends EventTarget {
     isPointSelfInverse(point: Point) {
         const c0 = getCoordinates(point, "point");
         const sd = Vector2.squaredMagnitude(Vector2.from(this.centerCoordinates, c0));
-        return Maths.equalTo(sd, this.power, eps.epsilon);
+        return Float.equalTo(sd, this.power, eps.epsilon);
     }
     /**
      * Whether line `line` is self-inverse in inversion `this`.
@@ -117,7 +117,7 @@ export default class Inversion extends EventTarget {
         const { centerCoordinates: cc0, radius: r0 } = inversionBasisCircle;
         const { centerCoordinates: cci, radius: ri } = circle;
         // the circle is the basis circle of inversion.
-        if (Coordinates.equalTo(cc0, cci, eps.epsilon) && Maths.equalTo(r0, ri, eps.epsilon)) {
+        if (Coordinates.equalTo(cc0, cci, eps.epsilon) && Float.equalTo(r0, ri, eps.epsilon)) {
             return true;
         }
         // the circle is orthogonal circle of the basis circle of inversion.

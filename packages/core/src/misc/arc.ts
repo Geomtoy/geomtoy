@@ -4,7 +4,7 @@
  * @see https://observablehq.com/@awhitty/svg-2-elliptical-arc-to-canvas-path2d
  * @see https://html.spec.whatwg.org/multipage/canvas.html#dom-context-2d-ellipse
  */
-import { Angle, Maths, TransformationMatrix, Vector2 } from "@geomtoy/util";
+import { Angle, Float, Maths, TransformationMatrix, Vector2 } from "@geomtoy/util";
 import { ArcCenterParameterization, ArcEndpointParameterization } from "../types";
 
 const ARC_ENDPOINT_FULL_APPROX = Maths.PI / 1800;
@@ -161,7 +161,7 @@ export function centerToEndpointParameterization(
 export function correctRadii(x1: number, y1: number, x2: number, y2: number, rx: number, ry: number, phi: number) {
     const [x1P, y1P] = Vector2.rotate(Vector2.scalarMultiply([x1 - x2, y1 - y2], 0.5), -phi);
     const lambda = x1P ** 2 / rx ** 2 + y1P ** 2 / ry ** 2;
-    if (Maths.greaterThan(lambda, 1, Number.EPSILON)) {
+    if (Float.greaterThan(lambda, 1, Float.MACHINE_EPSILON)) {
         const s = Maths.sqrt(lambda);
         (rx = s * rx), (ry = s * ry);
     }
@@ -178,9 +178,9 @@ export function flexCorrectRadii(x1: number, y1: number, x2: number, y2: number,
     const lambdaY = minRy ** 2 / ry ** 2;
     const lambda = lambdaX + lambdaY;
 
-    const lxGt1 = Maths.greaterThan(lambdaX, 1, Number.EPSILON);
-    const lyGt1 = Maths.greaterThan(lambdaY, 1, Number.EPSILON);
-    const lGt1 = Maths.greaterThan(lambda, 1, Number.EPSILON);
+    const lxGt1 = Float.greaterThan(lambdaX, 1, Float.MACHINE_EPSILON);
+    const lyGt1 = Float.greaterThan(lambdaY, 1, Float.MACHINE_EPSILON);
+    const lGt1 = Float.greaterThan(lambda, 1, Float.MACHINE_EPSILON);
 
     if (lxGt1 && !lyGt1) {
         const s = Maths.sqrt(1 - lambdaY);

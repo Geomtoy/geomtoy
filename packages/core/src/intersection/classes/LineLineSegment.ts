@@ -1,4 +1,4 @@
-import { Maths, Vector2 } from "@geomtoy/util";
+import { Float, Vector2 } from "@geomtoy/util";
 import type Line from "../../geometries/basic/Line";
 import type LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
@@ -24,7 +24,7 @@ export default class LineLineSegment extends BaseIntersection {
         const [a, b, c] = this.geometry1.getImplicitFunctionCoefs();
         const d1 = a * x1 + b * y1 + c;
         const d2 = a * x2 + b * y2 + c;
-        return Maths.equalTo(d1, 0, eps.epsilon) && Maths.equalTo(d2, 0, eps.epsilon);
+        return Float.equalTo(d1, 0, eps.epsilon) && Float.equalTo(d2, 0, eps.epsilon);
     }
 
     @cached
@@ -37,10 +37,10 @@ export default class LineLineSegment extends BaseIntersection {
         const [a, b, c] = this.geometry1.getImplicitFunctionCoefs();
         const d1 = a * x1 + b * y1 + c;
         const d2 = a * x2 + b * y2 + c;
-        const s1 = Maths.sign(d1, eps.epsilon);
-        const s2 = Maths.sign(d2, eps.epsilon);
+        const s1 = Float.sign(d1, eps.epsilon);
+        const s2 = Float.sign(d2, eps.epsilon);
 
-        if (Maths.equalTo(d1 - d2, 0, eps.epsilon)) return []; // parallel
+        if (Float.equalTo(d1 - d2, 0, eps.epsilon)) return []; // parallel
         const intersection = [];
         /*
         If `line` is crossing `lineSegment`, the signed distance of endpoints of `lineSegment` between `line` have different sign,
@@ -77,7 +77,7 @@ export default class LineLineSegment extends BaseIntersection {
     @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
-            .filter(i => !Maths.equalTo(i.t2, 0, eps.timeEpsilon) && !Maths.equalTo(i.t2, 1, eps.timeEpsilon))
+            .filter(i => !Float.equalTo(i.t2, 0, eps.timeEpsilon) && !Float.equalTo(i.t2, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
@@ -87,7 +87,7 @@ export default class LineLineSegment extends BaseIntersection {
     @superPreprocess("handleDegeneration")
     block() {
         return this.properIntersection()
-            .filter(i => Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon))
+            .filter(i => Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")

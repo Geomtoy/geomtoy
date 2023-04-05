@@ -1,4 +1,4 @@
-import { Angle, Assert, Box, Coordinates, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Angle, Assert, Box, Coordinates, Float, Maths, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
 import { eps, optioner } from "../../geomtoy";
@@ -158,15 +158,15 @@ export default class Path extends Geometry {
 
         for (let i = 1, l = this._commands.length; i < l; i++) {
             const { x: xi, y: yi, type } = commands[i];
-            if (!Coordinates.equalTo([x0, y0], [xi, yi], Number.EPSILON)) return check ? false : this;
+            if (!Coordinates.equalTo([x0, y0], [xi, yi], Float.MACHINE_EPSILON)) return check ? false : this;
 
             if (type === PathCommandType.QuadraticBezierTo) {
                 const { controlPointX: cpx, controlPointY: cpy } = commands[i] as PathQuadraticBezierToCommand;
-                if (!Coordinates.equalTo([x0, y0], [cpx, cpy], Number.EPSILON)) return check ? false : this;
+                if (!Coordinates.equalTo([x0, y0], [cpx, cpy], Float.MACHINE_EPSILON)) return check ? false : this;
             }
             if (type === PathCommandType.BezierTo) {
                 const { controlPoint1X: cp1x, controlPoint1Y: cp1y, controlPoint2X: cp2x, controlPoint2Y: cp2y } = commands[i] as PathBezierToCommand;
-                if (!Coordinates.equalTo([x0, y0], [cp1x, cp1y], Number.EPSILON) || !Coordinates.equalTo([x0, y0], [cp2x, cp2y], Number.EPSILON)) return check ? false : this;
+                if (!Coordinates.equalTo([x0, y0], [cp1x, cp1y], Float.MACHINE_EPSILON) || !Coordinates.equalTo([x0, y0], [cp2x, cp2y], Float.MACHINE_EPSILON)) return check ? false : this;
             }
         }
         return check ? true : new Point(x0, y0);
@@ -664,7 +664,7 @@ export default class Path extends Geometry {
     }
 
     randomPointInside() {
-        if (Maths.equalTo(this.getArea(), 0, eps.epsilon)) return null;
+        if (Float.equalTo(this.getArea(), 0, eps.epsilon)) return null;
         const [x, y, w, h] = this.getBoundingBox();
         let rnd: [number, number];
         do {

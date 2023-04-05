@@ -1,4 +1,4 @@
-import { Box, Complex, Maths, Polynomial, Type } from "@geomtoy/util";
+import { Box, Float, Polynomial, Type } from "@geomtoy/util";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
@@ -95,13 +95,7 @@ export default class QuadraticBezierQuadraticBezier extends BaseIntersection {
 
         // Quadratic bezier may degenerate.
         // tPoly = Polynomial.monic(Polynomial.standardize(tPoly));
-        const tRoots = Polynomial.roots(tPoly).map(r => {
-            if (Complex.is(r)) {
-                if (Maths.equalTo(Complex.imag(r), 0, eps.complexEpsilon)) return Complex.real(r);
-                return r;
-            }
-            return r;
-        });
+        const tRoots = Polynomial.roots(tPoly, eps.complexEpsilon);
         const tRootsM = Polynomial.rootsMultiplicity(tRoots.filter(Type.isNumber), eps.timeEpsilon);
         const intersection: ReturnType<typeof this.properIntersection> = [];
 
@@ -117,7 +111,7 @@ export default class QuadraticBezierQuadraticBezier extends BaseIntersection {
 
         for (let i = 0, l = tRootsM.length; i < l; i++) {
             const t2 = tRootsM[i].root;
-            if (Maths.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
+            if (Float.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
                 const x = Polynomial.evaluate(polyX2, t2);
                 const y = Polynomial.evaluate(polyY2, t2);
                 const t1 = this.geometry1.getTimeOfPoint([x, y]);
@@ -164,7 +158,7 @@ export default class QuadraticBezierQuadraticBezier extends BaseIntersection {
     equal(): Trilean {
         if (!this.onSameTrajectory()) return false;
         const { t2i, t2t } = this.perspective();
-        return Maths.equalTo(t2i, 0, eps.timeEpsilon) && Maths.equalTo(t2t, 1, eps.timeEpsilon);
+        return Float.equalTo(t2i, 0, eps.timeEpsilon) && Float.equalTo(t2t, 1, eps.timeEpsilon);
     }
     @superPreprocess("handleDegeneration")
     separate(): Trilean {
@@ -172,7 +166,7 @@ export default class QuadraticBezierQuadraticBezier extends BaseIntersection {
             return this.properIntersection().length === 0;
         }
         const { t2i, t2t } = this.perspective();
-        return Maths.greaterThan(t2i, 1, eps.timeEpsilon) || Maths.lessThan(t2t, 0, eps.timeEpsilon);
+        return Float.greaterThan(t2i, 1, eps.timeEpsilon) || Float.lessThan(t2t, 0, eps.timeEpsilon);
     }
     @superPreprocess("handleDegeneration")
     intersect() {
@@ -193,31 +187,31 @@ export default class QuadraticBezierQuadraticBezier extends BaseIntersection {
     @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
-            .filter(i => i.m % 2 === 1 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
+            .filter(i => i.m % 2 === 1 && Float.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     touch() {
         return this.properIntersection()
-            .filter(i => i.m % 2 === 0 && Maths.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Maths.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
+            .filter(i => i.m % 2 === 0 && Float.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     block() {
         return this.properIntersection()
-            .filter(i => (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)) && !(Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)))
+            .filter(i => (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)) && !(Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     blockedBy() {
         return this.properIntersection()
-            .filter(i => (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) && !(Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
+            .filter(i => (Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) && !(Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
     @superPreprocess("handleDegeneration")
     connect() {
         return this.properIntersection()
-            .filter(i => (Maths.equalTo(i.t1, 0, eps.timeEpsilon) || Maths.equalTo(i.t1, 1, eps.timeEpsilon)) && (Maths.equalTo(i.t2, 0, eps.timeEpsilon) || Maths.equalTo(i.t2, 1, eps.timeEpsilon)))
+            .filter(i => (Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) && (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
 
@@ -228,16 +222,16 @@ export default class QuadraticBezierQuadraticBezier extends BaseIntersection {
         const coincide: (Point | QuadraticBezier)[] = [];
 
         // coincide point
-        const iet = Maths.equalTo(t2i, 1, eps.timeEpsilon);
-        const tei = Maths.equalTo(t2t, 0, eps.timeEpsilon);
+        const iet = Float.equalTo(t2i, 1, eps.timeEpsilon);
+        const tei = Float.equalTo(t2t, 0, eps.timeEpsilon);
         if (iet) coincide.push(new Point(c1t));
         if (tei) coincide.push(new Point(c1i));
         if (iet || tei) return coincide;
 
-        const ili = Maths.lessThan(t2i, 0, eps.timeEpsilon);
-        const ibw = Maths.between(t2i, 0, 1, false, true, eps.timeEpsilon);
-        const tgt = Maths.greaterThan(t2t, 1, eps.timeEpsilon);
-        const tbw = Maths.between(t2t, 0, 1, true, false, eps.timeEpsilon);
+        const ili = Float.lessThan(t2i, 0, eps.timeEpsilon);
+        const ibw = Float.between(t2i, 0, 1, false, true, eps.timeEpsilon);
+        const tgt = Float.greaterThan(t2t, 1, eps.timeEpsilon);
+        const tbw = Float.between(t2t, 0, 1, true, false, eps.timeEpsilon);
         // overlap
         if (ili && tbw) coincide.push(this.geometry1.portionOf(0, t2t));
         // overlap

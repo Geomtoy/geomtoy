@@ -1,4 +1,4 @@
-import { Maths } from "@geomtoy/util";
+import { Float } from "@geomtoy/util";
 import Line from "../../geometries/basic/Line";
 import Point from "../../geometries/basic/Point";
 import { eps } from "../../geomtoy";
@@ -17,7 +17,7 @@ export default class LineLine extends BaseIntersection {
         const [a2, b2, c2] = this.geometry2.getImplicitFunctionCoefs();
         const m = a1 * b2 - a2 * b1;
         const n = a1 * c2 - a2 * c1;
-        return Maths.equalTo(m, 0, eps.epsilon) && Maths.equalTo(n, 0, eps.epsilon);
+        return Float.equalTo(m, 0, eps.epsilon) && Float.equalTo(n, 0, eps.epsilon);
     }
     @cached
     properIntersection(): {
@@ -28,7 +28,7 @@ export default class LineLine extends BaseIntersection {
         const [a2, b2, c2] = this.geometry2.getImplicitFunctionCoefs();
         const m = a1 * b2 - a2 * b1;
         const intersection: ReturnType<typeof this.properIntersection> = [];
-        if (!Maths.equalTo(m, 0, eps.epsilon)) {
+        if (!Float.equalTo(m, 0, eps.epsilon)) {
             const x = (c2 * b1 - c1 * b2) / m;
             const y = (c1 * a2 - c2 * a1) / m;
             intersection.push({ c: [x, y] });
