@@ -1318,18 +1318,19 @@ export default class View {
     }
 
     private _shouldRender(presentShapeSet: Set<Shape>) {
-        function _shapeDeepIn(shape: Shape & ParentShape): boolean {
+        function shapeDeepIn(shape: Shape & ParentShape): boolean {
             for (const item of Object.values(shape.items)) {
-                if (isParentShape(item)) return _shapeDeepIn(item);
                 if (presentShapeSet.has(item)) return true;
+                if (isParentShape(item)) {
+                    if (shapeDeepIn(item)) return true;
+                }
             }
             return false;
         }
         for (const ve of this._renderables) {
+            if (presentShapeSet.has(ve.shape)) return true;
             if (isParentShape(ve.shape)) {
-                if (_shapeDeepIn(ve.shape)) return true;
-            } else {
-                if (presentShapeSet.has(ve.shape)) return true;
+                if (shapeDeepIn(ve.shape)) return true;
             }
         }
         return false;
