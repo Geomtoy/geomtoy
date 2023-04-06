@@ -5,7 +5,6 @@ import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
 import BaseIntersection from "../BaseIntersection";
 import LineSegmentBezier from "./LineSegmentBezier";
 import LineSegmentLineSegment from "./LineSegmentLineSegment";
@@ -13,36 +12,50 @@ import LineSegmentQuadraticBezier from "./LineSegmentQuadraticBezier";
 import QuadraticBezierQuadraticBezier from "./QuadraticBezierQuadraticBezier";
 
 export default class QuadraticBezierBezier extends BaseIntersection {
-    constructor(public geometry1: QuadraticBezier, public geometry2: Bezier) {
-        super();
+    static override create(geometry1: QuadraticBezier, geometry2: Bezier) {
         const dg1 = geometry1.degenerate(false);
         const dg2 = geometry2.degenerate(false);
 
-        if (dg1 instanceof Point || dg2 instanceof Point) {
-            this.degeneration.intersection = null;
-            return this;
+        const ret = {
+            intersection: BaseIntersection.nullIntersection,
+            inverse: false
+        } as {
+            intersection: BaseIntersection;
+            inverse: boolean;
+        };
+
+        if (dg1 instanceof QuadraticBezier && dg2 instanceof Bezier) {
+            ret.intersection = new QuadraticBezierBezier(dg1, dg2);
+            return ret;
         }
         if (dg1 instanceof QuadraticBezier && dg2 instanceof QuadraticBezier) {
-            this.degeneration.intersection = new QuadraticBezierQuadraticBezier(dg1, dg2);
-            return this;
+            ret.intersection = new QuadraticBezierQuadraticBezier(dg1, dg2);
+            return ret;
         }
         if (dg1 instanceof QuadraticBezier && dg2 instanceof LineSegment) {
-            this.degeneration.intersection = new LineSegmentQuadraticBezier(dg2, dg1);
-            this.degeneration.inverse = true;
-            return this;
+            ret.intersection = new LineSegmentQuadraticBezier(dg2, dg1);
+            ret.inverse = true;
+            return ret;
         }
         if (dg1 instanceof LineSegment && dg2 instanceof Bezier) {
-            this.degeneration.intersection = new LineSegmentBezier(dg1, dg2);
-            return this;
+            ret.intersection = new LineSegmentBezier(dg1, dg2);
+            return ret;
         }
         if (dg1 instanceof LineSegment && dg2 instanceof QuadraticBezier) {
-            this.degeneration.intersection = new LineSegmentQuadraticBezier(dg1, dg2);
-            return this;
+            ret.intersection = new LineSegmentQuadraticBezier(dg1, dg2);
+            return ret;
         }
         if (dg1 instanceof LineSegment && dg2 instanceof LineSegment) {
-            this.degeneration.intersection = new LineSegmentLineSegment(dg1, dg2);
-            return this;
+            ret.intersection = new LineSegmentLineSegment(dg1, dg2);
+            return ret;
         }
+
+        // null or point degeneration
+        return ret;
+    }
+
+    constructor(public geometry1: QuadraticBezier, public geometry2: Bezier, public skipForBooleanOperation = false) {
+        super();
     }
     @cached
     properIntersection(): {
@@ -100,36 +113,44 @@ export default class QuadraticBezierBezier extends BaseIntersection {
         const tRootsM = Polynomial.rootsMultiplicity(tRoots.filter(Type.isNumber), eps.timeEpsilon);
         const intersection: ReturnType<typeof this.properIntersection> = [];
 
-        // adjust the multiplicity when bezier is a triple line
-        const tripleLine2 = this.geometry2.isTripleLine();
-        if (tripleLine2) {
-            tRootsM.forEach((rm, index) => {
-                if (rm.multiplicity === 9) tRootsM[index].multiplicity = 3;
-                if (rm.multiplicity === 6) tRootsM[index].multiplicity = 2;
-                if (rm.multiplicity === 3) tRootsM[index].multiplicity = 1;
-            });
+        let tripleLine2: boolean;
+        if (!this.skipForBooleanOperation) {
+            // adjust the multiplicity when bezier is a triple line
+            tripleLine2 = this.geometry2.isTripleLine();
+            if (tripleLine2) {
+                tRootsM.forEach((rm, index) => {
+                    if (rm.multiplicity === 9) tRootsM[index].multiplicity = 3;
+                    if (rm.multiplicity === 6) tRootsM[index].multiplicity = 2;
+                    if (rm.multiplicity === 3) tRootsM[index].multiplicity = 1;
+                });
+            }
+        } else {
+            tripleLine2 = false;
         }
-        // adjust the multiplicity when bezier is self-intersecting
-        const tsi = this.geometry2.selfIntersectionExtend();
-        if (tsi.length) {
-            const csi = this.geometry2.getPointAtTimeExtend(tsi[0]).coordinates;
-            tRootsM.forEach((rm, index) => {
-                const c = this.geometry1.getPointAtTimeExtend(rm.root).coordinates;
-                if (Coordinates.equalTo(csi, c, eps.epsilon)) {
-                    if (rm.multiplicity === 2) {
-                        // turn multiplicity = 2 (double strike)into two root multiplicity = 1
-                        tRootsM[index].multiplicity = 1;
-                        const newRootM = { ...tRootsM[index] };
-                        tRootsM.push(newRootM);
+
+        if (!this.skipForBooleanOperation) {
+            // adjust the multiplicity when bezier is self-intersecting
+            const tsi = this.geometry2.selfIntersectionExtend();
+            if (tsi.length) {
+                const csi = this.geometry2.getPointAtTimeExtend(tsi[0]).coordinates;
+                tRootsM.forEach((rm, index) => {
+                    const c = this.geometry1.getPointAtTimeExtend(rm.root).coordinates;
+                    if (Coordinates.equalTo(csi, c, eps.epsilon)) {
+                        if (rm.multiplicity === 2) {
+                            // turn multiplicity = 2 (double strike)into two root multiplicity = 1
+                            tRootsM[index].multiplicity = 1;
+                            const newRootM = { ...tRootsM[index] };
+                            tRootsM.push(newRootM);
+                        }
+                        if (rm.multiplicity === 3) {
+                            // turn multiplicity = 3 (strike and contact)into two root multiplicity = 1 multiplicity =2
+                            tRootsM[index].multiplicity = 1;
+                            const newRootM = { ...tRootsM[index], multiplicity: 2 };
+                            tRootsM.push(newRootM);
+                        }
                     }
-                    if (rm.multiplicity === 3) {
-                        // turn multiplicity = 3 (strike and contact)into two root multiplicity = 1 multiplicity =2
-                        tRootsM[index].multiplicity = 1;
-                        const newRootM = { ...tRootsM[index], multiplicity: 2 };
-                        tRootsM.push(newRootM);
-                    }
-                }
-            });
+                });
+            }
         }
 
         for (let i = 0, l = tRootsM.length; i < l; i++) {
@@ -154,61 +175,50 @@ export default class QuadraticBezierBezier extends BaseIntersection {
         return intersection;
     }
 
-    @superPreprocess("handleDegeneration")
     equal() {
         return false;
     }
-    @superPreprocess("handleDegeneration")
     separate() {
         return this.properIntersection().length === 0;
     }
-    @superPreprocess("handleDegeneration")
     intersect() {
         return this.properIntersection().map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     strike() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 1)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     contact() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 0)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 1 && Float.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     touch() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 0 && Float.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     block() {
         return this.properIntersection()
             .filter(i => (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)) && !(Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     blockedBy() {
         return this.properIntersection()
             .filter(i => (Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) && !(Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     connect() {
         return this.properIntersection()
             .filter(i => (Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) && (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     coincide() {
         return [];
     }

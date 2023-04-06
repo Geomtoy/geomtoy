@@ -9,6 +9,27 @@ import BaseIntersection from "../BaseIntersection";
 import LineLine from "./LineLine";
 
 export default class RayRay extends BaseIntersection {
+    static override create(geometry1: Ray, geometry2: Ray) {
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
+
+        const ret = {
+            intersection: BaseIntersection.nullIntersection,
+            inverse: false
+        } as {
+            intersection: BaseIntersection;
+            inverse: boolean;
+        };
+
+        if (dg1 instanceof Ray && dg2 instanceof Ray) {
+            ret.intersection = new RayRay(dg1, dg2);
+            return ret;
+        }
+
+        // null or point degeneration
+        return ret;
+    }
+
     constructor(public geometry1: Ray, public geometry2: Ray) {
         super();
         this.supIntersection = new LineLine(geometry1.toLine(), geometry2.toLine());

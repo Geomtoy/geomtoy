@@ -4,18 +4,31 @@ import Line from "../../geometries/basic/Line";
 import Point from "../../geometries/basic/Point";
 import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 
 export default class LineCircle extends BaseIntersection {
+    static override create(geometry1: Line, geometry2: Circle) {
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
+
+        const ret = {
+            intersection: BaseIntersection.nullIntersection,
+            inverse: false
+        } as {
+            intersection: BaseIntersection;
+            inverse: boolean;
+        };
+        if (dg1 instanceof Line && dg2 instanceof Circle) {
+            ret.intersection = new LineCircle(dg1, dg2);
+            return ret;
+        }
+        // null or point degeneration
+        return ret;
+    }
+
     constructor(public geometry1: Line, public geometry2: Circle) {
         super();
-        const dg2 = geometry2.degenerate(false);
-        if (dg2 instanceof Point) {
-            this.degeneration.intersection = null;
-            return this;
-        }
     }
 
     @cached
@@ -42,57 +55,44 @@ export default class LineCircle extends BaseIntersection {
         }
         return intersection;
     }
-
-    @superPreprocess("handleDegeneration")
     equal(): Trilean {
         return false;
     }
-    @superPreprocess("handleDegeneration")
     separate(): Trilean {
         return this.properIntersection().length === 0;
     }
-
-    @superPreprocess("handleDegeneration")
     intersect() {
         return this.properIntersection().map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     strike() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 1)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     contact() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 0)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 1)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     touch() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 0)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     block() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     blockedBy() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     connect() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     coincide() {
         return [];
     }

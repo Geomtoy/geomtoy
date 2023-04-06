@@ -1,7 +1,7 @@
 import { Utility } from "@geomtoy/util";
 import type Geometry from "../base/Geometry";
 import type Point from "../geometries/basic/Point";
-import { IntersectionPredicate, type AllResult, type Trilean } from "../types";
+import { IntersectionPredicate, type Trilean } from "../types";
 
 //@see https://en.wikipedia.org/wiki/Contact_(mathematics)
 /*
@@ -19,51 +19,61 @@ For the understanding convenience, we give some examples here(You may draw a pic
 */
 
 export default abstract class BaseIntersection {
-    degeneration: {
-        intersection: BaseIntersection | null;
-        inverse: boolean;
-    } = {
-        intersection: this,
-        inverse: false
-    };
-
-    private static _nullIntersection = {
-        equal: () => undefined,
-        separate: () => undefined,
-        intersect: () => [],
-        strike: () => [],
-        contact: () => [],
-        cross: () => [],
-        touch: () => [],
-        block: () => [],
-        blockedBy: () => [],
-        connect: () => [],
-        coincide: () => []
-    };
-
-    handleDegeneration(p: IntersectionPredicate) {
-        if (this.degeneration.intersection === null) {
-            return BaseIntersection._nullIntersection[p]();
-        }
-        if (this.degeneration.intersection !== this) {
-            const { intersection, inverse } = this.degeneration;
-            const inversePredicates = {
-                equal: "equal",
-                separate: "separate",
-                intersect: "intersect",
-                strike: "strike",
-                contact: "contact",
-                cross: "cross",
-                touch: "touch",
-                block: inverse ? "blockedBy" : "block",
-                blockedBy: inverse ? "block" : "blockedBy",
-                connect: "connect",
-                coincide: " coincide"
-            };
-            return intersection[inversePredicates[p] as IntersectionPredicate]?.() ?? BaseIntersection._nullIntersection[p]();
-        }
-        return this;
+    static create(geometry1: Geometry, geometry2: Geometry): { intersection: BaseIntersection; inverse: boolean } {
+        return {
+            intersection: this.nullIntersection,
+            inverse: false
+        };
     }
+
+    static nullIntersection = new (class NullIntersection extends BaseIntersection {
+        equal(): Trilean {
+            return undefined;
+        }
+        separate(): Trilean {
+            return undefined;
+        }
+        intersect() {
+            return [];
+        }
+        strike() {
+            return [];
+        }
+        contact() {
+            return [];
+        }
+        cross() {
+            return [];
+        }
+        touch() {
+            return [];
+        }
+        block() {
+            return [];
+        }
+        blockedBy() {
+            return [];
+        }
+        connect() {
+            return [];
+        }
+        coincide() {
+            return [];
+        }
+    })();
+    static readonly inversePredicates = {
+        equal: ["equal", "equal"],
+        separate: ["separate", "separate"],
+        intersect: ["intersect", "intersect"],
+        strike: ["strike", "strike"],
+        contact: ["contact", "contact"],
+        cross: ["cross", "cross"],
+        touch: ["touch", "touch"],
+        block: ["block", "blockedBy"],
+        blockedBy: ["blockedBy", "block"],
+        connect: ["connect", "connect"],
+        coincide: ["coincide", "coincide"]
+    };
 
     abstract equal(): Trilean;
     abstract separate(): Trilean;
@@ -77,7 +87,14 @@ export default abstract class BaseIntersection {
     abstract connect(): Point[];
     abstract coincide(): Geometry[];
 
-    all(predicates?: IntersectionPredicate[]) {
+    static result(intersectionInfo: ReturnType<typeof BaseIntersection.create>, p: IntersectionPredicate) {
+        if (intersectionInfo.intersection === BaseIntersection.nullIntersection) {
+            return intersectionInfo.intersection[p]();
+        }
+        const { intersection, inverse } = intersectionInfo;
+        return intersection[BaseIntersection.inversePredicates[p][inverse ? 1 : 0] as IntersectionPredicate]();
+    }
+    static all(intersectionInfo: ReturnType<typeof BaseIntersection.create>, predicates?: IntersectionPredicate[]) {
         if (predicates !== undefined) {
             predicates = Utility.uniqBy(predicates, p => p); // remove duplicated
         } else {
@@ -85,10 +102,8 @@ export default abstract class BaseIntersection {
         }
         const result: { [key in IntersectionPredicate]?: any } = {};
         predicates.forEach(p => {
-            if (this[p] !== undefined) {
-                result[p as IntersectionPredicate] = this[p]!();
-            }
+            result[p as IntersectionPredicate] = this.result(intersectionInfo, p);
         });
-        return result as AllResult<this>;
+        return result;
     }
 }

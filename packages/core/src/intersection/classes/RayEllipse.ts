@@ -1,74 +1,78 @@
 import { Coordinates } from "@geomtoy/util";
-import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import Ellipse from "../../geometries/basic/Ellipse";
 import Point from "../../geometries/basic/Point";
 import Ray from "../../geometries/basic/Ray";
 import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 import LineEllipse from "./LineEllipse";
 
 export default class RayEllipse extends BaseIntersection {
-    constructor(public geometry1: Ray, public geometry2: Ellipse) {
-        super();
+    static override create(geometry1: Ray, geometry2: Ellipse) {
+        const dg1 = geometry1.degenerate(false);
         const dg2 = geometry2.degenerate(false);
-        if (dg2 instanceof Point || dg2 instanceof SealedGeometryArray) {
-            this.degeneration.intersection = null;
-            return this;
+
+        const ret = {
+            intersection: BaseIntersection.nullIntersection,
+            inverse: false
+        } as {
+            intersection: BaseIntersection;
+            inverse: boolean;
+        };
+
+        if (dg1 instanceof Ray && dg2 instanceof Ellipse) {
+            ret.intersection = new RayEllipse(dg1, dg2);
+            return ret;
         }
 
+        // null or point degeneration
+        return ret;
+    }
+
+    constructor(public geometry1: Ray, public geometry2: Ellipse) {
+        super();
         this.supIntersection = new LineEllipse(geometry1.toLine(), geometry2);
     }
-    supIntersection?: LineEllipse;
+    supIntersection: LineEllipse;
 
     @cached
     properIntersection(): {
         c: [number, number]; // coordinates of intersection
         m: number; // multiplicity
     }[] {
-        const intersection = this.supIntersection?.properIntersection() ?? [];
-        return intersection.filter(i => this.geometry1.isPointOn(i.c));
+        return this.supIntersection.properIntersection().filter(i => this.geometry1.isPointOn(i.c));
     }
 
-    @superPreprocess("handleDegeneration")
     equal(): Trilean {
         return false;
     }
-    @superPreprocess("handleDegeneration")
     separate(): Trilean {
         return this.properIntersection().length === 0;
     }
-    @superPreprocess("handleDegeneration")
     intersect() {
         return this.properIntersection().map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     strike() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 1)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     contact() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 0)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 1)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     touch() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 0)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     block() {
         return [];
     }
@@ -78,11 +82,9 @@ export default class RayEllipse extends BaseIntersection {
             .filter(i => Coordinates.equalTo(i.c, coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     connect() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     coincide() {
         return [];
     }

@@ -4,38 +4,50 @@ import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 import EllipseEllipse from "./EllipseEllipse";
 import LineSegmentArc from "./LineSegmentArc";
 
 export default class ArcArc extends BaseIntersection {
-    constructor(public geometry1: Arc, public geometry2: Arc) {
-        super();
+    static override create(geometry1: Arc, geometry2: Arc) {
         const dg1 = geometry1.degenerate(false);
         const dg2 = geometry2.degenerate(false);
-        if (dg1 instanceof Point || dg2 instanceof Point) {
-            this.degeneration.intersection = null;
-            return this;
+
+        const ret = {
+            intersection: BaseIntersection.nullIntersection,
+            inverse: false
+        } as {
+            intersection: BaseIntersection;
+            inverse: boolean;
+        };
+        if (dg1 instanceof Arc && dg2 instanceof Arc) {
+            ret.intersection = new ArcArc(dg1, dg2);
+            return ret;
         }
         if (dg1 instanceof LineSegment && dg2 instanceof Arc) {
-            this.degeneration.intersection = new LineSegmentArc(dg1, dg2);
-            return this;
+            ret.intersection = new LineSegmentArc(dg1, dg2);
+            return ret;
         }
         if (dg1 instanceof Arc && dg2 instanceof LineSegment) {
-            this.degeneration.intersection = new LineSegmentArc(dg2, dg1);
-            this.degeneration.inverse = true;
-            return this;
+            ret.intersection = new LineSegmentArc(dg2, dg1);
+            ret.inverse = true;
+            ret;
         }
-        this.supIntersection = new EllipseEllipse(geometry1.toEllipse(), geometry2.toEllipse());
+
+        // null or point degeneration
+        return ret;
     }
 
-    supIntersection?: EllipseEllipse;
+    constructor(public geometry1: Arc, public geometry2: Arc) {
+        super();
+        this.supIntersection = new EllipseEllipse(geometry1.toEllipse(), geometry2.toEllipse());
+    }
+    supIntersection: EllipseEllipse;
 
     @cached
     onSameTrajectory() {
-        return this.supIntersection?.onSameTrajectory() ?? false;
+        return this.supIntersection.onSameTrajectory();
     }
     @cached
     properIntersection(): {
@@ -47,8 +59,9 @@ export default class ArcArc extends BaseIntersection {
         if (!Box.collide(this.geometry1.getBoundingBox(), this.geometry2.getBoundingBox())) return [];
         if (this.onSameTrajectory()) return [];
         const { a1i, a1t, a2i, a2t } = this.perspective();
-        const intersection = this.supIntersection?.properIntersection() ?? [];
-        return intersection.filter(i => Angle.between(i.a1, a1i, a1t, true, false, false, eps.angleEpsilon) && Angle.between(i.a2, a2i, a2t, true, false, false, eps.angleEpsilon));
+        return this.supIntersection
+            .properIntersection()
+            .filter(i => Angle.between(i.a1, a1i, a1t, true, false, false, eps.angleEpsilon) && Angle.between(i.a2, a2i, a2t, true, false, false, eps.angleEpsilon));
     }
     @cached
     perspective(): {
@@ -78,12 +91,10 @@ export default class ArcArc extends BaseIntersection {
         };
     }
 
-    @superPreprocess("handleDegeneration")
     equal(): Trilean {
         const { a1i, a1t, a2i, a2t } = this.perspective();
         return this.onSameTrajectory() && Angle.equalTo(a1i, a2i, eps.angleEpsilon) && Angle.equalTo(a1t, a2t, eps.angleEpsilon);
     }
-    @superPreprocess("handleDegeneration")
     separate(): Trilean {
         if (!this.onSameTrajectory()) return this.properIntersection().length === 0;
         const { a1i, a1t, a2i, a2t } = this.perspective();
@@ -94,37 +105,31 @@ export default class ArcArc extends BaseIntersection {
             return Float.greaterThan(a2i, a1t, eps.angleEpsilon) && Float.lessThan(a2t, a1i, eps.angleEpsilon);
         }
     }
-    @superPreprocess("handleDegeneration")
     intersect() {
         return this.properIntersection().map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     strike() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 1)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     contact() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 0)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     cross() {
         const { a1i, a1t, a2i, a2t } = this.perspective();
         return this.properIntersection()
             .filter(i => i.m % 2 === 1 && Angle.between(i.a1, a1i, a1t, true, true, true, eps.angleEpsilon) && Angle.between(i.a2, a2i, a2t, true, true, true, eps.angleEpsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     touch() {
         const { a1i, a1t, a2i, a2t } = this.perspective();
         return this.properIntersection()
             .filter(i => i.m % 2 === 0 && Angle.between(i.a1, a1i, a1t, true, true, true, eps.angleEpsilon) && Angle.between(i.a2, a2i, a2t, true, true, true, eps.angleEpsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     block() {
         const { a1i, a1t, a2i, a2t } = this.perspective();
         return this.properIntersection()
@@ -135,7 +140,6 @@ export default class ArcArc extends BaseIntersection {
             )
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     blockedBy() {
         const { a1i, a1t, a2i, a2t } = this.perspective();
         return this.properIntersection()
@@ -146,7 +150,6 @@ export default class ArcArc extends BaseIntersection {
             )
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     connect() {
         const { a1i, a1t, a2i, a2t } = this.perspective();
         return this.properIntersection()
@@ -157,7 +160,6 @@ export default class ArcArc extends BaseIntersection {
             )
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     coincide() {
         if (!this.onSameTrajectory()) return [];
         const { a1i, a1t, a2i, a2t, c1i, c1t } = this.perspective();

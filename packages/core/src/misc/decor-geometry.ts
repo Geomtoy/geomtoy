@@ -11,6 +11,7 @@ const alwaysAvailableInstanceMethods = [
     "degenerate", // from Geometry
     "isValid", // from Geometry
     "move", // from Shape
+    "toJSON", // from Object
     "toString", // from Object
     "copyFrom", // from Shape
     "clone", // from Shape
@@ -73,23 +74,6 @@ export function validGeometryArguments(target: any, propertyKey: string, descrip
             if (arg instanceof Geometry && !arg.isValid()) {
                 throw new Error(
                     `[G]Calling \`${propertyKey}\` of \`${this.name}\` with ${article(arg.name, "invalid")}: \
-                    \n${arg}. \
-                    \n${geometryInvalidText(arg)}`
-                );
-            }
-        }
-        return method.call(this, ...arguments);
-    };
-}
-
-export function initializedGeometryArguments(target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<(...args: any[]) => any>) {
-    const method = descriptor.value!;
-
-    descriptor.value = function (this: typeof target) {
-        for (const arg of arguments) {
-            if (arg instanceof Geometry && !arg.initialized()) {
-                throw new Error(
-                    `[G]Calling \`${propertyKey}\` of \`${this.name}\` with ${article(arg.name, "uninitialized")}: \
                     \n${arg}. \
                     \n${geometryInvalidText(arg)}`
                 );

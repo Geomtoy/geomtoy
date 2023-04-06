@@ -1,21 +1,34 @@
 import { Float, Vector2 } from "@geomtoy/util";
-import type Line from "../../geometries/basic/Line";
-import type LineSegment from "../../geometries/basic/LineSegment";
+import Line from "../../geometries/basic/Line";
+import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { type Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 
 export default class LineLineSegment extends BaseIntersection {
+    static override create(geometry1: Line, geometry2: LineSegment) {
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
+
+        const ret = {
+            intersection: BaseIntersection.nullIntersection,
+            inverse: false
+        } as {
+            intersection: BaseIntersection;
+            inverse: boolean;
+        };
+        if (dg1 instanceof Line && dg2 instanceof LineSegment) {
+            ret.intersection = new LineLineSegment(dg1, dg2);
+            return ret;
+        }
+        // null or point degeneration
+        return ret;
+    }
+
     constructor(public geometry1: Line, public geometry2: LineSegment) {
         super();
-        const dg2 = geometry2.degenerate(false);
-        if (dg2 instanceof Point) {
-            this.degeneration.intersection = null;
-            return this;
-        }
     }
 
     @cached
@@ -53,52 +66,41 @@ export default class LineLineSegment extends BaseIntersection {
         return intersection;
     }
 
-    @superPreprocess("handleDegeneration")
     equal(): Trilean {
         return false;
     }
-    @superPreprocess("handleDegeneration")
     separate(): Trilean {
         if (this.onSameTrajectory()) return false;
         return this.properIntersection().length === 0;
     }
-    @superPreprocess("handleDegeneration")
     intersect() {
         return this.properIntersection().map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     strike() {
         return this.properIntersection().map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     contact() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
             .filter(i => !Float.equalTo(i.t2, 0, eps.timeEpsilon) && !Float.equalTo(i.t2, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     touch() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     block() {
         return this.properIntersection()
             .filter(i => Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     blockedBy() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     connect() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     coincide() {
         if (this.onSameTrajectory()) return [this.geometry2.clone()];
         return [];

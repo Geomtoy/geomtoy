@@ -7,6 +7,27 @@ import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 
 export default class LineLine extends BaseIntersection {
+    static override create(geometry1: Line, geometry2: Line) {
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
+
+        const ret = {
+            intersection: BaseIntersection.nullIntersection,
+            inverse: false
+        } as {
+            intersection: BaseIntersection;
+            inverse: boolean;
+        };
+
+        if (dg1 instanceof Line && dg2 instanceof Line) {
+            ret.intersection = new LineLine(dg1, dg2);
+            return ret;
+        }
+
+        // null or point degeneration
+        return ret;
+    }
+
     constructor(public geometry1: Line, public geometry2: Line) {
         super();
     }

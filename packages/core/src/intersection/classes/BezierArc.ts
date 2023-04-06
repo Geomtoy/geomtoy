@@ -6,7 +6,6 @@ import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 import BezierEllipse from "./BezierEllipse";
@@ -17,40 +16,54 @@ import LineSegmentQuadraticBezier from "./LineSegmentQuadraticBezier";
 import QuadraticBezierArc from "./QuadraticBezierArc";
 
 export default class BezierArc extends BaseIntersection {
-    constructor(public geometry1: Bezier, public geometry2: Arc) {
-        super();
-
+    static override create(geometry1: Bezier, geometry2: Arc) {
         const dg1 = geometry1.degenerate(false);
         const dg2 = geometry2.degenerate(false);
-        if (dg1 instanceof Point || dg2 instanceof Point) {
-            this.degeneration.intersection = null;
-            return this;
-        }
-        if (dg1 instanceof QuadraticBezier && dg2 instanceof Arc) {
-            this.degeneration.intersection = new QuadraticBezierArc(dg1, dg2);
-            return this;
-        }
-        if (dg1 instanceof QuadraticBezier && dg2 instanceof LineSegment) {
-            this.degeneration.intersection = new LineSegmentQuadraticBezier(dg2, dg1);
-            this.degeneration.inverse = true;
-            return this;
-        }
-        if (dg1 instanceof LineSegment && dg2 instanceof Arc) {
-            this.degeneration.intersection = new LineSegmentArc(dg1, dg2);
-            return this;
-        }
-        if (dg1 instanceof LineSegment && dg2 instanceof LineSegment) {
-            this.degeneration.intersection = new LineSegmentLineSegment(dg1, dg2);
-            return this;
+
+        const ret = {
+            intersection: BaseIntersection.nullIntersection,
+            inverse: false
+        } as {
+            intersection: BaseIntersection;
+            inverse: boolean;
+        };
+
+        if (dg1 instanceof Bezier && dg2 instanceof Arc) {
+            ret.intersection = new BezierArc(dg1, dg2);
+            return ret;
         }
         if (dg1 instanceof Bezier && dg2 instanceof LineSegment) {
-            this.degeneration.intersection = new LineSegmentBezier(dg2, geometry1);
-            this.degeneration.inverse = true;
-            return this;
+            ret.intersection = new LineSegmentBezier(dg2, dg1);
+            ret.inverse = true;
+            return ret;
         }
+        if (dg1 instanceof QuadraticBezier && dg2 instanceof Arc) {
+            ret.intersection = new QuadraticBezierArc(dg1, dg2);
+            return ret;
+        }
+        if (dg1 instanceof QuadraticBezier && dg2 instanceof LineSegment) {
+            ret.intersection = new LineSegmentQuadraticBezier(dg2, dg1);
+            ret.inverse = true;
+            return ret;
+        }
+        if (dg1 instanceof LineSegment && dg2 instanceof Arc) {
+            ret.intersection = new LineSegmentArc(dg1, dg2);
+            return ret;
+        }
+        if (dg1 instanceof LineSegment && dg2 instanceof LineSegment) {
+            ret.intersection = new LineSegmentLineSegment(dg1, dg2);
+            return ret;
+        }
+
+        // null or point degeneration
+        return ret;
+    }
+
+    constructor(public geometry1: Bezier, public geometry2: Arc) {
+        super();
         this.supIntersection = new BezierEllipse(geometry1, geometry2.toEllipse());
     }
-    supIntersection?: BezierEllipse;
+    supIntersection: BezierEllipse;
 
     @cached
     properIntersection(): {
@@ -62,35 +75,28 @@ export default class BezierArc extends BaseIntersection {
         if (!Box.collide(this.geometry1.getBoundingBox(), this.geometry2.getBoundingBox())) return [];
         const [sa, ea] = this.geometry2.getStartEndAngles();
         const positive = this.geometry2.positive;
-        const intersection = this.supIntersection?.properIntersection() ?? [];
-        return intersection.filter(i => Angle.between(i.a2, sa, ea, positive, false, false, eps.angleEpsilon));
+        return this.supIntersection.properIntersection().filter(i => Angle.between(i.a2, sa, ea, positive, false, false, eps.angleEpsilon));
     }
 
-    @superPreprocess("handleDegeneration")
     equal(): Trilean {
         return false;
     }
-    @superPreprocess("handleDegeneration")
     separate(): Trilean {
         return this.properIntersection().length === 0;
     }
-    @superPreprocess("handleDegeneration")
     intersect() {
         return this.properIntersection().map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     strike() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 1)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     contact() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 0)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     cross() {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         return this.properIntersection()
@@ -102,7 +108,6 @@ export default class BezierArc extends BaseIntersection {
             )
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     touch() {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         return this.properIntersection()
@@ -114,7 +119,6 @@ export default class BezierArc extends BaseIntersection {
             )
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     block() {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         return this.properIntersection()
@@ -123,7 +127,6 @@ export default class BezierArc extends BaseIntersection {
             )
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     blockedBy() {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         return this.properIntersection()
@@ -132,7 +135,6 @@ export default class BezierArc extends BaseIntersection {
             )
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     connect() {
         const [sa, ea] = this.geometry2.getStartEndAngles();
         return this.properIntersection()
@@ -141,7 +143,6 @@ export default class BezierArc extends BaseIntersection {
             )
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     coincide() {
         return [];
     }

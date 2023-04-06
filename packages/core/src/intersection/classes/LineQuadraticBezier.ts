@@ -5,23 +5,37 @@ import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 import LineLineSegment from "./LineLineSegment";
 
 export default class LineQuadraticBezier extends BaseIntersection {
+    static override create(geometry1: Line, geometry2: QuadraticBezier) {
+        const dg1 = geometry1.degenerate(false);
+        const dg2 = geometry2.degenerate(false);
+        const ret = {
+            intersection: BaseIntersection.nullIntersection,
+            inverse: false
+        } as {
+            intersection: BaseIntersection;
+            inverse: boolean;
+        };
+
+        if (dg1 instanceof Line && dg2 instanceof QuadraticBezier) {
+            ret.intersection = new LineQuadraticBezier(dg1, dg2);
+            return ret;
+        }
+        if (dg1 instanceof Line && dg2 instanceof LineSegment) {
+            ret.intersection = new LineLineSegment(dg1, dg2);
+            return ret;
+        }
+
+        // null or point degeneration
+        return ret;
+    }
+
     constructor(public geometry1: Line, public geometry2: QuadraticBezier) {
         super();
-        const dg2 = this.geometry2.degenerate(false);
-        if (dg2 instanceof Point) {
-            this.degeneration.intersection = null;
-            return this;
-        }
-        if (dg2 instanceof LineSegment) {
-            this.degeneration.intersection = new LineLineSegment(geometry1, dg2);
-            return this;
-        }
     }
 
     @cached
@@ -48,57 +62,46 @@ export default class LineQuadraticBezier extends BaseIntersection {
         return intersection;
     }
 
-    @superPreprocess("handleDegeneration")
     equal(): Trilean {
         return false;
     }
-    @superPreprocess("handleDegeneration")
     separate(): Trilean {
         return this.properIntersection().length === 0;
     }
-    @superPreprocess("handleDegeneration")
     intersect() {
         return this.properIntersection().map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     strike() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 1)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     contact() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 0)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 1 && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     touch() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 0 && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     block() {
         return this.properIntersection()
             .filter(i => Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     blockedBy() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     connect() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     coincide() {
         return [];
     }

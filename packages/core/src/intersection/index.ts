@@ -1,6 +1,6 @@
 import BaseObject from "../base/BaseObject";
-import { initializedGeometryArguments } from "../misc/decor-geometry";
-import { IntersectionPredicate, type IntersectionMethodOverloads } from "../types";
+import { IntersectionAllOverloads, IntersectionPredicate, type IntersectionMethodOverloads } from "../types";
+import BaseIntersection from "./BaseIntersection";
 import ArcArc from "./classes/ArcArc";
 import ArcEllipse from "./classes/ArcEllipse";
 import BezierArc from "./classes/BezierArc";
@@ -87,7 +87,7 @@ class Intersection extends BaseObject {
     // To solve this, we define properties on the prototype and use `declare` to tell Typescript what happened.
     // But note that this is a type hack(workaround), since Typescript will think these methods on the prototype are properties on the instance.
 
-    declare all: IntersectionMethodOverloads<"all", typeof definedIntersections>;
+    declare all: IntersectionAllOverloads<typeof definedIntersections>;
 
     declare equal: IntersectionMethodOverloads<IntersectionPredicate.Equal, typeof definedIntersections>;
     declare separate: IntersectionMethodOverloads<IntersectionPredicate.Separate, typeof definedIntersections>;
@@ -105,29 +105,27 @@ class Intersection extends BaseObject {
 Object.defineProperty(Intersection.prototype, "all", {
     value: function (geometry1: any, geometry2: any, predicates?: IntersectionPredicate[]) {
         const className = geometry1.name + geometry2.name;
-        const inter = new definedIntersections[className as keyof typeof definedIntersections](geometry1, geometry2);
-        return inter.all(predicates);
+        const intersectionInfo = definedIntersections[className as keyof typeof definedIntersections].create(geometry1, geometry2);
+        return BaseIntersection.all(intersectionInfo, predicates);
     },
     // ES6 default
     configurable: true,
     enumerable: false,
     writable: true
 });
-initializedGeometryArguments(Intersection.prototype, "all", Object.getOwnPropertyDescriptor(Intersection.prototype, "all") as TypedPropertyDescriptor<(...args: any[]) => any>);
 
 Object.values(IntersectionPredicate).forEach(methodName => {
     Object.defineProperty(Intersection.prototype, methodName, {
         value: function (geometry1: any, geometry2: any) {
             const className = geometry1.name + geometry2.name;
-            const inter = new definedIntersections[className as keyof typeof definedIntersections](geometry1, geometry2);
-            return inter[methodName as IntersectionPredicate]!();
+            const intersectionInfo = definedIntersections[className as keyof typeof definedIntersections].create(geometry1, geometry2);
+            return BaseIntersection.result(intersectionInfo, methodName as IntersectionPredicate);
         },
         // ES6 default
         configurable: true,
         enumerable: false,
         writable: true
     });
-    initializedGeometryArguments(Intersection.prototype, methodName, Object.getOwnPropertyDescriptor(Intersection.prototype, methodName) as TypedPropertyDescriptor<(...args: any[]) => any>);
 });
 
 export default Intersection;

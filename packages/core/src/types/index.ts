@@ -12,8 +12,281 @@ import type Ray from "../geometries/basic/Ray";
 import type Compound from "../geometries/general/Compound";
 import type Path from "../geometries/general/Path";
 import type Polygon from "../geometries/general/Polygon";
+import type BaseIntersection from "../intersection/BaseIntersection";
 
 // #region Common
+
+// prettier-ignore
+/* @internal */
+export type ConstructorOverloads<T> =
+    T extends {
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
+        new (...args: infer A9): infer R9
+        new (...args: infer A10): infer R10
+        new (...args: infer A11): infer R11
+        new (...args: infer A12): infer R12
+        new (...args: infer A13): infer R13
+        new (...args: infer A14): infer R14
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2,
+        new (...args: A3) => R3,
+        new (...args: A4) => R4,
+        new (...args: A5) => R5,
+        new (...args: A6) => R6,
+        new (...args: A7) => R7,
+        new (...args: A8) => R8,
+        new (...args: A9) => R9,
+        new (...args: A10) => R10,
+        new (...args: A11) => R11,
+        new (...args: A12) => R12,
+        new (...args: A13) => R13,
+        new (...args: A14) => R14,
+    ]
+    : T extends {
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
+        new (...args: infer A9): infer R9
+        new (...args: infer A10): infer R10
+        new (...args: infer A11): infer R11
+        new (...args: infer A12): infer R12
+        new (...args: infer A13): infer R13
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2,
+        new (...args: A3) => R3,
+        new (...args: A4) => R4,
+        new (...args: A5) => R5,
+        new (...args: A6) => R6,
+        new (...args: A7) => R7,
+        new (...args: A8) => R8,
+        new (...args: A9) => R9,
+        new (...args: A10) => R10,
+        new (...args: A11) => R11,
+        new (...args: A12) => R12,
+        new (...args: A13) => R13,
+    ]
+    : T extends {
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
+        new (...args: infer A9): infer R9
+        new (...args: infer A10): infer R10
+        new (...args: infer A11): infer R11
+        new (...args: infer A12): infer R12
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2,
+        new (...args: A3) => R3,
+        new (...args: A4) => R4,
+        new (...args: A5) => R5,
+        new (...args: A6) => R6,
+        new (...args: A7) => R7,
+        new (...args: A8) => R8,
+        new (...args: A9) => R9,
+        new (...args: A10) => R10,
+        new (...args: A11) => R11,
+        new (...args: A12) => R12,
+    ]
+    : T extends {
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
+        new (...args: infer A9): infer R9
+        new (...args: infer A10): infer R10
+        new (...args: infer A11): infer R11
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2,
+        new (...args: A3) => R3,
+        new (...args: A4) => R4,
+        new (...args: A5) => R5,
+        new (...args: A6) => R6,
+        new (...args: A7) => R7,
+        new (...args: A8) => R8,
+        new (...args: A9) => R9,
+        new (...args: A10) => R10,
+        new (...args: A11) => R11,
+    ]
+    : T extends {
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
+        new (...args: infer A9): infer R9
+        new (...args: infer A10): infer R10
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2,
+        new (...args: A3) => R3,
+        new (...args: A4) => R4,
+        new (...args: A5) => R5,
+        new (...args: A6) => R6,
+        new (...args: A7) => R7,
+        new (...args: A8) => R8,
+        new (...args: A9) => R9,
+        new (...args: A10) => R10,
+    ]
+    : T extends {
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
+        new (...args: infer A9): infer R9
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2,
+        new (...args: A3) => R3,
+        new (...args: A4) => R4,
+        new (...args: A5) => R5,
+        new (...args: A6) => R6,
+        new (...args: A7) => R7,
+        new (...args: A8) => R8,
+        new (...args: A9) => R9,
+    ]
+    : T extends {
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+        new (...args: infer A8): infer R8
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2,
+        new (...args: A3) => R3,
+        new (...args: A4) => R4,
+        new (...args: A5) => R5,
+        new (...args: A6) => R6,
+        new (...args: A7) => R7,
+        new (...args: A8) => R8,
+    ]
+    : T extends {
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+        new (...args: infer A7): infer R7
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2,
+        new (...args: A3) => R3,
+        new (...args: A4) => R4,
+        new (...args: A5) => R5,
+        new (...args: A6) => R6,
+        new (...args: A7) => R7,
+    ]
+    : T extends {
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+        new (...args: infer A6): infer R6
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2,
+        new (...args: A3) => R3,
+        new (...args: A4) => R4,
+        new (...args: A5) => R5,
+        new (...args: A6) => R6,
+    ]
+    : T extends {
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+        new (...args: infer A5): infer R5
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2,
+        new (...args: A3) => R3,
+        new (...args: A4) => R4,
+        new (...args: A5) => R5
+    ]
+    : T extends {
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+        new (...args: infer A4): infer R4
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2,
+        new (...args: A3) => R3,
+        new (...args: A4) => R4
+    ]
+    : T extends {
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+        new (...args: infer A3): infer R3
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2,
+        new (...args: A3) => R3
+    ]
+    : T extends {
+        new (...args: infer A1): infer R1
+        new (...args: infer A2): infer R2
+    }
+    ? [
+        new (...args: A1) => R1,
+        new (...args: A2) => R2
+    ]
+    : T extends {
+        new (...args: infer A1): infer R1
+    }
+    ? [
+        new (...args: A1) => R1
+    ]
+    : never
+
 export type BasicSegment = LineSegment | QuadraticBezier | Bezier | Arc;
 
 /**
@@ -385,18 +658,24 @@ export enum IntersectionPredicate {
 
 type TypeIntersection<U> = (U extends any ? (arg: U) => void : never) extends (arg: infer I) => void ? I : never;
 
-export type AllResult<R extends Partial<Record<IntersectionPredicate, any>>> = {
-    [K in IntersectionPredicate as R[K] extends (...args: any[]) => any ? K : never]: R[K] extends (...args: any[]) => any ? ReturnType<R[K]> : never;
+type AllResult = {
+    [K in IntersectionPredicate]?: ReturnType<BaseIntersection[K]>;
 };
 
-export type IntersectionMethodsOfCollection<T extends IntersectionPredicate | "all", U extends { [key: string]: { new (...args: any[]): any } }> = {
-    [K in keyof U as InstanceType<U[K]>[T] extends (...args: any[]) => any ? K : never]: InstanceType<U[K]>[T] extends (...args: any[]) => any
-        ? T extends "all"
-            ? (geometry1: InstanceType<U[K]>["geometry1"], geometry2: InstanceType<U[K]>["geometry2"], predicates?: IntersectionPredicate[]) => ReturnType<InstanceType<U[K]>[T]>
-            : (geometry1: InstanceType<U[K]>["geometry1"], geometry2: InstanceType<U[K]>["geometry2"]) => ReturnType<InstanceType<U[K]>[T]>
-        : never;
+type IntersectionMethodsOfCollection<T extends IntersectionPredicate, U extends { [key: string]: { new (...args: any[]): any } }> = {
+    [K in keyof U]: (geometry1: InstanceType<U[K]>["geometry1"], geometry2: InstanceType<U[K]>["geometry2"]) => ReturnType<BaseIntersection[T]>;
 };
-export type IntersectionMethodOverloads<T extends IntersectionPredicate | "all", U extends { [key: string]: { new (...args: any[]): any } }> = TypeIntersection<
+
+type IntersectionAllOfCollection<U extends { [key: string]: { new (...args: any[]): any } }> = {
+    [K in keyof U]: (geometry1: InstanceType<U[K]>["geometry1"], geometry2: InstanceType<U[K]>["geometry2"], predicates?: IntersectionPredicate[]) => AllResult;
+};
+
+// prettier-ignore
+export type IntersectionAllOverloads<U extends { [key: string]: { new (...args: any[]): any } }> = TypeIntersection<
+    IntersectionAllOfCollection<U>[keyof IntersectionAllOfCollection<U>]
+>;
+
+export type IntersectionMethodOverloads<T extends IntersectionPredicate, U extends { [key: string]: { new (...args: any[]): any } }> = TypeIntersection<
     IntersectionMethodsOfCollection<T, U>[keyof IntersectionMethodsOfCollection<T, U>]
 >;
 

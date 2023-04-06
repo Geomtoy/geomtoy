@@ -4,35 +4,48 @@ import Point from "../../geometries/basic/Point";
 import Ray from "../../geometries/basic/Ray";
 import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 import LineLineSegment from "./LineLineSegment";
 
 export default class RayLineSegment extends BaseIntersection {
-    constructor(public geometry1: Ray, public geometry2: LineSegment) {
-        super();
+    static override create(geometry1: Ray, geometry2: LineSegment) {
+        const dg1 = geometry1.degenerate(false);
         const dg2 = geometry2.degenerate(false);
-        if (dg2 instanceof Point) {
-            this.degeneration.intersection = null;
-            return this;
+
+        const ret = {
+            intersection: BaseIntersection.nullIntersection,
+            inverse: false
+        } as {
+            intersection: BaseIntersection;
+            inverse: boolean;
+        };
+
+        if (dg1 instanceof Ray && dg2 instanceof LineSegment) {
+            ret.intersection = new RayLineSegment(dg1, dg2);
+            return ret;
         }
-        this.supIntersection = new LineLineSegment(geometry1.toLine(), geometry2);
+
+        // null or point degeneration
+        return ret;
     }
 
-    supIntersection?: LineLineSegment;
+    constructor(public geometry1: Ray, public geometry2: LineSegment) {
+        super();
+        this.supIntersection = new LineLineSegment(geometry1.toLine(), geometry2);
+    }
+    supIntersection: LineLineSegment;
 
     @cached
     onSameTrajectory() {
-        return this.supIntersection?.onSameTrajectory() ?? false;
+        return this.supIntersection.onSameTrajectory() ?? false;
     }
     @cached
     properIntersection(): {
         c: [number, number]; // coordinates of intersection,
         t2: number; // time of `c` on lineSegment
     }[] {
-        const intersection = this.supIntersection?.properIntersection() ?? [];
-        return intersection.filter(i => this.geometry1.isPointOn(i.c));
+        return this.supIntersection.properIntersection().filter(i => this.geometry1.isPointOn(i.c));
     }
     @cached
     perspective(): {
@@ -52,11 +65,10 @@ export default class RayLineSegment extends BaseIntersection {
             t1
         };
     }
-    @superPreprocess("handleDegeneration")
+
     equal(): Trilean {
         return false;
     }
-    @superPreprocess("handleDegeneration")
     separate(): Trilean {
         if (!this.onSameTrajectory()) {
             return this.properIntersection().length === 0;
@@ -64,47 +76,38 @@ export default class RayLineSegment extends BaseIntersection {
         const { t1 } = this.perspective();
         return !Float.between(t1, 0, 1, false, false, eps.timeEpsilon);
     }
-    @superPreprocess("handleDegeneration")
     intersect() {
         return this.properIntersection().map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     strike() {
         return this.properIntersection().map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     contact() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
             .filter(i => !Float.equalTo(i.t2, 0, eps.timeEpsilon) && !Float.equalTo(i.t2, 1, eps.timeEpsilon) && !Coordinates.equalTo(i.c, this.geometry1.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     touch() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     block() {
         return this.properIntersection()
             .filter(i => Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     blockedBy() {
         return this.properIntersection()
             .filter(i => Coordinates.equalTo(i.c, this.geometry1.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     connect() {
         return this.properIntersection()
             .filter(i => (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)) && Coordinates.equalTo(i.c, this.geometry1.coordinates, eps.epsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     coincide() {
         if (!this.onSameTrajectory()) return [];
         const { c2i, c2t, t1 } = this.perspective();

@@ -1,24 +1,37 @@
-import { Angle, Complex, Float, Maths, Polynomial, RootMultiplicity, Type } from "@geomtoy/util";
-import SealedGeometryArray from "../../collection/SealedGeometryArray";
+import { Angle, Maths, Polynomial, Type } from "@geomtoy/util";
 import Ellipse from "../../geometries/basic/Ellipse";
 import Point from "../../geometries/basic/Point";
 import { eps } from "../../geomtoy";
 import { compareImplicit } from "../../misc/compare-implicit";
 import { cached } from "../../misc/decor-cache";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { mapComplexAtanImagZeroToReal, rootMultiplicityAtPi } from "../../misc/tangent-half-angle-substitution";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 
 export default class EllipseEllipse extends BaseIntersection {
-    constructor(public geometry1: Ellipse, public geometry2: Ellipse) {
-        super();
+    static override create(geometry1: Ellipse, geometry2: Ellipse) {
         const dg1 = geometry1.degenerate(false);
         const dg2 = geometry2.degenerate(false);
-        if (dg1 instanceof Point || dg2 instanceof Point || dg1 instanceof SealedGeometryArray || dg2 instanceof SealedGeometryArray) {
-            this.degeneration.intersection = null;
-            return this;
+
+        const ret = {
+            intersection: BaseIntersection.nullIntersection,
+            inverse: false
+        } as {
+            intersection: BaseIntersection;
+            inverse: boolean;
+        };
+
+        if (dg1 instanceof Ellipse && dg2 instanceof Ellipse) {
+            ret.intersection = new EllipseEllipse(dg1, dg2);
+            return ret;
         }
+
+        // null or point degeneration
+        return ret;
+    }
+
+    constructor(public geometry1: Ellipse, public geometry2: Ellipse) {
+        super();
     }
 
     @cached
@@ -97,56 +110,45 @@ export default class EllipseEllipse extends BaseIntersection {
         return intersection;
     }
 
-    @superPreprocess("handleDegeneration")
     equal(): Trilean {
         return this.onSameTrajectory();
     }
-    @superPreprocess("handleDegeneration")
     separate(): Trilean {
         if (this.onSameTrajectory()) return false;
         return this.properIntersection().length === 0;
     }
-    @superPreprocess("handleDegeneration")
     intersect() {
         return this.properIntersection().map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     strike() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 1)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     contact() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 0)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 1)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     touch() {
         return this.properIntersection()
             .filter(i => i.m % 2 === 0)
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     block() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     blockedBy() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     connect() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     coincide() {
         if (!this.onSameTrajectory()) return [];
         return [this.geometry1.clone()];

@@ -3,19 +3,32 @@ import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import { eps } from "../../geomtoy";
 import { cached } from "../../misc/decor-cache";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 
 export default class LineSegmentLineSegment extends BaseIntersection {
-    constructor(public geometry1: LineSegment, public geometry2: LineSegment) {
-        super();
+    static override create(geometry1: LineSegment, geometry2: LineSegment) {
         const dg1 = geometry1.degenerate(false);
         const dg2 = geometry2.degenerate(false);
-        if (dg1 instanceof Point || dg2 instanceof Point) {
-            this.degeneration.intersection = null;
-            return this;
+
+        const ret = {
+            intersection: BaseIntersection.nullIntersection,
+            inverse: false
+        } as {
+            intersection: BaseIntersection;
+            inverse: boolean;
+        };
+        if (dg1 instanceof LineSegment && dg2 instanceof LineSegment) {
+            ret.intersection = new LineSegmentLineSegment(dg1, dg2);
+            return ret;
         }
+
+        // null or point degeneration
+        return ret;
+    }
+
+    constructor(public geometry1: LineSegment, public geometry2: LineSegment) {
+        super();
     }
 
     @cached
@@ -86,13 +99,11 @@ export default class LineSegmentLineSegment extends BaseIntersection {
         };
     }
 
-    @superPreprocess("handleDegeneration")
     equal(): Trilean {
         if (!this.onSameTrajectory()) return false;
         const { t2i, t2t } = this.perspective();
         return Float.equalTo(t2i, 0, eps.timeEpsilon) && Float.equalTo(t2t, 1, eps.timeEpsilon);
     }
-    @superPreprocess("handleDegeneration")
     separate(): Trilean {
         if (!this.onSameTrajectory()) {
             return this.properIntersection().length === 0;
@@ -100,47 +111,38 @@ export default class LineSegmentLineSegment extends BaseIntersection {
         const { t2i, t2t } = this.perspective();
         return Float.greaterThan(t2i, 1, eps.timeEpsilon) || Float.lessThan(t2t, 0, eps.timeEpsilon);
     }
-    @superPreprocess("handleDegeneration")
     intersect() {
         return this.properIntersection().map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     strike() {
         return this.properIntersection().map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     contact() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     cross() {
         return this.properIntersection()
             .filter(i => Float.between(i.t1, 0, 1, true, true, eps.timeEpsilon) && Float.between(i.t2, 0, 1, true, true, eps.timeEpsilon))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     touch() {
         return [];
     }
-    @superPreprocess("handleDegeneration")
     block() {
         return this.properIntersection()
             .filter(i => (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)) && !(Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     blockedBy() {
         return this.properIntersection()
             .filter(i => (Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) && !(Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     connect() {
         return this.properIntersection()
             .filter(i => (Float.equalTo(i.t1, 0, eps.timeEpsilon) || Float.equalTo(i.t1, 1, eps.timeEpsilon)) && (Float.equalTo(i.t2, 0, eps.timeEpsilon) || Float.equalTo(i.t2, 1, eps.timeEpsilon)))
             .map(i => new Point(i.c));
     }
-    @superPreprocess("handleDegeneration")
     coincide() {
         if (!this.onSameTrajectory()) return [];
         const { t2i, t2t, c1i, c1t } = this.perspective();
