@@ -3,6 +3,7 @@ import type Transformation from "../transformation";
 import Shape from "./Shape";
 
 export default abstract class Geometry extends Shape {
+    skipValidation = false;
     /**
      * Whether essential properties of geometry `this` is properly set.
      */

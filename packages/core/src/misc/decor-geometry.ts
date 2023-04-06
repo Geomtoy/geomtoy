@@ -52,7 +52,7 @@ export function validGeometry(constructor: new (...args: any[]) => any) {
         ) {
             const method = descriptor.value;
             descriptor.value = function (this: Geometry) {
-                if (!this.isValid()) {
+                if (!this.skipValidation && !this.isValid()) {
                     throw new Error(
                         `[G]Calling \`${memberName}\` of ${article(name, "invalid")}: \
                         \n${this}. \
@@ -68,10 +68,9 @@ export function validGeometry(constructor: new (...args: any[]) => any) {
 
 export function validGeometryArguments(target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<(...args: any[]) => any>) {
     const method = descriptor.value!;
-
     descriptor.value = function (this: typeof target) {
         for (const arg of arguments) {
-            if (arg instanceof Geometry && !arg.isValid()) {
+            if (arg instanceof Geometry && !arg.skipValidation && !arg.isValid()) {
                 throw new Error(
                     `[G]Calling \`${propertyKey}\` of \`${this.name}\` with ${article(arg.name, "invalid")}: \
                     \n${arg}. \
