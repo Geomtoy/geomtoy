@@ -90,55 +90,7 @@ class Polynomial {
     static standardize(p: number[]) {
         return trimLeadingZero([...p]);
     }
-    /**
-     * Returns a new polynomial from `roots`.
-     * @description
-     * Given roots $r_1, r_2, ..., r_n$, this method returns the polynomial that factors as $(x-r_1)(x-r_2)...(x-r_n)$.
-     * @note
-     * - Since our polynomials only support real coefficients, hence any non-real zeroes must occur in complex conjugate pairs, so complex roots should be provided in conjugate pairs.
-     * - Let's say `r` is a root, the multiplicity of `r` is `k`, then you should provide `r` `k` times. For example, if 1 is a root of multiplicity 2, then provide `[1, 1]`.
-     * @throws
-     * If complex roots are not in conjugate pairs, an `Error` will be thrown.
-     * @param roots
-     */
-    static from(roots: (number | [number, number])[]) {
-        const pc: [number, number][] = [[1, 0]];
 
-        const complexRootsWithMultiplicity = Utility.sortBy(
-            roots.filter((r): r is [number, number] => Complex.is(r) && Complex.imag(r) !== 0),
-            [Complex.real, Complex.imag]
-        ).reduce((acc, c) => {
-            const [r, i] = c;
-            const index = acc.findIndex(ck => ck[0] === r && ck[1] === i);
-            if (index === -1) {
-                acc.push([r, i, 1]);
-            } else {
-                acc[index][2] += 1;
-            }
-            return acc;
-        }, [] as [real: number, imag: number, multiplicity: number][]);
-
-        while (complexRootsWithMultiplicity.length > 0) {
-            const [a, b] = complexRootsWithMultiplicity;
-            if (b === undefined) {
-                throw new Error("[G]The complex roots of a polynomial should be conjugate pairs.");
-            }
-            if (a[0] !== b[0] || a[1] !== -b[1] || a[2] !== b[2]) {
-                throw new Error("[G]The complex roots of a polynomial should be conjugate pairs.");
-            }
-            complexRootsWithMultiplicity.shift();
-            complexRootsWithMultiplicity.shift();
-        }
-
-        roots.forEach((root, i) => {
-            const cRoot = Complex.is(root) ? root : ([root, 0] as [number, number]);
-            pc.forEach((c, j) => {
-                pc[j] = Complex.add(Complex.scalarMultiply(Complex.multiply(c, cRoot), -1), j < i ? pc[j + 1] : [0, 0]);
-            });
-            pc.unshift([1, 0]);
-        });
-        return Array.from(pc, x => Complex.real(x));
-    }
     /**
      * Returns a new polynomial of adding `p1` by `p2`.
      * @param p1
@@ -245,8 +197,17 @@ class Polynomial {
         if (Polynomial.isConstant(p)) throw new Error("[G]Constant polynomial can not be deflated.");
         p = [...p];
         const d = Polynomial.degree(p);
+        // real root deflation
+        if (Type.isNumber(root)) {
+            if (root !== 0) {
+                let s = 0;
+                for (let i = 0; i < d; i++) {
+                    p[i] = s = s * root + p[i];
+                }
+            }
+        }
         // complex root deflation
-        if (Complex.is(root)) {
+        else {
             if (!Complex.equalTo(root, Complex.zero())) {
                 // deflation in conjugate pair
                 const r = -2 * Complex.real(root);
@@ -256,15 +217,6 @@ class Polynomial {
                     p[i] = p[i] - r * p[i - 1] - u * p[i - 2];
                 }
                 p.length--;
-            }
-        }
-        // real root deflation
-        else {
-            if (root !== 0) {
-                let s = 0;
-                for (let i = 0; i < d; i++) {
-                    p[i] = s = s * root + p[i];
-                }
             }
         }
         p.length--;
@@ -277,6 +229,7 @@ class Polynomial {
      * @param s
      */
     static scalarMultiply(p: number[], s: number) {
+        if (Polynomial.isZero(p)) return Polynomial.zero();
         return trimLeadingZero(p.map(c => c * s));
     }
     /**
@@ -300,10 +253,27 @@ class Polynomial {
      */
     static evaluate(p: number[], number: [number, number]): [number, number];
     static evaluate(p: number[], number: number | [number, number]) {
-        if (Complex.is(number)) {
-            return p.reduce((acc, c) => Complex.add(Complex.multiply(acc, number), [c, 0]), Complex.zero());
+        if (Polynomial.isZero(p)) return Type.isNumber(number) ? 0 : [0, 0];
+        if (Type.isNumber(number)) {
+            let acc = p[0];
+            for (let i = 1; i < p.length; i++) {
+                acc = acc * number + p[i];
+            }
+            return acc;
         }
-        return p.reduce((acc, c) => acc * number + c, 0);
+
+        const r = -2 * Complex.real(number);
+        const u = Complex.squaredModulus(number);
+        let a = p[0];
+        let b = 0;
+        let c;
+        for (let i = 1; i < p.length - 1; i++) {
+            c = p[i] - r * a - u * b;
+            b = a;
+            a = c;
+        }
+        const acc = [p[p.length - 1] + Complex.real(number) * a - u * b, Complex.imag(number) * a];
+        return acc;
     }
     /**
      * Compute the `n`th derivative of polynomial `p`.
@@ -366,16 +336,7 @@ class Polynomial {
 
         main: while (rsCopy.length) {
             const elem = rsCopy.shift()!;
-
-            if (Complex.is(elem)) {
-                for (let mc of multipleComplex) {
-                    if (Float.equalTo(Complex.real(mc[0]), Complex.real(elem), epsilon) && Float.equalTo(Complex.imag(mc[0]), Complex.imag(elem), epsilon)) {
-                        mc.push(elem as [number, number]);
-                        continue main;
-                    }
-                }
-                multipleComplex.push([elem]);
-            } else {
+            if (Type.isNumber(elem)) {
                 for (let mr of multipleReal) {
                     if (Float.equalTo(mr[0], elem, epsilon)) {
                         mr.push(elem as number);
@@ -383,6 +344,14 @@ class Polynomial {
                     }
                 }
                 multipleReal.push([elem]);
+            } else {
+                for (let mc of multipleComplex) {
+                    if (Float.equalTo(Complex.real(mc[0]), Complex.real(elem), epsilon) && Float.equalTo(Complex.imag(mc[0]), Complex.imag(elem), epsilon)) {
+                        mc.push(elem as [number, number]);
+                        continue main;
+                    }
+                }
+                multipleComplex.push([elem]);
             }
         }
 
@@ -403,12 +372,7 @@ class Polynomial {
      * - Only polynomials with degree up to 100 are supported.
      * - Complex roots are present [number, number].
      * - The number of roots is the degree of `p`, in other words, the multiplicity of roots is considered.
-     * - The returned roots are ordered as follows:
-     *      - Pure real roots come first, then the complex roots.
-     *      - For pure real roots, the one smaller comes first.
-     *      - For complex roots, the one with smaller real part comes first. If the real part is equal, the one with smaller imaginary part comes first.
-     *      - Complex roots come in conjugate pairs.
-     * - If the degree of polynomial of `p` is 0, `[]` will be returned
+     * - If `p` is constant polynomial, `[]` will be returned.
      * @throws
      * - If the degree of polynomial of `p` is greater than 100, an `Error` will be thrown.
      * @param p
@@ -420,9 +384,8 @@ class Polynomial {
         }
         p = Polynomial.standardize(p);
         const d = Polynomial.degree(p);
-        if (d > MAX_ROOT_FINDING_DEGREE) {
-            throw new Error(`[G]The degree of polynomial \`p\` should not be greater than ${MAX_ROOT_FINDING_DEGREE}.`);
-        }
+        if (d > MAX_ROOT_FINDING_DEGREE) throw new Error(`[G]The degree of polynomial \`p\` should not be greater than ${MAX_ROOT_FINDING_DEGREE}.`);
+
         const solutions: [number, number][] = [];
         solve(p, solutions);
         const roots: (number | [number, number])[] = [];
@@ -436,7 +399,7 @@ class Polynomial {
                 else roots.push(solutions[i]);
             }
         }
-        return Utility.sortBy(roots, [Complex.is, r => r]);
+        return roots;
     }
 }
 export default Polynomial;

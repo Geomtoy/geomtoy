@@ -7,25 +7,24 @@ class Type {
     }
     // #region Native
     static isString(v: any): v is string {
-        return Object.prototype.toString.call(v) === "[object String]";
+        return typeof v === "string";
     }
     static isBoolean(v: any): v is boolean {
-        return Object.prototype.toString.call(v) === "[object Boolean]";
+        return typeof v === "boolean";
     }
     static isNumber(v: any): v is number {
-        return Object.prototype.toString.call(v) === "[object Number]";
+        return typeof v === "number";
     }
     static isArray(v: any): v is any[] {
         return Array.isArray(v);
     }
-    static isPlainObject(v: any): v is { [key: string]: any } {
+    static isPlainObject(v: any): v is { [key: string]: any } { 
         if (Object.prototype.toString.call(v) !== "[object Object]") return false;
         const proto = Object.getPrototypeOf(v);
-        return proto === Object.getPrototypeOf({}) || proto === null;
+        return proto === Object.prototype || proto === null;
     }
     static isFunction(v: any): v is (...args: any[]) => any {
-        const t = Object.prototype.toString.call(v);
-        return t === "[object Function]" || t === "[object AsyncFunction]" || t === "[object GeneratorFunction]";
+        return typeof v === "function";
     }
     // #endregion
 

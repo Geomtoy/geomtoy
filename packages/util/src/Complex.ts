@@ -2,7 +2,6 @@ import Float from "./Float";
 import Maths from "./Maths";
 import Type from "./Type";
 import type { StaticClass } from "./types";
-import Vector2 from "./Vector2";
 
 interface Complex extends StaticClass {}
 class Complex {
@@ -13,6 +12,11 @@ class Complex {
     static is(v: any): v is [number, number] {
         return Type.isArray(v) && v.length === 2 && v.every(elem => Type.isExtendedRealNumber(elem));
     }
+
+    static isZero(v: [number, number]) {
+        return v[0] === 0 && v[1] === 0;
+    }
+
     /**
      * Whether complex number `c1` is equal to complex number `c2`, make an approximate comparison if `epsilon` is provided.
      * @param c1
@@ -64,21 +68,27 @@ class Complex {
      * @param c
      */
     static modulus(c: [number, number]) {
-        return Vector2.magnitude(c);
+        if (Complex.isZero(c)) return 0;
+        if (Maths.abs(c[0]) >= Maths.abs(c[1])) {
+            return Maths.abs(c[0]) * Maths.sqrt(1 + (c[1] / c[0]) ** 2);
+        } else {
+            return Maths.abs(c[1]) * Maths.sqrt(1 + (c[0] / c[1]) ** 2);
+        }
     }
     /**
      * The squared modulus of complex number `c`.
      * @param c
      */
     static squaredModulus(c: [number, number]) {
-        return Vector2.squaredMagnitude(c);
+        if (Complex.isZero(c)) return 0;
+        return c[0] ** 2 + c[1] ** 2;
     }
     /**
      * The argument of complex number `c`.
      * @param c
      */
     static argument(c: [number, number]) {
-        return Vector2.angle(c);
+        return Maths.atan2(c[1], c[0]);
     }
     /**
      * Returns a new complex number from argument `a` and modulus `m`
@@ -86,7 +96,7 @@ class Complex {
      * @param m
      */
     static from(a: number, m: number) {
-        return Vector2.from2(a, m);
+        return [m * Maths.cos(a), m * Maths.sin(a)] as [number, number];
     }
     /**
      * Returns a new complex number of adding `c1` by `c2`.
@@ -94,7 +104,7 @@ class Complex {
      * @param c2
      */
     static add(c1: [number, number], c2: [number, number]) {
-        return Vector2.add(c1, c2);
+        return [c1[0] + c2[0], c1[1] + c2[1]] as [number, number];
     }
     /**
      * Returns a new complex number of subtracting `c1` by `c2`.
@@ -102,7 +112,7 @@ class Complex {
      * @param c2
      */
     static subtract(c1: [number, number], c2: [number, number]) {
-        return Complex.add(c1, Complex.negative(c2));
+        return [c1[0] - c2[0], c1[1] - c2[1]] as [number, number];
     }
     /**
      * Returns a new complex number of multiplying `c1` by `c2`.
@@ -110,9 +120,7 @@ class Complex {
      * @param c2
      */
     static multiply(c1: [number, number], c2: [number, number]) {
-        const [re1, im1] = c1;
-        const [re2, im2] = c2;
-        return [re1 * re2 - im1 * im2, re1 * im2 + im1 * re2] as [number, number];
+        return [c1[0] * c2[0] - c1[1] * c2[1], c1[0] * c2[1] + c1[1] * c2[0]] as [number, number];
     }
     /**
      * Returns a new complex number of dividing `c1` by `c2`.
@@ -121,28 +129,25 @@ class Complex {
      */
     static divide(c1: [number, number], c2: [number, number]) {
         // or return Complex.multiply(c1, Complex.reciprocal(c2));
-        const [re1, im1] = c1;
-        const [re2, im2] = c2;
-        if (re2 === 0 && im2 === 0) return [Infinity, Infinity] as [number, number];
+        if (Complex.isZero(c2)) return [Infinity, Infinity] as [number, number];
         const s = Complex.squaredModulus(c2);
-        return [(re1 * re2 + im1 * im2) / s, (-re1 * im2 + im1 * re2) / s] as [number, number];
+        return [(c1[0] * c2[0] + c1[1] * c2[1]) / s, (-c1[0] * c2[1] + c1[1] * c2[0]) / s] as [number, number];
     }
     /**
      * Returns the negative of complex number `c`.
      * @param c
      */
     static negative(c: [number, number]) {
-        return Vector2.negative(c);
+        return [-c[0], -c[1]] as [number, number];
     }
     /**
      * Returns the reciprocal of complex number `c`.
      * @param c
      */
     static reciprocal(c: [number, number]) {
-        const [re, im] = c;
-        if (re === 0 && im === 0) return [Infinity, Infinity] as [number, number];
+        if (Complex.isZero(c)) return [Infinity, Infinity] as [number, number];
         const s = Complex.squaredModulus(c);
-        return [re / s, -im / s] as [number, number];
+        return [c[0] / s, -c[1] / s] as [number, number];
     }
     /**
      * Returns the conjugate of complex number `c`.
@@ -157,7 +162,7 @@ class Complex {
      * @param s
      */
     static scalarMultiply(c: [number, number], s: number) {
-        return Vector2.scalarMultiply(c, s);
+        return [c[0] * s, c[1] * s] as [number, number];
     }
     /**
      * Returns the natural logarithm (base $e$) of complex number `c`.
@@ -166,8 +171,7 @@ class Complex {
      * @param c
      */
     static log(c: [number, number]) {
-        const [re, im] = c;
-        if (re === 0 && im === 0) return [-Infinity, -Infinity] as [number, number];
+        if (Complex.isZero(c)) return [-Infinity, -Infinity] as [number, number];
         return [Maths.log(Complex.modulus(c)), Complex.argument(c)] as [number, number];
     }
     /**
@@ -177,19 +181,17 @@ class Complex {
      * @param c
      */
     static sqrt(c: [number, number]) {
-        const [re, im] = c;
-        if (re === 0 && im === 0) return [0, 0] as [number, number];
+        if (Complex.isZero(c)) return [0, 0] as [number, number];
         const m = Complex.modulus(c);
-        const [x, y] = [m + re, m - re];
-        return [Maths.sqrt(x / 2), (im < 0 ? -1 : 1) * Maths.sqrt(y / 2)] as [number, number];
+        const [x, y] = [m + c[0], m - c[0]];
+        return [Maths.sqrt(x / 2), (c[1] < 0 ? -1 : 1) * Maths.sqrt(y / 2)] as [number, number];
     }
     /**
      * Returns the base $e$(the base of natural logarithms) raised to the power of the complex exponent `c`.
      * @param c
      */
     static exp(c: [number, number]) {
-        const [re, im] = c;
-        return [Maths.exp(re) * Maths.cos(im), Maths.exp(re) * Maths.sin(im)] as [number, number];
+        return [Maths.exp(c[0]) * Maths.cos(c[1]), Maths.exp(c[0]) * Maths.sin(c[1])] as [number, number];
     }
     /**
      * Returns the complex base `c` raised to the power of the complex exponent `n`.
@@ -207,16 +209,14 @@ class Complex {
      * @param c
      */
     static sin(c: [number, number]) {
-        const [re, im] = c;
-        return [Maths.sin(re) * Maths.cosh(im), Maths.cos(re) * Maths.sinh(im)] as [number, number];
+        return [Maths.sin(c[0]) * Maths.cosh(c[1]), Maths.cos(c[0]) * Maths.sinh(c[1])] as [number, number];
     }
     /**
      * Returns the cosine of complex number `c`.
      * @param c
      */
     static cos(c: [number, number]) {
-        const [re, im] = c;
-        return [Maths.cos(re) * Maths.cosh(im), -Maths.sin(re) * Maths.sinh(im)] as [number, number];
+        return [Maths.cos(c[0]) * Maths.cosh(c[1]), -Maths.sin(c[0]) * Maths.sinh(c[1])] as [number, number];
     }
     /**
      * Returns the tangent of complex number `c`.
@@ -224,9 +224,8 @@ class Complex {
      */
     static tan(c: [number, number]) {
         // or return Complex.divide(Complex.sin(c), Complex.cos(c));
-        const [re, im] = c;
-        const d = Maths.cos(2 * re) + Maths.cosh(2 * im);
-        return [Maths.sin(2 * re) / d, Maths.sinh(2 * im) / d];
+        const d = Maths.cos(2 * c[0]) + Maths.cosh(2 * c[1]);
+        return [Maths.sin(2 * c[0]) / d, Maths.sinh(2 * c[1]) / d];
     }
     /**
      * Returns the arcsine of complex number `c`.
@@ -268,16 +267,14 @@ class Complex {
      * @param c
      */
     static sinh(c: [number, number]) {
-        const [re, im] = c;
-        return [Maths.sinh(re) * Maths.cos(im), Maths.cosh(re) * Maths.sin(im)] as [number, number];
+        return [Maths.sinh(c[0]) * Maths.cos(c[1]), Maths.cosh(c[0]) * Maths.sin(c[1])] as [number, number];
     }
     /**
      * Returns the hyperbolic cosine of complex number `c`.
      * @param c
      */
     static cosh(c: [number, number]) {
-        const [re, im] = c;
-        return [Maths.cosh(re) * Maths.cos(im), Maths.sinh(re) * Maths.sin(im)] as [number, number];
+        return [Maths.cosh(c[0]) * Maths.cos(c[1]), Maths.sinh(c[0]) * Maths.sin(c[1])] as [number, number];
     }
     /**
      * Returns the hyperbolic tangent of complex number `c`.
@@ -285,9 +282,8 @@ class Complex {
      */
     static tanh(c: [number, number]) {
         // or return Complex.divide(Complex.sinh(c), Complex.cosh(c));
-        const [re, im] = c;
-        const d = Maths.cosh(2 * re) + Maths.cos(2 * im);
-        return [Maths.sinh(2 * re) / d, Maths.sin(2 * im) / d];
+        const d = Maths.cosh(2 * c[0]) + Maths.cos(2 * c[1]);
+        return [Maths.sinh(2 * c[0]) / d, Maths.sin(2 * c[1]) / d];
     }
     /**
      * Returns the hyperbolic arcsine of complex number `c`.

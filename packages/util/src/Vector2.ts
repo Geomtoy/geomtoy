@@ -14,7 +14,7 @@ class Vector2 {
      * @param v
      */
     static from(u: [number, number], v: [number, number]) {
-        return Vector2.subtract(v, u);
+        return [u[0] - v[0], u[1] - v[1]] as [number, number];
     }
     /**
      * Returns a new vector2 with angle `a` and magnitude `m`.
@@ -57,7 +57,12 @@ class Vector2 {
      * @param v
      */
     static magnitude(v: [number, number]) {
-        return Maths.hypot(v[0], v[1]);
+        if (Vector2.isZero(v)) return 0;
+        if (Maths.abs(v[0]) >= Maths.abs(v[1])) {
+            return Maths.abs(v[0]) * Maths.sqrt(1 + (v[1] / v[0]) ** 2);
+        } else {
+            return Maths.abs(v[1]) * Maths.sqrt(1 + (v[0] / v[1]) ** 2);
+        }
     }
     /**
      * Returns the squared magnitude of vector2 `v`.
@@ -72,9 +77,7 @@ class Vector2 {
      * @param v
      */
     static add(u: [number, number], v: [number, number]) {
-        const [ux, uy] = u;
-        const [vx, vy] = v;
-        return [ux + vx, uy + vy] as [number, number];
+        return [u[0] + v[0], u[1] + v[1]] as [number, number];
     }
     /**
      * Returns a new vector2 of subtracting `u` by `v`.
@@ -82,9 +85,7 @@ class Vector2 {
      * @param v
      */
     static subtract(u: [number, number], v: [number, number]) {
-        const [ux, uy] = u;
-        const [vx, vy] = v;
-        return [ux - vx, uy - vy] as [number, number];
+        return [u[0] - v[0], u[1] - v[1]] as [number, number];
     }
     /**
      * Returns a new vector2 of vector2 `v` multiplying a scalar `s`.
@@ -100,9 +101,7 @@ class Vector2 {
      * @param v
      */
     static dot(u: [number, number], v: [number, number]) {
-        const [ux, uy] = u;
-        const [vx, vy] = v;
-        return ux * vx + uy * vy;
+        return u[0] * v[0] + u[1] * v[1];
     }
     /**
      * Returns the cross product of vector2 `u` and vector2 `v`.
@@ -110,9 +109,7 @@ class Vector2 {
      * @param v
      */
     static cross(u: [number, number], v: [number, number]) {
-        const [ux, uy] = u;
-        const [vx, vy] = v;
-        return ux * vy - vx * uy;
+        return u[0] * v[1] - v[0] * u[1];
     }
     /**
      * Returns the projection(a vector2) of vector2 `u` on vector2 `v`.
@@ -120,10 +117,8 @@ class Vector2 {
      * @param v
      */
     static project(u: [number, number], v: [number, number]) {
-        const [ux, uy] = u;
-        const [vx, vy] = v;
         if (Vector2.isZero(v)) return [NaN, NaN] as [number, number];
-        return Vector2.scalarMultiply([vx, vy], Vector2.dot([ux, uy], [vx, vy]) / Vector2.dot([vx, vy], [vx, vy]));
+        return Vector2.scalarMultiply(v, Vector2.dot(u, v) / Vector2.dot(v, v));
     }
     /**
      * Returns a new vector2 of the linear interpolation between vector2 `u` and vector2 `v`.
