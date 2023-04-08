@@ -1,16 +1,9 @@
 import { Coordinates } from "@geomtoy/util";
 import Arc from "../../geometries/basic/Arc";
 import { eps } from "../../geomtoy";
+import type { SweepLineIntersectorResult } from "../../types";
 import { calcIntersection } from "../common";
 import MonoSegment from "./MonoSegment";
-
-type IntersectorResult = {
-    intersectionType: "proper" | "coincidental" | "none";
-    // first element `null` remove, otherwise update, rest elements add,
-    a?: [remove: null, ...add: MonoSegment[]] | [update: MonoSegment, ...add: MonoSegment[]] | [];
-    // first element update, rest elements add.
-    b?: [update: MonoSegment, ...add: MonoSegment[]] | [];
-};
 
 export default class Intersector {
     intersectionSet = new Set<string>();
@@ -19,7 +12,7 @@ export default class Intersector {
         return idA > idB ? idA + "-" + idB : idB + "-" + idA;
     }
 
-    result(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment): IntersectorResult {
+    result(monoSegmentA: MonoSegment, monoSegmentB: MonoSegment): SweepLineIntersectorResult {
         // If they are from the same origin, do nothing.
         if (monoSegmentA.origin === monoSegmentB.origin) return { intersectionType: "none" };
 
@@ -45,7 +38,7 @@ export default class Intersector {
         return { intersectionType: "none" };
     }
 
-    handleProper(monoSegmentA: MonoSegment, paramsA: number[], monoSegmentB: MonoSegment, paramsB: number[]): IntersectorResult {
+    handleProper(monoSegmentA: MonoSegment, paramsA: number[], monoSegmentB: MonoSegment, paramsB: number[]): SweepLineIntersectorResult {
         if (paramsA.length === 0 && paramsB.length !== 0) {
             const splitMsb = this.splitMonoSegment(monoSegmentB, paramsB);
             return {
@@ -74,7 +67,7 @@ export default class Intersector {
         throw new Error("[G]Impossible.");
     }
 
-    handleCoincidental(monoSegmentA: MonoSegment, paramsA: number[], monoSegmentB: MonoSegment, paramsB: number[]): IntersectorResult {
+    handleCoincidental(monoSegmentA: MonoSegment, paramsA: number[], monoSegmentB: MonoSegment, paramsB: number[]): SweepLineIntersectorResult {
         // There are six situations:
         // monoSegmentA--curr:a, monoSegmentB-above/below:b
         // 1. ba--------a--------------------b
@@ -167,6 +160,7 @@ export default class Intersector {
         );
         // reverse the order only, not the segments, the segments will handle the coordinates order themselves.
         monoSegment.transposed && monoSegments.reverse();
+        // todo?: pick out the segment that is too tiny to distinct from x coordinate for non-vertical mono, or from y coordinate for vertical mono.
         return monoSegments;
     }
 

@@ -1,6 +1,6 @@
 import { Coordinates, Float, Maths } from "@geomtoy/util";
 import { eps } from "../../geomtoy";
-import { FillRule } from "../../types";
+import type { FillRule, SweepLineIntersectorResult } from "../../types";
 import Intersector from "./Intersector";
 import { LinkedList, type LinkedListNode } from "./LinkedList";
 import MonoSegment from "./MonoSegment";
@@ -234,7 +234,7 @@ export default class SweepLine {
         return this.intersector.result(eventA.mono, eventB.mono);
     }
 
-    private handleIntersectorResult(eventA: SweepEvent, eventB: SweepEvent, result: ReturnType<typeof this.intersectorResult>) {
+    handleIntersectorResult(eventA: SweepEvent, eventB: SweepEvent, result: SweepLineIntersectorResult) {
         const { a, b } = result;
         if (a!.length !== 0) {
             const [head, ...tail] = a!;
@@ -255,7 +255,7 @@ export default class SweepLine {
             const [head, ...tail] = b!;
             // update
             this.updateEventPair(eventB, head!);
-
+            // add
             for (const mono of tail) {
                 this.addEventPair(mono);
             }
@@ -270,7 +270,7 @@ export default class SweepLine {
             if (curr.isEnter) {
                 const { above, below } = this.findAboveAndBelow(curr);
 
-                let result: ReturnType<typeof this.intersectorResult> = { intersectionType: "none" };
+                let result: SweepLineIntersectorResult = { intersectionType: "none" };
                 if (above !== null) {
                     result = this.intersectorResult(curr, above.data);
                     if (result.intersectionType !== "none") {

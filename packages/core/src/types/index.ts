@@ -1,6 +1,7 @@
 import type EventTarget from "../base/EventTarget";
 import type Shape from "../base/Shape";
 import type SegmentWithFill from "../boolean-operation/SegmentWithFill";
+import type MonoSegment from "../boolean-operation/sweep-line/MonoSegment";
 import type EventObject from "../event/EventObject";
 import type Arc from "../geometries/basic/Arc";
 import type Bezier from "../geometries/basic/Bezier";
@@ -394,6 +395,15 @@ export interface FillDescription {
     fillRule: FillRule;
     segmentWithFills: SegmentWithFill[];
 }
+/* @internal */
+export type SweepLineIntersectorResult = {
+    intersectionType: "proper" | "coincidental" | "none";
+    // first element `null` remove, otherwise update, rest elements add,
+    a?: [remove: null, ...add: MonoSegment[]] | [update: MonoSegment, ...add: MonoSegment[]] | [];
+    // first element update, rest elements add.
+    b?: [update: MonoSegment, ...add: MonoSegment[]] | [];
+};
+
 // #endregion
 
 // #region Data
