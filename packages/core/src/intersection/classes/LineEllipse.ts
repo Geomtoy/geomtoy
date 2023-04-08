@@ -1,11 +1,9 @@
 import { Angle, Maths, Polynomial, Type } from "@geomtoy/util";
-import SealedGeometryArray from "../../collection/SealedGeometryArray";
 import Ellipse from "../../geometries/basic/Ellipse";
 import Line from "../../geometries/basic/Line";
 import Point from "../../geometries/basic/Point";
 import { eps } from "../../geomtoy";
-import { cached } from "../../misc/decor-cache";
-import { superPreprocess } from "../../misc/decor-super-preprocess";
+import { cached, DISABLE_CACHE_SYMBOL } from "../../misc/decor-cached";
 import { mapComplexAtanImagZeroToReal, rootMultiplicityAtPi } from "../../misc/tangent-half-angle-substitution";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
@@ -25,6 +23,7 @@ export default class LineEllipse extends BaseIntersection {
 
         if (dg1 instanceof Line && dg2 instanceof Ellipse) {
             ret.intersection = new LineEllipse(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
 

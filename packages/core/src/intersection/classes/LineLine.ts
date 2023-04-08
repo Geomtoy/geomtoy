@@ -2,7 +2,7 @@ import { Float } from "@geomtoy/util";
 import Line from "../../geometries/basic/Line";
 import Point from "../../geometries/basic/Point";
 import { eps } from "../../geomtoy";
-import { cached } from "../../misc/decor-cache";
+import { cached, DISABLE_CACHE_SYMBOL } from "../../misc/decor-cached";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 
@@ -21,6 +21,7 @@ export default class LineLine extends BaseIntersection {
 
         if (dg1 instanceof Line && dg2 instanceof Line) {
             ret.intersection = new LineLine(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
 

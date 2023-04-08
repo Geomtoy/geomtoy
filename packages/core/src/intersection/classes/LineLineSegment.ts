@@ -3,7 +3,7 @@ import Line from "../../geometries/basic/Line";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import { eps } from "../../geomtoy";
-import { cached } from "../../misc/decor-cache";
+import { cached, DISABLE_CACHE_SYMBOL } from "../../misc/decor-cached";
 import { type Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 
@@ -21,6 +21,7 @@ export default class LineLineSegment extends BaseIntersection {
         };
         if (dg1 instanceof Line && dg2 instanceof LineSegment) {
             ret.intersection = new LineLineSegment(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         // null or point degeneration

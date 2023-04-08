@@ -5,7 +5,7 @@ import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import Ray from "../../geometries/basic/Ray";
 import { eps } from "../../geomtoy";
-import { cached } from "../../misc/decor-cache";
+import { cached, DISABLE_CACHE_SYMBOL } from "../../misc/decor-cached";
 import BaseIntersection from "../BaseIntersection";
 import LineBezier from "./LineBezier";
 import RayLineSegment from "./RayLineSegment";
@@ -26,14 +26,17 @@ export default class RayBezier extends BaseIntersection {
 
         if (dg1 instanceof Ray && dg2 instanceof Bezier) {
             ret.intersection = new RayBezier(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof Ray && dg2 instanceof QuadraticBezier) {
             ret.intersection = new RayQuadraticBezier(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof Ray && dg2 instanceof LineSegment) {
             ret.intersection = new RayLineSegment(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
 

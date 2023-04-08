@@ -4,7 +4,7 @@ import Ellipse from "../../geometries/basic/Ellipse";
 import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import { eps } from "../../geomtoy";
-import { cached } from "../../misc/decor-cache";
+import { cached, DISABLE_CACHE_SYMBOL } from "../../misc/decor-cached";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 import EllipseEllipse from "./EllipseEllipse";
@@ -25,10 +25,12 @@ export default class ArcEllipse extends BaseIntersection {
 
         if (dg1 instanceof Arc && dg2 instanceof Ellipse) {
             ret.intersection = new ArcEllipse(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof LineSegment && dg2 instanceof Ellipse) {
             ret.intersection = new LineSegmentEllipse(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
 

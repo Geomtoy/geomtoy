@@ -4,7 +4,7 @@ import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import { eps } from "../../geomtoy";
-import { cached } from "../../misc/decor-cache";
+import { cached, DISABLE_CACHE_SYMBOL } from "../../misc/decor-cached";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 import LineSegmentEllipse from "./LineSegmentEllipse";
@@ -24,10 +24,12 @@ export default class QuadraticBezierEllipse extends BaseIntersection {
 
         if (dg1 instanceof QuadraticBezier && dg2 instanceof Ellipse) {
             ret.intersection = new QuadraticBezierEllipse(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof LineSegment && dg2 instanceof Ellipse) {
             ret.intersection = new LineSegmentEllipse(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
 

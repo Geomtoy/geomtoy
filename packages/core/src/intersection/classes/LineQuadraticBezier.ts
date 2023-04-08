@@ -4,7 +4,7 @@ import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import { eps } from "../../geomtoy";
-import { cached } from "../../misc/decor-cache";
+import { cached, DISABLE_CACHE_SYMBOL } from "../../misc/decor-cached";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 import LineLineSegment from "./LineLineSegment";
@@ -23,10 +23,12 @@ export default class LineQuadraticBezier extends BaseIntersection {
 
         if (dg1 instanceof Line && dg2 instanceof QuadraticBezier) {
             ret.intersection = new LineQuadraticBezier(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof Line && dg2 instanceof LineSegment) {
             ret.intersection = new LineLineSegment(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
 

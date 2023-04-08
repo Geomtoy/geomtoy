@@ -3,7 +3,7 @@ import Circle from "../../geometries/basic/Circle";
 import Point from "../../geometries/basic/Point";
 import Ray from "../../geometries/basic/Ray";
 import { eps } from "../../geomtoy";
-import { cached } from "../../misc/decor-cache";
+import { cached, DISABLE_CACHE_SYMBOL } from "../../misc/decor-cached";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 import LineCircle from "./LineCircle";
@@ -23,6 +23,7 @@ export default class RayCircle extends BaseIntersection {
 
         if (dg1 instanceof Ray && dg2 instanceof Circle) {
             ret.intersection = new RayCircle(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
 

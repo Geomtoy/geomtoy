@@ -3,7 +3,7 @@ import Ellipse from "../../geometries/basic/Ellipse";
 import Point from "../../geometries/basic/Point";
 import { eps } from "../../geomtoy";
 import { compareImplicit } from "../../misc/compare-implicit";
-import { cached } from "../../misc/decor-cache";
+import { cached, DISABLE_CACHE_SYMBOL } from "../../misc/decor-cached";
 import { mapComplexAtanImagZeroToReal, rootMultiplicityAtPi } from "../../misc/tangent-half-angle-substitution";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
@@ -23,6 +23,7 @@ export default class EllipseEllipse extends BaseIntersection {
 
         if (dg1 instanceof Ellipse && dg2 instanceof Ellipse) {
             ret.intersection = new EllipseEllipse(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
 

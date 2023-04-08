@@ -4,7 +4,7 @@ import LineSegment from "../../geometries/basic/LineSegment";
 import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import { eps } from "../../geomtoy";
-import { cached } from "../../misc/decor-cache";
+import { cached, DISABLE_CACHE_SYMBOL } from "../../misc/decor-cached";
 import BaseIntersection from "../BaseIntersection";
 import LineSegmentBezier from "./LineSegmentBezier";
 import LineSegmentLineSegment from "./LineSegmentLineSegment";
@@ -26,27 +26,33 @@ export default class QuadraticBezierBezier extends BaseIntersection {
 
         if (dg1 instanceof QuadraticBezier && dg2 instanceof Bezier) {
             ret.intersection = new QuadraticBezierBezier(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof QuadraticBezier && dg2 instanceof QuadraticBezier) {
             ret.intersection = new QuadraticBezierQuadraticBezier(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof QuadraticBezier && dg2 instanceof LineSegment) {
             ret.intersection = new LineSegmentQuadraticBezier(dg2, dg1);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             ret.inverse = true;
             return ret;
         }
         if (dg1 instanceof LineSegment && dg2 instanceof Bezier) {
             ret.intersection = new LineSegmentBezier(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof LineSegment && dg2 instanceof QuadraticBezier) {
             ret.intersection = new LineSegmentQuadraticBezier(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof LineSegment && dg2 instanceof LineSegment) {
             ret.intersection = new LineSegmentLineSegment(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
 

@@ -1,6 +1,7 @@
 import { Utility } from "@geomtoy/util";
 import type Geometry from "../base/Geometry";
 import type Point from "../geometries/basic/Point";
+import { DISABLE_CACHE_SYMBOL } from "../misc/decor-cached";
 import { IntersectionPredicate, type Trilean } from "../types";
 
 //@see https://en.wikipedia.org/wiki/Contact_(mathematics)
@@ -19,6 +20,8 @@ For the understanding convenience, we give some examples here(You may draw a pic
 */
 
 export default abstract class BaseIntersection {
+    [DISABLE_CACHE_SYMBOL] = true;
+
     static create(geometry1: Geometry, geometry2: Geometry): { intersection: BaseIntersection; inverse: boolean } {
         return {
             intersection: this.nullIntersection,
@@ -61,6 +64,7 @@ export default abstract class BaseIntersection {
             return [];
         }
     })();
+
     static readonly inversePredicates = {
         equal: ["equal", "equal"],
         separate: ["separate", "separate"],

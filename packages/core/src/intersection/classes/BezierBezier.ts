@@ -5,7 +5,7 @@ import Point from "../../geometries/basic/Point";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import { eps } from "../../geomtoy";
 import { compareImplicit } from "../../misc/compare-implicit";
-import { cached } from "../../misc/decor-cache";
+import { cached, DISABLE_CACHE_SYMBOL } from "../../misc/decor-cached";
 import { Trilean } from "../../types";
 import BaseIntersection from "../BaseIntersection";
 import LineSegmentBezier from "./LineSegmentBezier";
@@ -29,41 +29,50 @@ export default class BezierBezier extends BaseIntersection {
 
         if (dg1 instanceof Bezier && dg2 instanceof Bezier) {
             ret.intersection = new BezierBezier(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof Bezier && dg2 instanceof QuadraticBezier) {
             ret.intersection = new QuadraticBezierBezier(dg2, dg1);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             ret.inverse = true;
             return ret;
         }
         if (dg1 instanceof Bezier && dg2 instanceof LineSegment) {
             ret.intersection = new LineSegmentBezier(dg2, dg1);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             ret.inverse = true;
             return ret;
         }
         if (dg1 instanceof QuadraticBezier && dg2 instanceof Bezier) {
             ret.intersection = new QuadraticBezierBezier(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof QuadraticBezier && dg2 instanceof QuadraticBezier) {
             ret.intersection = new QuadraticBezierQuadraticBezier(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof QuadraticBezier && dg2 instanceof LineSegment) {
             ret.intersection = new LineSegmentQuadraticBezier(dg2, dg1);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             ret.inverse = true;
             return ret;
         }
         if (dg1 instanceof LineSegment && dg2 instanceof Bezier) {
             ret.intersection = new LineSegmentBezier(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof LineSegment && dg2 instanceof QuadraticBezier) {
             ret.intersection = new LineSegmentQuadraticBezier(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
         if (dg1 instanceof LineSegment && dg2 instanceof LineSegment) {
             ret.intersection = new LineSegmentLineSegment(dg1, dg2);
+            ret.intersection[DISABLE_CACHE_SYMBOL] = false;
             return ret;
         }
 
