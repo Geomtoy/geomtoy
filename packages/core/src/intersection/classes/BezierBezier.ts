@@ -214,70 +214,166 @@ export default class BezierBezier extends BaseIntersection {
         const { point1Coordinates: c1i, point2Coordinates: c1t } = this.geometry1;
         const { point1Coordinates: c2i, point2Coordinates: c2t } = this.geometry2;
 
-        let t2i = this.geometry1.getTimeOfPointExtend(c2i);
-        let t2t = this.geometry1.getTimeOfPointExtend(c2t);
-
-        const tsi = this.geometry1.selfIntersectionExtend();
-        const csi = tsi.length ? this.geometry1.getPointAtTimeExtend(tsi[0]).coordinates : undefined;
-
-        // Correct `t2i` and `t2t` by according to the situation of self-intersection and `bezier2`
-        if (tsi.length) {
-            // Note if `t2i` or `t2t` it at the times of the self-intersection, their values are always be the smaller one which is `tsi[0]`.
-            const d1 = Float.equalTo(t2i, tsi[0], eps.timeEpsilon);
-            const d2 = Float.equalTo(t2t, tsi[0], eps.timeEpsilon);
-
-            if ((d1 && !d2) || (!d1 && d2)) {
-                let s: number = NaN;
-                let r: number = NaN;
-                if (d1) [s, r] = [t2i, t2t];
-                if (d2) [s, r] = [t2t, t2i];
-
-                if (Float.between(r, tsi[0], tsi[1], false, false, eps.timeEpsilon)) {
-                    const midT1 = (tsi[0] + r) / 2;
-                    const midT2 = (tsi[1] + r) / 2;
-                    const midD1 = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT1));
-                    const midD2 = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT2));
-                    if (midD1) s = tsi[0];
-                    if (midD2) s = tsi[1];
-                } else if (Float.lessThan(r, tsi[0], eps.timeEpsilon)) {
-                    const midT = (tsi[0] + tsi[1]) / 2;
-                    const midD = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT));
-                    if (midD) s = tsi[1];
-                    else s = tsi[0];
-                } else if (Float.greaterThan(r, tsi[1], eps.timeEpsilon)) {
-                    const midT = (tsi[0] + tsi[1]) / 2;
-                    const midD = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT));
-                    if (midD) s = tsi[0];
-                    else s = tsi[1];
-                }
-                if (d1) [t2i, t2t] = [s, r];
-                if (d2) [t2t, t2i] = [s, r];
-            }
-            if (d1 && d2) {
-                t2i = tsi[0];
-                t2t = tsi[1];
-            }
-            if (!d1 && !d2) {
-                // do nothing
-            }
-        }
-
-        const dt = t2i > t2t;
-
-        return {
-            c1i, // initial coordinates of `bezier1`
-            c1t, // terminal coordinates of `bezier1`
-            c2i: dt ? c2t : c2i, // initial coordinates of `bezier2` in the perspective of `bezier1`
-            c2t: dt ? c2i : c2t, // terminal coordinates of `bezier2` in the perspective of `bezier1`
-            t2i: dt ? t2t : t2i, // time of `c2i` in the perspective of `bezier1`
-            t2t: dt ? t2i : t2t, // time of `c2t` in the perspective of `bezier1`
-            csi, // coordinates of self-intersection in the perspective of `bezier1`(may be not on `bezier1` nor `bezier2` but on underlying curve), `undefined` if there is no self-intersection
-            tsi, // times of self-intersection in the perspective of `bezier1`, `[]` if there is no self-intersection
-            d1si1: tsi.length ? Float.between(tsi[0], 0, 1, false, false, eps.timeEpsilon) : false, // determination of whether `bezier1` pass the first time of the self-intersection, `false` if there is no self-intersection
-            d1si2: tsi.length ? Float.between(tsi[1], 0, 1, false, false, eps.timeEpsilon) : false, // determination of whether `bezier1` pass the second time of the self-intersection, `false` if there is no self-intersection
-            d2si1: tsi.length ? Float.between(tsi[0], t2i, t2t, false, false, eps.timeEpsilon) : false, // determination of whether `bezier2` pass the first time of the self-intersection, `false` if there is no self-intersection
-            d2si2: tsi.length ? Float.between(tsi[1], t2i, t2t, false, false, eps.timeEpsilon) : false // determination of whether `bezier2` pass the second time of the self-intersection, `false` if there is no self-intersection
+        const ret = {} as {
+            c1i: [number, number]; // initial coordinates of `bezier1`
+            c1t: [number, number]; // terminal coordinates of `bezier1`
+            c2i: [number, number]; // initial coordinates of `bezier2` in the perspective of `bezier1`
+            c2t: [number, number]; // terminal coordinates of `bezier2` in the perspective of `bezier1`
+            t2i: number; // time of `c2i` in the perspective of `bezier1`
+            t2t: number; // time of `c2t` in the perspective of `bezier1`
+            csi: [number, number] | undefined; // coordinates of self-intersection in the perspective of `bezier1`(may be not on `bezier1` nor `bezier2` but on underlying curve), `undefined` if there is no self-intersection
+            tsi: [number, number] | never[]; // times of self-intersection in the perspective of `bezier1`, `[]` if there is no self-intersection
+            d1si1: boolean; // determination of whether `bezier1` pass the first time of the self-intersection, `false` if there is no self-intersection
+            d1si2: boolean; // determination of whether `bezier1` pass the second time of the self-intersection, `false` if there is no self-intersection
+            d2si1: boolean; // determination of whether `bezier2` pass the first time of the self-intersection, `false` if there is no self-intersection
+            d2si2: boolean; // determination of whether `bezier2` pass the second time of the self-intersection, `false` if there is no self-intersection
         };
+
+        ret.c1i = c1i;
+        ret.c1t = c1t;
+        const tsi = this.geometry1.selfIntersectionExtend();
+        ret.tsi = tsi;
+
+        // no self-interaction even on underlying curve
+        if (tsi.length === 0) {
+            const t2i = this.geometry1.getTimeOfPointExtend(c2i);
+            const t2t = this.geometry1.getTimeOfPointExtend(c2t);
+            ret.csi = undefined;
+            ret.c2i = t2i > t2t ? c2t : c2i;
+            ret.c2t = t2i > t2t ? c2i : c2t;
+            ret.t2i = t2i > t2t ? t2t : t2i;
+            ret.t2t = t2i > t2t ? t2i : t2t;
+            ret.d1si1 = false;
+            ret.d1si2 = false;
+            ret.d2si1 = false;
+            ret.d2si2 = false;
+            return ret;
+        }
+        // handle self-intersection
+        ret.csi = this.geometry1.getPointAtTimeExtend(tsi[0]).coordinates;
+        ret.d1si1 = Float.between(tsi[0], 0, 1, false, false, eps.timeEpsilon);
+        ret.d1si2 = Float.between(tsi[1], 0, 1, false, false, eps.timeEpsilon);
+
+        const t2is = this.geometry1.getTimesOfPointExtend(c2i);
+        const t2ts = this.geometry1.getTimesOfPointExtend(c2t);
+
+        if (t2is.length === 1 && t2ts.length === 1) {
+            // c2i and c2t are not at the self-intersection point
+            const t2i = t2is[0];
+            const t2t = t2ts[0];
+            ret.d2si1 = Float.between(tsi[0], t2i, t2t, false, false, eps.timeEpsilon);
+            ret.d2si2 = Float.between(tsi[1], t2i, t2t, false, false, eps.timeEpsilon);
+            ret.t2i = t2i > t2t ? t2t : t2i;
+            ret.t2t = t2i > t2t ? t2i : t2t;
+            ret.c2i = t2i > t2t ? c2t : c2i;
+            ret.c2t = t2i > t2t ? c2i : c2t;
+            return ret;
+        } else if (t2is.length === 2 && t2ts.length === 1) {
+            // c2i is at the self-intersection point
+            const t2t = t2ts[0];
+            let t2i: number;
+
+            if (Float.lessThan(t2t, tsi[0], eps.timeEpsilon)) {
+                const midT = (tsi[0] + tsi[1]) / 2;
+                const midD = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT));
+                if (midD) {
+                    t2i = tsi[1];
+                    ret.d2si1 = true;
+                    ret.d2si2 = true;
+                } else {
+                    t2i = tsi[0];
+                    ret.d2si1 = true;
+                    ret.d2si2 = false;
+                }
+            } else if (Float.greaterThan(t2t, tsi[1], eps.timeEpsilon)) {
+                const midT = (tsi[0] + tsi[1]) / 2;
+                const midD = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT));
+                if (midD) {
+                    t2i = tsi[0];
+                    ret.d2si1 = true;
+                    ret.d2si2 = true;
+                } else {
+                    t2i = tsi[1];
+                    ret.d2si1 = false;
+                    ret.d2si2 = true;
+                }
+            } else {
+                const midT = (tsi[0] + t2t) / 2;
+                const midD = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT));
+                if (midD) {
+                    t2i = tsi[0];
+                    ret.d2si1 = true;
+                    ret.d2si2 = false;
+                } else {
+                    t2i = tsi[1];
+                    ret.d2si1 = false;
+                    ret.d2si2 = true;
+                }
+            }
+            ret.t2i = t2i > t2t ? t2t : t2i;
+            ret.t2t = t2i > t2t ? t2i : t2t;
+            ret.c2i = t2i > t2t ? c2t : c2i;
+            ret.c2t = t2i > t2t ? c2i : c2t;
+            return ret;
+        } else if (t2is.length === 1 && t2ts.length === 2) {
+            // c2t is at the self-intersection point
+            const t2i = t2is[0];
+            let t2t: number;
+
+            if (Float.lessThan(t2i, tsi[0], eps.timeEpsilon)) {
+                const midT = (tsi[0] + tsi[1]) / 2;
+                const midD = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT));
+                if (midD) {
+                    t2t = tsi[1];
+                    ret.d2si1 = true;
+                    ret.d2si2 = true;
+                } else {
+                    t2t = tsi[0];
+                    ret.d2si1 = true;
+                    ret.d2si2 = false;
+                }
+            } else if (Float.greaterThan(t2i, tsi[1], eps.timeEpsilon)) {
+                const midT = (tsi[0] + tsi[1]) / 2;
+                const midD = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT));
+                if (midD) {
+                    t2t = tsi[0];
+                    ret.d2si1 = true;
+                    ret.d2si2 = true;
+                } else {
+                    t2t = tsi[1];
+                    ret.d2si1 = false;
+                    ret.d2si2 = true;
+                }
+            } else {
+                const midT = (tsi[0] + t2i) / 2;
+                const midD = this.geometry2.isPointOn(this.geometry1.getPointAtTimeExtend(midT));
+                if (midD) {
+                    t2t = tsi[0];
+                    ret.d2si1 = true;
+                    ret.d2si2 = false;
+                } else {
+                    t2t = tsi[1];
+                    ret.d2si1 = false;
+                    ret.d2si2 = true;
+                }
+            }
+            ret.t2i = t2i > t2t ? t2t : t2i;
+            ret.t2t = t2i > t2t ? t2i : t2t;
+            ret.c2i = t2i > t2t ? c2t : c2i;
+            ret.c2t = t2i > t2t ? c2i : c2t;
+            return ret;
+        } else if (t2is.length === 2 && t2ts.length === 2) {
+            // c2i and c2t are at the self-intersection point
+            ret.d2si1 = true;
+            ret.d2si2 = true;
+            ret.t2i = tsi[0];
+            ret.t2t = tsi[1];
+            ret.c2i = c2i;
+            ret.c2t = c2t;
+            return ret;
+        } else {
+            throw new Error("[G]We should not reach here.");
+        }
     }
 
     equal(): Trilean {
@@ -302,9 +398,6 @@ export default class BezierBezier extends BaseIntersection {
         // handle self-intersection
         if (tsi.length && (d1si1 || d1si2) && (d2si1 || d2si2)) return [new Point(csi!)];
         return [];
-        // memo
-        // The cubic bezier curve may contact itself at cusps(if there is),
-        // but it is very difficult to encounter, so we will not deal with it here.
     }
     strike() {
         if (!this.onSameTrajectory()) {
@@ -321,6 +414,9 @@ export default class BezierBezier extends BaseIntersection {
         return this.properIntersection()
             .filter(i => i.m % 2 === 0)
             .map(i => new Point(i.c));
+        // *Memo
+        // The cubic bezier curve may contact itself at cusps(if there is),
+        // but it is very difficult to encounter, so we will not deal with it here.
     }
     cross() {
         if (!this.onSameTrajectory()) {
