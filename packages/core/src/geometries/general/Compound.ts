@@ -1,23 +1,22 @@
 import { Assert, Box, Type, Utility } from "@geomtoy/util";
+import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
+import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
+import FillRuleHelper from "../../helper/FillRuleHelper";
+import { validGeometryArguments } from "../../misc/decor-geometry";
+import { statedWithBoolean } from "../../misc/decor-stated";
+import { getCoordinates } from "../../misc/point-like";
+import { parseSvgPath } from "../../misc/svg-path";
+import Transformation from "../../transformation";
+import type { FillRule, ParentShape, ViewportDescriptor } from "../../types";
 import Arc from "../basic/Arc";
 import Bezier from "../basic/Bezier";
 import LineSegment from "../basic/LineSegment";
 import Point from "../basic/Point";
 import QuadraticBezier from "../basic/QuadraticBezier";
-
-import Geometry from "../../base/Geometry";
-import Graphics from "../../graphics";
-import FillRuleHelper from "../../helper/FillRuleHelper";
-import { statedWithBoolean } from "../../misc/decor-cache";
-import { getCoordinates } from "../../misc/point-like";
-import { parseSvgPath } from "../../misc/svg-path";
-import Transformation from "../../transformation";
-import type { FillRule, ParentShape, ViewportDescriptor } from "../../types";
 import Path from "./Path";
 import Polygon from "./Polygon";
-import { validGeometryArguments } from "../../misc/decor-geometry";
 
 export default class Compound extends Geometry implements ParentShape {
     private _fillRule: FillRule = "nonzero";

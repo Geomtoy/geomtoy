@@ -1,9 +1,8 @@
-import { Box } from "@geomtoy/util";
 import Geometry from "../base/Geometry";
 import EventSourceObject from "../event/EventSourceObject";
 import Graphics from "../graphics";
-import { stated, statedWithBoolean } from "../misc/decor-cache";
 import { validGeometry } from "../misc/decor-geometry";
+import { stated, statedWithBoolean } from "../misc/decor-stated";
 import Transformation from "../transformation";
 import { ViewportDescriptor } from "../types";
 

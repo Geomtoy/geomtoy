@@ -1,4 +1,4 @@
-import { stated } from "../misc/decor-cache";
+import { stated } from "../misc/decor-stated";
 import type Transformation from "../transformation";
 import Shape from "./Shape";
 

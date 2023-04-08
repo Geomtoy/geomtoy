@@ -1,12 +1,12 @@
-import { Assert, Coordinates, Float, Maths, Matrix3, Polynomial, RootMultiplicity, Type, Utility, Vector2 } from "@geomtoy/util";
+import { Assert, Coordinates, Float, Maths, Matrix3, Polynomial, Type, Utility, Vector2 } from "@geomtoy/util";
 import Geometry from "../../base/Geometry";
 import EventSourceObject from "../../event/EventSourceObject";
 import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { bezierLength } from "../../misc/bezier-length";
-import { stated, statedWithBoolean } from "../../misc/decor-cache";
 import { validGeometry } from "../../misc/decor-geometry";
+import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
 import type { FiniteOpenGeometry, ViewportDescriptor } from "../../types";

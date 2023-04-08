@@ -5,9 +5,8 @@ import EventObject from "../event/EventObject";
 import EventSourceObject from "../event/EventSourceObject";
 import { scheduler } from "../geomtoy";
 import BaseObject from "./BaseObject";
-
 import { EVENT_ALL, EVENT_ANY, EVENT_PATTERN_ALL_REG, EVENT_PATTERN_ALL_SPLITTER, EVENT_PATTERN_ANY_REG, EVENT_PATTERN_ANY_SPLITTER } from "../event/EventConst";
-import { CACHE_SYMBOL, STATE_IDENTIFIER_SYMBOL } from "../misc/decor-cache";
+import { STATE_SYMBOL, STATE_IDENTIFIER_SYMBOL } from "../misc/decor-stated";
 import type { BindOptions, BindParameters, EventObjectsFromPairs, EventPair, OnOptions } from "../types";
 
 const ON_EVENT_HANDLER_DEFAULT_PRIORITY = 1;
@@ -275,10 +274,10 @@ export default abstract class EventTarget extends BaseObject {
     // @internal
     private [STATE_IDENTIFIER_SYMBOL] = Utility.now();
     // @internal
-    private [CACHE_SYMBOL]?: object;
+    private [STATE_SYMBOL]?: object;
 
-    inspectCache() {
-        return this[CACHE_SYMBOL];
+    inspectState() {
+        return this[STATE_SYMBOL];
     }
 
     protected trigger_<T extends EventTarget>(this: T, eso: EventSourceObject<T>) {

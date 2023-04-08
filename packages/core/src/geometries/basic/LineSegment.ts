@@ -4,8 +4,8 @@ import EventSourceObject from "../../event/EventSourceObject";
 import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
-import { stated, statedWithBoolean } from "../../misc/decor-cache";
 import { validGeometry } from "../../misc/decor-geometry";
+import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
 import type { FiniteOpenGeometry, ViewportDescriptor } from "../../types";
@@ -333,7 +333,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
             Utility.uniqWith(ts, (a, b) => Float.equalTo(a, b, eps.timeEpsilon)),
             [n => n]
         );
-        
+
         [0, ...ts, 1].forEach((_, index, arr) => {
             if (index !== arr.length - 1) {
                 ret.push(this.portionOfExtend(arr[index], arr[index + 1]));
