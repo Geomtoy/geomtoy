@@ -121,7 +121,7 @@ export default class Selector {
             0,  1, -1,  0
         ]);
     }
-    differenceRev(description: FillDescription) {
+    differenceReverse(description: FillDescription) {
         //      this          that
         //   pos    neg    pos    neg       keep?               value
         //    0      0      0      0   =>   no                  0

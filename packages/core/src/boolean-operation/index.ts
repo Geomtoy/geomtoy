@@ -32,8 +32,8 @@ export default class BooleanOperation extends BaseObject {
     selectDifference(desc: FillDescription) {
         return this._selector.difference(desc);
     }
-    selectDifferenceRev(desc: FillDescription) {
-        return this._selector.differenceRev(desc);
+    selectDifferenceReverse(desc: FillDescription) {
+        return this._selector.differenceReverse(desc);
     }
     selectExclusion(desc: FillDescription) {
         return this._selector.exclusion(desc);
@@ -43,7 +43,7 @@ export default class BooleanOperation extends BaseObject {
         return this._chainer.chain(desc);
     }
 
-    private _operate(ggA: GeneralGeometry, ggB: GeneralGeometry, methodName: "selectUnion" | "selectIntersection" | "selectDifference" | "selectDifferenceRev" | "selectExclusion") {
+    private _operate(ggA: GeneralGeometry, ggB: GeneralGeometry, methodName: "selectUnion" | "selectIntersection" | "selectDifference" | "selectDifferenceReverse" | "selectExclusion") {
         const desc = this.describe(ggA, ggB);
         const selected = this[methodName].call(this, desc);
         return this._chainer.chain(selected);
@@ -62,8 +62,8 @@ export default class BooleanOperation extends BaseObject {
     difference(ggA: GeneralGeometry, ggB: GeneralGeometry) {
         return this._operate(ggA, ggB, "selectDifference");
     }
-    differenceRev(ggA: GeneralGeometry, ggB: GeneralGeometry) {
-        return this._operate(ggA, ggB, "selectDifferenceRev");
+    differenceReverse(ggA: GeneralGeometry, ggB: GeneralGeometry) {
+        return this._operate(ggA, ggB, "selectDifferenceReverse");
     }
     exclusion(ggA: GeneralGeometry, ggB: GeneralGeometry) {
         return this._operate(ggA, ggB, "selectExclusion");
