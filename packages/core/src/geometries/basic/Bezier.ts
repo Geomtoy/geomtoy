@@ -555,11 +555,10 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * - Else return a empty array.
      */
     selfIntersection(): [] | [number, number] {
-        const [t1, t2] = this.selfIntersectionExtend();
-        if (!t1 || !t2) return [];
-        if (Float.between(t1, 0, 1, false, false, eps.timeEpsilon) && Float.between(t2, 0, 1, false, false, eps.timeEpsilon)) {
-            // Self-intersection is on underlying curve not on bezier `this`.
-            return [t1, t2] as [number, number];
+        const tsi = this.selfIntersectionExtend();
+        if (tsi.length === 0) return [];
+        if (Float.between(tsi[0], 0, 1, false, false, eps.timeEpsilon) && Float.between(tsi[1], 0, 1, false, false, eps.timeEpsilon)) {
+            return tsi as [number, number];
         }
         return [];
     }
@@ -571,7 +570,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * - If the underlying curve has a self-intersection, the two time values of the self-intersection will be returned.
      * - Else return a empty array.
      */
-    selfIntersectionExtend() {
+    selfIntersectionExtend(): [] | [number, number] {
         const [[cx3, cx2, cx1, cx0], [cy3, cy2, cy1, cy0]] = this.getPolynomial();
         // Suppose bezier has self-intersection which has two distinct times `t1` and `t2`.
         // By Vieta's formulas, `t1` and `t2` are the roots of $t^2-(t1+t2)t+t1*t2=0$
@@ -587,7 +586,8 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         if (tRoots.length === 0) return [];
         // violate the supposition that `t1` and `t2` are distinct(The case where self-intersection degenerates to a cusp is not taken into account)
         if (Float.equalTo(tRoots[0], tRoots[1], eps.timeEpsilon)) return [];
-        return [tRoots[0], tRoots[1]] as [number, number];
+        if (tRoots[0] < tRoots[1]) return [tRoots[0], tRoots[1]];
+        return [tRoots[1], tRoots[0]];
     }
 
     /**
