@@ -91,13 +91,13 @@ function prepareIntersection(swfA: SegmentWithFill, swfB: SegmentWithFill) {
             return {
                 inverse: false,
                 type: "nn" as const,
-                intersection: new QuadraticBezierQuadraticBezier(segmentA, segmentB)
+                intersection: new QuadraticBezierQuadraticBezier(segmentA, segmentB, true)
             };
         if (segmentB instanceof Bezier)
             return {
                 inverse: false,
                 type: "mn" as const,
-                intersection: new QuadraticBezierBezier(segmentA, segmentB)
+                intersection: new QuadraticBezierBezier(segmentA, segmentB, true)
             };
         if (segmentB instanceof Arc)
             return {
@@ -117,13 +117,13 @@ function prepareIntersection(swfA: SegmentWithFill, swfB: SegmentWithFill) {
             return {
                 inverse: true,
                 type: "mn" as const,
-                intersection: new QuadraticBezierBezier(segmentB, segmentA)
+                intersection: new QuadraticBezierBezier(segmentB, segmentA, true)
             };
         if (segmentB instanceof Bezier)
             return {
                 inverse: false,
                 type: "nn" as const,
-                intersection: new BezierBezier(segmentA, segmentB)
+                intersection: new BezierBezier(segmentA, segmentB, true)
             };
         if (segmentB instanceof Arc)
             return {
