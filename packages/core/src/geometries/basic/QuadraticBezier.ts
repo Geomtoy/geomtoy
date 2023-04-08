@@ -470,41 +470,41 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         const xPoly = Polynomial.standardize(Polynomial.add(polyX, [-x]));
         const yPoly = Polynomial.standardize(Polynomial.add(polyY, [-y]));
 
-        let xRootsM: RootMultiplicity<number>[] | undefined = undefined;
-        let yRootsM: RootMultiplicity<number>[] | undefined = undefined;
+        let xRoots: number[] | undefined = undefined;
+        let yRoots: number[] | undefined = undefined;
 
         if (Polynomial.isConstant(xPoly)) {
             if (!Float.equalTo(Polynomial.coef(xPoly, 0), 0, eps.coefficientEpsilon)) return [];
         } else {
-            xRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(xPoly, eps.complexEpsilon).filter(Type.isNumber), eps.timeEpsilon);
-            if (xRootsM.length === 0) return [];
+            xRoots = Polynomial.roots(xPoly, eps.complexEpsilon).filter(Type.isNumber);
+            if (xRoots.length === 0) return [];
         }
 
         if (Polynomial.isConstant(yPoly)) {
             if (!Float.equalTo(Polynomial.coef(yPoly, 0), 0, eps.coefficientEpsilon)) return [];
         } else {
-            yRootsM = Polynomial.rootsMultiplicity(Polynomial.roots(yPoly, eps.complexEpsilon).filter(Type.isNumber), eps.timeEpsilon);
-            if (yRootsM.length === 0) return [];
+            yRoots = Polynomial.roots(yPoly, eps.complexEpsilon).filter(Type.isNumber);
+            if (yRoots.length === 0) return [];
         }
 
-        if (xRootsM !== undefined && yRootsM === undefined) {
-            return xRootsM.map(rm => rm.root);
+        if (xRoots !== undefined && yRoots === undefined) {
+            return Utility.uniqWith(xRoots, (a, b) => Float.equalTo(a, b, eps.timeEpsilon));
         }
-        if (xRootsM === undefined && yRootsM !== undefined) {
-            return yRootsM.map(rm => rm.root);
+        if (xRoots === undefined && yRoots !== undefined) {
+            return Utility.uniqWith(yRoots, (a, b) => Float.equalTo(a, b, eps.timeEpsilon));
         }
-        if (xRootsM !== undefined && yRootsM !== undefined) {
-            const ret: number[] = [];
-            for (let xr of xRootsM) {
-                for (let yr of yRootsM) {
-                    if (Float.equalTo(xr.root, yr.root, eps.timeEpsilon)) {
-                        ret.push(Maths.avg(xr.root, yr.root));
+        if (xRoots !== undefined && yRoots !== undefined) {
+            const roots: number[] = [];
+            for (let xr of xRoots) {
+                for (let yr of yRoots) {
+                    if (Float.equalTo(xr, yr, eps.timeEpsilon)) {
+                        roots.push(Maths.avg(xr, yr));
                     }
                 }
             }
-            return ret;
+            return Utility.uniqWith(roots, (a, b) => Float.equalTo(a, b, eps.timeEpsilon));
         }
-        // now xRootsM === undefined && yRootsM === undefined that's impossible.
+        // now xRootsM === undefined && yRootsM === undefined
         return [];
     }
     /**
