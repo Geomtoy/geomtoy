@@ -24,7 +24,6 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
     private _radius = NaN;
     private _sideCount = NaN;
     private _rotation = 0;
-    private _windingDirection = 1 as WindingDirection;
 
     constructor(centerX: number, centerY: number, radius: number, sideCount: number, rotation?: number);
     constructor(centerCoordinates: [number, number], radius: number, sideCount: number, rotation?: number);
@@ -176,10 +175,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
     }
 
     getWindingDirection() {
-        return this._windingDirection;
-    }
-    setWindingDirection(direction: WindingDirection) {
-        this._windingDirection = direction;
+        return 1 as WindingDirection;
     }
     getLength(): number {
         throw new Error("Method not implemented.");
