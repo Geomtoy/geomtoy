@@ -267,13 +267,26 @@ export default class Compound extends Geometry implements ParentShape {
     }
     clone() {
         const ret = new Compound();
+        ret._items = [...this._items];
+        ret._fillRule = this._fillRule;
+        return ret;
+    }
+    deepClone() {
+        const ret = new Compound();
         ret._items = this._items.map(item => item.clone());
         ret._fillRule = this._fillRule;
         return ret;
     }
     copyFrom(shape: Compound | null) {
         if (shape === null) shape = new Compound();
-        this._setItems(shape.items);
+        this._setItems([...shape._items]);
+        this._setFillRule(shape._fillRule);
+        return this;
+    }
+    deepCopyFrom(shape: Compound | null) {
+        if (shape === null) shape = new Compound();
+        this._setItems(shape._items.map(item => item.clone()));
+        this._setFillRule(shape._fillRule);
         return this;
     }
     override toJSON() {

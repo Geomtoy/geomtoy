@@ -334,7 +334,9 @@ export default class Transformation extends EventTarget {
         return TransformationMatrix.span(this._matrix);
     }
     clone() {
-        return new Transformation(this._matrix);
+        const ret = new Transformation();
+        Object.assign(ret._matrix, this._matrix);
+        return ret;
     }
     copyFrom(transformation: Transformation | null) {
         if (transformation === null) transformation = new Transformation();

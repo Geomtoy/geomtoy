@@ -9,7 +9,7 @@ import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import Transformation from "../../transformation";
-import type { ClosedGeometry, RotationFeaturedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
+import type { ClosedGeometry, PathCommand, RotationFeaturedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
 import Path from "../general/Path";
 import Polygon from "../general/Polygon";
 import LineSegment from "./LineSegment";
@@ -387,14 +387,13 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
     }
 
     toPath() {
-        const path = new Path();
         const [p1, p2, p3, p4] = this.getVertices();
-        path.appendCommand(Path.moveTo(p1));
-        path.appendCommand(Path.lineTo(p2));
-        path.appendCommand(Path.lineTo(p3));
-        path.appendCommand(Path.lineTo(p4));
-        path.closed = true;
-        return path;
+        const commands: PathCommand[] = [];
+        commands.push(Path.moveTo(p1));
+        commands.push(Path.lineTo(p2));
+        commands.push(Path.lineTo(p3));
+        commands.push(Path.lineTo(p4));
+        return new Path(commands, true);
     }
 
     apply(transformation: Transformation) {
@@ -441,7 +440,13 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         return g;
     }
     clone() {
-        return new Rectangle(this._x, this._y, this._width, this._height, this._rotation);
+        const ret = new Rectangle();
+        ret._x = this._x;
+        ret._y = this._y;
+        ret._width = this._width;
+        ret._height = this._height;
+        ret._rotation = this._rotation;
+        return ret;
     }
     copyFrom(shape: Rectangle | null) {
         if (shape === null) shape = new Rectangle();

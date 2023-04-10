@@ -259,12 +259,17 @@ export default class Point extends Geometry {
         return new Point(nc, this.appearance);
     }
     clone() {
-        return new Point(this._x, this._y);
+        const ret = new Point();
+        ret._x = this._x;
+        ret._y = this._y;
+        ret.appearance = this.appearance;
+        return ret;
     }
     copyFrom(shape: Point | null) {
         if (shape === null) shape = new Point();
         this._setX(shape._x);
         this._setY(shape._y);
+        this.appearance = shape.appearance;
         return this;
     }
     override toJSON() {

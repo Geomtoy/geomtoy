@@ -871,11 +871,15 @@ export default class Path extends Geometry {
         return g;
     }
     clone() {
-        return new Path(this.commands);
+        const ret = new Path();
+        ret._commands = commandCopyNewID(this._commands);
+        ret._closed = this._closed;
+        ret._fillRule = this._fillRule;
+        return ret;
     }
     copyFrom(shape: Path | null) {
         if (shape === null) shape = new Path();
-        this._setCommands(shape.commands);
+        this._setCommands(commandCopyNewID(this._commands));
         return this;
     }
     override toJSON() {

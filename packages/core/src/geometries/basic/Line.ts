@@ -402,7 +402,11 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
         return new Line(nc, ns);
     }
     clone() {
-        return new Line(this.x, this.y, this.slope);
+        const ret = new Line();
+        ret._x = this._x;
+        ret._y = this._y;
+        ret._slope = this._slope;
+        return ret;
     }
     copyFrom(shape: Line | null) {
         if (shape === null) shape = new Line();

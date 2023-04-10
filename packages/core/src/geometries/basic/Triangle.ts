@@ -9,7 +9,7 @@ import { Cartesian, Trilinear } from "../../helper/CoordinateSystem";
 import { validGeometry } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import type Transformation from "../../transformation";
-import type { ClosedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
+import type { ClosedGeometry, PathCommand, ViewportDescriptor, WindingDirection } from "../../types";
 import Path from "../general/Path";
 import Polygon from "../general/Polygon";
 import Circle from "./Circle";
@@ -974,13 +974,12 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     }
 
     toPath() {
-        const path = new Path();
         const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
-        path.appendCommand(Path.moveTo(c1));
-        path.appendCommand(Path.lineTo(c2));
-        path.appendCommand(Path.lineTo(c3));
-        path.closed = true;
-        return path;
+        const commands: PathCommand[] = [];
+        commands.push(Path.moveTo(c1));
+        commands.push(Path.lineTo(c2));
+        commands.push(Path.lineTo(c3));
+        return new Path(commands, true);
     }
     apply(transformation: Transformation) {
         const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
@@ -1005,7 +1004,14 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         return g;
     }
     clone() {
-        return new Triangle(this._point1X, this._point1Y, this._point2X, this._point2Y, this._point3X, this._point3Y);
+        const ret = new Triangle();
+        ret._point1X = this._point1X;
+        ret._point1Y = this._point1Y;
+        ret._point2X = this._point2X;
+        ret._point2Y = this._point2Y;
+        ret._point3X = this._point3X;
+        ret._point3Y = this._point3Y;
+        return ret;
     }
     copyFrom(shape: Triangle | null) {
         if (shape === null) shape = new Triangle();

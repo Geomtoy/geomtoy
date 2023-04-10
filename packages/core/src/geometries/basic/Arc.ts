@@ -10,7 +10,7 @@ import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { completeEllipticIntegralOfSecondKind, incompleteEllipticIntegralOfSecondKind } from "../../misc/elliptic-integral";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
-import type { FiniteOpenGeometry, ViewportDescriptor } from "../../types";
+import type { FiniteOpenGeometry, PathCommand, ViewportDescriptor } from "../../types";
 import Path from "../general/Path";
 import Circle from "./Circle";
 import Ellipse from "./Ellipse";
@@ -29,9 +29,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     private _largeArc = true;
     private _positive = true;
     private _rotation = 0;
-
-    private _inputRadiusX = NaN;
-    private _inputRadiusY = NaN;
 
     constructor(point1X: number, point1Y: number, point2X: number, point2Y: number, radiusX: number, radiusY: number, largeArc: boolean, positive: boolean, rotation?: number);
     constructor(point1Coordinates: [number, number], point2Coordinates: [number, number], radiusX: number, radiusY: number, largeArc: boolean, positive: boolean, rotation?: number);
@@ -653,12 +650,11 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     }
 
     toPath(closed = false) {
-        const path = new Path();
+        const commands: PathCommand[] = [];
         const { point1Coordinates: c1, point2Coordinates: c2, radiusX, radiusY, rotation, largeArc, positive } = this;
-        path.appendCommand(Path.moveTo(c1));
-        path.appendCommand(Path.arcTo(radiusX, radiusY, rotation, largeArc, positive, c2));
-        path.closed = closed;
-        return path;
+        commands.push(Path.moveTo(c1));
+        commands.push(Path.arcTo(radiusX, radiusY, rotation, largeArc, positive, c2));
+        return new Path(commands, closed);
     }
 
     apply(transformation: Transformation) {
@@ -682,14 +678,24 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     }
 
     clone() {
-        return new Arc(this._point1X, this._point1Y, this._point2X, this._point2Y, this._radiusX, this._radiusY, this._largeArc, this._positive, this._rotation);
+        const ret = new Arc();
+        ret._point1X = this._point1X;
+        ret._point1Y = this._point1Y;
+        ret._point2X = this._point2X;
+        ret._point2Y = this._point2Y;
+        ret._radiusX = this._radiusX;
+        ret._radiusY = this._radiusY;
+        ret._largeArc = this._largeArc;
+        ret._positive = this._positive;
+        ret._rotation = this._rotation;
+        return ret;
     }
 
     copyFrom(shape: Arc | null) {
         if (shape === null) shape = new Arc();
         // make `_inputRadiusX` and `_inputRadiusY` to `NaN` first, avoid redundant calls of `_correctAndSetRadii`
-        this._inputRadiusX = NaN;
-        this._inputRadiusY = NaN;
+        this._radiusX = NaN;
+        this._radiusY = NaN;
 
         this._setPoint1X(shape._point1X);
         this._setPoint1Y(shape._point1Y);

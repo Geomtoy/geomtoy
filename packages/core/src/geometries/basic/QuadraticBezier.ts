@@ -9,7 +9,7 @@ import { validGeometry } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
-import type { FiniteOpenGeometry, ViewportDescriptor } from "../../types";
+import type { FiniteOpenGeometry, PathCommand, ViewportDescriptor } from "../../types";
 import Path from "../general/Path";
 import Circle from "./Circle";
 import LineSegment from "./LineSegment";
@@ -688,12 +688,11 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
     // #endregion
 
     toPath(closed = false) {
-        const path = new Path();
         const { point1Coordinates: c1, point2Coordinates: c2, controlPointCoordinates: cpc } = this;
-        path.appendCommand(Path.moveTo(c1));
-        path.appendCommand(Path.quadraticBezierTo(cpc, c2));
-        path.closed = closed;
-        return path;
+        const commands: PathCommand[] = [];
+        commands.push(Path.moveTo(c1));
+        commands.push(Path.quadraticBezierTo(cpc, c2));
+        return new Path(commands, closed);
     }
     apply(transformation: Transformation) {
         const { point1Coordinates: c1, point2Coordinates: c2, controlPointCoordinates: cpc } = this;
@@ -716,7 +715,14 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         return g;
     }
     clone() {
-        return new QuadraticBezier(this.point1X, this.point1Y, this.point2X, this.point2Y, this.controlPointX, this.controlPointY);
+        const ret = new QuadraticBezier();
+        ret._point1X = this._point1X;
+        ret._point1Y = this._point1Y;
+        ret._point2X = this._point2X;
+        ret._point2Y = this._point2Y;
+        ret._controlPointX = this._controlPointX;
+        ret._controlPointY = this._controlPointY;
+        return ret;
     }
     copyFrom(shape: QuadraticBezier | null) {
         if (shape === null) shape = new QuadraticBezier();

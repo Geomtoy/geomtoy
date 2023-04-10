@@ -367,7 +367,19 @@ export default class Image extends Shape {
         return g;
     }
     clone() {
-        return new Image(this._x, this._y, this._width, this._height, this._sourceX, this._sourceY, this._sourceWidth, this._sourceHeight, this._source, this._consistent, this._anchor);
+        const ret = new Image();
+        ret._x = this._x;
+        ret._y = this._y;
+        ret._width = this._width;
+        ret._height = this._height;
+        ret._sourceX = this._sourceX;
+        ret._sourceY = this._sourceY;
+        ret._sourceWidth = this._sourceWidth;
+        ret._sourceHeight = this._sourceHeight;
+        ret._source = this._source;
+        ret._consistent = this._consistent;
+        ret._anchor = this._anchor;
+        return ret;
     }
     copyFrom(shape: Image | null) {
         if (shape === null) shape = new Image();

@@ -8,7 +8,7 @@ import { validGeometry } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
-import type { FiniteOpenGeometry, ViewportDescriptor } from "../../types";
+import type { FiniteOpenGeometry, PathCommand, ViewportDescriptor } from "../../types";
 import Path from "../general/Path";
 import Line from "./Line";
 import Point from "./Point";
@@ -513,11 +513,10 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
     }
     toPath(closed = false) {
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;
-        const path = new Path();
-        path.appendCommand(Path.moveTo(c1));
-        path.appendCommand(Path.lineTo(c2));
-        path.closed = closed;
-        return path;
+        const commands: PathCommand[] = [];
+        commands.push(Path.moveTo(c1));
+        commands.push(Path.lineTo(c2));
+        return new Path(commands, closed);
     }
     apply(transformation: Transformation) {
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;
@@ -539,7 +538,12 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         return g;
     }
     clone() {
-        return new LineSegment(this.point1X, this.point1Y, this.point2X, this.point2Y);
+        const ret = new LineSegment();
+        ret._point1X = this._point1X;
+        ret._point1Y = this._point1Y;
+        ret._point2X = this._point2X;
+        ret._point2Y = this._point2Y;
+        return ret;
     }
     copyFrom(shape: LineSegment | null) {
         if (shape === null) shape = new LineSegment();

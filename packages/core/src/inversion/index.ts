@@ -234,6 +234,22 @@ export default class Inversion extends EventTarget {
             }
         }
     }
+
+    clone() {
+        const ret = new Inversion();
+        ret._centerX = this._centerX;
+        ret._centerY = this._centerY;
+        ret._power = this._power;
+        return ret;
+    }
+    copyFrom(inversion: Inversion | null) {
+        if (inversion === null) inversion = new Inversion();
+        this._setCenterX(inversion._centerX);
+        this._setCenterY(inversion._centerY);
+        this._setPower(inversion._power);
+        return this;
+    }
+
     override toJSON() {
         return {
             name: this.name,

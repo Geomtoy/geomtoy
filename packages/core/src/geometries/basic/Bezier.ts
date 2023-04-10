@@ -9,7 +9,7 @@ import { validGeometry } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
-import type { FiniteOpenGeometry, ViewportDescriptor } from "../../types";
+import type { FiniteOpenGeometry, PathCommand, ViewportDescriptor } from "../../types";
 import Path from "../general/Path";
 import Circle from "./Circle";
 import LineSegment from "./LineSegment";
@@ -905,12 +905,11 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         return new Bezier(xs[0], ys[0], xs[3], ys[3], xs[1], ys[1], xs[2], ys[2]);
     }
     toPath(closed = false) {
-        const path = new Path();
+        const commands: PathCommand[] = [];
         const { point1Coordinates: c1, point2Coordinates: c2, controlPoint1Coordinates: cpc1, controlPoint2Coordinates: cpc2 } = this;
-        path.appendCommand(Path.moveTo(c1));
-        path.appendCommand(Path.bezierTo(cpc1, cpc2, c2));
-        path.closed = closed;
-        return path;
+        commands.push(Path.moveTo(c1));
+        commands.push(Path.bezierTo(cpc1, cpc2, c2));
+        return new Path(commands, closed);
     }
     apply(transformation: Transformation) {
         const { point1Coordinates: c1, point2Coordinates: c2, controlPoint1Coordinates: cpc1, controlPoint2Coordinates: cpc2 } = this;
@@ -934,7 +933,16 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         return g;
     }
     clone() {
-        return new Bezier(this.point1X, this.point1Y, this.point2X, this.point2Y, this.controlPoint1X, this.controlPoint1Y, this.controlPoint2X, this.controlPoint2Y);
+        const ret = new Bezier();
+        ret._point1X = this._point1X;
+        ret._point1Y = this._point1Y;
+        ret._point2X = this._point2X;
+        ret._point2Y = this._point2Y;
+        ret._controlPoint1X = this._controlPoint1X;
+        ret._controlPoint1Y = this._controlPoint1Y;
+        ret._controlPoint2X = this._controlPoint2X;
+        ret._controlPoint2Y = this._controlPoint2Y;
+        return ret;
     }
     copyFrom(shape: Bezier | null) {
         if (shape === null) shape = new Bezier();

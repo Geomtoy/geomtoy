@@ -175,7 +175,15 @@ export default class Text extends Shape {
         return g;
     }
     clone() {
-        return new Text(this._x, this._y, this._offsetX, this._offsetY, this._content, this._font, this._anchor);
+        const ret = new Text();
+        ret._x = this._x;
+        ret._y = this._y;
+        ret._offsetX = this._offsetX;
+        ret._offsetY = this._offsetY;
+        ret._content = this._content;
+        ret._font = { ...this._font };
+        ret._anchor = this._anchor;
+        return ret;
     }
     copyFrom(shape: Text | null) {
         if (shape === null) shape = new Text();

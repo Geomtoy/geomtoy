@@ -369,7 +369,12 @@ export default class Vector extends Geometry {
         return g;
     }
     clone() {
-        return new Vector(this._point1X, this._point1Y, this._x, this._y);
+        const ret = new Vector();
+        ret._x = this._x;
+        ret._y = this._y;
+        ret._point1X = this._point1X;
+        ret._point1Y = this._point1Y;
+        return ret;
     }
     copyFrom(shape: Vector | null) {
         if (shape === null) shape = new Vector();

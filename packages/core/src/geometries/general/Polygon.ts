@@ -604,11 +604,15 @@ export default class Polygon extends Geometry {
         return g;
     }
     clone() {
-        return new Polygon(this.vertices, this.closed);
+        const ret = new Polygon();
+        ret._vertices = vertexCopyNewID(this._vertices);
+        ret._closed = this._closed;
+        ret._fillRule = this._fillRule;
+        return ret;
     }
     copyFrom(shape: Polygon | null) {
         if (shape === null) shape = new Polygon();
-        this._setVertices(shape.vertices);
+        this._setVertices(vertexCopyNewID(shape._vertices));
         return this;
     }
     override toJSON() {

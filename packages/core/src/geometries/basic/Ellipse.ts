@@ -10,7 +10,7 @@ import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { completeEllipticIntegralOfSecondKind } from "../../misc/elliptic-integral";
 import { getCoordinates } from "../../misc/point-like";
 import Transformation from "../../transformation";
-import type { ClosedGeometry, RotationFeaturedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
+import type { ClosedGeometry, PathCommand, RotationFeaturedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
 import Path from "../general/Path";
 import Arc from "./Arc";
 import Circle from "./Circle";
@@ -589,30 +589,17 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         return new Ellipse(tx, ty, Maths.abs(sx), Maths.abs(sy), rotate1);
     }
     /**
-     * Convert ellipse `this` to path, using only one `Path.arcTo` command.
+     * Convert ellipse `this` to path, using two `Path.arcTo` commands.
      */
     toPath() {
         const { _rotation: rotation, _radiusX: radiusX, _radiusY: radiusY } = this;
-        const c = this.getParametricEquation()(0);
-        const path = new Path();
-        path.appendCommand(Path.moveTo(c));
-        path.appendCommand(Path.arcTo(radiusX, radiusY, rotation, true, true, c));
-        path.closed = true;
-        return path;
-    }
-    /**
-     * Convert ellipse `this` to path, using two `Path.arcTo` commands.
-     */
-    toPath3() {
-        const { _rotation: rotation, _radiusX: radiusX, _radiusY: radiusY } = this;
         const c0 = this.getParametricEquation()(0);
         const c1 = this.getParametricEquation()(Maths.PI);
-        const path = new Path();
-        path.appendCommand(Path.moveTo(c0));
-        path.appendCommand(Path.arcTo(radiusX, radiusY, rotation, false, true, c1));
-        path.appendCommand(Path.arcTo(radiusX, radiusY, rotation, false, true, c0));
-        path.closed = true;
-        return path;
+        const commands: PathCommand[] = [];
+        commands.push(Path.moveTo(c0));
+        commands.push(Path.arcTo(radiusX, radiusY, rotation, false, true, c1));
+        commands.push(Path.arcTo(radiusX, radiusY, rotation, false, true, c0));
+        return new Path(commands, true);
     }
 
     toPath2() {
@@ -638,14 +625,13 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const cp42 = Vector2.rotate([xs, ym + oy], phi);
 
         // todo consider windingDirection
-        const path = new Path();
-        path.appendCommand(Path.moveTo(Vector2.rotate([xs, ym], phi)));
-        path.appendCommand(Path.bezierTo(cp11, cp12, Vector2.rotate([xm, ys], phi)));
-        path.appendCommand(Path.bezierTo(cp21, cp22, Vector2.rotate([xe, ym], phi)));
-        path.appendCommand(Path.bezierTo(cp31, cp32, Vector2.rotate([xm, ye], phi)));
-        path.appendCommand(Path.bezierTo(cp41, cp42, Vector2.rotate([xs, ym], phi)));
-        path.closed = true;
-        return path;
+        const commands: PathCommand[] = [];
+        commands.push(Path.moveTo([xs, ym]));
+        commands.push(Path.bezierTo(cp11, cp12, [xm, ys]));
+        commands.push(Path.bezierTo(cp21, cp22, [xe, ym]));
+        commands.push(Path.bezierTo(cp31, cp32, [xm, ye]));
+        commands.push(Path.bezierTo(cp41, cp42, [xs, ym]));
+        return new Path(commands, true);
     }
 
     getGraphics(viewport: ViewportDescriptor) {
@@ -661,7 +647,13 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         return g;
     }
     clone() {
-        return new Ellipse(this.centerX, this.centerY, this.radiusX, this.radiusY, this.rotation);
+        const ret = new Ellipse();
+        ret._centerX = this._centerX;
+        ret._centerY = this._centerY;
+        ret._radiusX = this._radiusX;
+        ret._radiusY = this._radiusY;
+        ret._rotation = this._rotation;
+        return ret;
     }
     copyFrom(shape: Ellipse | null) {
         if (shape === null) shape = new Ellipse();

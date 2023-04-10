@@ -238,7 +238,11 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         return this.point.getBoundingBox();
     }
     clone() {
-        return new Ray(this.x, this.y, this.angle);
+        const ret = new Ray();
+        ret._x = this._x;
+        ret._y = this._y;
+        ret._angle = this._angle;
+        return ret;
     }
     copyFrom(shape: Ray | null) {
         if (shape === null) shape = new Ray();

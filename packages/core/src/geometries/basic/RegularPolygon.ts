@@ -8,7 +8,7 @@ import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import Transformation from "../../transformation";
-import type { ClosedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
+import type { ClosedGeometry, PathCommand, ViewportDescriptor, WindingDirection } from "../../types";
 import Path from "../general/Path";
 import Polygon from "../general/Polygon";
 import Circle from "./Circle";
@@ -259,12 +259,12 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
 
     toPath() {
         const [head, ...tail] = this.getVertices();
-        const path = new Path(true);
-        path.appendCommand(Path.moveTo(head.coordinates));
+        const commands: PathCommand[] = [];
+        commands.push(Path.moveTo(head.coordinates));
         tail.forEach(p => {
-            path.appendCommand(Path.lineTo(p.coordinates));
+            commands.push(Path.lineTo(p.coordinates));
         });
-        return path;
+        return new Path(commands, true);
     }
     apply(transformation: Transformation) {
         const { centerCoordinates: cc, radius: r } = this;
@@ -300,7 +300,13 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         return g;
     }
     clone() {
-        return new RegularPolygon(this.centerX, this.centerY, this.radius, this.sideCount, this.rotation);
+        const ret = new RegularPolygon();
+        ret._centerX = this._centerX;
+        ret._centerY = this._centerY;
+        ret._radius = this._radius;
+        ret._sideCount = this._sideCount;
+        ret._rotation = this._rotation;
+        return ret;
     }
     copyFrom(shape: RegularPolygon | null) {
         if (shape === null) shape = new RegularPolygon();

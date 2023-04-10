@@ -9,7 +9,7 @@ import { validGeometry } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
-import type { ClosedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
+import type { ClosedGeometry, PathCommand, ViewportDescriptor, WindingDirection } from "../../types";
 import Path from "../general/Path";
 import Arc from "./Arc";
 import Line from "./Line";
@@ -467,30 +467,17 @@ export default class Circle extends Geometry implements ClosedGeometry {
     }
 
     /**
-     * Convert circle `this` to path, using only one `Path.arcTo` command.
+     * Convert circle `this` to path, using two `Path.arcTo` commands.
      */
     toPath() {
         const { _radius: radius } = this;
-        const c = this.getParametricEquation()(0);
-        const path = new Path();
-        path.appendCommand(Path.moveTo(c));
-        path.appendCommand(Path.arcTo(radius, radius, 0, true, true, c));
-        path.closed = true;
-        return path;
-    }
-    /**
-     * Convert circle `this` to path, using two `Path.arcTo` commands.
-     */
-    toPath3() {
-        const { _radius: radius } = this;
         const c0 = this.getParametricEquation()(0);
         const c1 = this.getParametricEquation()(Maths.PI);
-        const path = new Path();
-        path.appendCommand(Path.moveTo(c0));
-        path.appendCommand(Path.arcTo(radius, radius, 0, false, true, c1));
-        path.appendCommand(Path.arcTo(radius, radius, 0, false, true, c0));
-        path.closed = true;
-        return path;
+        const commands: PathCommand[] = [];
+        commands.push(Path.moveTo(c0));
+        commands.push(Path.arcTo(radius, radius, 0, false, true, c1));
+        commands.push(Path.arcTo(radius, radius, 0, false, true, c0));
+        return new Path(commands, true);
     }
 
     /**
@@ -520,14 +507,13 @@ export default class Circle extends Geometry implements ClosedGeometry {
         const cp41 = [xm - offset, ye] as [number, number];
         const cp42 = [xs, ym + offset] as [number, number];
 
-        const path = new Path();
-        path.appendCommand(Path.moveTo([xs, ym]));
-        path.appendCommand(Path.bezierTo(cp11, cp12, [xm, ys]));
-        path.appendCommand(Path.bezierTo(cp21, cp22, [xe, ym]));
-        path.appendCommand(Path.bezierTo(cp31, cp32, [xm, ye]));
-        path.appendCommand(Path.bezierTo(cp41, cp42, [xs, ym]));
-        path.closed = true;
-        return path;
+        const commands: PathCommand[] = [];
+        commands.push(Path.moveTo([xs, ym]));
+        commands.push(Path.bezierTo(cp11, cp12, [xm, ys]));
+        commands.push(Path.bezierTo(cp21, cp22, [xe, ym]));
+        commands.push(Path.bezierTo(cp31, cp32, [xm, ye]));
+        commands.push(Path.bezierTo(cp41, cp42, [xs, ym]));
+        return new Path(commands, true);
     }
 
     apply(transformation: Transformation) {
@@ -547,7 +533,11 @@ export default class Circle extends Geometry implements ClosedGeometry {
         }
     }
     clone() {
-        return new Circle(this.centerX, this.centerY, this.radius);
+        const ret = new Circle();
+        ret._centerX = this._centerX;
+        ret._centerY = this._centerY;
+        ret._radius = this._radius;
+        return ret;
     }
     copyFrom(shape: Circle | null) {
         if (shape === null) shape = new Circle();
