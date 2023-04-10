@@ -33,6 +33,7 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
         if (a0 instanceof Point) {
             Object.assign(this, { point: a0, slope: a1 });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -43,19 +44,20 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
     };
 
     private _setX(value: number) {
-        if (!Utility.is(this._x, value)) this.trigger_(new EventSourceObject(this, Line.events.xChanged, this._x));
+        if (Utility.is(this._x, value)) return;
         this._x = value;
+        this.trigger_(new EventSourceObject(this, Line.events.xChanged, this._x));
     }
     private _setY(value: number) {
-        if (!Utility.is(this._y, value)) this.trigger_(new EventSourceObject(this, Line.events.yChanged, this._y));
+        if (Utility.is(this._y, value)) return;
         this._y = value;
+        this.trigger_(new EventSourceObject(this, Line.events.yChanged, this._y));
     }
     private _setSlope(value: number) {
-        if (!Utility.is(this._slope, value)) {
-            this.trigger_(new EventSourceObject(this, Line.events.slopeChanged, this._slope));
-            this.trigger_(new EventSourceObject(this, Line.events.angleChanged, this.angle));
-        }
+        if (Utility.is(this._slope, value)) return;
         this._slope = value;
+        this.trigger_(new EventSourceObject(this, Line.events.slopeChanged, this._slope));
+        this.trigger_(new EventSourceObject(this, Line.events.angleChanged, this.angle));
     }
 
     get x() {

@@ -11,6 +11,7 @@ export default class SealedShapeArray<T extends Shape[]> extends Shape implement
         super();
         this._items = [...items];
         this._initProxy();
+        this.initState_();
     }
 
     static override events = {

@@ -38,6 +38,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
         if (a0 instanceof Point) {
             Object.assign(this, { centerPoint: a0, radius: a1 });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -47,16 +48,19 @@ export default class Circle extends Geometry implements ClosedGeometry {
     };
 
     private _setCenterX(value: number) {
-        if (!Utility.is(this._centerX, value)) this.trigger_(new EventSourceObject(this, Circle.events.centerXChanged));
+        if (Utility.is(this._centerX, value)) return;
         this._centerX = value;
+        this.trigger_(new EventSourceObject(this, Circle.events.centerXChanged));
     }
     private _setCenterY(value: number) {
-        if (!Utility.is(this._centerY, value)) this.trigger_(new EventSourceObject(this, Circle.events.centerYChanged));
+        if (Utility.is(this._centerY, value)) return;
         this._centerY = value;
+        this.trigger_(new EventSourceObject(this, Circle.events.centerYChanged));
     }
     private _setRadius(value: number) {
-        if (!Utility.is(this._radius, value)) this.trigger_(new EventSourceObject(this, Circle.events.radiusChanged));
+        if (Utility.is(this._radius, value)) return;
         this._radius = value;
+        this.trigger_(new EventSourceObject(this, Circle.events.radiusChanged));
     }
 
     get centerX() {

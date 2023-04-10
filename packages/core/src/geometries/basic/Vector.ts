@@ -52,6 +52,7 @@ export default class Vector extends Geometry {
                 Object.assign(this, { point: a0 });
             }
         }
+        this.initState_();
     }
 
     static override events = {
@@ -64,26 +65,26 @@ export default class Vector extends Geometry {
     };
 
     private _setX(value: number) {
-        if (!Utility.is(this._x, value)) {
-            this.trigger_(new EventSourceObject(this, Vector.events.xChanged));
-            this.trigger_(new EventSourceObject(this, Vector.events.point2XChanged));
-        }
+        if (Utility.is(this._x, value)) return;
         this._x = value;
+        this.trigger_(new EventSourceObject(this, Vector.events.xChanged));
+        this.trigger_(new EventSourceObject(this, Vector.events.point2XChanged));
     }
     private _setY(value: number) {
-        if (!Utility.is(this._y, value)) {
-            this.trigger_(new EventSourceObject(this, Vector.events.yChanged));
-            this.trigger_(new EventSourceObject(this, Vector.events.point2YChanged));
-        }
+        if (Utility.is(this._y, value)) return;
         this._y = value;
+        this.trigger_(new EventSourceObject(this, Vector.events.yChanged));
+        this.trigger_(new EventSourceObject(this, Vector.events.point2YChanged));
     }
     private _setPoint1X(value: number) {
-        if (!Utility.is(this._point1X, value)) this.trigger_(new EventSourceObject(this, Vector.events.point1XChanged));
+        if (Utility.is(this._point1X, value)) return;
         this._point1X = value;
+        this.trigger_(new EventSourceObject(this, Vector.events.point1XChanged));
     }
     private _setPoint1Y(value: number) {
-        if (!Utility.is(this._point1Y, value)) this.trigger_(new EventSourceObject(this, Vector.events.point1YChanged));
+        if (Utility.is(this._point1Y, value)) return;
         this._point1Y = value;
+        this.trigger_(new EventSourceObject(this, Vector.events.point1YChanged));
     }
 
     get x() {

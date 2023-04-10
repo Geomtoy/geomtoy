@@ -40,6 +40,7 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         if (a0 instanceof Point) {
             Object.assign(this, { point1: a0, point2: a1, controlPoint: a2 });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -52,28 +53,34 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
     };
 
     private _setPoint1X(value: number) {
-        if (!Utility.is(this._point1X, value)) this.trigger_(new EventSourceObject(this, QuadraticBezier.events.point1XChanged));
+        if (Utility.is(this._point1X, value)) return;
         this._point1X = value;
+        this.trigger_(new EventSourceObject(this, QuadraticBezier.events.point1XChanged));
     }
     private _setPoint1Y(value: number) {
-        if (!Utility.is(this._point1Y, value)) this.trigger_(new EventSourceObject(this, QuadraticBezier.events.point1YChanged));
+        if (Utility.is(this._point1Y, value)) return;
         this._point1Y = value;
+        this.trigger_(new EventSourceObject(this, QuadraticBezier.events.point1YChanged));
     }
     private _setPoint2X(value: number) {
-        if (!Utility.is(this._point2X, value)) this.trigger_(new EventSourceObject(this, QuadraticBezier.events.point2XChanged));
+        if (Utility.is(this._point2X, value)) return;
         this._point2X = value;
+        this.trigger_(new EventSourceObject(this, QuadraticBezier.events.point2XChanged));
     }
     private _setPoint2Y(value: number) {
-        if (!Utility.is(this._point2Y, value)) this.trigger_(new EventSourceObject(this, QuadraticBezier.events.point2YChanged));
+        if (Utility.is(this._point2Y, value)) return;
         this._point2Y = value;
+        this.trigger_(new EventSourceObject(this, QuadraticBezier.events.point2YChanged));
     }
     private _setControlPointX(value: number) {
-        if (!Utility.is(this._controlPointX, value)) this.trigger_(new EventSourceObject(this, QuadraticBezier.events.controlPointXChanged));
+        if (Utility.is(this._controlPointX, value)) return;
         this._controlPointX = value;
+        this.trigger_(new EventSourceObject(this, QuadraticBezier.events.controlPointXChanged));
     }
     private _setControlPointY(value: number) {
-        if (!Utility.is(this._controlPointY, value)) this.trigger_(new EventSourceObject(this, QuadraticBezier.events.controlPointYChanged));
+        if (Utility.is(this._controlPointY, value)) return;
         this._controlPointY = value;
+        this.trigger_(new EventSourceObject(this, QuadraticBezier.events.controlPointYChanged));
     }
 
     get point1X() {

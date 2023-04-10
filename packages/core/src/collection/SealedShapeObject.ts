@@ -11,6 +11,7 @@ export default class SealedShapeObject<T extends { [key: string]: Shape }> exten
         super();
         this._items = { ...items };
         this._initProxy();
+        this.initState_();
     }
     static override events = {
         itemChanged: "itemChange" as const

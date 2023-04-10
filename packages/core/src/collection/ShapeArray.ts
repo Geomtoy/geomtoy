@@ -13,6 +13,7 @@ export default class ShapeArray<T extends Shape> extends Shape implements Parent
         super();
         Object.assign(this, { items });
         this._initProxy();
+        this.initState_();
     }
     static override events = {
         itemsReset: "reset" as const,
@@ -21,9 +22,10 @@ export default class ShapeArray<T extends Shape> extends Shape implements Parent
         itemRemoved: "itemRemove" as const
     };
     private _setItems(value: T[]) {
-        if (!Utility.is(this._items, value)) this.trigger_(new EventSourceObject(this, ShapeArray.events.itemsReset));
+        if (Utility.is(this._items, value)) return;
         this._items.length = 0;
         for (const [i, v] of value.entries()) this._items[i] = v;
+        this.trigger_(new EventSourceObject(this, ShapeArray.events.itemsReset));
     }
     get items() {
         return this._itemsProxy;

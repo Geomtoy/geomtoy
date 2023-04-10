@@ -53,6 +53,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
                 Object.assign(this, { point: a0, size: a1, rotation: a2 ?? 0 });
             }
         }
+        this.initState_();
     }
 
     static override events = {
@@ -64,24 +65,29 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
     };
 
     private _setX(value: number) {
-        if (!Utility.is(this._x, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.xChanged));
+        if (Utility.is(this._x, value)) return;
         this._x = value;
+        this.trigger_(new EventSourceObject(this, Rectangle.events.xChanged));
     }
     private _setY(value: number) {
-        if (!Utility.is(this._y, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.yChanged));
+        if (Utility.is(this._y, value)) return;
         this._y = value;
+        this.trigger_(new EventSourceObject(this, Rectangle.events.yChanged));
     }
     private _setWidth(value: number) {
-        if (!Utility.is(this._width, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.widthChanged));
+        if (Utility.is(this._width, value)) return;
         this._width = value;
+        this.trigger_(new EventSourceObject(this, Rectangle.events.widthChanged));
     }
     private _setHeight(value: number) {
-        if (!Utility.is(this._height, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.heightChanged));
+        if (Utility.is(this._height, value)) return;
         this._height = value;
+        this.trigger_(new EventSourceObject(this, Rectangle.events.heightChanged));
     }
     private _setRotation(value: number) {
-        if (!Utility.is(this._rotation, value)) this.trigger_(new EventSourceObject(this, Rectangle.events.rotationChanged));
+        if (Utility.is(this._rotation, value)) return;
         this._rotation = value;
+        this.trigger_(new EventSourceObject(this, Rectangle.events.rotationChanged));
     }
 
     get x() {

@@ -35,6 +35,15 @@ import QuadraticBezier from "../basic/QuadraticBezier";
 
 const PATH_MIN_COMMAND_COUNT = 2;
 
+function commandCopyNewID(value: PathCommand[]): Required<PathCommand>[] {
+    return value.map(cmd => {
+        return { ...cmd, id: Utility.id("PathCommand") };
+    });
+}
+function commandCopy<T extends PathCommand[] | Required<PathCommand>[]>(value: T): T {
+    return value.map(cmd => ({ ...cmd })) as T;
+}
+
 @validGeometry
 export default class Path extends Geometry {
     private _commands: Required<PathCommand>[] = [];
@@ -56,6 +65,7 @@ export default class Path extends Geometry {
         if (Type.isString(a0)) {
             Object.assign(this, { fillRule: a0 });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -67,30 +77,26 @@ export default class Path extends Geometry {
         fillRuleChanged: "fillRule" as const
     };
 
-    private _setCommands(value: PathCommand[]) {
-        const commands: Required<PathCommand>[] = value.map(cmd => {
-            return { ...cmd, id: Utility.id("PathCommand") };
-        });
-
-        let firstMoveToIndex = commands.findIndex(cmd => cmd.type === PathCommandType.MoveTo);
+    private _setCommands(value: Required<PathCommand>[]) {
+        let firstMoveToIndex = value.findIndex(cmd => cmd.type === PathCommandType.MoveTo);
         let temp: Required<PathCommand> | null = null;
 
-        for (let i = 0, l = commands.length; i < l; i++) {
-            const cmd = commands[i];
+        for (let i = 0, l = value.length; i < l; i++) {
+            const cmd = value[i];
 
             if (i < firstMoveToIndex) {
                 if (temp === null) {
                     // this is the first command if we have `moveTo` but not first
-                    commands[i] = { ...Path.moveTo([cmd.x, cmd.y]), id: cmd.id };
+                    value[i] = { ...Path.moveTo([cmd.x, cmd.y]), id: cmd.id };
                     temp = cmd;
                 } else {
-                    commands[i] = this._reverseCommand(temp, cmd.x, cmd.y);
+                    value[i] = this._reverseCommand(temp, cmd.x, cmd.y);
                     temp = cmd;
                 }
             }
             if (i === firstMoveToIndex) {
                 if (temp !== null) {
-                    commands[i] = this._reverseCommand(temp, cmd.x, cmd.y);
+                    value[i] = this._reverseCommand(temp, cmd.x, cmd.y);
                 } else {
                     // do nothing, `i` is the first command and is `moveTo`.
                 }
@@ -98,33 +104,35 @@ export default class Path extends Geometry {
             if (i > firstMoveToIndex) {
                 if (firstMoveToIndex === -1) {
                     // this is the first command if we do not have `moveTo
-                    commands[i] = { ...Path.moveTo([cmd.x, cmd.y]), id: cmd.id };
+                    value[i] = { ...Path.moveTo([cmd.x, cmd.y]), id: cmd.id };
                     firstMoveToIndex = 0;
                 } else {
                     if (cmd.type === PathCommandType.MoveTo) {
-                        commands[i] = { ...Path.lineTo([cmd.x, cmd.y]), id: cmd.id };
+                        value[i] = { ...Path.lineTo([cmd.x, cmd.y]), id: cmd.id };
                     }
                 }
             }
         }
+        this._commands = value;
         this.trigger_(new EventSourceObject(this, Path.events.commandsReset));
-        this._commands = commands;
     }
     private _setClosed(value: boolean) {
-        if (!Utility.is(this._closed, value)) this.trigger_(new EventSourceObject(this, Path.events.closedChanged));
+        if (Utility.is(this._closed, value)) return;
         this._closed = value;
+        this.trigger_(new EventSourceObject(this, Path.events.closedChanged));
     }
     private _setFillRule(value: FillRule) {
-        if (!Utility.is(this._fillRule, value)) this.trigger_(new EventSourceObject(this, Path.events.fillRuleChanged));
+        if (Utility.is(this._fillRule, value)) return;
         this._fillRule = value;
+        this.trigger_(new EventSourceObject(this, Path.events.fillRuleChanged));
     }
 
     get commands(): Required<PathCommand>[] {
-        return this._commands.map(cmd => ({ ...cmd }));
+        return commandCopy(this._commands);
     }
     set commands(value: PathCommand[]) {
         Assert.condition(Type.isArray(value) && value.every(cmd => this._isPathCommand(cmd)), "[G]The `commands` should be an array of `PathCommand`.");
-        this._setCommands(value);
+        this._setCommands(commandCopyNewID(value));
     }
     get closed() {
         return this._closed;
@@ -556,10 +564,9 @@ export default class Path extends Geometry {
                 ? { ...Path.lineTo([command.x, command.y]), id }
                 : { ...command, id };
 
-        if (!Utility.is(this._commands[index], cmd)) {
-            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index, id));
-            this._commands[index] = cmd;
-        }
+        if (Utility.is(this._commands[index], cmd)) return true;
+        this._commands[index] = cmd;
+        this.trigger_(new EventSourceObject(this, Path.events.commandChanged, index, id));
         return true;
     }
     insertCommand(indexOrId: number | string, command: PathCommand) {
@@ -577,8 +584,8 @@ export default class Path extends Geometry {
             ? { ...Path.lineTo([command.x, command.y]), id } 
             : { ...command, id };
 
-        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, id));
         this._commands.splice(index, 0, cmd);
+        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, id));
         return [index, id] as [number, string];
     }
     removeCommand(indexOrId: number | string) {
@@ -593,9 +600,8 @@ export default class Path extends Geometry {
             this.trigger_(new EventSourceObject(this, Path.events.commandChanged, 1, id1));
             this._commands[1] = cmd1;
         }
-
-        this.trigger_(new EventSourceObject(this, Path.events.commandRemoved, index, id));
         this._commands.splice(index, 1);
+        this.trigger_(new EventSourceObject(this, Path.events.commandRemoved, index, id));
         return true;
     }
     appendCommand(command: PathCommand) {
@@ -612,8 +618,8 @@ export default class Path extends Geometry {
                 ? { ...Path.lineTo([command.x, command.y]), id }
                 : { ...command, id };
 
-        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, id));
         this._commands.push(cmd);
+        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, id));
         return [index, id] as [number, string];
     }
     prependCommand(command: PathCommand) {
@@ -626,13 +632,11 @@ export default class Path extends Geometry {
         if (this.commands.length !== 0) {
             const { x: x0, y: y0, id: id0 } = this._commands[0];
             let cmd0 = this._reverseCommand({ ...command, type: command.type === PathCommandType.MoveTo ? PathCommandType.LineTo : command.type, id: id0 } as Required<PathCommand>, x0, y0);
-
-            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, 0, id0));
             this._commands[0] = cmd0;
+            this.trigger_(new EventSourceObject(this, Path.events.commandChanged, 0, id0));
         }
-
-        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, id));
         this._commands.unshift(cmd);
+        this.trigger_(new EventSourceObject(this, Path.events.commandAdded, index, id));
         return [index, id] as [number, string];
     }
     // #endregion

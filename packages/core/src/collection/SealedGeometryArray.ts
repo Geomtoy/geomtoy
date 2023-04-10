@@ -14,6 +14,7 @@ export default class SealedGeometryArray<T extends Geometry[]> extends Geometry 
         super();
         this._items = [...items];
         this._initProxy();
+        this.initState_();
     }
 
     static override events = {

@@ -36,6 +36,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         if (a0 instanceof Point) {
             Object.assign(this, { point1: a0, point2: a1 });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -47,32 +48,28 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
     };
 
     private _setPoint1X(value: number) {
-        if (!Utility.is(this._point1X, value)) {
-            this.trigger_(new EventSourceObject(this, LineSegment.events.point1XChanged));
-            this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
-        }
+        if (Utility.is(this._point1X, value)) return;
         this._point1X = value;
+        this.trigger_(new EventSourceObject(this, LineSegment.events.point1XChanged));
+        this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
     }
     private _setPoint1Y(value: number) {
-        if (!Utility.is(this._point1Y, value)) {
-            this.trigger_(new EventSourceObject(this, LineSegment.events.point1YChanged));
-            this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
-        }
+        if (Utility.is(this._point1Y, value)) return;
         this._point1Y = value;
+        this.trigger_(new EventSourceObject(this, LineSegment.events.point1YChanged));
+        this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
     }
     private _setPoint2X(value: number) {
-        if (!Utility.is(this._point2X, value)) {
-            this.trigger_(new EventSourceObject(this, LineSegment.events.point2XChanged));
-            this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
-        }
+        if (Utility.is(this._point2X, value)) return;
         this._point2X = value;
+        this.trigger_(new EventSourceObject(this, LineSegment.events.point2XChanged));
+        this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
     }
     private _setPoint2Y(value: number) {
-        if (!Utility.is(this._point2Y, value)) {
-            this.trigger_(new EventSourceObject(this, LineSegment.events.point2YChanged));
-            this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
-        }
+        if (Utility.is(this._point2Y, value)) return;
         this._point2Y = value;
+        this.trigger_(new EventSourceObject(this, LineSegment.events.point2YChanged));
+        this.trigger_(new EventSourceObject(this, LineSegment.events.angleChanged));
     }
 
     get point1X() {

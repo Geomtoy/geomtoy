@@ -34,6 +34,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         if (a0 instanceof Point) {
             Object.assign(this, { point: a0, angle: a1 });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -43,16 +44,19 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
     };
 
     private _setX(value: number) {
-        if (!Utility.is(this._x, value)) this.trigger_(new EventSourceObject(this, Ray.events.xChanged));
+        if (Utility.is(this._x, value)) return;
         this._x = value;
+        this.trigger_(new EventSourceObject(this, Ray.events.xChanged));
     }
     private _setY(value: number) {
-        if (!Utility.is(this._y, value)) this.trigger_(new EventSourceObject(this, Ray.events.yChanged));
+        if (Utility.is(this._y, value)) return;
         this._y = value;
+        this.trigger_(new EventSourceObject(this, Ray.events.yChanged));
     }
     private _setAngle(value: number) {
-        if (!Utility.is(this._angle, value)) this.trigger_(new EventSourceObject(this, Ray.events.angleChanged));
+        if (Utility.is(this._angle, value)) return;
         this._angle = value;
+        this.trigger_(new EventSourceObject(this, Ray.events.angleChanged));
     }
 
     get x() {

@@ -30,6 +30,7 @@ export default class Inversion extends EventTarget {
         if (a0 instanceof Point) {
             Object.assign(this, { centerPoint: a0, power: a1 ?? this._power });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -39,16 +40,19 @@ export default class Inversion extends EventTarget {
     };
 
     private _setCenterX(value: number) {
-        if (!Utility.is(this._centerX, value)) this.trigger_(new EventSourceObject(this, Inversion.events.centerXChanged));
+        if (Utility.is(this._centerX, value)) return;
         this._centerX = value;
+        this.trigger_(new EventSourceObject(this, Inversion.events.centerXChanged));
     }
     private _setCenterY(value: number) {
-        if (!Utility.is(this._centerY, value)) this.trigger_(new EventSourceObject(this, Inversion.events.centerYChanged));
+        if (Utility.is(this._centerY, value)) return;
         this._centerY = value;
+        this.trigger_(new EventSourceObject(this, Inversion.events.centerYChanged));
     }
     private _setPower(value: number) {
-        if (!Utility.is(this._power, value)) this.trigger_(new EventSourceObject(this, Inversion.events.powerChanged));
+        if (Utility.is(this._power, value)) return;
         this._power = value;
+        this.trigger_(new EventSourceObject(this, Inversion.events.powerChanged));
     }
 
     get centerX() {

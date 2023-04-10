@@ -14,6 +14,7 @@ export default class GeometryObject<T extends Geometry> extends Geometry impleme
         super();
         Object.assign(this, { items });
         this._initProxy();
+        this.initState_();
     }
     static override events = {
         itemsReset: "reset" as const,
@@ -22,9 +23,10 @@ export default class GeometryObject<T extends Geometry> extends Geometry impleme
         itemRemoved: "itemRemove" as const
     };
     private _setItems(value: { [key: string]: T }) {
-        if (!Utility.is(this._items, value)) this.trigger_(new EventSourceObject(this, GeometryObject.events.itemsReset));
+        if (Utility.is(this._items, value)) return;
         for (const k of Object.keys(this._items)) delete this._items[k];
         for (const [k, v] of Object.entries(value)) this._items[k] = v;
+        this.trigger_(new EventSourceObject(this, GeometryObject.events.itemsReset));
     }
     get items() {
         return this._itemsProxy;

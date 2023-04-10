@@ -41,6 +41,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         if (a0 instanceof Point) {
             Object.assign(this, { centerPoint: a0, radius: a1, sideCount: a2, rotation: a3 ?? 0 });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -52,24 +53,29 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
     };
 
     private _setCenterX(value: number) {
-        if (!Utility.is(this._centerX, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.centerXChanged));
+        if (Utility.is(this._centerX, value)) return;
         this._centerX = value;
+        this.trigger_(new EventSourceObject(this, RegularPolygon.events.centerXChanged));
     }
     private _setCenterY(value: number) {
-        if (!Utility.is(this._centerY, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.centerYChanged));
+        if (Utility.is(this._centerY, value)) return;
         this._centerY = value;
+        this.trigger_(new EventSourceObject(this, RegularPolygon.events.centerYChanged));
     }
     private _setRadius(value: number) {
-        if (!Utility.is(this._radius, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.radiusChanged));
+        if (Utility.is(this._radius, value)) return;
         this._radius = value;
+        this.trigger_(new EventSourceObject(this, RegularPolygon.events.radiusChanged));
     }
     private _setSideCount(value: number) {
-        if (!Utility.is(this._sideCount, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.sideCountChanged));
+        if (Utility.is(this._sideCount, value)) return;
         this._sideCount = value;
+        this.trigger_(new EventSourceObject(this, RegularPolygon.events.sideCountChanged));
     }
     private _setRotation(value: number) {
-        if (!Utility.is(this._rotation, value)) this.trigger_(new EventSourceObject(this, RegularPolygon.events.rotationChanged));
+        if (Utility.is(this._rotation, value)) return;
         this._rotation = value;
+        this.trigger_(new EventSourceObject(this, RegularPolygon.events.rotationChanged));
     }
 
     get centerX() {

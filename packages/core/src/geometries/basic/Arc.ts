@@ -51,6 +51,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
             // assign `rotation` first for handling `radiusX` and `radiusY`
             Object.assign(this, { point1: a0, point2: a1, rotation: a6 ?? 0, radiusX: a2, radiusY: a3, largeArc: a4, positive: a5 });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -90,14 +91,14 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         this._correctAndSetRadii();
     }
     private _setRadiusX(value: number) {
-        if (Utility.is(this._inputRadiusX, value)) return;
-        this._inputRadiusX = value;
+        if (Utility.is(this._radiusX, value)) return;
+        this._radiusX = value;
         this.trigger_(new EventSourceObject(this, Arc.events.radiusXChanged));
         this._correctAndSetRadii();
     }
     private _setRadiusY(value: number) {
-        if (Utility.is(this._inputRadiusY, value)) return;
-        this._inputRadiusY = value;
+        if (Utility.is(this._radiusY, value)) return;
+        this._radiusY = value;
         this.trigger_(new EventSourceObject(this, Arc.events.radiusYChanged));
         this._correctAndSetRadii();
     }
@@ -119,27 +120,18 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     }
 
     private _correctAndSetRadii() {
-        const { _point1X, _point1Y, _point2X, _point2Y, _inputRadiusX, _inputRadiusY, _rotation } = this;
         // prettier-ignore
-        const correctPrecondition = (
-            !Number.isNaN(_point1X) &&
-            !Number.isNaN(_point1Y) &&
-            !Number.isNaN(_point2X) &&
-            !Number.isNaN(_point1Y) &&
-            !Number.isNaN(_point2Y) &&
-            !Number.isNaN(_inputRadiusX) &&
-            !Number.isNaN(_inputRadiusY)
-        )
-        if (correctPrecondition) {
+        if (this.initialized()) {
+            const { _point1X, _point1Y, _point2X, _point2Y, _radiusX, _radiusY, _rotation } = this;
             let rx: number;
             let ry: number;
-            if (_inputRadiusX === 0 && _inputRadiusY === 0) {
-                Maths.random() > 0.5 ? (this._inputRadiusX = 1) : (this._inputRadiusY = 1);
+            if (_radiusX === 0 && _radiusY === 0) {
+                Maths.random() > 0.5 ? (this._radiusX = 1) : (this._radiusY = 1);
             }
-            if (_inputRadiusX === 0 || _inputRadiusY === 0) {
-                [rx, ry] = [_inputRadiusX, _inputRadiusY];
+            if (_radiusX === 0 || _radiusY === 0) {
+                [rx, ry] = [_radiusX, _radiusY];
             } else {
-                [rx, ry] = flexCorrectRadii(_point1X, _point1Y, _point2X, _point2Y, _inputRadiusX, _inputRadiusY, _rotation);
+                [rx, ry] = flexCorrectRadii(_point1X, _point1Y, _point2X, _point2Y, _radiusX, _radiusY, _rotation);
             }
             if (!Utility.is(this._radiusX, rx)) {
                 this._radiusX = rx;

@@ -34,6 +34,7 @@ export default class Point extends Geometry {
         if (Type.isString(a0)) {
             Object.assign(this, { appearance: a0 ?? this.appearance });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -42,12 +43,14 @@ export default class Point extends Geometry {
     };
 
     private _setX(value: number) {
-        if (!Utility.is(this._x, value)) this.trigger_(new EventSourceObject(this, Point.events.xChanged));
+        if (Utility.is(this._x, value)) return;
         this._x = value;
+        this.trigger_(new EventSourceObject(this, Point.events.xChanged));
     }
     private _setY(value: number) {
-        if (!Utility.is(this._y, value)) this.trigger_(new EventSourceObject(this, Point.events.yChanged));
+        if (Utility.is(this._y, value)) return;
         this._y = value;
+        this.trigger_(new EventSourceObject(this, Point.events.yChanged));
     }
 
     get x() {

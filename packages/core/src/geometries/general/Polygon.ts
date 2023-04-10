@@ -20,6 +20,15 @@ import Point from "../basic/Point";
 
 const POLYGON_MIN_VERTEX_COUNT = 2;
 
+function vertexCopyNewID(value: PolygonVertex[]): Required<PolygonVertex>[] {
+    return value.map(vtx => {
+        return { ...vtx, id: Utility.id("PolygonVertex") };
+    });
+}
+function vertexCopy<T extends PolygonVertex[] | Required<PolygonVertex>[]>(value: T): T {
+    return value.map(vtx => ({ ...vtx })) as T;
+}
+
 @validGeometry
 export default class Polygon extends Geometry {
     private _vertices: Required<PolygonVertex>[] = [];
@@ -41,6 +50,7 @@ export default class Polygon extends Geometry {
         if (Type.isString(a0)) {
             Object.assign(this, { fillRule: a0 });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -52,25 +62,27 @@ export default class Polygon extends Geometry {
         fillRuleChanged: "fillRule" as const
     };
 
-    private _setVertices(value: PolygonVertex[]) {
+    private _setVertices(value: Required<PolygonVertex>[]) {
+        this._vertices = value;
         this.trigger_(new EventSourceObject(this, Polygon.events.verticesReset));
-        this._vertices = value.map(vtx => ({ ...vtx, id: Utility.id("PolygonVertex") }));
     }
     private _setClosed(value: boolean) {
-        if (!Utility.is(this._closed, value)) this.trigger_(new EventSourceObject(this, Polygon.events.closedChanged));
+        if (Utility.is(this._closed, value)) return;
         this._closed = value;
+        this.trigger_(new EventSourceObject(this, Polygon.events.closedChanged));
     }
     private _setFillRule(value: FillRule) {
-        if (!Utility.is(this._fillRule, value)) this.trigger_(new EventSourceObject(this, Polygon.events.fillRuleChanged));
+        if (Utility.is(this._fillRule, value)) return;
         this._fillRule = value;
+        this.trigger_(new EventSourceObject(this, Polygon.events.fillRuleChanged));
     }
 
     get vertices(): Required<PolygonVertex>[] {
-        return this._vertices.map(vtx => ({ ...vtx }));
+        return vertexCopy(this._vertices);
     }
     set vertices(value: PolygonVertex[]) {
         Assert.condition(Type.isArray(value) && value.every(vtx => this._isPolygonVertex(vtx)), "[G]The `vertices` should be an array of `PolygonVertex`.");
-        this._setVertices(value);
+        this._setVertices(vertexCopyNewID(value));
     }
     get closed() {
         return this._closed;
@@ -278,10 +290,9 @@ export default class Polygon extends Geometry {
 
         const vtx = { ...vertex, id };
 
-        if (!Utility.is(this._vertices[index], vtx)) {
-            this.trigger_(new EventSourceObject(this, Polygon.events.vertexChanged, index, id));
-            this._vertices[index] = vtx;
-        }
+        if (Utility.is(this._vertices[index], vtx)) return true;
+        this._vertices[index] = vtx;
+        this.trigger_(new EventSourceObject(this, Polygon.events.vertexChanged, index, id));
         return true;
     }
     insertVertex(indexOrId: number | string, vertex: PolygonVertex) {
@@ -292,8 +303,8 @@ export default class Polygon extends Geometry {
 
         const vtx = { ...vertex, id };
 
-        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, id));
         this._vertices.splice(index, 0, vtx);
+        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, id));
         return [index, id] as [number, string];
     }
     removeVertex(indexOrId: number | string) {
@@ -301,8 +312,8 @@ export default class Polygon extends Geometry {
         if (index === -1) return false;
         const id = this._vertices[index].id;
 
-        this.trigger_(new EventSourceObject(this, Polygon.events.vertexRemoved, index, id));
         this._vertices.splice(index, 1);
+        this.trigger_(new EventSourceObject(this, Polygon.events.vertexRemoved, index, id));
         return true;
     }
     appendVertex(vertex: PolygonVertex) {
@@ -312,8 +323,8 @@ export default class Polygon extends Geometry {
 
         const vtx = { ...vertex, id };
 
-        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, id));
         this._vertices.push(vtx);
+        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, id));
         return [index, id] as [number, string];
     }
     prependVertex(vertex: PolygonVertex): [number, string] {
@@ -323,8 +334,8 @@ export default class Polygon extends Geometry {
 
         const vtx = { ...vertex, id };
 
-        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, id));
         this._vertices.unshift(vtx);
+        this.trigger_(new EventSourceObject(this, Polygon.events.vertexAdded, index, id));
         return [index, id] as [number, string];
     }
     // #endregion

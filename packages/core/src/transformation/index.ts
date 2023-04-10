@@ -1,9 +1,9 @@
 import { Assert, TransformationMatrix, Type, Utility } from "@geomtoy/util";
-import { validGeometryArguments } from "../misc/decor-geometry";
-import EventSourceObject from "../event/EventSourceObject";
 import EventTarget from "../base/EventTarget";
-import type Point from "../geometries/basic/Point";
+import EventSourceObject from "../event/EventSourceObject";
 import type Line from "../geometries/basic/Line";
+import type Point from "../geometries/basic/Point";
+import { validGeometryArguments } from "../misc/decor-geometry";
 import { getCoordinates } from "../misc/point-like";
 
 export default class Transformation extends EventTarget {
@@ -14,14 +14,16 @@ export default class Transformation extends EventTarget {
         if (matrix !== undefined) {
             this.matrix = matrix;
         }
+        this.initState_();
     }
     static override events = {
         matrixChanged: "matrix" as const
     };
 
     private _setMatrix(value: [number, number, number, number, number, number]) {
-        if (!Utility.is(this._matrix, value)) this.trigger_(new EventSourceObject(this, Transformation.events.matrixChanged));
+        if (Utility.is(this._matrix, value)) return;
         Object.assign(this._matrix, value);
+        this.trigger_(new EventSourceObject(this, Transformation.events.matrixChanged));
     }
     get matrix() {
         return [...this._matrix] as [a: number, b: number, c: number, d: number, e: number, f: number];

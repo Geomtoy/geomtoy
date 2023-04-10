@@ -41,6 +41,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         if (a0 instanceof Point) {
             Object.assign(this, { point1: a0, point2: a1, point3: a2 });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -53,28 +54,34 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     };
 
     private _setPoint1X(value: number) {
-        if (!Utility.is(this._point1X, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point1XChanged));
+        if (Utility.is(this._point1X, value)) return;
         this._point1X = value;
+        this.trigger_(new EventSourceObject(this, Triangle.events.point1XChanged));
     }
     private _setPoint1Y(value: number) {
-        if (!Utility.is(this._point1Y, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point1YChanged));
+        if (Utility.is(this._point1Y, value)) return;
         this._point1Y = value;
+        this.trigger_(new EventSourceObject(this, Triangle.events.point1YChanged));
     }
     private _setPoint2X(value: number) {
-        if (!Utility.is(this._point2X, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point2XChanged));
+        if (Utility.is(this._point2X, value)) return;
         this._point2X = value;
+        this.trigger_(new EventSourceObject(this, Triangle.events.point2XChanged));
     }
     private _setPoint2Y(value: number) {
-        if (!Utility.is(this._point2Y, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point2YChanged));
+        if (Utility.is(this._point2Y, value)) return;
         this._point2Y = value;
+        this.trigger_(new EventSourceObject(this, Triangle.events.point2YChanged));
     }
     private _setPoint3X(value: number) {
-        if (!Utility.is(this._point3X, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point3XChanged));
+        if (Utility.is(this._point3X, value)) return;
         this._point3X = value;
+        this.trigger_(new EventSourceObject(this, Triangle.events.point3XChanged));
     }
     private _setPoint3Y(value: number) {
-        if (!Utility.is(this._point3Y, value)) this.trigger_(new EventSourceObject(this, Triangle.events.point3YChanged));
+        if (Utility.is(this._point3Y, value)) return;
         this._point3Y = value;
+        this.trigger_(new EventSourceObject(this, Triangle.events.point3YChanged));
     }
 
     get point1X() {

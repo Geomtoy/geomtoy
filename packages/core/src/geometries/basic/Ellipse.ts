@@ -43,6 +43,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         if (a0 instanceof Point) {
             Object.assign(this, { centerPoint: a0, radiusX: a1, radiusY: a2, rotation: a3 ?? 0 });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -54,24 +55,29 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     };
 
     private _setCenterX(value: number) {
-        if (!Utility.is(this._centerX, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.centerXChanged));
+        if (Utility.is(this._centerX, value)) return;
         this._centerX = value;
+        this.trigger_(new EventSourceObject(this, Ellipse.events.centerXChanged));
     }
     private _setCenterY(value: number) {
-        if (!Utility.is(this._centerY, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.centerYChanged));
+        if (Utility.is(this._centerY, value)) return;
         this._centerY = value;
+        this.trigger_(new EventSourceObject(this, Ellipse.events.centerYChanged));
     }
     private _setRadiusX(value: number) {
-        if (!Utility.is(this._radiusX, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.radiusXChanged));
+        if (Utility.is(this._radiusX, value)) return;
         this._radiusX = value;
+        this.trigger_(new EventSourceObject(this, Ellipse.events.radiusXChanged));
     }
     private _setRadiusY(value: number) {
-        if (!Utility.is(this._radiusY, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.radiusYChanged));
+        if (Utility.is(this._radiusY, value)) return;
         this._radiusY = value;
+        this.trigger_(new EventSourceObject(this, Ellipse.events.radiusYChanged));
     }
     private _setRotation(value: number) {
-        if (!Utility.is(this._rotation, value)) this.trigger_(new EventSourceObject(this, Ellipse.events.rotationChanged));
+        if (Utility.is(this._rotation, value)) return;
         this._rotation = value;
+        this.trigger_(new EventSourceObject(this, Ellipse.events.rotationChanged));
     }
 
     get centerX() {

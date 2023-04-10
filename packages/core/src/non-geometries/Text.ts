@@ -45,6 +45,7 @@ export default class Text extends Shape {
         if (Type.isPlainObject(a0)) {
             Object.assign(this, { font: a0 ?? this._font, anchor: a1 ?? this._anchor });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -58,32 +59,39 @@ export default class Text extends Shape {
     };
 
     private _setX(value: number) {
-        if (!Utility.is(this._x, value)) this.trigger_(new EventSourceObject(this, Text.events.xChanged, this._x));
+        if (Utility.is(this._x, value)) return;
         this._x = value;
+        this.trigger_(new EventSourceObject(this, Text.events.xChanged, this._x));
     }
     private _setY(value: number) {
-        if (!Utility.is(this._y, value)) this.trigger_(new EventSourceObject(this, Text.events.yChanged));
+        if (Utility.is(this._y, value)) return;
         this._y = value;
+        this.trigger_(new EventSourceObject(this, Text.events.yChanged));
     }
     private _setOffsetX(value: number) {
-        if (!Utility.is(this._offsetX, value)) this.trigger_(new EventSourceObject(this, Text.events.offsetXChanged));
+        if (Utility.is(this._offsetX, value)) return;
         this._offsetX = value;
+        this.trigger_(new EventSourceObject(this, Text.events.offsetXChanged));
     }
     private _setOffsetY(value: number) {
-        if (!Utility.is(this._offsetY, value)) this.trigger_(new EventSourceObject(this, Text.events.offsetYChanged));
+        if (Utility.is(this._offsetY, value)) return;
         this._offsetY = value;
+        this.trigger_(new EventSourceObject(this, Text.events.offsetYChanged));
     }
     private _setText(value: string) {
-        if (!Utility.is(this._content, value)) this.trigger_(new EventSourceObject(this, Text.events.contentChanged));
+        if (Utility.is(this._content, value)) return;
         this._content = value;
+        this.trigger_(new EventSourceObject(this, Text.events.contentChanged));
     }
     private _setFont(value: Partial<FontConfig>) {
-        if (!Utility.is(this.font, value)) this.trigger_(new EventSourceObject(this, Text.events.fontChanged));
+        if (Utility.is(this.font, value)) return;
         this._font = { ...this._font, ...value };
+        this.trigger_(new EventSourceObject(this, Text.events.fontChanged));
     }
     private _setAnchor(value: Anchor) {
-        if (!Utility.is(this._anchor, value)) this.trigger_(new EventSourceObject(this, Text.events.anchorChanged));
+        if (Utility.is(this._anchor, value)) return;
         this._anchor = value;
+        this.trigger_(new EventSourceObject(this, Text.events.anchorChanged));
     }
 
     get x() {

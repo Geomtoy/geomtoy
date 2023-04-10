@@ -12,7 +12,7 @@ export function initArrayProxy<T>(this: EventTarget, items: T[]) {
             if (Reflect.ownKeys(target).includes(prop)) {
                 if (descriptor.get !== undefined || descriptor.set !== undefined) {
                     console.warn(`[G]You could not define the property \`${prop.toString()}\` of \`items\` as an accessor.`);
-                    return true;
+                    return false;
                 }
                 // setting `length` alone to less number will not trigger `deleteProperty`
                 if (prop === "length") {
@@ -25,7 +25,8 @@ export function initArrayProxy<T>(this: EventTarget, items: T[]) {
                     return Reflect.defineProperty(target, prop, descriptor);
                 }
 
-                if (!Utility.is(target[Number(prop)], descriptor.value)) this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, Number(prop)));
+                if (Utility.is(target[Number(prop)], descriptor.value)) return true;
+                this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, Number(prop)));
                 return Reflect.defineProperty(target, prop, {
                     configurable: true,
                     enumerable: true,
@@ -50,11 +51,11 @@ export function initArrayProxy<T>(this: EventTarget, items: T[]) {
         },
         preventExtensions: target => {
             console.warn(`[G]You could not prevent extensions of \`items\`.`);
-            return true;
+            return false;
         },
         setPrototypeOf: (target, prototype) => {
             console.warn(`[G]You could not set the prototype of \`items\`.`);
-            return true;
+            return false;
         }
     });
 }
@@ -65,14 +66,14 @@ export function initSealedArrayProxy<T extends any[]>(this: EventTarget, items: 
             if (Reflect.ownKeys(target).includes(prop)) {
                 if (descriptor.get !== undefined || descriptor.set !== undefined) {
                     console.warn(`[G]You could not define the property \`${prop.toString()}\` of \`items\` as an accessor.`);
-                    return true;
+                    return false;
                 }
                 if (prop === "length") {
                     console.warn(`[G]You could not change the \`length\` of \`items\`.`);
-                    return true;
+                    return false;
                 }
-                if (!Utility.is(target[Number(prop)], descriptor.value))
-                    this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, target[Number(prop)], Number(prop)));
+                if (Utility.is(target[Number(prop)], descriptor.value)) return true;
+                this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, target[Number(prop)], Number(prop)));
                 return Reflect.defineProperty(target, prop, {
                     configurable: true,
                     enumerable: true,
@@ -81,18 +82,18 @@ export function initSealedArrayProxy<T extends any[]>(this: EventTarget, items: 
                 });
             }
             console.warn(`[G]You could not add any new property to \`items\`.`);
-            return true;
+            return false;
         },
         deleteProperty: (target, prop) => {
             if (Reflect.ownKeys(target).includes(prop)) {
                 console.warn(`[G]You could not delete any property from \`items\`.`);
-                return true;
+                return false;
             }
             return true; // `prop` do not existed, `Reflect.deleteProperty` always return `true`
         },
         setPrototypeOf: (target, prototype) => {
             console.warn(`[G]You could not set the prototype of \`items\`.`);
-            return true;
+            return false;
         }
     });
 }
@@ -103,9 +104,10 @@ export function initObjectProxy<T>(this: EventTarget, items: { [key: string]: T 
             if (Reflect.ownKeys(target).includes(prop)) {
                 if (descriptor.get !== undefined || descriptor.set !== undefined) {
                     console.warn(`[G]You could not define the property \`${prop.toString()}\` of \`items\` as an accessor.`);
-                    return true;
+                    return false;
                 }
-                if (!Utility.is(target[String(prop)], descriptor.value)) this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, String(prop)));
+                if (Utility.is(target[String(prop)], descriptor.value)) return true;
+                this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, String(prop)));
                 return Reflect.defineProperty(target, prop, {
                     configurable: true,
                     enumerable: true,
@@ -130,11 +132,11 @@ export function initObjectProxy<T>(this: EventTarget, items: { [key: string]: T 
         },
         preventExtensions: target => {
             console.warn(`[G]You could not prevent extensions of \`items\`.`);
-            return true;
+            return false;
         },
         setPrototypeOf: (target, prototype) => {
             console.warn(`[G]You could not set the prototype of \`items\`.`);
-            return true;
+            return false;
         }
     });
 }
@@ -145,10 +147,10 @@ export function initSealedObjectProxy<T extends { [key: string]: any }>(this: Ev
             if (Reflect.ownKeys(target).includes(prop)) {
                 if (descriptor.get !== undefined || descriptor.set !== undefined) {
                     console.warn(`[G]You could not define the property \`${prop.toString()}\` of \`items\` as an accessor.`);
-                    return true;
+                    return false;
                 }
-                if (!Utility.is(target[String(prop)], descriptor.value))
-                    this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, target[String(prop)], String(prop)));
+                if (Utility.is(target[String(prop)], descriptor.value)) return true;
+                this.trigger_(new EventSourceObject(this, (this.constructor as typeof EventTarget).events.itemChanged, target[String(prop)], String(prop)));
                 return Reflect.defineProperty(target, prop, {
                     configurable: true,
                     enumerable: true,
@@ -157,18 +159,18 @@ export function initSealedObjectProxy<T extends { [key: string]: any }>(this: Ev
                 });
             }
             console.warn(`[G]You could not add any new property to \`items\`.`);
-            return true;
+            return false;
         },
         deleteProperty: (target, prop) => {
             if (Reflect.ownKeys(target).includes(prop)) {
                 console.warn(`[G]You could not delete any property from \`items\`.`);
-                return true;
+                return false;
             }
             return true; // `prop` do not existed, `Reflect.deleteProperty` always return `true`
         },
         setPrototypeOf: (target, prototype) => {
             console.warn(`[G]You could not set the prototype of \`items\`.`);
-            return true;
+            return false;
         }
     });
 }

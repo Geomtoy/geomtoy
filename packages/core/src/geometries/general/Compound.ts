@@ -32,6 +32,7 @@ export default class Compound extends Geometry implements ParentShape {
         if (Type.isString(a0)) {
             Object.assign(this, { fillRule: a0 });
         }
+        this.initState_();
     }
 
     static override events = {
@@ -42,19 +43,20 @@ export default class Compound extends Geometry implements ParentShape {
         fillRuleChanged: "fillRule" as const
     };
     private _setItems(value: (Path | Polygon)[]) {
+        this._items = value;
         this.trigger_(new EventSourceObject(this, Compound.events.itemsReset));
-        this._items = [...value];
     }
     private _setFillRule(value: FillRule) {
-        if (!Utility.is(this._fillRule, value)) this.trigger_(new EventSourceObject(this, Compound.events.fillRuleChanged));
+        if (Utility.is(this._fillRule, value)) return;
         this._fillRule = value;
+        this.trigger_(new EventSourceObject(this, Compound.events.fillRuleChanged));
     }
     get items(): (Path | Polygon)[] {
         return [...this._items];
     }
     set items(value) {
         Assert.condition(Type.isArray(value) && value.every(item => item instanceof Path || item instanceof Polygon), "[G]The `items` should be an array of `Path` or `Polygon`.");
-        this._setItems(value);
+        this._setItems([...value]);
     }
     get fillRule() {
         return this._fillRule;
@@ -136,18 +138,17 @@ export default class Compound extends Geometry implements ParentShape {
     setItem(index: number, item: Polygon | Path) {
         this._assertIsCompoundItem(item, "item");
         const oldItem = this._items[index] ?? null;
-        if (!Utility.is(item, oldItem)) {
-            this.trigger_(new EventSourceObject(this, Compound.events.itemChanged, index));
-            this._items[index] = item;
-        }
+        if (Utility.is(item, oldItem)) return true;
+        this._items[index] = item;
+        this.trigger_(new EventSourceObject(this, Compound.events.itemChanged, index));
         return true;
     }
     insertItem(index: number, item: Polygon | Path) {
         this._assertIsCompoundItem(item, "item");
         if (this._items[index] === undefined) return false;
-        this.trigger_(new EventSourceObject(this, Compound.events.itemAdded, index + 1));
         this._items.splice(index, 0, item);
-        return index + 1;
+        this.trigger_(new EventSourceObject(this, Compound.events.itemAdded, index));
+        return index;
     }
     removeItem(index: number) {
         if (this._items[index] === undefined) return false;
@@ -158,15 +159,15 @@ export default class Compound extends Geometry implements ParentShape {
     appendItem(item: Polygon | Path) {
         this._assertIsCompoundItem(item, "item");
         const index = this.itemCount;
-        this.trigger_(new EventSourceObject(this, Compound.events.itemAdded, index));
         this._items.push(item);
+        this.trigger_(new EventSourceObject(this, Compound.events.itemAdded, index));
         return index;
     }
     prependItem(item: Polygon | Path) {
         this._assertIsCompoundItem(item, "item");
         const index = 0;
-        this.trigger_(new EventSourceObject(this, Compound.events.itemAdded, index));
         this._items.unshift(item);
+        this.trigger_(new EventSourceObject(this, Compound.events.itemAdded, index));
         return index;
     }
     /**

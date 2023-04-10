@@ -14,6 +14,7 @@ export default class SealedGeometryObject<T extends { [key: string]: Geometry }>
         super();
         this._items = { ...items };
         this._initProxy();
+        this.initState_();
     }
     static override events = {
         itemChanged: "itemChange" as const
