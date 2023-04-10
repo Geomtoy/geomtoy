@@ -256,12 +256,11 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
                 // degenerate to linear
                 if (d1) {
                     // degenerate to point, no move.
-                    return new Point([x0, y0]);
+                    return new Point(x0, y0);
                 }
-                return new LineSegment([x0, y0], [x3, y3]);
+                return new LineSegment(x0, y0, x3, y3);
             }
-            const cpc = [(-x0 + 3 * x1) / 2, (-y0 + 3 * y1) / 2] as [number, number];
-            return new QuadraticBezier([x0, y0], [x3, y3], cpc);
+            return new QuadraticBezier(x0, y0, x3, y3, (-x0 + 3 * x1) / 2, (-y0 + 3 * y1) / 2);
         }
         return this;
     }
