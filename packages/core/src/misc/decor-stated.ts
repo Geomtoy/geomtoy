@@ -1,5 +1,5 @@
-export const STATE_SYMBOL = Symbol("decor-stated");
-export const STATE_KEY_SYMBOL = Symbol("decor-stated.stateKey");
+const STATE_SYMBOL = Symbol("decor-stated");
+const STATE_KEY_SYMBOL = Symbol("decor-stated.stateKey");
 export const DISABLE_STATE_SYMBOL = Symbol("decor-stated.disable");
 export const STATE_IDENTIFIER_SYMBOL = Symbol("decor-stated.stateIdentifier");
 

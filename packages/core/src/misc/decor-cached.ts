@@ -1,4 +1,4 @@
-export const CACHE_SYMBOL = Symbol("decor-cached");
+const CACHE_SYMBOL = Symbol("decor-cached");
 export const DISABLE_CACHE_SYMBOL = Symbol("decor-cached.disable");
 
 /**
