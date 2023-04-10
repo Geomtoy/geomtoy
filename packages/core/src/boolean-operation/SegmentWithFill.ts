@@ -1,3 +1,4 @@
+import { DISABLE_STATE_SYMBOL } from "../misc/decor-stated";
 import { BasicSegment } from "../types";
 import TrajectoryID from "./TrajectoryID";
 
@@ -20,6 +21,10 @@ export default class SegmentWithFill {
     ) {
         // disable the event handling, it's not necessary.
         segment.mute();
+        // skip validation, it' not necessary.
+        segment.skipValidation = true;
+        // disable state, it's not necessary.
+        segment[DISABLE_STATE_SYMBOL] = true;
     }
 
     superClone() {
