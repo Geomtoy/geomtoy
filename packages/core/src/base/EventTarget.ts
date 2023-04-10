@@ -1,13 +1,13 @@
 import { Assert, Type, Utility } from "@geomtoy/util";
 import EventCache from "../event/EventCache";
+import { EVENT_ALL, EVENT_ANY, EVENT_PATTERN_ALL_REG, EVENT_PATTERN_ALL_SPLITTER, EVENT_PATTERN_ANY_REG, EVENT_PATTERN_ANY_SPLITTER } from "../event/EventConst";
 import EventHandler from "../event/EventHandler";
 import EventObject from "../event/EventObject";
 import EventSourceObject from "../event/EventSourceObject";
 import { scheduler } from "../geomtoy";
-import BaseObject from "./BaseObject";
-import { EVENT_ALL, EVENT_ANY, EVENT_PATTERN_ALL_REG, EVENT_PATTERN_ALL_SPLITTER, EVENT_PATTERN_ANY_REG, EVENT_PATTERN_ANY_SPLITTER } from "../event/EventConst";
-import { STATE_SYMBOL, STATE_IDENTIFIER_SYMBOL } from "../misc/decor-stated";
+import { DISABLE_STATE_SYMBOL, STATE_IDENTIFIER_SYMBOL } from "../misc/decor-stated";
 import type { BindOptions, BindParameters, EventObjectsFromPairs, EventPair, OnOptions } from "../types";
+import BaseObject from "./BaseObject";
 
 const ON_EVENT_HANDLER_DEFAULT_PRIORITY = 1;
 const BIND_EVENT_HANDLER_DEFAULT_PRIORITY = 1000;
@@ -271,21 +271,26 @@ export default abstract class EventTarget extends BaseObject {
         scheduler.tick();
     }
 
-    // @internal
-    private [STATE_IDENTIFIER_SYMBOL] = Utility.now();
-    // @internal
-    private [STATE_SYMBOL]?: object;
+    private [STATE_IDENTIFIER_SYMBOL]?: number;
 
-    inspectState() {
-        return this[STATE_SYMBOL];
+    // concrete class should call this method in the end of its `constructor`
+    protected initState_() {
+        this[STATE_IDENTIFIER_SYMBOL] = Utility.now();
     }
 
-    protected trigger_<T extends EventTarget>(this: T, eso: EventSourceObject<T>) {
-        // We are muted, so do nothing except change the our state.
-        this[STATE_IDENTIFIER_SYMBOL] = eso.timestamp;
-        if (this._muted) return this;
+    // @internal
+    [DISABLE_STATE_SYMBOL] = false;
 
+    protected trigger_<T extends EventTarget>(this: T, eso: EventSourceObject<T>) {
+        // If we are constructing, then we have no state yet, so do nothing.
+        if (this[STATE_IDENTIFIER_SYMBOL] === undefined) return this;
+
+        // If we are muted, also need to change the our state.
+        this[STATE_IDENTIFIER_SYMBOL] = eso.timestamp;
+        // If we are muted, also need to tell that ourself is changed.
         scheduler.record(this);
+
+        if (this._muted) return this;
         // Here we put the triggering event name in to the `_eventCache` instead of directly invoking the event handlers in the event.
         // Doing so to avoid repeatedly invoking the event handlers in one loop.
         // No matter how many times an event of `EventTarget` is triggered,
