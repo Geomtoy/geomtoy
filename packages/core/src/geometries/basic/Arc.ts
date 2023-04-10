@@ -397,16 +397,16 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     }
 
     reverse() {
-        this.positive = !this.positive;
-        // We need special handling, do not use `point1Coordinates`, `point2Coordinates`.
+        this._positive = !this._positive;
         // prettier-ignore
         [
-            [this._point1X, this._point1Y], 
+            [this._point1X, this._point1Y],
             [this._point2X, this._point2Y]
         ] = [
             [this._point2X, this._point2Y],
             [this._point1X, this._point1Y]
         ];
+        this.trigger_(new EventSourceObject(this, Arc.events.positiveChanged));
         this.trigger_(new EventSourceObject(this, Arc.events.point1XChanged));
         this.trigger_(new EventSourceObject(this, Arc.events.point1YChanged));
         this.trigger_(new EventSourceObject(this, Arc.events.point2XChanged));
@@ -502,8 +502,10 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const portion1 = Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, startAngle, a, this.positive, this.rotation);
         const portion2 = Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a, endAngle, this.positive, this.rotation);
         // Do this to get better precision.
-        portion1.point1Coordinates = this.point1Coordinates;
-        portion2.point2Coordinates = this.point2Coordinates;
+        portion1._point1X = this._point1X;
+        portion1._point1Y = this._point1Y;
+        portion2._point2X = this._point2X;
+        portion2._point2Y = this._point2Y;
         return [portion1, portion2] as [Arc, Arc];
     }
     splitAtAngles(as: number[]) {
@@ -518,10 +520,14 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
             }
         });
         // Do this to get better precision.
-        ret[0].point1Coordinates = this.point1Coordinates;
-        ret[ret.length - 1].point2Coordinates = this.point2Coordinates;
+        ret[0]._point1X = this._point1X;
+        ret[0]._point1Y = this._point1Y;
+        ret[ret.length - 1]._point2X = this._point2X;
+        ret[ret.length - 1]._point2Y = this._point2Y;
+
         for (let i = 1, l = ret.length; i < l; i++) {
-            ret[i].point1Coordinates = ret[i - 1].point2Coordinates;
+            ret[i]._point1X = ret[i - 1]._point2X;
+            ret[i]._point1Y = ret[i - 1]._point2Y;
         }
         return ret;
     }

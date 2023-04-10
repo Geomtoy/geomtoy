@@ -337,8 +337,31 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
     }
 
     reverse() {
-        [this.point1Coordinates, this.point2Coordinates] = [this.point2Coordinates, this.point1Coordinates];
-        [this.controlPoint1Coordinates, this.controlPoint2Coordinates] = [this.controlPoint2Coordinates, this.controlPoint1Coordinates];
+        // prettier-ignore
+        [
+            [this._point1X, this._point1Y],
+            [this._point2X, this._point2Y]
+        ] = [
+            [this._point2X, this._point2Y],
+            [this._point1X, this._point1Y]
+        ];
+        // prettier-ignore
+        [
+            [this._controlPoint1X, this._controlPoint1Y],
+            [this._controlPoint2X, this._controlPoint2Y]
+        ] = [
+            [this._controlPoint2X, this._controlPoint2Y],
+            [this._controlPoint1X, this._controlPoint1Y]
+        ];
+
+        this.trigger_(new EventSourceObject(this, Bezier.events.point1XChanged));
+        this.trigger_(new EventSourceObject(this, Bezier.events.point1YChanged));
+        this.trigger_(new EventSourceObject(this, Bezier.events.point2XChanged));
+        this.trigger_(new EventSourceObject(this, Bezier.events.point2YChanged));
+        this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint1XChanged));
+        this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint1YChanged));
+        this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint2XChanged));
+        this.trigger_(new EventSourceObject(this, Bezier.events.controlPoint2YChanged));
         return this;
     }
     /**
@@ -838,8 +861,10 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         const portion1 = this.portionOfExtend(0, t);
         const portion2 = this.portionOfExtend(t, 1);
         // Do this to get better precision.
-        portion1.point1Coordinates = this.point1Coordinates;
-        portion2.point2Coordinates = this.point2Coordinates;
+        portion1._point1X = this._point1X;
+        portion1._point1Y = this._point1Y;
+        portion2._point2X = this._point2X;
+        portion2._point2Y = this._point2Y;
         return [portion1, portion2] as [Bezier, Bezier];
     }
     splitAtTimes(ts: number[]) {
@@ -855,10 +880,14 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
             }
         });
         // Do this to get better precision.
-        ret[0].point1Coordinates = this.point1Coordinates;
-        ret[ret.length - 1].point2Coordinates = this.point2Coordinates;
+        ret[0]._point1X = this._point1X;
+        ret[0]._point1Y = this._point1Y;
+        ret[ret.length - 1]._point2X = this._point2X;
+        ret[ret.length - 1]._point2Y = this._point2Y;
+
         for (let i = 1, l = ret.length; i < l; i++) {
-            ret[i].point1Coordinates = ret[i - 1].point2Coordinates;
+            ret[i]._point1X = ret[i - 1]._point2X;
+            ret[i]._point1Y = ret[i - 1]._point2Y;
         }
         return ret;
     }

@@ -190,7 +190,18 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         return Float.equalTo(cp, 0, eps.vectorEpsilon) && !Float.lessThan(dp, 0, eps.vectorEpsilon) && !Float.greaterThan(dp, sm, eps.vectorEpsilon);
     }
     reverse() {
-        [this.point1Coordinates, this.point2Coordinates] = [this.point2Coordinates, this.point1Coordinates];
+        // prettier-ignore
+        [
+            [this._point1X, this._point1Y],
+            [this._point2X, this._point2Y]
+        ] = [
+            [this._point2X, this._point2Y],
+            [this._point1X, this._point1Y]
+        ];
+        this.trigger_(new EventSourceObject(this, LineSegment.events.point1XChanged));
+        this.trigger_(new EventSourceObject(this, LineSegment.events.point1YChanged));
+        this.trigger_(new EventSourceObject(this, LineSegment.events.point2XChanged));
+        this.trigger_(new EventSourceObject(this, LineSegment.events.point2YChanged));
         return this;
     }
     /**
@@ -323,6 +334,18 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         return Float.equalTo(cp1, 0, eps.vectorEpsilon) && Float.equalTo(cp2, 0, eps.vectorEpsilon);
     }
 
+    splitAtTime(t: number) {
+        t = this._clampTime(t, "t");
+        const portion1 = this.portionOfExtend(0, t);
+        const portion2 = this.portionOfExtend(t, 1);
+        // Do this to get better precision.
+        portion1._point1X = this._point1X;
+        portion1._point1Y = this._point1Y;
+        portion2._point2X = this._point2X;
+        portion2._point2Y = this._point2Y;
+        return [portion1, portion2] as [LineSegment, LineSegment];
+    }
+
     splitAtTimes(ts: number[]) {
         ts = ts.map(t => this._clampTime(t, "element of ts"));
         const ret: LineSegment[] = [];
@@ -337,22 +360,16 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
             }
         });
         // Do this to get better precision.
-        ret[0].point1Coordinates = this.point1Coordinates;
-        ret[ret.length - 1].point2Coordinates = this.point2Coordinates;
+        ret[0]._point1X = this._point1X;
+        ret[0]._point1Y = this._point1Y;
+        ret[ret.length - 1]._point2X = this._point2X;
+        ret[ret.length - 1]._point2Y = this._point2Y;
+
         for (let i = 1, l = ret.length; i < l; i++) {
-            ret[i].point1Coordinates = ret[i - 1].point2Coordinates;
+            ret[i]._point1X = ret[i - 1]._point2X;
+            ret[i]._point1Y = ret[i - 1]._point2Y;
         }
         return ret;
-    }
-
-    splitAtTime(t: number) {
-        t = this._clampTime(t, "t");
-        const portion1 = this.portionOfExtend(0, t);
-        const portion2 = this.portionOfExtend(t, 1);
-        // Do this to get better precision.
-        portion1.point1Coordinates = this.point1Coordinates;
-        portion2.point2Coordinates = this.point2Coordinates;
-        return [portion1, portion2] as [LineSegment, LineSegment];
     }
 
     portionOf(t1: number, t2: number) {
