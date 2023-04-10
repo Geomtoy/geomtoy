@@ -380,7 +380,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     @stated
     toEllipse() {
         const { centerX: cx, centerY: cy } = this._centerParameterization();
-        const { rotation: phi, radiusX: rx, radiusY: ry } = this;
+        const { _rotation: phi, _radiusX: rx, _radiusY: ry } = this;
         const ellipse = new Ellipse(cx, cy, rx, ry, phi);
         return ellipse;
     }
@@ -391,12 +391,12 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     @stated
     toCircleByRadiusX() {
         const { centerX: cx, centerY: cy } = this._centerParameterization();
-        return new Circle(cx, cy, this.radiusX);
+        return new Circle(cx, cy, this._radiusX);
     }
     @stated
     toCircleByRadiusY() {
         const { centerX: cx, centerY: cy } = this._centerParameterization();
-        return new Circle(cx, cy, this.radiusY);
+        return new Circle(cx, cy, this._radiusY);
     }
 
     reverse() {
