@@ -191,10 +191,10 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
      */
     static fromPointAndAngle(point: [number, number] | Point, angle: number) {
         const c = getCoordinates(point, "point");
-        const l = new Line();
-        l.coordinates = c;
-        l.angle = angle;
-        return l;
+        Assert.isRealNumber(angle, "angle");
+        const a = Angle.convert2(angle);
+        const s = a === Maths.PI / 2 ? Infinity : Maths.tan(a);
+        return new Line(c, s);
     }
     /**
      * Determine a line from x-intercept `xIntercept` and y-intercept `yIntercept`.
