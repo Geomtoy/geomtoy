@@ -14,7 +14,7 @@ class Vector2 {
      * @param v
      */
     static from(u: [number, number], v: [number, number]) {
-        return [u[0] - v[0], u[1] - v[1]] as [number, number];
+        return [v[0] - u[0], v[1] - u[1]] as [number, number];
     }
     /**
      * Returns a new vector2 with angle `a` and magnitude `m`.
