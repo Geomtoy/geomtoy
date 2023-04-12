@@ -34,7 +34,7 @@ export default class Arbitrary extends Geometry {
     set geometry(value: Geometry | null) {
         this._setGeometry(value);
     }
-    @stated
+
     initialized() {
         // We do not require the `geometry` to be non-degenerate, but we cannot tolerate it not being initialized.
         return this._geometry !== null && this._geometry.initialized();

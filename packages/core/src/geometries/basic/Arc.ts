@@ -118,8 +118,17 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
 
     private _correctAndSetRadii() {
         // prettier-ignore
-        if (this.initialized()) {
-            const { _point1X, _point1Y, _point2X, _point2Y, _radiusX, _radiusY, _rotation } = this;
+        const { _point1X, _point1Y, _point2X, _point2Y, _radiusX, _radiusY, _rotation } = this;
+        // prettier-ignore
+        const correctPrecondition = (
+            !Number.isNaN(_point1X) &&
+            !Number.isNaN(_point1Y) &&
+            !Number.isNaN(_point2X) && 
+            !Number.isNaN(_point2Y) &&
+            !Number.isNaN(_radiusX) &&
+            !Number.isNaN(_radiusY)
+        )
+        if (correctPrecondition) {
             let rx: number;
             let ry: number;
             if (_radiusX === 0 && _radiusY === 0) {
@@ -232,7 +241,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         this._setRotation(value);
     }
 
-    @stated
     initialized() {
         // prettier-ignore
         return (

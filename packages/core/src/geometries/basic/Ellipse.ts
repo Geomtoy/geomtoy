@@ -131,7 +131,6 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         this._setRotation(value);
     }
 
-    @stated
     initialized() {
         // prettier-ignore
         return (

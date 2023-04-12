@@ -100,7 +100,6 @@ export default class Circle extends Geometry implements ClosedGeometry {
         this._setRadius(value);
     }
 
-    @stated
     initialized() {
         // prettier-ignore
         return (
@@ -481,7 +480,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
     }
 
     /**
-     * To path, using `Path.bezierTo` command to do bezier approximating.
+     * To path, using `Path.bezierTo` command to do bezier approximation.
      * @see https://spencermortensen.com/articles/bezier-circle/
      * @see https://en.wikipedia.org/wiki/Composite_B%C3%A9zier_curve#Approximating_circular_arcs
      * @returns

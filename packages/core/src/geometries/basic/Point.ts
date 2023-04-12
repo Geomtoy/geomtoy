@@ -76,7 +76,6 @@ export default class Point extends Geometry {
         this._setY(Coordinates.y(value));
     }
 
-    @stated
     initialized() {
         // prettier-ignore
         return (

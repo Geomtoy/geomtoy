@@ -149,7 +149,6 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         this._setRotation(value);
     }
 
-    @stated
     initialized() {
         // prettier-ignore
         return (

@@ -215,7 +215,6 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         this._setControlPoint2Y(value.y);
     }
 
-    @stated
     initialized() {
         return (
             !Number.isNaN(this._point1X) &&

@@ -190,7 +190,6 @@ export default class Vector extends Geometry {
         return Vector2.magnitude(this.coordinates);
     }
 
-    @stated
     initialized() {
         // prettier-ignore
         return (

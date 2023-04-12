@@ -96,7 +96,6 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         this._setAngle(value);
     }
 
-    @stated
     initialized() {
         // prettier-ignore
         return (

@@ -151,7 +151,6 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         return (this.sideCount * (this.sideCount - 3)) / 2;
     }
 
-    @stated
     initialized() {
         // prettier-ignore
         return (

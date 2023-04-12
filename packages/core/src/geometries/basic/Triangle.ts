@@ -211,7 +211,6 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         return Maths.abs(Vector2.angleTo(Vector2.from(c3, c1), Vector2.from(c3, c2)));
     }
 
-    @stated
     initialized() {
         // prettier-ignore
         return (

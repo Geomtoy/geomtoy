@@ -171,7 +171,6 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
         this._setControlPointY(value.y);
     }
 
-    @stated
     initialized() {
         return (
             !Number.isNaN(this._point1X) &&

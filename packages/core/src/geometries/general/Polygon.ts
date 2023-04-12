@@ -101,7 +101,6 @@ export default class Polygon extends Geometry {
         return this._vertices.length;
     }
 
-    @stated
     initialized() {
         return this._vertices.length >= POLYGON_MIN_VERTEX_COUNT;
     }

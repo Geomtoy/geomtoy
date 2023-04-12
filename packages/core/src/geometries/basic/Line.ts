@@ -135,7 +135,6 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
         return slope === 0 ? Infinity : -y / slope + x;
     }
 
-    @stated
     initialized() {
         // prettier-ignore
         return (

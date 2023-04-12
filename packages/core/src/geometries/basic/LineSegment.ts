@@ -140,7 +140,6 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         this._setPoint2Y(Coordinates.y(nc2));
     }
 
-    @stated
     initialized() {
         // prettier-ignore
         return (
