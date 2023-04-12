@@ -120,8 +120,9 @@ export default class SweepLine {
             });
 
             const index = tempShot.findIndex(e => e === event.otherEvent); // never -1
-            // Because the leave event is from bottom to top, the position in `tempShot` is also the position where the current vertical segment leave event
-            // should be inserted in `snapshotH`.
+            // Because the leave event is from bottom to top, and status list is from top to bottom,
+            // So even some non-vertical segment left before us, we can still find where we should located.
+            // the position in `tempShot` is also the position where the current vertical segment should be inserted in `snapshotH`.
             let copy = [...this.snapshotH];
             copy.splice(index, 0, event.otherEvent);
             this.snapshotV = copy;
