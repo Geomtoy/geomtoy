@@ -1,24 +1,24 @@
 import { Circle, Triangle } from "@geomtoy/core";
-import SvgRenderer from "../src/renderer/SvgRenderer";
+import SVGRenderer from "../src/renderer/SVGRenderer";
 import { svgSetup, svgTeardown } from "./util";
 import { diffPixelData, visualTestSize } from "./util/visual";
 
 const expect = chai.expect;
 
-describe("SvgRenderer", () => {
+describe("SVGRenderer", () => {
     let svgElement: SVGSVGElement;
-    let sr: SvgRenderer;
+    let sr: SVGRenderer;
 
     before(() => {
         svgElement = svgSetup();
-        sr = new SvgRenderer(svgElement, { showAxis: false, showGrid: false, showLabel: false });
+        sr = new SVGRenderer(svgElement, { showAxis: false, showGrid: false, showLabel: false });
     });
     after(() => {
         svgTeardown();
     });
 
     it("constructor", () => {
-        expect(sr).to.be.an.instanceOf(SvgRenderer);
+        expect(sr).to.be.an.instanceOf(SVGRenderer);
         expect(sr.container).to.be.equal(svgElement);
     });
     it("display", () => {

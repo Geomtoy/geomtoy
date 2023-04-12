@@ -1,6 +1,6 @@
 import { Circle, Triangle } from "@geomtoy/core";
 import CanvasRenderer from "../src/renderer/CanvasRenderer";
-import SvgRenderer from "../src/renderer/SvgRenderer";
+import SVGRenderer from "../src/renderer/SVGRenderer";
 import { canvasSetup, canvasTeardown, svgSetup, svgTeardown } from "./util";
 import { diffPixelData, visualTestSize } from "./util/visual";
 
@@ -10,13 +10,13 @@ describe("", () => {
     let canvasElement: HTMLCanvasElement;
     let svgElement: SVGSVGElement;
     let cr: CanvasRenderer;
-    let sr: SvgRenderer;
+    let sr: SVGRenderer;
 
     before(() => {
         canvasElement = canvasSetup();
         svgElement = svgSetup();
         cr = new CanvasRenderer(canvasElement, { showAxis: false, showGrid: false, showLabel: false });
-        sr = new SvgRenderer(svgElement, { showAxis: false, showGrid: false, showLabel: false });
+        sr = new SVGRenderer(svgElement, { showAxis: false, showGrid: false, showLabel: false });
     });
     after(() => {
         canvasTeardown();
