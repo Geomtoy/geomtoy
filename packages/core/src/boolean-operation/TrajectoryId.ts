@@ -4,13 +4,13 @@ import LineSegment from "../geometries/basic/LineSegment";
 import QuadraticBezier from "../geometries/basic/QuadraticBezier";
 import { BasicSegment } from "../types";
 
-export default class TrajectoryID {
+export default class TrajectoryId {
     private _number: number;
     private _type: string;
 
     constructor(segment: BasicSegment) {
         this._type = segment.name;
-        this._number = TrajectoryID._trajectoryNumberPool[segment.name]++;
+        this._number = TrajectoryId._trajectoryNumberPool[segment.name]++;
     }
 
     private static _trajectoryNumberPool = {
@@ -20,13 +20,13 @@ export default class TrajectoryID {
         [Arc.name]: 0
     };
 
-    negotiate(that: TrajectoryID) {
+    negotiate(that: TrajectoryId) {
         if (this._type !== that._type) {
             throw new Error("[G]They are not the same type segments.");
         }
         return this._number < that._number ? this : that;
     }
-    equalTo(that: TrajectoryID) {
+    equalTo(that: TrajectoryId) {
         return this === that;
     }
 }
