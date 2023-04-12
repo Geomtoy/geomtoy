@@ -11,20 +11,28 @@ const ROTATION_FOR_INF_DERIVATIVE = Maths.PI / 4;
 /**
  * What to do when the first derivative start to be infinity:
  * 1. According to the sign of the first infinity derivative, determine whether the segment is curving up or down at `this.coordinates`.
+ * Note: The leave event is viewed by inverting the x-axis, so the first derivative of leave event is negated.
  * 2. Assuming a rotation performing on the segments. Since the rotation does not change the relative relationship between segments, but
  * it allows us to calculate the derivatives without encountering infinity.
- * - If the segment is curving up with first derivative being positive infinity, then rotate the mono segment `-ROTATION`.
- * - If the segment is curving down with first derivative being negative infinity, then rotate the mono segment `ROTATION`.
+ * - If the segment is curving up with first derivative being positive infinity:
+ *  - This is an enter event, then rotate the mono segment `-ROTATION`.
+ *  - This is an leave enter, then rotate the mono segment `ROTATION`.
+ * - If the segment is curving down with first derivative being negative infinity:
+ *  - This is an enter event, then rotate the mono segment `ROTATION`.
+ *  - This is an leave enter, then rotate the mono segment `-ROTATION`
  * @param segment
- * @param sign
+ * @param curveUp
+ * @param isEnter
  * @param origin
  */
-function rotateSegment(segment: BasicSegment, sign: number, origin: [number, number]) {
+function rotateSegment(segment: BasicSegment, curveUp: boolean, isEnter: boolean, origin: [number, number]) {
     let t = new Transformation();
-    if (sign > 0) {
-        t.setRotate(-ROTATION_FOR_INF_DERIVATIVE, origin);
+    if (isEnter) {
+        if (curveUp) t.setRotate(-ROTATION_FOR_INF_DERIVATIVE, origin);
+        else t.setRotate(ROTATION_FOR_INF_DERIVATIVE, origin);
     } else {
-        t.setRotate(ROTATION_FOR_INF_DERIVATIVE, origin);
+        if (curveUp) t.setRotate(ROTATION_FOR_INF_DERIVATIVE, origin);
+        else t.setRotate(-ROTATION_FOR_INF_DERIVATIVE, origin);
     }
     return segment.apply(t);
 }
@@ -96,35 +104,57 @@ export default class SweepEvent {
     private _getDerivativeValue(n: 1 | 2 | 3) {
         if (n === 1) {
             if (Number.isNaN(this._derivativeInfo.first)) {
-                const value = derivativeValueAtEnd(this.mono.segment, this.isInit, 1);
+                let value = derivativeValueAtEnd(this.mono.segment, this.isInit, 1);
                 // Change the sign of first derivative for infinity, if transposed.
-                if (!Number.isFinite(value)) {
-                    this._derivativeInfo.first = (this.mono.transposed ? -1 : 1) * value;
-                } else {
-                    this._derivativeInfo.first = value;
-                }
+                // We only encounter infinity with the first derivative.
+                if (!Number.isFinite(value)) value = (this.mono.transposed ? -1 : 1) * value;
+
+                // Handle enter and leave in different coordinate system.
+                // Note: The leave event is viewed by inverting the x-axis, so the first derivative of leave event is negated.
+                this._derivativeInfo.first = (this.isEnter ? 1 : -1) * value;
             }
             return this._derivativeInfo.first;
         }
         if (n === 2) {
             if (Number.isFinite(this._derivativeInfo.first)) {
-                if (Number.isNaN(this._derivativeInfo.second)) this._derivativeInfo.second = derivativeValueAtEnd(this.mono.segment, this.isInit, 2);
+                if (Number.isNaN(this._derivativeInfo.second)) {
+                    // Handle enter and leave in different coordinate system.
+                    // Note: The leave event is viewed by inverting the x-axis, so the second derivative of leave event is NOT negated.
+                    let value = derivativeValueAtEnd(this.mono.segment, this.isInit, 2);
+                    this._derivativeInfo.second = value;
+                }
                 return this._derivativeInfo.second;
             } else {
-                if (this._derivativeInfo.rotatedSegment === undefined) {
-                    this._derivativeInfo.rotatedSegment = rotateSegment(this.mono.segment, Maths.sign(this._derivativeInfo.first), this.coordinates);
+                if (this._derivativeInfo.rotatedSegment === undefined)
+                    this._derivativeInfo.rotatedSegment = rotateSegment(this.mono.segment, Maths.sign(this._derivativeInfo.first) > 0, this.isEnter, this.coordinates);
+
+                if (Number.isNaN(this._derivativeInfo.rotatedSecond)) {
+                    // Handle enter and leave in different coordinate system.
+                    // Note: The leave event is viewed by inverting the x-axis, so the second derivative of leave event is NOT negated.
+                    let value = derivativeValueAtEnd(this._derivativeInfo.rotatedSegment!, this.isInit, 2);
+                    this._derivativeInfo.rotatedSecond = value;
                 }
-                if (Number.isNaN(this._derivativeInfo.rotatedSecond)) this._derivativeInfo.rotatedSecond = derivativeValueAtEnd(this._derivativeInfo.rotatedSegment!, this.isInit, 2);
                 return this._derivativeInfo.rotatedSecond;
             }
         }
         if (n === 3) {
             if (Number.isFinite(this._derivativeInfo.first)) {
-                if (Number.isNaN(this._derivativeInfo.third)) this._derivativeInfo.third = derivativeValueAtEnd(this.mono.segment, this.isInit, 3);
+                if (Number.isNaN(this._derivativeInfo.third)) {
+                    let value = derivativeValueAtEnd(this.mono.segment, this.isInit, 3);
+                    // Handle enter and leave in different coordinate system.
+                    // Note: The leave event is viewed by inverting the x-axis, so the third derivative of leave event is negated.
+                    this._derivativeInfo.third = (this.isEnter ? 1 : -1) * value;
+                }
+
                 return this._derivativeInfo.third;
             } else {
                 // this._derivativeInfo.rotatedSegment !== undefined, we must have done it.
-                if (Number.isNaN(this._derivativeInfo.rotatedThird)) this._derivativeInfo.rotatedThird = derivativeValueAtEnd(this._derivativeInfo.rotatedSegment!, this.isInit, 3);
+                if (Number.isNaN(this._derivativeInfo.rotatedThird)) {
+                    let value = derivativeValueAtEnd(this._derivativeInfo.rotatedSegment!, this.isInit, 3);
+                    // Handle enter and leave in different coordinate system.
+                    // Note: The leave event is viewed by inverting the x-axis, so the third derivative of leave event is negated.
+                    this._derivativeInfo.rotatedThird = (this.isEnter ? 1 : -1) * value;
+                }
                 return this._derivativeInfo.rotatedThird;
             }
         }
@@ -147,24 +177,19 @@ export default class SweepEvent {
         const thisFDV = this._getDerivativeValue(1);
         const thatFDV = that._getDerivativeValue(1);
         if (!Float.equalTo(thisFDV, thatFDV, eps.epsilon)) {
-            const result = thisFDV > thatFDV ? 1 : -1;
-            // For enter coordinates, the greater derivative means upper location,
-            // but for the leave coordinates, the greater derivative means lower location.
-            return this.isEnter ? result : -result;
+            return thisFDV > thatFDV ? 1 : -1;
         }
 
         const thisSDV = this._getDerivativeValue(2);
         const thatSDV = that._getDerivativeValue(2);
         if (!Float.equalTo(thisSDV, thatSDV, eps.epsilon)) {
-            const result = thisSDV > thatSDV ? 1 : -1;
-            return this.isEnter ? result : -result;
+            return thisSDV > thatSDV ? 1 : -1;
         }
 
         const thisTDV = this._getDerivativeValue(3);
         const thatTDV = that._getDerivativeValue(3);
         if (!Float.equalTo(thisTDV, thatTDV, eps.epsilon)) {
-            const result = thisTDV > thatTDV ? 1 : -1;
-            return this.isEnter ? result : -result;
+            return thisTDV > thatTDV ? 1 : -1;
         }
         return 0;
     }
