@@ -323,6 +323,9 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         return new Arc(x1, y1, x2, y2, r, r, largeArc, positive, 0);
     }
 
+    /**
+     * Returns an array of angle indicate at what angle, arc `this` has max/min x/y coordinate value.
+     */
     @stated
     extrema() {
         const [sa, ea] = this.getStartEndAngles();
@@ -334,13 +337,8 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const xRoots = [Angle.simplify(atanX), Angle.simplify(atanX + Maths.PI)];
         const atanY = Maths.atan((ry * cosPhi) / (rx * sinPhi));
         const yRoots = [Angle.simplify(atanY), Angle.simplify(atanY + Maths.PI)];
-        const fn = this.getParametricEquation();
-        const aRoots = Utility.uniqWith([...xRoots, ...yRoots], (a, b) => Angle.equalTo(a, b, eps.angleEpsilon));
-        return aRoots
-            .filter(a => {
-                return Angle.between(a, sa, ea, this.positive, false, false, eps.angleEpsilon);
-            })
-            .map(a => [new Point(fn(a)), a] as [point: Point, angle: number]);
+        const roots = [...xRoots, ...yRoots].filter(a => Angle.between(a, sa, ea, this.positive, false, false, eps.angleEpsilon));
+        return Utility.uniqWith(roots, (a, b) => Angle.equalTo(a, b, eps.angleEpsilon));
     }
 
     move(deltaX: number, deltaY: number) {
@@ -443,10 +441,10 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         let maxX = -Infinity;
         let minY = Infinity;
         let maxY = -Infinity;
-        const extrema = this.extrema().map(([p]) => p);
+        const extrema = this.extrema().map(a => this.getParametricEquation()(a));
         // Take endpoints into account
-        extrema.concat([this.point1, this.point2]).forEach(point => {
-            const { x, y } = point;
+        extrema.concat([this.point1Coordinates, this.point2Coordinates]).forEach(c => {
+            const [x, y] = c;
             if (x < minX) minX = x;
             if (x > maxX) maxX = x;
             if (y < minY) minY = y;

@@ -264,7 +264,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         return this;
     }
     /**
-     * Returns an array of `[Point, time]` indicate where and at what time, bezier curve `this` has max/min x/y coordinate value.
+     * Returns an array of time indicate at what time, bezier curve `this` has max/min x/y coordinate value.
      */
     @stated
     extrema() {
@@ -275,13 +275,11 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
             Polynomial.standardize(Polynomial.derivative(polyY))
         ];
         // prettier-ignore
-        let tRoots = [
+        const tRoots = [
             ...(!Polynomial.isConstant(polyXD) ? Polynomial.roots(polyXD, eps.complexEpsilon) : []),
             ...(!Polynomial.isConstant(polyYD) ? Polynomial.roots(polyYD, eps.complexEpsilon) : [])
         ].filter((t) : t is number => Type.isNumber(t) &&  Float.between(t, 0, 1, false, false, eps.timeEpsilon) );
-        tRoots = Utility.uniqWith(tRoots, (a, b) => Float.equalTo(a, b, eps.timeEpsilon));
-
-        return tRoots.map(t => [new Point(this.getParametricEquation()(t)), t] as [point: Point, time: number]);
+        return Utility.uniqWith(tRoots, (a, b) => Float.equalTo(a, b, eps.timeEpsilon));
     }
 
     move(deltaX: number, deltaY: number) {
@@ -393,10 +391,10 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         let maxX = -Infinity;
         let minY = Infinity;
         let maxY = -Infinity;
-        const extrema = this.extrema().map(([p]) => p);
+        const extrema = this.extrema().map(t => this.getParametricEquation()(t));
         // Take endpoints into account
-        extrema.concat([this.point1, this.point2]).forEach(point => {
-            const { x, y } = point;
+        extrema.concat([this.point1Coordinates, this.point2Coordinates]).forEach(c => {
+            const [x, y] = c;
             if (x < minX) minX = x;
             if (x > maxX) maxX = x;
             if (y < minY) minY = y;

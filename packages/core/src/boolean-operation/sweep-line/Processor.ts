@@ -91,15 +91,15 @@ export default class Processor {
         if (quadraticBezier.isDoubleLine()) {
             const extrema = quadraticBezier
                 .extrema()
-                .filter(([, t]) => Float.between(t, 0, 1, true, true, eps.timeEpsilon))
-                .map(([p]) => p);
-            let points = [quadraticBezier.point1, ...extrema, quadraticBezier.point2];
+                .filter(t => !Float.equalTo(t, 0, eps.timeEpsilon) && !Float.equalTo(t, 1, eps.timeEpsilon))
+                .map(t => quadraticBezier.getParametricEquation()(t));
+            let cs = [quadraticBezier.point1Coordinates, ...extrema, quadraticBezier.point2Coordinates];
             // Quadratic bezier sometimes goes very ugly, the control point coincides with one of the endpoints, and it is still a double line.
             // The extreme will be the coincident endpoint.
-            points = Utility.uniqWith(points, (a, b) => Coordinates.equalTo(a.coordinates, b.coordinates, eps.epsilon));
+            cs = Utility.uniqWith(cs, (a, b) => Coordinates.equalTo(a, b, eps.epsilon));
             const monos = [];
-            for (let i = 0, l = points.length; i < l - 1; i++) {
-                monos.push(...this._monoLineSegment(new LineSegment(points[i], points[i + 1]), isPrimary));
+            for (let i = 0, l = cs.length; i < l - 1; i++) {
+                monos.push(...this._monoLineSegment(new LineSegment(cs[i], cs[i + 1]), isPrimary));
             }
             return monos;
         }
@@ -156,15 +156,15 @@ export default class Processor {
         if (selfIntersectionOrigin === null && bezier.isTripleLine()) {
             const extrema = bezier
                 .extrema()
-                .filter(([, t]) => Float.between(t, 0, 1, true, true, eps.timeEpsilon))
-                .map(([p]) => p);
-            let points = [bezier.point1, ...extrema, bezier.point2];
+                .filter(t => !Float.equalTo(t, 0, eps.timeEpsilon) && !Float.equalTo(t, 1, eps.timeEpsilon))
+                .map(t => bezier.getParametricEquation()(t));
+            let cs = [bezier.point1Coordinates, ...extrema, bezier.point2Coordinates];
             // Bezier sometimes goes very ugly, the control points coincide with one of the endpoints, and it is still a triple line.
             // The extreme will be the coincident endpoint.
-            points = Utility.uniqWith(points, (a, b) => Coordinates.equalTo(a.coordinates, b.coordinates, eps.epsilon));
+            cs = Utility.uniqWith(cs, (a, b) => Coordinates.equalTo(a, b, eps.epsilon));
             const monos = [];
-            for (let i = 0, l = points.length; i < l - 1; i++) {
-                monos.push(...this._monoLineSegment(new LineSegment(points[i], points[i + 1]), isPrimary));
+            for (let i = 0, l = cs.length; i < l - 1; i++) {
+                monos.push(...this._monoLineSegment(new LineSegment(cs[i], cs[i + 1]), isPrimary));
             }
             return monos;
         }
