@@ -6,7 +6,7 @@ import EventObject from "../event/EventObject";
 import EventSourceObject from "../event/EventSourceObject";
 import { scheduler } from "../geomtoy";
 import { DISABLE_STATE_SYMBOL, STATE_IDENTIFIER_SYMBOL } from "../misc/decor-stated";
-import type { BindOptions, BindParameters, EventObjectsFromPairs, EventPair, OnOptions } from "../types";
+import type { BindParameters, EventHandlerOptions, EventObjectsFromPairs, EventPair } from "../types";
 import BaseObject from "./BaseObject";
 
 const ON_EVENT_HANDLER_DEFAULT_PRIORITY = 1;
@@ -113,11 +113,12 @@ export default abstract class EventTarget extends BaseObject {
         return !definedEventNames.includes(event) ? (console.warn(`[G]There is no event named \`${event}\` in \`${this.name}\` , so it will be ignored.`), false) : event;
     }
 
-    on(onOptions: OnOptions, event: string, callback: (this: this, arg: EventObject<this>) => void): this;
+    on(onOptions: EventHandlerOptions, event: string, callback: (this: this, arg: EventObject<this>) => void): this;
     on(event: string, callback: (this: this, arg: EventObject<this>) => void): this;
     on(arg0: any, arg1: any, arg2?: any) {
         let priority = ON_EVENT_HANDLER_DEFAULT_PRIORITY;
         let debounce = 0;
+        let immediately = true;
 
         let event: string;
         let callback: (this: this, arg: EventObject<this>) => void;
@@ -130,6 +131,9 @@ export default abstract class EventTarget extends BaseObject {
             if (arg0.debounce !== undefined) {
                 debounce = arg0.debounce;
                 Assert.isRealNumber(debounce, "debounce");
+            }
+            if (arg0.immediately !== undefined) {
+                immediately = arg0.immediately;
             }
 
             event = arg1;
@@ -145,6 +149,9 @@ export default abstract class EventTarget extends BaseObject {
             return console.warn(`[G]An event handler with the same event \`${parsedEvent}\`, callback and context \`${this}\` already exists in \`${this}\`, so it will be ignored.`), this;
 
         this._addHandler(parsedEvent, callback, this, null, priority, debounce);
+        if (immediately) {
+            callback.call(this, EventObject.empty(this));
+        }
         return this;
     }
     off(event: string, callback?: (...args: any) => void) {
@@ -319,7 +326,7 @@ export default abstract class EventTarget extends BaseObject {
 
     private _binding = new Set<EventTarget>();
 
-    bind<T extends EventPair[]>(bindOptions: BindOptions, ...bindParameters: BindParameters<T, this>): this;
+    bind<T extends EventPair[]>(bindOptions: EventHandlerOptions, ...bindParameters: BindParameters<T, this>): this;
     bind<T extends EventPair[]>(...bindParameters: BindParameters<T, this>): this;
     bind<T extends EventPair[]>(...args: any) {
         let immediately = true;
@@ -329,7 +336,7 @@ export default abstract class EventTarget extends BaseObject {
         let bindParameters: BindParameters<T, this>;
 
         if (Type.isPlainObject(args[0])) {
-            const arg0 = Utility.head(args)! as BindOptions;
+            const arg0 = Utility.head(args)! as EventHandlerOptions;
             if (arg0.priority !== undefined) {
                 priority = arg0.priority;
                 Assert.isRealNumber(priority, "priority");

@@ -435,12 +435,7 @@ export type LineSegmentRayLineData = {
 export type EventPair = [EventTarget, string];
 export type BindParameters<T extends EventPair[], U extends EventTarget> = [...pair: T, callback: (this: U, ...args: EventObjectsFromPairs<T>) => void];
 
-export type OnOptions = Partial<{
-    priority: number;
-    debounce: number;
-}>;
-
-export type BindOptions = Partial<{
+export type EventHandlerOptions = Partial<{
     immediately: boolean;
     priority: number;
     debounce: number;
