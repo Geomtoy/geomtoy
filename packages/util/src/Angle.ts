@@ -93,7 +93,7 @@ class Angle {
         a = Angle.simplify(a);
         b = Angle.simplify(b);
         if (epsilon === undefined) return a === b;
-        return Float.equalTo(a - b, 0, epsilon);
+        return Float.equalTo(a - b, 0, epsilon) || Float.equalTo(Maths.abs(a - b) - Maths.PI * 2, 0, epsilon); // handle values near 0 and $2\pi$
     }
     /**
      * Clamp angle `a` into the `positive`(or not) sweep interval between start angle `s` and end angle `e`.
@@ -123,21 +123,40 @@ class Angle {
         s = Angle.simplify(s);
         e = Angle.simplify(e);
 
+        let aEqS: boolean;
+        let aEqE: boolean;
+        if (epsilon === undefined) {
+            aEqS = a === s;
+            aEqE = a === e;
+        } else {
+            aEqS = Float.equalTo(a - s, 0, epsilon) || Float.equalTo(Maths.abs(a - s) - Maths.PI * 2, 0, epsilon);
+            aEqE = Float.equalTo(a - e, 0, epsilon) || Float.equalTo(Maths.abs(a - e) - Maths.PI * 2, 0, epsilon);
+        }
+
         if (!positive) [s, e] = [e, s];
 
-        if (epsilon === undefined) {
-            if (s > e) {
-                return (startOpen ? a > s : a >= s) || (endOpen ? a < e : a <= e);
-            } else {
-                return (startOpen ? a > s : a >= s) && (endOpen ? a < e : a <= e);
-            }
+        let ret: boolean;
+        if (s > e) {
+            ret = a > s || a < e;
+        } else {
+            ret = a > s && a < e;
         }
 
-        if (s > e) {
-            return (startOpen ? Float.greaterThan(a - s, 0, epsilon) : !Float.lessThan(a - s, 0, epsilon)) || (endOpen ? Float.lessThan(a - e, 0, epsilon) : !Float.greaterThan(a - e, 0, epsilon));
+        if (startOpen) {
+            if (positive) ret &&= !aEqS;
+            else ret &&= !aEqE;
         } else {
-            return (startOpen ? Float.greaterThan(a - s, 0, epsilon) : !Float.lessThan(a - s, 0, epsilon)) && (endOpen ? Float.lessThan(a - e, 0, epsilon) : !Float.greaterThan(a - e, 0, epsilon));
+            if (positive) ret ||= aEqS;
+            else ret ||= aEqE;
         }
+        if (endOpen) {
+            if (positive) ret &&= !aEqE;
+            else ret &&= !aEqS;
+        } else {
+            if (positive) ret ||= aEqE;
+            else ret ||= aEqS;
+        }
+        return ret;
     }
 }
 export default Angle;
