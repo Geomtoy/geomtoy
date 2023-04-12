@@ -1,8 +1,10 @@
-import { Coordinates, Maths, Vector2 } from "@geomtoy/util";
+import { Angle, Coordinates, Maths, Vector2 } from "@geomtoy/util";
 import Arc from "../geometries/basic/Arc";
 import Bezier from "../geometries/basic/Bezier";
 import LineSegment from "../geometries/basic/LineSegment";
+import Point from "../geometries/basic/Point";
 import QuadraticBezier from "../geometries/basic/QuadraticBezier";
+import { eps } from "../geomtoy";
 import SegmentWithFill from "./SegmentWithFill";
 
 export default class Merger {
@@ -35,6 +37,8 @@ export default class Merger {
                     ? sa - ea 
                     : 2 * Maths.PI - (ea - sa);
             const la = deltaTheta > Maths.PI ? true : false;
+            // prevent full arc
+            if (Angle.equalTo(deltaTheta, Maths.PI * 2, eps.angleEpsilon)) return null;
 
             const ret = new SegmentWithFill(new Arc(ac1, bc2, rx, ry, la, pos, phi), swfA.trajectoryID);
             ret.thisFill = { ...swfA.thisFill };
@@ -62,6 +66,9 @@ export default class Merger {
             const { point1Coordinates: bc1, point2Coordinates: bc2, controlPoint1Coordinates: bcc1, controlPoint2Coordinates: bcc2 } = swfB.segment;
             // `ac2` and `bc1` should be equal, but for more precision, we take the average.
             const cm = [Maths.avg(Coordinates.x(ac2), Coordinates.x(bc1)), Maths.avg(Coordinates.y(ac2), Coordinates.y(bc1))] as [number, number];
+            // handle bezier self-intersection, the loop and the out branches of the loop
+            if (!Point.isThreePointsCollinear(cm, acc2, bcc1)) return null;
+
             const value1 = Vector2.magnitude(Vector2.from(acc2, cm));
             const value2 = Vector2.magnitude(Vector2.from(bcc1, cm));
             const t = value1 / (value1 + value2); // the t value on the merged bezier of `cm`.
