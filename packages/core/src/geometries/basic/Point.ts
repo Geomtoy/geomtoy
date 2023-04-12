@@ -269,7 +269,6 @@ export default class Point extends Geometry {
         if (shape === null) shape = new Point();
         this._setX(shape._x);
         this._setY(shape._y);
-        this.appearance = shape.appearance;
         return this;
     }
     override toJSON() {
