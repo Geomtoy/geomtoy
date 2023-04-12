@@ -1,5 +1,3 @@
-
-
 <p align="center"><img alt="Geomtoy logo" src="./logo.svg" width="150"></p>
 <h1 align="center">Geomtoy</h1>
 
@@ -18,19 +16,19 @@ npx lerna bootstrap --ci
 
 ## Install
 ### Install all packages
-```js
+```sh
 npm i geomtoy -S
 ```
 ### Install a specified package 
-```js
+```sh
 npm i "@geomtoy/core" -S
 npm i "@geomtoy/view" -S
 npm i "@geomtoy/util" -S
 ```
 
-## Usage 
-- [Examples site]((https://examples.geomtoy.com/)) 
-- [Documents site]((https://documents.geomtoy.com/))
+## Usage
+- [Examples](https://examples.geomtoy.com/)
+- [Documents](https://documents.geomtoy.com/)
   
 ## Features
 
@@ -49,7 +47,7 @@ npm i "@geomtoy/util" -S
 - Support coordinate system setting.
 
 ## Brief architecture
-![Brief architecture](https://raw.githubusercontent.com/Geomtoy/geomtoy-assets/main/images/architecture.png)
+![Brief architecture](https://raw.githubusercontent.com/Geomtoy/geomtoy-assets/master/images/architecture.png)
 
 ## Roadmap && todo
 - [ ] Support all conic curves.
