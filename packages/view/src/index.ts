@@ -1,10 +1,10 @@
 import Renderer from "./renderer/Renderer";
 import CanvasRenderer from "./renderer/CanvasRenderer";
-import SvgRenderer from "./renderer/SvgRenderer";
+import SVGRenderer from "./renderer/SVGRenderer";
 /**
  * @category Renderer
  */
-export { Renderer, CanvasRenderer, SvgRenderer };
+export { Renderer, CanvasRenderer, SVGRenderer };
 
 import View from "./frontend/View";
 import SubView from "./frontend/SubView";
@@ -22,18 +22,18 @@ export { Display };
 
 import Interface from "./renderer/Interface";
 import CanvasInterface from "./renderer/CanvasInterface";
-import SvgInterface from "./renderer/SvgInterface";
+import SVGInterface from "./renderer/SVGInterface";
 /**
  * @category Interface
  */
-export { Interface, CanvasInterface, SvgInterface };
+export { Interface, CanvasInterface, SVGInterface };
 
 import ImageSourceManager from "./renderer/ImageSourceManager";
 import CanvasImageSourceManager from "./renderer/CanvasImageSourceManager";
-import SvgImageSourceManager from "./renderer/SvgImageSourceManager";
+import SVGImageSourceManager from "./renderer/SVGImageSourceManager";
 /**
  * @category Other
  */
-export { ImageSourceManager, CanvasImageSourceManager, SvgImageSourceManager };
+export { ImageSourceManager, CanvasImageSourceManager, SVGImageSourceManager };
 
 export * from "./types";

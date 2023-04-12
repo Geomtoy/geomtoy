@@ -12,7 +12,7 @@ import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { next } from "../../misc/loop";
 import { getCoordinates } from "../../misc/point-like";
-import { parseSvgPath } from "../../misc/svg-path";
+import { parseSVGPath } from "../../misc/svg-path";
 import type Transformation from "../../transformation";
 import {
     PathCommandType,
@@ -183,7 +183,7 @@ export default class Path extends Geometry {
     }
 
     static fromSVGString(data: string) {
-        const paths = parseSvgPath(data);
+        const paths = parseSVGPath(data);
         return new Path(paths[0].commands, paths[0].closed);
     }
 

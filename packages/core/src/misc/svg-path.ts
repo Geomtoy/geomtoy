@@ -2,7 +2,7 @@ import { Vector2 } from "@geomtoy/util";
 import Path from "../geometries/general/Path";
 import { PathCommand } from "../types";
 
-export function parseSvgPath(d: string) {
+export function parseSVGPath(d: string) {
     const paths: {
         commands: PathCommand[];
         closed: boolean;

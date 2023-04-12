@@ -1,7 +1,7 @@
 import { Maths } from "@geomtoy/util";
 import ImageSourceManager from "./ImageSourceManager";
 
-export default class SvgImageSourceManager extends ImageSourceManager {
+export default class SVGImageSourceManager extends ImageSourceManager {
     private _placeholderContainer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
     placeholder(width: number, height: number, backgroundColor: string = "rgba(0, 0, 0, 0.3)", color: string = "rgba(0, 0, 0, 0.5)") {

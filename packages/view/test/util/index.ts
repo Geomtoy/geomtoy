@@ -1,5 +1,5 @@
-const nativeSvgId = "nativeSvg";
-const testSvgId = "testSvg";
+const nativeSVGId = "nativeSVG";
+const testSVGId = "testSVG";
 const nativeCanvasId = "nativeCanvas";
 const testCanvasId = "testCanvas";
 
@@ -18,16 +18,16 @@ const remove = (id: string) => {
 function svgSetup(withNative: true): [SVGSVGElement, SVGSVGElement];
 function svgSetup(withNative?: false): SVGSVGElement;
 function svgSetup(withNative = false) {
-    assertNotExisted(testSvgId);
-    withNative && assertNotExisted(nativeSvgId);
-    return withNative ? ([add("svg", testSvgId), add("svg", nativeSvgId)] as [SVGSVGElement, SVGSVGElement]) : add("svg", testSvgId);
+    assertNotExisted(testSVGId);
+    withNative && assertNotExisted(nativeSVGId);
+    return withNative ? ([add("svg", testSVGId), add("svg", nativeSVGId)] as [SVGSVGElement, SVGSVGElement]) : add("svg", testSVGId);
 }
 
 export { svgSetup };
 
 export function svgTeardown(withNative = false) {
-    remove(testSvgId);
-    withNative && remove(nativeSvgId);
+    remove(testSVGId);
+    withNative && remove(nativeSVGId);
 }
 
 function canvasSetup(withNative: true): [HTMLCanvasElement, HTMLCanvasElement];

@@ -7,7 +7,7 @@ import FillRuleHelper from "../../helper/FillRuleHelper";
 import { validGeometryArguments } from "../../misc/decor-geometry";
 import { statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
-import { parseSvgPath } from "../../misc/svg-path";
+import { parseSVGPath } from "../../misc/svg-path";
 import Transformation from "../../transformation";
 import type { FillRule, ParentShape, ViewportDescriptor } from "../../types";
 import Arc from "../basic/Arc";
@@ -69,8 +69,8 @@ export default class Compound extends Geometry implements ParentShape {
         return this._items.length;
     }
 
-    static fromSvgString(data: string) {
-        const paths = parseSvgPath(data);
+    static fromSVGString(data: string) {
+        const paths = parseSVGPath(data);
         const compound = new Compound();
         for (const path of paths) {
             compound.appendItem(new Path(path.commands, path.closed));

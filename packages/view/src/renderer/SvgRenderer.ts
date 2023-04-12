@@ -4,31 +4,31 @@ import TextMeasurer from "../helper/TextMeasurer";
 import type { DisplaySettings, InterfaceSettings, PathInfo } from "../types";
 import Display from "./Display";
 import Renderer from "./Renderer";
-import SvgImageSourceManager from "./SvgImageSourceManager";
-import SvgInterface from "./SvgInterface";
+import SVGImageSourceManager from "./SVGImageSourceManager";
+import SVGInterface from "./SVGInterface";
 
 const DEFAULT_BASELINE = "alphabetic";
 
-export default class SvgRenderer extends Renderer {
-    private _id = Utility.id("SvgRenderer");
+export default class SVGRenderer extends Renderer {
+    private _id = Utility.id("SVGRenderer");
     private _surface: SVGGElement;
     private _interfaceSurface: SVGGElement;
     private _buffer = document.createDocumentFragment();
     private _bufferFlushScheduled = false;
 
     private _container: SVGSVGElement;
-    private _interface: SvgInterface;
+    private _interface: SVGInterface;
     private _display: Display;
-    private _imageSourceManager: SvgImageSourceManager;
+    private _imageSourceManager: SVGImageSourceManager;
 
     constructor(container: SVGSVGElement, interfaceSettings: Partial<InterfaceSettings> = {}, displaySettings: Partial<DisplaySettings> = {}) {
         super();
         if (container instanceof SVGSVGElement) {
             this._container = container;
             this.manageRendererInitialized_();
-            this._interface = new SvgInterface(this, interfaceSettings);
+            this._interface = new SVGInterface(this, interfaceSettings);
             this._display = new Display(this, displaySettings);
-            this._imageSourceManager = new SvgImageSourceManager();
+            this._imageSourceManager = new SVGImageSourceManager();
 
             this.container.style["touch-action" as any] = "none";
             this.container.style["user-select" as any] = "none";

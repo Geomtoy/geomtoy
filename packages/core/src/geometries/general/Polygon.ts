@@ -12,7 +12,7 @@ import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { next } from "../../misc/loop";
 import { getCoordinates } from "../../misc/point-like";
-import { parseSvgPolygon } from "../../misc/svg-polygon";
+import { parseSVGPolygon } from "../../misc/svg-polygon";
 import type Transformation from "../../transformation";
 import type { FillRule, PolygonVertex, ViewportDescriptor, WindingDirection } from "../../types";
 import LineSegment from "../basic/LineSegment";
@@ -124,7 +124,7 @@ export default class Polygon extends Geometry {
     }
 
     static fromSVGString(data: string, closed = true) {
-        const polygon = parseSvgPolygon(data);
+        const polygon = parseSVGPolygon(data);
         return new Polygon(polygon.vertices, closed);
     }
 

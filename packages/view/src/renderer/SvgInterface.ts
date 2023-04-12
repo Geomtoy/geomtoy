@@ -1,11 +1,11 @@
 import type { InterfaceSettings } from "../types";
 import Interface from "./Interface";
-import type SvgRenderer from "./SvgRenderer";
+import type SVGRenderer from "./SVGRenderer";
 
-export default class SvgInterface extends Interface {
+export default class SVGInterface extends Interface {
     private _interfaceBuffer = document.createDocumentFragment();
 
-    constructor(renderer: SvgRenderer, interfaceSettings: Partial<InterfaceSettings>) {
+    constructor(renderer: SVGRenderer, interfaceSettings: Partial<InterfaceSettings>) {
         super(renderer, interfaceSettings);
     }
 
