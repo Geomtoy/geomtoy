@@ -15,6 +15,7 @@ export default class Arbitrary extends Geometry {
         if (geometry !== undefined) {
             Object.assign(this, { geometry });
         }
+        this.initState_();
     }
 
     static override events = {
