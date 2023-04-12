@@ -166,7 +166,10 @@ export default class Path extends Geometry {
         for (let i = 1, l = this._commands.length; i < l; i++) {
             const { x: xi, y: yi, type } = commands[i];
             if (!Coordinates.equalTo([x0, y0], [xi, yi], Float.MACHINE_EPSILON)) return check ? false : this;
-
+            if (type === PathCommandType.ArcTo) {
+                const { radiusX: rx, radiusY: ry } = commands[i] as PathArcToCommand;
+                if (!Float.equalTo(rx, 0, Float.MACHINE_EPSILON) && !Float.equalTo(ry, 0, Float.MACHINE_EPSILON)) return check ? false : this;
+            }
             if (type === PathCommandType.QuadraticBezierTo) {
                 const { controlPointX: cpx, controlPointY: cpy } = commands[i] as PathQuadraticBezierToCommand;
                 if (!Coordinates.equalTo([x0, y0], [cpx, cpy], Float.MACHINE_EPSILON)) return check ? false : this;
