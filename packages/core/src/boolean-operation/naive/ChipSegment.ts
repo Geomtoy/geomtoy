@@ -1,11 +1,11 @@
 import { BasicSegment } from "../../types";
 import SegmentWithFill from "../SegmentWithFill";
-import TrajectoryID from "../TrajectoryID";
+import TrajectoryId from "../TrajectoryId";
 
 export default class ChipSegment extends SegmentWithFill {
     params: number[] = [];
 
-    constructor({ segment, trajectoryID }: { segment: BasicSegment; trajectoryID: TrajectoryID }) {
-        super(segment, trajectoryID);
+    constructor({ segment, trajectoryId }: { segment: BasicSegment; trajectoryId: TrajectoryId }) {
+        super(segment, trajectoryId);
     }
 }

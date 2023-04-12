@@ -16,10 +16,10 @@ import QuadraticBezierBezier from "../../intersection/classes/QuadraticBezierBez
 import QuadraticBezierQuadraticBezier from "../../intersection/classes/QuadraticBezierQuadraticBezier";
 import SegmentWithFill from "../SegmentWithFill";
 
-function negotiateAndSetTrajectoryID(swfA: SegmentWithFill, swfB: SegmentWithFill) {
-    const trajectoryID = swfA.trajectoryID.negotiate(swfB.trajectoryID);
-    swfA.trajectoryID = trajectoryID;
-    swfB.trajectoryID = trajectoryID;
+function negotiateAndSetTrajectoryId(swfA: SegmentWithFill, swfB: SegmentWithFill) {
+    const trajectoryId = swfA.trajectoryId.negotiate(swfB.trajectoryId);
+    swfA.trajectoryId = trajectoryId;
+    swfB.trajectoryId = trajectoryId;
 }
 
 export function calcIntersection(
@@ -33,7 +33,7 @@ export function calcIntersection(
     const inter = prepareIntersection(swfA, swfB);
     // [n] degree bezier vs [n] degree bezier
     if (inter.type === "nn") {
-        return nn(inter.intersection, () => negotiateAndSetTrajectoryID(swfA, swfB));
+        return nn(inter.intersection, () => negotiateAndSetTrajectoryId(swfA, swfB));
     }
     // [m] degree bezier vs [n] degree bezier
     if (inter.type === "mn") {
@@ -45,7 +45,7 @@ export function calcIntersection(
     }
     // [a]rc vs [a]rc
     if (inter.type === "aa") {
-        return aa(inter.intersection, () => negotiateAndSetTrajectoryID(swfA, swfB));
+        return aa(inter.intersection, () => negotiateAndSetTrajectoryId(swfA, swfB));
     }
     throw new Error("[G]Impossible.");
 }

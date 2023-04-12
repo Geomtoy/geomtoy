@@ -35,7 +35,7 @@ import QuadraticBezier from "../basic/QuadraticBezier";
 
 const PATH_MIN_COMMAND_COUNT = 2;
 
-function commandCopyNewID(value: PathCommand[]): Required<PathCommand>[] {
+function commandCopyNewId(value: PathCommand[]): Required<PathCommand>[] {
     return value.map(cmd => {
         return { ...cmd, id: Utility.id("PathCommand") };
     });
@@ -132,7 +132,7 @@ export default class Path extends Geometry {
     }
     set commands(value: PathCommand[]) {
         Assert.condition(Type.isArray(value) && value.every(cmd => this._isPathCommand(cmd)), "[G]The `commands` should be an array of `PathCommand`.");
-        this._setCommands(commandCopyNewID(value));
+        this._setCommands(commandCopyNewId(value));
     }
     get closed() {
         return this._closed;
@@ -875,14 +875,14 @@ export default class Path extends Geometry {
     }
     clone() {
         const ret = new Path();
-        ret._commands = commandCopyNewID(this._commands);
+        ret._commands = commandCopyNewId(this._commands);
         ret._closed = this._closed;
         ret._fillRule = this._fillRule;
         return ret;
     }
     copyFrom(shape: Path | null) {
         if (shape === null) shape = new Path();
-        this._setCommands(commandCopyNewID(this._commands));
+        this._setCommands(commandCopyNewId(this._commands));
         return this;
     }
     override toJSON() {

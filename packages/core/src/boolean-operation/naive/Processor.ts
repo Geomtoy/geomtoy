@@ -6,7 +6,7 @@ import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import { eps } from "../../geomtoy";
 import FillRuleHelper from "../../helper/FillRuleHelper";
 import { FillDescription, FillRule, GeneralGeometry } from "../../types";
-import TrajectoryID from "../TrajectoryID";
+import TrajectoryId from "../TrajectoryId";
 import ChipSegment from "./ChipSegment";
 import Intersector from "./Intersector";
 
@@ -37,7 +37,7 @@ export default class Processor {
         return [
             new ChipSegment({
                 segment: lineSegment,
-                trajectoryID: new TrajectoryID(lineSegment)
+                trajectoryId: new TrajectoryId(lineSegment)
             })
         ];
     }
@@ -67,7 +67,7 @@ export default class Processor {
         return [
             new ChipSegment({
                 segment: quadraticBezier,
-                trajectoryID: new TrajectoryID(quadraticBezier)
+                trajectoryId: new TrajectoryId(quadraticBezier)
             })
         ];
     }
@@ -88,7 +88,7 @@ export default class Processor {
             const chips = bezier.splitAtTimes(tsi).map(bezier => {
                 return new ChipSegment({
                     segment: bezier,
-                    trajectoryID: new TrajectoryID(bezier)
+                    trajectoryId: new TrajectoryId(bezier)
                 });
             });
             return chips;
@@ -112,7 +112,7 @@ export default class Processor {
         return [
             new ChipSegment({
                 segment: bezier,
-                trajectoryID: new TrajectoryID(bezier)
+                trajectoryId: new TrajectoryId(bezier)
             })
         ];
     }
@@ -125,7 +125,7 @@ export default class Processor {
         return [
             new ChipSegment({
                 segment: arc,
-                trajectoryID: new TrajectoryID(arc)
+                trajectoryId: new TrajectoryId(arc)
             })
         ];
     }
@@ -159,7 +159,7 @@ export default class Processor {
     }
     private _deduplicate(chips: ChipSegment[]) {
         return Utility.uniqWith(chips, (a, b) => {
-            if (a.trajectoryID.equalTo(b.trajectoryID)) {
+            if (a.trajectoryId.equalTo(b.trajectoryId)) {
                 const [acn, acm] = this._sortCoordinates(a.segment.point1Coordinates, a.segment.point2Coordinates);
                 const [bcn, bcm] = this._sortCoordinates(b.segment.point1Coordinates, b.segment.point2Coordinates);
                 return Coordinates.equalTo(acn, bcn, eps.epsilon) && Coordinates.equalTo(acm, bcm, eps.epsilon);

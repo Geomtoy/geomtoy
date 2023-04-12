@@ -5,7 +5,7 @@ import LineSegment from "../../geometries/basic/LineSegment";
 import QuadraticBezier from "../../geometries/basic/QuadraticBezier";
 import { eps } from "../../geomtoy";
 import { FillDescription, GeneralGeometry } from "../../types";
-import TrajectoryID from "../TrajectoryID";
+import TrajectoryId from "../TrajectoryId";
 import MonoSegment from "./MonoSegment";
 import SweepLine from "./SweepLine";
 
@@ -38,7 +38,7 @@ export default class Processor {
                 segment: lineSegment,
                 isPrimary,
                 origin: lineSegment,
-                trajectoryID: new TrajectoryID(lineSegment)
+                trajectoryId: new TrajectoryId(lineSegment)
             })
         ];
     }
@@ -62,19 +62,19 @@ export default class Processor {
                     segment: arc,
                     isPrimary,
                     origin: arc,
-                    trajectoryID: new TrajectoryID(arc)
+                    trajectoryId: new TrajectoryId(arc)
                 })
             ];
         }
 
-        const trajectoryID = new TrajectoryID(arc);
+        const trajectoryId = new TrajectoryId(arc);
         // splitAtAngles will handle the multiplicity and order
         const monos = arc.splitAtAngles(xARoots).map(segment => {
             return new MonoSegment({
                 segment,
                 isPrimary,
                 origin: arc,
-                trajectoryID
+                trajectoryId
             });
         });
         return monos;
@@ -113,25 +113,25 @@ export default class Processor {
                     segment: quadraticBezier,
                     isPrimary,
                     origin: quadraticBezier,
-                    trajectoryID: new TrajectoryID(quadraticBezier)
+                    trajectoryId: new TrajectoryId(quadraticBezier)
                 })
             ];
         }
 
-        const trajectoryID = new TrajectoryID(quadraticBezier);
+        const trajectoryId = new TrajectoryId(quadraticBezier);
         // splitAtTimes will handle the multiplicity and order
         const monos = quadraticBezier.splitAtTimes(xTRoots).map(segment => {
             return new MonoSegment({
                 segment,
                 isPrimary,
                 origin: quadraticBezier,
-                trajectoryID
+                trajectoryId
             });
         });
         return monos;
     }
 
-    private _monoBezier(bezier: Bezier, isPrimary: boolean, selfIntersectionOrigin: [Bezier, TrajectoryID] | null = null) {
+    private _monoBezier(bezier: Bezier, isPrimary: boolean, selfIntersectionOrigin: [Bezier, TrajectoryId] | null = null) {
         // handle degenerate
         if (selfIntersectionOrigin === null) {
             const ndg = bezier.degenerate(false);
@@ -147,7 +147,7 @@ export default class Processor {
             const ret: MonoSegment[] = [];
             const tsi = bezier.selfIntersection().filter(t => Float.between(t, 0, 1, true, true, eps.timeEpsilon));
             if (tsi.length !== 0) {
-                bezier.splitAtTimes(tsi).forEach(s => ret.push(...this._monoBezier(s, isPrimary, [bezier, new TrajectoryID(bezier)])));
+                bezier.splitAtTimes(tsi).forEach(s => ret.push(...this._monoBezier(s, isPrimary, [bezier, new TrajectoryId(bezier)])));
                 return ret;
             }
         }
@@ -178,19 +178,19 @@ export default class Processor {
                     segment: bezier,
                     isPrimary,
                     origin: selfIntersectionOrigin === null ? bezier : selfIntersectionOrigin[0],
-                    trajectoryID: selfIntersectionOrigin === null ? new TrajectoryID(bezier) : selfIntersectionOrigin[1]
+                    trajectoryId: selfIntersectionOrigin === null ? new TrajectoryId(bezier) : selfIntersectionOrigin[1]
                 })
             ];
         }
 
-        const trajectoryID = selfIntersectionOrigin === null ? new TrajectoryID(bezier) : selfIntersectionOrigin[1];
+        const trajectoryId = selfIntersectionOrigin === null ? new TrajectoryId(bezier) : selfIntersectionOrigin[1];
         // splitAtTimes will handle the multiplicity and order
         const monos = bezier.splitAtTimes(xTRoots).map(segment => {
             return new MonoSegment({
                 segment,
                 isPrimary,
                 origin: selfIntersectionOrigin === null ? bezier : selfIntersectionOrigin[0],
-                trajectoryID
+                trajectoryId
             });
         });
         return monos;

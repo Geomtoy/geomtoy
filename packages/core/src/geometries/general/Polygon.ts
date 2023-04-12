@@ -20,7 +20,7 @@ import Point from "../basic/Point";
 
 const POLYGON_MIN_VERTEX_COUNT = 2;
 
-function vertexCopyNewID(value: PolygonVertex[]): Required<PolygonVertex>[] {
+function vertexCopyNewId(value: PolygonVertex[]): Required<PolygonVertex>[] {
     return value.map(vtx => {
         return { ...vtx, id: Utility.id("PolygonVertex") };
     });
@@ -82,7 +82,7 @@ export default class Polygon extends Geometry {
     }
     set vertices(value: PolygonVertex[]) {
         Assert.condition(Type.isArray(value) && value.every(vtx => this._isPolygonVertex(vtx)), "[G]The `vertices` should be an array of `PolygonVertex`.");
-        this._setVertices(vertexCopyNewID(value));
+        this._setVertices(vertexCopyNewId(value));
     }
     get closed() {
         return this._closed;
@@ -605,14 +605,14 @@ export default class Polygon extends Geometry {
     }
     clone() {
         const ret = new Polygon();
-        ret._vertices = vertexCopyNewID(this._vertices);
+        ret._vertices = vertexCopyNewId(this._vertices);
         ret._closed = this._closed;
         ret._fillRule = this._fillRule;
         return ret;
     }
     copyFrom(shape: Polygon | null) {
         if (shape === null) shape = new Polygon();
-        this._setVertices(vertexCopyNewID(shape._vertices));
+        this._setVertices(vertexCopyNewId(shape._vertices));
         return this;
     }
     override toJSON() {

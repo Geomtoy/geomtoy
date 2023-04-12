@@ -10,14 +10,14 @@ import SegmentWithFill from "./SegmentWithFill";
 export default class Merger {
     // merge at swfA's tail and swfB's head, like : swfA --> swfB
     merge(swfA: SegmentWithFill, swfB: SegmentWithFill) {
-        if (!swfA.trajectoryID.equalTo(swfB.trajectoryID)) {
+        if (!swfA.trajectoryId.equalTo(swfB.trajectoryId)) {
             return null;
         }
 
         if (swfA.segment instanceof LineSegment && swfB.segment instanceof LineSegment) {
             const { point1Coordinates: ac1 } = swfA.segment;
             const { point2Coordinates: bc2 } = swfB.segment;
-            const ret = new SegmentWithFill(new LineSegment(ac1, bc2), swfA.trajectoryID);
+            const ret = new SegmentWithFill(new LineSegment(ac1, bc2), swfA.trajectoryId);
             ret.thisFill = { ...swfA.thisFill };
             ret.thatFill = { ...swfA.thatFill };
             return ret;
@@ -40,7 +40,7 @@ export default class Merger {
             // prevent full arc
             if (Angle.equalTo(deltaTheta, Maths.PI * 2, eps.angleEpsilon)) return null;
 
-            const ret = new SegmentWithFill(new Arc(ac1, bc2, rx, ry, la, pos, phi), swfA.trajectoryID);
+            const ret = new SegmentWithFill(new Arc(ac1, bc2, rx, ry, la, pos, phi), swfA.trajectoryId);
             ret.thisFill = { ...swfA.thisFill };
             ret.thatFill = { ...swfA.thatFill };
             return ret;
@@ -56,7 +56,7 @@ export default class Merger {
             const cpc = Vector2.add(ac1, Vector2.scalarMultiply(Vector2.from(ac1, acc), 1 / t));
             // the calculation from `bc2` is the same.
 
-            const ret = new SegmentWithFill(new QuadraticBezier(ac1, bc2, cpc), swfA.trajectoryID);
+            const ret = new SegmentWithFill(new QuadraticBezier(ac1, bc2, cpc), swfA.trajectoryId);
             ret.thisFill = { ...swfA.thisFill };
             ret.thatFill = { ...swfA.thatFill };
             return ret;
@@ -75,7 +75,7 @@ export default class Merger {
             const cpc1 = Vector2.add(ac1, Vector2.scalarMultiply(Vector2.from(ac1, acc1), 1 / t));
             const cpc2 = Vector2.add(bc2, Vector2.scalarMultiply(Vector2.from(bc2, bcc2), 1 / (1 - t)));
 
-            const ret = new SegmentWithFill(new Bezier(ac1, bc2, cpc1, cpc2), swfA.trajectoryID);
+            const ret = new SegmentWithFill(new Bezier(ac1, bc2, cpc1, cpc2), swfA.trajectoryId);
             ret.thisFill = { ...swfA.thisFill };
             ret.thatFill = { ...swfA.thatFill };
             return ret;

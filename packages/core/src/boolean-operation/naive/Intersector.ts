@@ -13,7 +13,7 @@ export default class Intersector {
             segment =>
                 new ChipSegment({
                     segment,
-                    trajectoryID: chipSegment.trajectoryID
+                    trajectoryId: chipSegment.trajectoryId
                 })
         );
         return chipSegments;

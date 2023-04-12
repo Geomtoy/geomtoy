@@ -1,6 +1,6 @@
 import { DISABLE_STATE_SYMBOL } from "../misc/decor-stated";
 import { BasicSegment } from "../types";
-import TrajectoryID from "./TrajectoryID";
+import TrajectoryId from "./TrajectoryId";
 
 export default class SegmentWithFill {
     thisFill = {
@@ -17,7 +17,7 @@ export default class SegmentWithFill {
         // Record the coincident segment with common trajectory.
         // Then when chaining, they are considered to be on the same trajectory and can be merged if their fill are the same.
         // Note: segments that do not originate from the same origin can be on the same trajectory.
-        public trajectoryID: TrajectoryID
+        public trajectoryId: TrajectoryId
     ) {
         // disable the event handling, it's not necessary.
         segment.mute();
@@ -28,7 +28,7 @@ export default class SegmentWithFill {
     }
 
     superClone() {
-        const ret = new SegmentWithFill(this.segment.clone(), this.trajectoryID);
+        const ret = new SegmentWithFill(this.segment.clone(), this.trajectoryId);
         ret.thisFill = { ...this.thisFill };
         ret.thatFill = { ...this.thatFill };
         return ret;
