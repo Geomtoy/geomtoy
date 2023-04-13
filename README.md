@@ -33,18 +33,27 @@ npm i "@geomtoy/util" -S
 ## Features
 
 ### Core
+- Support basic geometries: `Point`, `Vector`, `Rectangle`, `Circle`, `Ellipse`, `Line`, `Ray`, 
+  `RegularPolygon`, `Triangle`, `LineSegment`, `QuadraticBezier`, `Bezier` and their commonly used methods.
+- Support general geometries: `Polygon`, `Path`, `Compound`. 
+- Support two non-geometric shape: `Image`, `Text`.
+- A microtask based event system.
+- `Intersection` to handle proper intersections and coincidental intersections. [More info](https://examples.geomtoy.com/intersection/index.html).
+- `Transformation` to apply affine transformation to all geometries. [More info](https://examples.geomtoy.com/transformation/index.html). 
+- `Inversion` of `Point`, `Line`, `Circle`. [More info](https://examples.geomtoy.com/inversion/beauty-of-inversion.html). 
+- `BooleanOperation` to perform boolean operations(`selfUnion`, `union`, `intersection`, `difference`,
+  `differenceReverse`, `exclusion`) of general geometries. [More info](https://examples.geomtoy.com/boolean-operation/about.html).
 
-- Supply a collection of commonly used 2D geometry.
-- Support `Intersection` of all basic geometries.
-- Support affine transformation `Transformation` to all the included 2D geometric objects.
-- Support `Inversion` of `Point`, `Line`, `Circle`. 
-
-- Support `BooleanOperation`
 ### View
-
 - Support `<svg>` or `<canvas>` as renderer.
-
-- Support coordinate system setting.
+- Support custom coordinate system.
+- A **Geogebra** like interface.
+- Support interactions like dragging, panning, zooming.
+- Support touch devices.
+- Support a lot of options of `View`.
+- Support `ViewElement`.
+- Support `SubView`.
+- ...
 
 ## Brief architecture
 ![Brief architecture](https://raw.githubusercontent.com/Geomtoy/geomtoy-assets/master/images/architecture.png)
