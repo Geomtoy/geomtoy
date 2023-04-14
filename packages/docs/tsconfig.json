@@ -1,7 +1,0 @@
-{
-    "extends": "../../tsconfig.json",
-    "files": ["./typedoc.js"],
-    "compilerOptions": {
-        "stripInternal": true
-    }
-}
