@@ -285,7 +285,7 @@ export default abstract class EventTarget extends BaseObject {
         this[STATE_IDENTIFIER_SYMBOL] = Utility.now();
     }
 
-    // @internal
+    /** @internal */
     [DISABLE_STATE_SYMBOL] = false;
 
     protected trigger_<T extends EventTarget>(this: T, eso: EventSourceObject<T>) {

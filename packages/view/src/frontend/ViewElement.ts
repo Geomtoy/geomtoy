@@ -58,7 +58,7 @@ export default class ViewElement<T extends Shape = Shape> {
     private _clickStyle = Utility.cloneDeep(DEFAULT_INTERACTIVE_STYLE);
     private _activeStyle = Utility.cloneDeep(DEFAULT_INTERACTIVE_STYLE);
 
-    // @internal
+    /** @internal */
     [VE_EVENT_HANDLERS_SYMBOL]: { [key: string]: ((e: ViewEventObject) => void)[] } = {};
 
     private _shape: T;
@@ -70,9 +70,9 @@ export default class ViewElement<T extends Shape = Shape> {
     // 1. view: null && subView: null - The view element initial status.
     // 2. view: View && subView: null - The view element directly added to a view.
     // 3. view: null && subView: SubView - The view element added to a sub view.
-    // @internal
+    /** @internal */
     [VE_VIEW_SYMBOL]: View | null = null;
-    // @internal
+    /** @internal */
     [VE_SUB_VIEW_SYMBOL]: SubView | null = null;
 
     constructor(

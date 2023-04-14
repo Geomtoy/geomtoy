@@ -18,7 +18,7 @@ import type BaseIntersection from "../intersection/BaseIntersection";
 // #region Common
 
 // prettier-ignore
-/* @internal */
+/** @internal */
 export type ConstructorOverloads<T> =
     T extends {
         new (...args: infer A1): infer R1
@@ -395,7 +395,7 @@ export interface FillDescription {
     fillRule: FillRule;
     segmentWithFills: SegmentWithFill[];
 }
-/* @internal */
+/** @internal */
 export type SweepLineIntersectorResult = {
     intersectionType: "proper" | "coincidental" | "none";
     // first element `null` remove, otherwise update, rest elements add,
@@ -449,7 +449,7 @@ export type EventObjectsFromPairs<T extends EventPair[]> = {
 // #region Graphics
 export type PointAppearance = "circle" | "square" | "cross" | "plus" | "diamond";
 
-/* @internal */
+/** @internal */
 export type ArcEndpointParameterization = {
     point1X: number;
     point1Y: number;
@@ -461,7 +461,7 @@ export type ArcEndpointParameterization = {
     positive: boolean;
     rotation: number;
 };
-/* @internal */
+/** @internal */
 export type ArcCenterParameterization = {
     centerX: number;
     centerY: number;

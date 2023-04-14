@@ -8,7 +8,7 @@ export { SV_VIEW_SYMBOL };
 export default class SubView {
     private _elements: ViewElement[] = [];
 
-    // @internal
+    /** @internal */
     [SV_VIEW_SYMBOL]: View | null = null;
 
     get view() {
