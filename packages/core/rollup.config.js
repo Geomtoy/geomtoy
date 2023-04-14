@@ -44,5 +44,5 @@ export default {
     external(id) {
         return id.indexOf(config.scope) >= 0;
     },
-    plugins: [nodeResolve({ extensions }), babel({ babelHelpers: "bundled", extensions })]
+    plugins: [nodeResolve({ extensions }), babel({ babelHelpers: "bundled", extensions, rootMode: "upward" })]
 };

@@ -34,5 +34,5 @@ export default {
             plugins: [terser()]
         }
     ],
-    plugins: [nodeResolve({ extensions }), babel({ babelHelpers: "bundled", extensions })]
+    plugins: [nodeResolve({ extensions }), babel({ babelHelpers: "bundled", extensions, rootMode: "upward" })]
 };

@@ -18,7 +18,7 @@ module.exports = function (config) {
             "**/*.ts": ["rollup"]
         },
         rollupPreprocessor: {
-            plugins: [nodeResolve({ extensions }), commonjs({ extensions, include: exclude }), babel({ babelHelpers: "bundled", extensions, exclude, plugins: ["istanbul"] })],
+            plugins: [nodeResolve({ extensions }), commonjs({ extensions, include: exclude }), babel({ babelHelpers: "bundled", extensions, exclude, rootMode: "upward", plugins: ["istanbul"] })],
             onwarn(warning, rollupWarn) {
                 if (warning.code === "THIS_IS_UNDEFINED") return;
                 if (warning.code === "CIRCULAR_DEPENDENCY") return;
