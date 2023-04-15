@@ -952,9 +952,10 @@ export default class View {
                     } else {
                         if (this._hoverElement !== null) {
                             this.cursor = "default";
+                            const temp = this._hoverElement;
                             this._hoverElement = null;
                             this._trigger(ViewEventType.Unhover, withElement(veo, null));
-                            this._dispatch([this._hoverElement], ViewElementEventType.Unhover, withElement(veo, null));
+                            this._dispatch([temp], ViewElementEventType.Unhover, withElement(veo, null));
                             this.requestRender();
                         } else {
                             if (this.cursor !== "default") this.cursor = "default";
