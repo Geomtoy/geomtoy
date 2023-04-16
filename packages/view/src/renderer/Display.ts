@@ -48,7 +48,7 @@ export default class Display implements ViewportDescriptor {
 
     /**
      *  * Memo:
-     *  What if the user set `width` or `height` with percentage? - calculate it.
+     *  What if the user set `width` or `height` with percentages? - calculate it.
      */
 
     /**
@@ -156,7 +156,7 @@ export default class Display implements ViewportDescriptor {
         return [...this._globalTransformation] as [number, number, number, number, number, number];
     }
     /**
-     * The dimensions of the renderer's container in the view coordinate system.
+     * The position and dimensions of the renderer's container in the view coordinate system.
      * It takes the units of the view coordinate system.
      */
     get globalViewBox() {
@@ -170,6 +170,7 @@ export default class Display implements ViewportDescriptor {
     }
     /**
      * The total offset of the view coordinate system.
+     * It takes the units of the screen coordinate system.
      */
     get offset() {
         return [this._origin[0] + this._pan[0], this._origin[1] + this._pan[1]] as [number, number];
