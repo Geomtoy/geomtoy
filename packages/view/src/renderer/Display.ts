@@ -4,7 +4,7 @@ import type Renderer from "./Renderer";
 import type { ViewportDescriptor } from "@geomtoy/core";
 import type { DisplaySettings } from "../types";
 
-// 300x150 is the browser default size for both `<canvas>` and `<svg>`
+// 300 x 150 is the browser default size for both `<canvas>` and `<svg>`
 const DEFAULT_CONTAINER_WIDTH = 300;
 const DEFAULT_CONTAINER_HEIGHT = 150;
 
@@ -28,7 +28,6 @@ const DISPLAY_DEFAULT_RANGES = {
     minPan: -Maths.pow(2, 44)
 };
 
-//todo add event to `Display`
 export default class Display implements ViewportDescriptor {
     private _renderer: Renderer;
 
@@ -47,7 +46,14 @@ export default class Display implements ViewportDescriptor {
         Object.assign(this, Utility.cloneDeep(displaySettings));
     }
 
-    //? What if the user set `width` or `height` with percentage? - calculate it.
+    /**
+     *  * Memo:
+     *  What if the user set `width` or `height` with percentage? - calculate it.
+     */
+
+    /**
+     * The width of the display, equal to the width fo the renderer's container in the screen coordinate system.
+     */
     get width() {
         return Number(this._renderer.container.getAttribute("width")) || DEFAULT_CONTAINER_WIDTH;
     }
@@ -56,6 +62,9 @@ export default class Display implements ViewportDescriptor {
         this._renderer.container.setAttribute("width", `${value}`);
         this._refresh();
     }
+    /**
+     * The height of the display, equal to the height of the renderer's container in the screen coordinate system.
+     */
     get height() {
         return Number(this._renderer.container.getAttribute("height")) || DEFAULT_CONTAINER_HEIGHT;
     }
@@ -64,6 +73,9 @@ export default class Display implements ViewportDescriptor {
         this._renderer.container.setAttribute("height", `${value}`);
         this._refresh();
     }
+    /**
+     * The density of the display, can be interpreted as the initial zoom of the view coordinate system in the screen coordinate system.
+     */
     get density() {
         return this._density;
     }
@@ -74,9 +86,8 @@ export default class Display implements ViewportDescriptor {
         this._density = value;
         this._refresh();
     }
-
     /**
-     * The `zoom` is the scale base on `density`.
+     * The zoom is the scale based on the density, the zoom of the view coordinate system in the screen coordinate system.
      */
     get zoom() {
         return this._zoom;
@@ -88,6 +99,10 @@ export default class Display implements ViewportDescriptor {
         this._zoom = Number(value.toPrecision(2));
         this._refresh();
     }
+    /**
+     * The origin of the view coordinate system in the screen coordinate system, can be also interpreted as the initial offset
+     * of the view coordinate system in the screen coordinate system. It takes the units of the screen coordinate system.
+     */
     get origin(): [number, number] {
         return [...this._origin];
     }
@@ -100,7 +115,8 @@ export default class Display implements ViewportDescriptor {
         this._refresh();
     }
     /**
-     * The `pan` is the offset base on `origin`.
+     * The pan is the offset based on the origin, the offset of the view coordinate system in the screen coordinate system.
+     * It takes the units of the screen coordinate system.
      */
     get pan(): [number, number] {
         return [...this._pan];
@@ -113,6 +129,9 @@ export default class Display implements ViewportDescriptor {
         this._pan = [px, py];
         this._refresh();
     }
+    /**
+     * Whether the x-axis of the view coordinate system is positive on the right.
+     */
     get xAxisPositiveOnRight() {
         return this._xAxisPositiveOnRight;
     }
@@ -120,6 +139,9 @@ export default class Display implements ViewportDescriptor {
         this._xAxisPositiveOnRight = value;
         this._refresh();
     }
+    /**
+     * Whether the y-axis of the view coordinate system is positive on the bottom.
+     */
     get yAxisPositiveOnBottom() {
         return this._yAxisPositiveOnBottom;
     }
@@ -127,16 +149,28 @@ export default class Display implements ViewportDescriptor {
         this._yAxisPositiveOnBottom = value;
         this._refresh();
     }
-
+    /**
+     * The transformation of the view coordinate system based on the screen coordinate system.
+     */
     get globalTransformation() {
         return [...this._globalTransformation] as [number, number, number, number, number, number];
     }
+    /**
+     * The dimensions of the renderer's container in the view coordinate system.
+     * It takes the units of the view coordinate system.
+     */
     get globalViewBox() {
         return [...this._globalViewBox] as [number, number, number, number];
     }
+    /**
+     * The total scale of the view coordinate system.
+     */
     get scale() {
         return this._density * this._zoom;
     }
+    /**
+     * The total offset of the view coordinate system.
+     */
     get offset() {
         return [this._origin[0] + this._pan[0], this._origin[1] + this._pan[1]] as [number, number];
     }
