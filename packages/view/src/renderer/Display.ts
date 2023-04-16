@@ -1,4 +1,4 @@
-import { Maths, Assert, Coordinates, Utility, TransformationMatrix } from "@geomtoy/util";
+import { Maths, Assert, Utility, TransformationMatrix } from "@geomtoy/util";
 
 import type Renderer from "./Renderer";
 import type { ViewportDescriptor } from "@geomtoy/core";
@@ -139,13 +139,10 @@ export default class Display implements ViewportDescriptor {
     }
 
     private _refresh() {
-        const { width, height, origin, pan, xAxisPositiveOnRight: xPr, yAxisPositiveOnBottom: yPb } = this;
-
-        const scale = this.scale;
-        const [offsetX, offsetY] = [Coordinates.x(origin) + Coordinates.x(pan), Coordinates.y(origin) + Coordinates.y(pan)];
+        const { width, height, scale, offset, _xAxisPositiveOnRight: xPr, _yAxisPositiveOnBottom: yPb } = this;
 
         let gt = TransformationMatrix.identity();
-        gt = TransformationMatrix.multiply(gt, TransformationMatrix.translate(offsetX, offsetY));
+        gt = TransformationMatrix.multiply(gt, TransformationMatrix.translate(...offset));
         gt = TransformationMatrix.multiply(gt, TransformationMatrix.scale(xPr ? scale : -scale, yPb ? scale : -scale));
 
         this._globalTransformation = gt;
