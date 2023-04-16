@@ -68,6 +68,7 @@ export default abstract class Renderer {
         this.style_.strokeLineCap = strokeLineCap;
     }
     strokeMiterLimit(strokeMiterLimit: number) {
+        Assert.isRealNumber(strokeMiterLimit, "strokeMiterLimit");
         this.style_.strokeMiterLimit = strokeMiterLimit;
     }
 }
