@@ -83,9 +83,9 @@ export default class Text extends Shape {
         this._content = value;
         this.trigger_(new EventSourceObject(this, Text.events.contentChanged));
     }
-    private _setFont(value: Partial<FontConfig>) {
+    private _setFont(value: FontConfig) {
         if (Utility.is(this.font, value)) return;
-        this._font = { ...this._font, ...value };
+        this._font = { ...value };
         this.trigger_(new EventSourceObject(this, Text.events.fontChanged));
     }
     private _setAnchor(value: Anchor) {
@@ -141,10 +141,10 @@ export default class Text extends Shape {
     set content(value) {
         this._setText(value);
     }
-    get font(): FontConfig {
+    get font() {
         return { ...this._font };
     }
-    set font(value: Partial<FontConfig>) {
+    set font(value) {
         this._setFont(value);
     }
     get anchor() {
