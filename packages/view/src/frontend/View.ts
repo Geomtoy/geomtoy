@@ -6,7 +6,7 @@ import { Style, ViewElementEventType, ViewElementType, ViewEventType, type ViewE
 import Lasso from "./Lasso";
 import SubView, { SV_VIEW_SYMBOL } from "./SubView";
 import type ViewElement from "./ViewElement";
-import { VE_EVENT_HANDLERS_SYMBOL, VE_SUB_VIEW_SYMBOL, VE_VIEW_SYMBOL } from "./ViewElement";
+import { VE_EVENT_HANDLERS_SYMBOL, VE_STYLE_SYMBOL, VE_SUB_VIEW_SYMBOL, VE_VIEW_SYMBOL } from "./ViewElement";
 
 function viewEventObject(isTouch: boolean, viewportX: number, viewportY: number, x: number, y: number) {
     return { isTouch, viewportX, viewportY, x, y } as ViewEventObject;
@@ -293,7 +293,7 @@ export default class View {
     private _isPointInElement(element: ViewElement, x: number, y: number) {
         return element.paths.some(pathInfo => {
             const [path, fillRule] = pathInfo;
-            return PointChecker.isPointIn(x, y, path, fillRule, element.style(), this.renderer.display, this._hasTouchDevice);
+            return PointChecker.isPointIn(x, y, path, fillRule, element[VE_STYLE_SYMBOL], this._renderer!.display, this._hasTouchDevice);
         });
     }
     private _addTouch(id: number, offset: [number, number]) {

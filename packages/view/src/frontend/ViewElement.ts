@@ -27,6 +27,7 @@ const DEFAULT_INTERACTIVE_STYLE: InteractiveStyle = {
 export const VE_VIEW_SYMBOL = Symbol("ViewElement.view");
 export const VE_SUB_VIEW_SYMBOL = Symbol("ViewElement.subView");
 export const VE_EVENT_HANDLERS_SYMBOL = Symbol("ViewElement.eventHandlers");
+export const VE_STYLE_SYMBOL = Symbol("ViewElement.style");
 
 export default class ViewElement<T extends Shape = Shape> {
     /**
@@ -60,6 +61,10 @@ export default class ViewElement<T extends Shape = Shape> {
 
     /** @internal */
     [VE_EVENT_HANDLERS_SYMBOL]: { [key: string]: ((e: ViewEventObject) => void)[] } = {};
+    /** @internal */
+    get [VE_STYLE_SYMBOL]() {
+        return this._style;
+    }
 
     private _shape: T;
     paths: PathInfo[] = [];
