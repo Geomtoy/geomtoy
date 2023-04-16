@@ -1,11 +1,6 @@
 import { Type } from "@geomtoy/util";
 import Geometry from "../base/Geometry";
 
-function article(name: string, adj?: string) {
-    const vowels = ["A", "E", "I", "O", "U"];
-    const a = adj !== undefined ? (vowels.includes(adj[0].toUpperCase()) ? `an ${adj}` : `a ${adj}`) : vowels.includes(name[0].toUpperCase()) ? "an" : "a";
-    return `${a} \`${name}\``;
-}
 const alwaysAvailableInstanceMethods = [
     "initialized", // from Geometry
     "degenerate", // from Geometry
@@ -54,7 +49,7 @@ export function validGeometry(constructor: new (...args: any[]) => any) {
             descriptor.value = function (this: Geometry) {
                 if (!this.skipValidation && !this.isValid()) {
                     throw new Error(
-                        `[G]Calling \`${memberName}\` of ${article(name, "invalid")}: \
+                        `[G]Calling \`${memberName}\` of an invalid ${name}: \
                         \n${this}. \
                         \n${geometryInvalidText(this)}`
                     );
@@ -72,7 +67,7 @@ export function validGeometryArguments(target: any, propertyKey: string, descrip
         for (const arg of arguments) {
             if (arg instanceof Geometry && !arg.skipValidation && !arg.isValid()) {
                 throw new Error(
-                    `[G]Calling \`${propertyKey}\` of \`${this.name}\` with ${article(arg.name, "invalid")}: \
+                    `[G]Calling \`${propertyKey}\` of \`${this.name}\` with an invalid ${arg.name}: \
                     \n${arg}. \
                     \n${geometryInvalidText(arg)}`
                 );
