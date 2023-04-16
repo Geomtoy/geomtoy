@@ -2,6 +2,7 @@ import { Geomtoy, Image, ParentShape, SealedShapeArray, SealedShapeObject, Shape
 import { Assert, Maths, TransformationMatrix, Vector2 } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import type Renderer from "../renderer/Renderer";
+import { RENDERER_VIEW_SYMBOL } from "../renderer/Renderer";
 import { Style, ViewElementEventType, ViewElementType, ViewEventType, type ViewEventObject } from "../types";
 import Lasso from "./Lasso";
 import SubView, { SV_VIEW_SYMBOL } from "./SubView";
@@ -51,7 +52,7 @@ export default class View {
     private _maxZoom = VIEW_DEFAULTS.maxZoom;
     private _wheelZoomDeltaRate = VIEW_DEFAULTS.wheelZoomDeltaRate;
 
-    private _renderer!: Renderer;
+    private _renderer: null | Renderer = null;
 
     private _hasTouchDevice: boolean;
     private _touchPointers: { id: number; offset: [number, number] }[] = [];
@@ -73,6 +74,7 @@ export default class View {
     private _panningOffset: [number, number] = [0, 0];
     private _zoomingDistance: number = 0;
 
+    private _eventAttached = false;
     private _resizeObserver: ResizeObserver | null = null;
     private _resizeTimer = 0;
 
@@ -105,7 +107,7 @@ export default class View {
             wheelZoomDeltaRate: number;
             inverseWheelZoom: boolean;
         }>,
-        renderer: Renderer
+        renderer?: Renderer
     ) {
         this.hoverForemost = hoverForemost;
         this.operativeForemost = operativeForemost;
@@ -115,17 +117,18 @@ export default class View {
         this.dragThrottleDistance = dragThrottleDistance;
         this.wheelZoomDeltaRate = wheelZoomDeltaRate;
         this.inverseWheelZoom = inverseWheelZoom;
-        this.renderer = renderer;
 
+        if (renderer !== undefined) {
+            if (renderer[RENDERER_VIEW_SYMBOL] !== null) {
+                throw new Error("[G]A other view is using this renderer, try to initialize the view without passing the renderer parameter and call `use` to use this renderer compulsorily.");
+            }
+            renderer[RENDERER_VIEW_SYMBOL] = this;
+
+            this._renderer = renderer;
+        }
         // request render on every tick of Geomtoy
         Geomtoy.allTick(this._geomtoyRequestRender);
         this._hasTouchDevice = window.matchMedia("(any-pointer: coarse)").matches || "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    }
-
-    dispose() {
-        Geomtoy.allTick(this._geomtoyRequestRender, true);
-        this.stopResponsive();
-        this.stopInteractive();
     }
 
     hoverForemost: boolean;
@@ -159,7 +162,6 @@ export default class View {
      *     Click on another inactive ac-element will activate the another ac-element and keep current activeElements.
      *     Click on a blank area will deactivate all activeElements.
      */
-    //todo
     activationMode: "numerous" | "numerousAlt" | "continuous" | "continuousAlt" = "numerous";
     modifierKey: "Alt" | "Shift" | "Control" = "Shift";
     // todo
@@ -196,12 +198,6 @@ export default class View {
         Assert.condition(value !== 1, "[G]The `wheelZoomDeltaRate` can not be 1.");
         this._wheelZoomDeltaRate = value;
     }
-    get renderer() {
-        return this._renderer;
-    }
-    set renderer(value) {
-        this._renderer = value;
-    }
     get elements() {
         return [...this._elements];
     }
@@ -217,6 +213,9 @@ export default class View {
         this.addSubView(...value);
     }
 
+    get renderer() {
+        return this._renderer;
+    }
     get activeElements() {
         return [...this._activeElements];
     }
@@ -240,11 +239,27 @@ export default class View {
     }
 
     use(renderer: Renderer, responsiveCallback: (width: number, height: number) => void) {
+        const interactive = this._eventAttached;
+        const responsive = this._resizeObserver !== null;
+
         this.stopInteractive();
         this.stopResponsive();
-        this.renderer = renderer;
-        this.startInteractive();
-        this.startResponsive(responsiveCallback);
+        if (this._renderer !== null) {
+            this._renderer.clear();
+            this._renderer[RENDERER_VIEW_SYMBOL] = null;
+        }
+
+        if (renderer[RENDERER_VIEW_SYMBOL] !== null) {
+            renderer[RENDERER_VIEW_SYMBOL]!.stopInteractive();
+            renderer[RENDERER_VIEW_SYMBOL]!.stopResponsive();
+            renderer[RENDERER_VIEW_SYMBOL]!._renderer = null;
+        }
+        renderer[RENDERER_VIEW_SYMBOL] = this;
+
+        this._renderer = renderer;
+        interactive && this.startInteractive();
+        responsive && this.startResponsive(responsiveCallback);
+        this.requestRender();
     }
 
     suspendRefreshRenderables = false;
@@ -376,10 +391,10 @@ export default class View {
     }
 
     private _getAntiOffset(offset: [x: number, y: number]) {
-        return TransformationMatrix.antitransformCoordinates(this.renderer.display.globalTransformation, offset);
+        return TransformationMatrix.antitransformCoordinates(this._renderer!.display.globalTransformation, offset);
     }
     private _getOffset(antiOffset: [x: number, y: number]) {
-        return TransformationMatrix.transformCoordinates(this.renderer.display.globalTransformation, antiOffset);
+        return TransformationMatrix.transformCoordinates(this._renderer!.display.globalTransformation, antiOffset);
     }
 
     private readonly _pointerEnterHandler = function (this: View, e: PointerEvent) {
@@ -872,7 +887,7 @@ export default class View {
 
             if (isMouse) {
                 if (this._prepareDragging) {
-                    const scale = this.renderer.display.scale;
+                    const scale = this._renderer!.display.scale;
                     const dragDistance = Maths.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
                     if (dragDistance < this.dragThrottleDistance) {
                         return;
@@ -910,7 +925,7 @@ export default class View {
                     this.cursor = "grab";
                     const [deltaX, deltaY] = [pointerOffset[0] - this._panningOffset[0], pointerOffset[1] - this._panningOffset[1]];
                     this._panningOffset = pointerOffset;
-                    this.renderer.display.pan = [this.renderer.display.pan[0] + deltaX, this.renderer.display.pan[1] + deltaY];
+                    this._renderer!.display.pan = [this._renderer!.display.pan[0] + deltaX, this._renderer!.display.pan[1] + deltaY];
                     this._trigger(ViewEventType.Panning, veo);
                     this.requestRender();
                 } else {
@@ -966,7 +981,7 @@ export default class View {
 
             if (isTouch) {
                 if (this._prepareDragging) {
-                    const scale = this.renderer.display.density * this.renderer.display.zoom;
+                    const scale = this._renderer!.display.scale;
                     const dragDistance = Maths.hypot(atOffset[0] - this._draggingOffset[0], atOffset[1] - this._draggingOffset[1]) * scale;
                     if (dragDistance < this.dragThrottleDistance) {
                         return;
@@ -1016,7 +1031,7 @@ export default class View {
                     this._panningOffset = centerOffset;
                     this._zoomingDistance = distance;
 
-                    const display = this.renderer.display;
+                    const display = this._renderer!.display;
                     let zoom = display.zoom * deltaZoom;
                     zoom = Maths.clamp(zoom, this.minZoom, this.maxZoom);
 
@@ -1044,7 +1059,7 @@ export default class View {
             this._trigger(ViewEventType.PanStart, veo);
 
             const deltaY = e.deltaY;
-            const display = this.renderer.display;
+            const display = this._renderer!.display;
             let zoom: number;
             if (this.inverseWheelZoom) {
                 zoom = deltaY < 0 ? display.zoom / this.wheelZoomDeltaRate : deltaY > 0 ? display.zoom * this.wheelZoomDeltaRate : display.zoom;
@@ -1066,24 +1081,30 @@ export default class View {
     }.bind(this);
 
     startInteractive() {
-        this.renderer.container.addEventListener("pointerdown", this._pointerDownHandler as EventListener);
-        this.renderer.container.addEventListener("pointerup", this._pointerUpHandler as EventListener);
-        this.renderer.container.addEventListener("pointermove", this._pointerMoveHandler as EventListener);
-        this.renderer.container.addEventListener("pointerenter", this._pointerEnterHandler as EventListener);
-        this.renderer.container.addEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
-        this.renderer.container.addEventListener("pointercancel", this._pointerCancelHandler as EventListener);
-        this.renderer.container.addEventListener("wheel", this._wheelHandler as EventListener);
+        if (this._renderer === null) return;
+        this._renderer.container.addEventListener("pointerdown", this._pointerDownHandler as EventListener);
+        this._renderer.container.addEventListener("pointerup", this._pointerUpHandler as EventListener);
+        this._renderer.container.addEventListener("pointermove", this._pointerMoveHandler as EventListener);
+        this._renderer.container.addEventListener("pointerenter", this._pointerEnterHandler as EventListener);
+        this._renderer.container.addEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
+        this._renderer.container.addEventListener("pointercancel", this._pointerCancelHandler as EventListener);
+        this._renderer.container.addEventListener("wheel", this._wheelHandler as EventListener);
+        this._eventAttached = true;
     }
     stopInteractive() {
-        this.renderer.container.removeEventListener("pointerdown", this._pointerDownHandler as EventListener);
-        this.renderer.container.removeEventListener("pointerup", this._pointerUpHandler as EventListener);
-        this.renderer.container.removeEventListener("pointermove", this._pointerMoveHandler as EventListener);
-        this.renderer.container.removeEventListener("pointerenter", this._pointerEnterHandler as EventListener);
-        this.renderer.container.removeEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
-        this.renderer.container.removeEventListener("pointercancel", this._pointerCancelHandler as EventListener);
-        this.renderer.container.removeEventListener("wheel", this._wheelHandler as EventListener);
+        if (this._renderer === null) return;
+        this._renderer.container.removeEventListener("pointerdown", this._pointerDownHandler as EventListener);
+        this._renderer.container.removeEventListener("pointerup", this._pointerUpHandler as EventListener);
+        this._renderer.container.removeEventListener("pointermove", this._pointerMoveHandler as EventListener);
+        this._renderer.container.removeEventListener("pointerenter", this._pointerEnterHandler as EventListener);
+        this._renderer.container.removeEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
+        this._renderer.container.removeEventListener("pointercancel", this._pointerCancelHandler as EventListener);
+        this._renderer.container.removeEventListener("wheel", this._wheelHandler as EventListener);
+        this._eventAttached = false;
     }
     startResponsive(callback: (width: number, height: number) => void) {
+        if (this._renderer === null) return;
+        const display = this._renderer.display;
         // immediately call by `ResizeObserver` initialization in the microtask queue
         let immediatelyFirstCalled = false;
         if (this._resizeObserver !== null) return;
@@ -1092,23 +1113,23 @@ export default class View {
                 const w = Maths.floor(entry.contentRect.width);
                 const h = Maths.floor(entry.contentRect.height);
                 if (!immediatelyFirstCalled) {
-                    this.renderer.display.width = w;
-                    this.renderer.display.height = h;
+                    display.width = w;
+                    display.height = h;
                     immediatelyFirstCalled = true;
                     callback(w, h);
                     this.requestRender();
                 } else {
                     window.clearTimeout(this._resizeTimer);
                     this._resizeTimer = window.setTimeout(() => {
-                        this.renderer.display.width = w;
-                        this.renderer.display.height = h;
+                        display.width = w;
+                        display.height = h;
                         callback(w, h);
                         this.requestRender();
                     }, VIEW_DEFAULTS.resizeObserverDebouncingTime);
                 }
             }
         });
-        ob.observe(this.renderer.container.parentElement!);
+        ob.observe(this._renderer.container.parentElement!);
         this._resizeObserver = ob;
     }
     stopResponsive() {
@@ -1119,8 +1140,9 @@ export default class View {
     }
 
     zoom(zoom: number, keepViewCenter = true) {
+        if (this._renderer === null) return;
         if (keepViewCenter) {
-            const display = this.renderer.display;
+            const display = this._renderer.display;
             const box = display.globalViewBox;
             const [atCx, atCy] = [box[0] + box[2] / 2, box[1] + box[3] / 2];
             const [cx, cy] = [display.width / 2, display.height / 2];
@@ -1131,12 +1153,13 @@ export default class View {
             const [zoomOffsetX, zoomOffsetY] = [cx - scaledOffsetX, cy - scaledOffsetY];
             display.pan = [display.pan[0] + zoomOffsetX, display.pan[1] + zoomOffsetY];
         } else {
-            this.renderer.display.zoom = zoom;
+            this._renderer.display.zoom = zoom;
         }
         this.requestRender();
     }
     pan(panX: number, panY: number) {
-        this.renderer.display.pan = [this.renderer.display.pan[0] + panX, this.renderer.display.pan[1] + panY];
+        if (this._renderer === null) return;
+        this._renderer.display.pan = [panX, panY];
         this.requestRender();
     }
 
@@ -1338,7 +1361,8 @@ export default class View {
     }
 
     private _renderLasso() {
-        const renderer = this.renderer;
+        const renderer = this._renderer;
+        if (renderer === null) return;
         renderer.paintOrder(VIEW_DEFAULTS.lassoStyle.paintOrder);
         renderer.noFill(VIEW_DEFAULTS.lassoStyle.noFill);
         renderer.fill(VIEW_DEFAULTS.lassoStyle.fill);
@@ -1370,8 +1394,8 @@ export default class View {
     }.bind(this);
 
     private _renderFunc() {
-        const renderer = this.renderer;
-
+        const renderer = this._renderer;
+        if (renderer === null) return;
         renderer.clear();
 
         const renderList = sortToRender(

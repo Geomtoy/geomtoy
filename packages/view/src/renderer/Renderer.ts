@@ -6,9 +6,13 @@ import Display from "./Display";
 import ImageSourceManager from "./ImageSourceManager";
 import Interface from "./Interface";
 
-const DATA_KEY_RENDERER_INITIALIZED = "data-renderer-initialized";
+export const RENDERER_VIEW_SYMBOL = Symbol("Renderer.view");
+const DATA_RENDERER_INITIALIZED = "data-renderer-initialized";
 
 export default abstract class Renderer {
+    /** @internal  */
+    [RENDERER_VIEW_SYMBOL]: null | View = null;
+
     protected style_: Partial<Style> = {};
 
     abstract get container(): ContainerElement;
@@ -18,10 +22,10 @@ export default abstract class Renderer {
     abstract get id(): string;
 
     protected manageRendererInitialized_() {
-        if (this.container.getAttribute(DATA_KEY_RENDERER_INITIALIZED) !== null) {
+        if (this.container.getAttribute(DATA_RENDERER_INITIALIZED) !== null) {
             throw new Error("[G]A renderer has been initialized on this element.");
         }
-        this.container.setAttribute(DATA_KEY_RENDERER_INITIALIZED, "");
+        this.container.setAttribute(DATA_RENDERER_INITIALIZED, "");
     }
 
     abstract clear(): void;
