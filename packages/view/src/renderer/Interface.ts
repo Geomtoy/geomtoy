@@ -183,8 +183,7 @@ export default abstract class Interface implements InterfaceSettings {
 
         const { labelFontSize, labelXOffset, labelYOffset } = INTERFACE_INTERNAL_DEFAULTS;
         const { _xEt: xEt, _xEb: xEb, _yEl: yEl, _yEr: yEr, _tOx: tOx, _tOy: tOy, _tOxRem: tOxRem, _tOyRem: tOyRem, _gridSize: gridSize } = this;
-        const { density, zoom, width: w, height: h, xAxisPositiveOnRight: xPr, yAxisPositiveOnBottom: yPb } = this.renderer.display;
-        const scale = density * zoom;
+        const { scale, width: w, height: h, xAxisPositiveOnRight: xPr, yAxisPositiveOnBottom: yPb } = this.renderer.display;
 
         const [startXPosition, startYPosition] = [tOxRem, tOyRem];
         const [startXValue, startYValue] = [this._exactValue(xPr ? (tOxRem - tOx) / scale : (tOx - tOxRem) / scale), this._exactValue(yPb ? (tOyRem - tOy) / scale : (tOy - tOyRem) / scale)];
