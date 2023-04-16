@@ -137,6 +137,9 @@ export default class Display implements ViewportDescriptor {
     get scale() {
         return this._density * this._zoom;
     }
+    get offset() {
+        return [this._origin[0] + this._pan[0], this._origin[1] + this._pan[1]] as [number, number];
+    }
 
     private _refresh() {
         const { width, height, scale, offset, _xAxisPositiveOnRight: xPr, _yAxisPositiveOnBottom: yPb } = this;
