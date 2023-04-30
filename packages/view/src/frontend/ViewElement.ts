@@ -74,7 +74,7 @@ export default class ViewElement<T extends Shape = Shape> {
     // There status:
     // 1. view: null && subView: null - The view element initial status.
     // 2. view: View && subView: null - The view element directly added to a view.
-    // 3. view: null && subView: SubView - The view element added to a sub view.
+    // 3. view: null && subView: SubView - The view element added to a sub-view.
     /** @internal */
     [VE_VIEW_SYMBOL]: View | null = null;
     /** @internal */
