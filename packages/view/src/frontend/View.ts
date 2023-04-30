@@ -74,7 +74,6 @@ export default class View {
     private _panningOffset: [number, number] = [0, 0];
     private _zoomingDistance: number = 0;
 
-    private _eventAttached = false;
     private _resizeObserver: ResizeObserver | null = null;
     private _resizeTimer = 0;
 
@@ -106,7 +105,7 @@ export default class View {
             maxZoom: number;
             wheelZoomDeltaRate: number;
             inverseWheelZoom: boolean;
-        }>,
+        }> = {},
         renderer?: Renderer
     ) {
         this.hoverForemost = hoverForemost;
@@ -238,12 +237,14 @@ export default class View {
         return this._renderables[this._renderables.length - 1]?.zIndex ?? 0;
     }
 
-    use(renderer: Renderer, responsiveCallback: (width: number, height: number) => void) {
-        const interactive = this._eventAttached;
-        const responsive = this._resizeObserver !== null;
+    use(renderer: Renderer) {
+        if (renderer === this._renderer) return;
+        const interactive = this._willInteractive;
+        const responsive = this._willResponsive;
 
         this.stopInteractive();
         this.stopResponsive();
+
         if (this._renderer !== null) {
             this._renderer.clear();
             this._renderer[RENDERER_VIEW_SYMBOL] = null;
@@ -258,7 +259,7 @@ export default class View {
 
         this._renderer = renderer;
         interactive && this.startInteractive();
-        responsive && this.startResponsive(responsiveCallback);
+        responsive && this.startResponsive(this._responsiveCallback);
         this.requestRender();
     }
 
@@ -1080,8 +1081,12 @@ export default class View {
         });
     }.bind(this);
 
+    private _willInteractive = false;
     startInteractive() {
+        if (this._willInteractive) return;
+        this._willInteractive = true;
         if (this._renderer === null) return;
+
         this._renderer.container.addEventListener("pointerdown", this._pointerDownHandler as EventListener);
         this._renderer.container.addEventListener("pointerup", this._pointerUpHandler as EventListener);
         this._renderer.container.addEventListener("pointermove", this._pointerMoveHandler as EventListener);
@@ -1089,10 +1094,12 @@ export default class View {
         this._renderer.container.addEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
         this._renderer.container.addEventListener("pointercancel", this._pointerCancelHandler as EventListener);
         this._renderer.container.addEventListener("wheel", this._wheelHandler as EventListener);
-        this._eventAttached = true;
     }
     stopInteractive() {
+        if (!this._willInteractive) return;
+        this._willInteractive = false;
         if (this._renderer === null) return;
+
         this._renderer.container.removeEventListener("pointerdown", this._pointerDownHandler as EventListener);
         this._renderer.container.removeEventListener("pointerup", this._pointerUpHandler as EventListener);
         this._renderer.container.removeEventListener("pointermove", this._pointerMoveHandler as EventListener);
@@ -1100,10 +1107,20 @@ export default class View {
         this._renderer.container.removeEventListener("pointerleave", this._pointerLeaveHandler as EventListener);
         this._renderer.container.removeEventListener("pointercancel", this._pointerCancelHandler as EventListener);
         this._renderer.container.removeEventListener("wheel", this._wheelHandler as EventListener);
-        this._eventAttached = false;
     }
-    startResponsive(callback: (width: number, height: number) => void) {
+
+    static centerOrigin = function (this: View, width: number, height: number) {
+        this._renderer!.display.origin = [width / 2, height / 2];
+    };
+
+    private _responsiveCallback = (width: number, height: number) => {};
+    private _willResponsive = false;
+    startResponsive(callback?: (width: number, height: number) => void) {
+        if (this._willResponsive) return;
+        this._willResponsive = true;
+        if (callback !== undefined) this._responsiveCallback = callback;
         if (this._renderer === null) return;
+
         const display = this._renderer.display;
         // immediately call by `ResizeObserver` initialization in the microtask queue
         let immediatelyFirstCalled = false;
@@ -1116,14 +1133,14 @@ export default class View {
                     display.width = w;
                     display.height = h;
                     immediatelyFirstCalled = true;
-                    callback(w, h);
+                    this._responsiveCallback(w, h);
                     this.requestRender();
                 } else {
                     window.clearTimeout(this._resizeTimer);
                     this._resizeTimer = window.setTimeout(() => {
                         display.width = w;
                         display.height = h;
-                        callback(w, h);
+                        this._responsiveCallback(w, h);
                         this.requestRender();
                     }, VIEW_DEFAULTS.resizeObserverDebouncingTime);
                 }
@@ -1133,6 +1150,10 @@ export default class View {
         this._resizeObserver = ob;
     }
     stopResponsive() {
+        if (!this._willResponsive) return;
+        this._willResponsive = false;
+        if (this._renderer === null) return;
+
         if (this._resizeObserver !== null) {
             this._resizeObserver.disconnect();
             this._resizeObserver = null;
