@@ -45,7 +45,7 @@ npm i "@geomtoy/util" -S
   - Support predicates: `equal`, `separate`, `intersect`, `strike`, `contact`, `cross`, `touch`, `block`, `blockedBy`, `connect`, `coincide`.
 - Application of affine transformations returning the transformed geometry. [More info](https://examples.geomtoy.com/transformation/index.html).  
 - Inversion of points, lines, and circles. [More info](https://examples.geomtoy.com/inversion/beauty-of-inversion.html).
-- Full boolean operations respecting fill rules. [More info](https://examples.geomtoy.com/boolean-operation/about.html).
+- Full boolean operations respecting fill rules and area computation of complex general geometries. [More info](https://examples.geomtoy.com/boolean-operation/about.html).
   - Support boolean operations: `selfUnion`, `union`, `intersection`, `difference`, `differenceReverse`, `exclusion`.
 
 ### @geomtoy/view
@@ -53,7 +53,7 @@ npm i "@geomtoy/util" -S
   - Support dragging, panning, and zooming.
   - Support two kind, four activation modes.
   - Support three type view elements.
-  - Support sub views.
+  - Support sub-views.
   - ...
 - Microtask based rendering without user attention.
 - Support both SVG and Canvas as renderers.
