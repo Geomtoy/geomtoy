@@ -279,6 +279,15 @@ export default class View {
         responsive && this.startResponsive(this._responsiveCallback);
         this.requestRender();
     }
+    halt() {
+        if (this._renderer === null) return;
+
+        this._renderer.clear();
+        this._renderer[RENDERER_VIEW_SYMBOL] = null;
+        this.stopInteractive();
+        this.stopResponsive();
+        this._renderer = null;
+    }
 
     suspendRefreshRenderables = false;
 
