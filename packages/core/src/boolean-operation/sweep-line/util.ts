@@ -188,12 +188,13 @@ function arcDerivativeValueAtEnd(arc: Arc, isInit: boolean, n: 1 | 2 | 3) {
     const sinPhi = Maths.sin(phi);
     const sinA = Maths.sin(isInit ? sa : ea);
     const cosA = Maths.cos(isInit ? sa : ea);
+
     const dx1V = -rx * sinA * cosPhi - ry * cosA * sinPhi;
     const dy1V = -rx * sinA * sinPhi + ry * cosA * cosPhi;
     if (n == 1) return arc.positive ? firstDerivativeValue(dx1V, dy1V) : firstDerivativeValue(-dx1V, -dy1V);
     const dx2V = -rx * cosA * cosPhi + ry * sinA * sinPhi;
     const dy2V = -rx * cosA * sinPhi - ry * sinA * cosPhi;
-    if (n == 2) return arc.positive ? secondDerivativeValue(dx1V, dx2V, dy1V, dy2V) : secondDerivativeValue(-dx1V, -dx2V, -dy1V, -dy2V);
+    if (n == 2) return secondDerivativeValue(dx1V, dx2V, dy1V, dy2V);
     const dx3V = rx * sinA * cosPhi + ry * cosA * sinPhi;
     const dy3V = rx * sinA * sinPhi - ry * cosA * cosPhi;
     if (n == 3) return arc.positive ? thirdDerivativeValue(dx1V, dx2V, dx3V, dy1V, dy2V, dy3V) : thirdDerivativeValue(-dx1V, -dx2V, -dx3V, -dy1V, -dy2V, -dy3V);
