@@ -74,7 +74,7 @@ export default class Display implements ViewportDescriptor {
         this._refresh();
     }
     /**
-     * The density of the display, can be interpreted as the initial zoom of the view coordinate system in the screen coordinate system.
+     * The density of the display, can be interpreted as the initial scale of the view coordinate system in the screen coordinate system.
      */
     get density() {
         return this._density;
