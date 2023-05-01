@@ -230,11 +230,28 @@ export default class View {
     get hoverElement() {
         return this._hoverElement;
     }
-    get maxZIndex() {
-        return this._renderables[0]?.zIndex ?? 0;
+
+    maxZIndex(type: ViewElementType) {
+        const l = this._renderables.length;
+        let found: ViewElement | undefined;
+        for (let i = 0; i <= l - 1; i++) {
+            if (this._renderables[i].type === type) {
+                found = this._renderables[i];
+                break;
+            }
+        }
+        return found?.zIndex ?? 0;
     }
-    get minZIndex() {
-        return this._renderables[this._renderables.length - 1]?.zIndex ?? 0;
+    minZIndex(type: ViewElementType) {
+        const l = this._renderables.length;
+        let found: ViewElement | undefined;
+        for (let i = l - 1; i >= 0; i--) {
+            if (this._renderables[i].type === type) {
+                found = this._renderables[i];
+                break;
+            }
+        }
+        return found?.zIndex ?? 0;
     }
 
     use(renderer: Renderer) {
@@ -1328,16 +1345,18 @@ export default class View {
     forward(element: ViewElement) {
         const index = this._renderables.indexOf(element);
         if (index !== -1 && index !== 0) {
-            this._renderables[index].zIndex = this._renderables[index - 1].zIndex + 1;
-            this.sortRenderables();
-            this.requestRender();
+            if (this._renderables[index].type === this._renderables[index - 1].type) {
+                this._renderables[index].zIndex = this._renderables[index - 1].zIndex + 1;
+                this.sortRenderables();
+                this.requestRender();
+            }
         }
         return this;
     }
     foremost(element: ViewElement) {
         const index = this._renderables.indexOf(element);
         if (index !== -1 && index !== 0) {
-            this._renderables[index].zIndex = this.maxZIndex + 1;
+            this._renderables[index].zIndex = this.maxZIndex(element.type) + 1;
             this.sortRenderables();
             this.requestRender();
         }
@@ -1346,16 +1365,18 @@ export default class View {
     backward(element: ViewElement) {
         const index = this._renderables.indexOf(element);
         if (index !== -1 && index !== this._renderables.length - 1) {
-            this._renderables[index].zIndex = this.elements[index + 1].zIndex - 1;
-            this.sortRenderables();
-            this.requestRender();
+            if (this._renderables[index].type === this._renderables[index + 1].type) {
+                this._renderables[index].zIndex = this.elements[index + 1].zIndex - 1;
+                this.sortRenderables();
+                this.requestRender();
+            }
         }
         return this;
     }
     backmost(element: ViewElement) {
         const index = this._renderables.indexOf(element);
         if (index !== -1 && index !== this._renderables.length - 1) {
-            this._renderables[index].zIndex = this.minZIndex - 1;
+            this._renderables[index].zIndex = this.minZIndex(element.type) - 1;
             this.sortRenderables();
             this.requestRender();
         }
