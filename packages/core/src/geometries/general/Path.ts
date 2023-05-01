@@ -665,8 +665,7 @@ export default class Path extends Geometry {
     reverse() {
         const copy = commandCopy(this._commands);
         copy.reverse();
-        this._commands = copy;
-        this.trigger_(new EventSourceObject(this, Path.events.commandsReset));
+        this._setCommands(copy);
         return this;
     }
 

@@ -518,8 +518,7 @@ export default class Polygon extends Geometry {
     reverse() {
         const copy = vertexCopy(this._vertices);
         copy.reverse();
-        this._vertices = copy;
-        this.trigger_(new EventSourceObject(this, Polygon.events.verticesReset));
+        this._setVertices(copy);
         return this;
     }
 
