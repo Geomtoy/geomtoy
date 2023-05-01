@@ -180,14 +180,16 @@ export default class Point extends Geometry {
     /**
      * Get the distance between point `this` and point `point`.
      */
-    getDistanceBetweenPoint(point: Point): number {
-        return Vector2.magnitude(Vector2.from(this.coordinates, point.coordinates));
+    getDistanceBetweenPoint(point: [number, number] | Point): number {
+        const c = getCoordinates(point, "point");
+        return Vector2.magnitude(Vector2.from(this.coordinates, c));
     }
     /**
      * Get the distance square between point `this` and point `point`.
      */
-    getSquaredDistanceBetweenPoint(point: Point): number {
-        return Vector2.squaredMagnitude(Vector2.from(this.coordinates, point.coordinates));
+    getSquaredDistanceBetweenPoint(point: [number, number] | Point): number {
+        const c = getCoordinates(point, "point");
+        return Vector2.squaredMagnitude(Vector2.from(this.coordinates, c));
     }
     /**
      * Get the distance between point `this` and line `line`.
