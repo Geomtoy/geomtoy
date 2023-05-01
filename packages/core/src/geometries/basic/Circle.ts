@@ -6,7 +6,7 @@ import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import Inversion from "../../inversion";
 import { validGeometry } from "../../misc/decor-geometry";
-import { stated, statedWithBoolean } from "../../misc/decor-stated";
+import { statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
 import type { ClosedGeometry, PathCommand, ViewportDescriptor, WindingDirection } from "../../types";
@@ -131,6 +131,24 @@ export default class Circle extends Geometry implements ClosedGeometry {
         const cr = getCoordinates(radiusControlPoint, "radiusControlPoint");
         const r = Vector2.magnitude(Vector2.from(cc, cr));
         return new Circle(cc, r);
+    }
+    static fromTwoPointsAndRadius(point1: [number, number] | Point, point2: [number, number] | Point, radius: number) {
+        const c1 = getCoordinates(point1, "point1");
+        const c2 = getCoordinates(point2, "point2");
+        Assert.isNonNegativeNumber(radius, "radius");
+        const mc = [(c1[0] + c2[0]) / 2, (c1[1] + c2[1]) / 2] as [number, number];
+        if (Coordinates.equalTo(c1, c2, eps.epsilon)) {
+            return [null, null] as [null, null];
+        }
+        const v = Vector2.from(c1, c2);
+        const hd = Vector2.magnitude(v) / 2;
+        if (!Float.greaterThan(radius, hd, eps.epsilon)) {
+            return [null, null] as [null, null];
+        }
+        const cd = Maths.sqrt(radius ** 2 - hd ** 2);
+        const vc1 = Vector2.scalarMultiply(Vector2.normalize(Vector2.rotate(v, Maths.PI / 2)), cd);
+        const vc2 = Vector2.scalarMultiply(Vector2.normalize(Vector2.rotate(v, -Maths.PI / 2)), cd);
+        return [new Circle(Vector2.add(mc, vc1), radius), new Circle(Vector2.add(mc, vc2), radius)] as [Circle, Circle];
     }
     static fromThreePoints(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point) {
         const [x1, y1] = getCoordinates(point1, "point1");
