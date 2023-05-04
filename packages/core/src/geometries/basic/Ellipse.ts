@@ -30,7 +30,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
 
     constructor(centerX: number, centerY: number, radiusX: number, radiusY: number, rotation?: number);
     constructor(centerCoordinates: [number, number], radiusX: number, radiusY: number, rotation?: number);
-    constructor(centerPoint: Point, radiusX: number, radiusY: number, rotation?: number);
+    constructor(center: Point, radiusX: number, radiusY: number, rotation?: number);
     constructor();
     constructor(a0?: any, a1?: any, a2?: any, a3?: any, a4?: any) {
         super();
@@ -41,7 +41,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
             Object.assign(this, { centerCoordinates: a0, radiusX: a1, radiusY: a2, rotation: a3 ?? 0 });
         }
         if (a0 instanceof Point) {
-            Object.assign(this, { centerPoint: a0, radiusX: a1, radiusY: a2, rotation: a3 ?? 0 });
+            Object.assign(this, { center: a0, radiusX: a1, radiusY: a2, rotation: a3 ?? 0 });
         }
         this.initState_();
     }
@@ -102,10 +102,10 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         this._setCenterX(Coordinates.x(value));
         this._setCenterY(Coordinates.y(value));
     }
-    get centerPoint() {
+    get center() {
         return new Point(this._centerX, this._centerY);
     }
-    set centerPoint(value) {
+    set center(value) {
         this._setCenterX(value.x);
         this._setCenterY(value.y);
     }
@@ -302,24 +302,24 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     }
 
     /**
-     * Determine a ellipse from center point `centerPoint` and two endpoints `endpoint1` and `endpoint2` of conjugate diameters.
+     * Determine a ellipse from center `center` and two endpoints `endpoint1` and `endpoint2` of conjugate diameters.
      * @see https://en.wikipedia.org/wiki/Rytz%27s_construction
-     * @param centerPoint
+     * @param center
      * @param endpoint1
      * @param endpoint2
      */
-    static fromCenterPointAndTwoConjugateDiametersEndPoints(centerPoint: [number, number] | Point, endpoint1: [number, number] | Point, endpoint2: [number, number] | Point) {
-        const cc = getCoordinates(centerPoint, "centerPoint");
+    static fromCenterAndConjugateDiametersEndPoints(center: [number, number] | Point, endpoint1: [number, number] | Point, endpoint2: [number, number] | Point) {
+        const cc = getCoordinates(center, "center");
         const c1 = getCoordinates(endpoint1, "endpoint1");
         const c2 = getCoordinates(endpoint2, "endpoint2");
         if (Coordinates.equalTo(cc, c1, eps.epsilon) || Coordinates.equalTo(cc, c2, eps.epsilon) || Coordinates.equalTo(c1, c2, eps.epsilon)) {
-            console.warn("[G]The `centerPoint`, `endpoint1` and `endpoint2` can not be the same to each other, `null` will be returned");
+            console.warn("[G]The `center`, `endpoint1` and `endpoint2` can not be the same to each other, `null` will be returned");
             return null;
         }
         const v01 = Vector2.from(cc, c1);
         const v02 = Vector2.from(cc, c2);
         if (Float.equalTo(Vector2.cross(v01, v02), 0, eps.vectorEpsilon)) {
-            console.warn("[G]The `centerPoint`, `endpoint1` and `endpoint2` can not be collinear, `null` will be returned");
+            console.warn("[G]The `center`, `endpoint1` and `endpoint2` can not be collinear, `null` will be returned");
             return null;
         }
         const vh = Vector2.subtract(Vector2.rotate(v01, Maths.PI / 2), v02);
@@ -380,7 +380,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const fn = this.getParametricEquation();
 
         if (cx === x && cy === y && rx === ry) {
-            return [new Point(fn(0)), rx] as [point: Point, distance: number]; // circle and at centerPoint
+            return [new Point(fn(0)), rx] as [point: Point, distance: number]; // circle and at center
         }
         let tPoly = [
             ry * (sinPhi * (cx - x) - cosPhi * (cy - y)),
@@ -420,7 +420,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     getArcBetweenAngles(startAngle: number, endAngle: number, positive = true): null | Arc {
         const sa = Angle.simplify(startAngle);
         const ea = Angle.simplify(endAngle);
-        return Arc.fromCenterPointAndStartEndAnglesEtc(this.centerCoordinates, this.radiusX, this.radiusY, sa, ea, positive, this.rotation);
+        return Arc.fromCenterAndStartEndAnglesEtc(this.centerCoordinates, this.radiusX, this.radiusY, sa, ea, positive, this.rotation);
     }
 
     //https://www.coder.work/article/1220553

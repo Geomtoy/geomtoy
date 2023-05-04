@@ -70,7 +70,7 @@ function quickArcY(event: SweepEvent, coordinates: [number, number]) {
     const [x] = coordinates;
     const arc = event.mono.segment as Arc;
     const { radiusX: rx, radiusY: ry, rotation: phi, positive } = arc;
-    const [cx, cy] = arc.getCenterPoint().coordinates;
+    const [cx, cy] = arc.getCenter().coordinates;
     const [sa, ea] = arc.getStartEndAngles();
     const cosPhi = Maths.cos(phi);
     const sinPhi = Maths.sin(phi);

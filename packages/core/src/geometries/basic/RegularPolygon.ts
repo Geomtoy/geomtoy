@@ -27,7 +27,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
 
     constructor(centerX: number, centerY: number, radius: number, sideCount: number, rotation?: number);
     constructor(centerCoordinates: [number, number], radius: number, sideCount: number, rotation?: number);
-    constructor(centerPoint: Point, radius: number, sideCount: number, rotation?: number);
+    constructor(center: Point, radius: number, sideCount: number, rotation?: number);
     constructor();
     constructor(a0?: any, a1?: any, a2?: any, a3?: any, a4?: any) {
         super();
@@ -38,7 +38,7 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
             Object.assign(this, { centerCoordinates: a0, radius: a1, sideCount: a2, rotation: a3 ?? 0 });
         }
         if (a0 instanceof Point) {
-            Object.assign(this, { centerPoint: a0, radius: a1, sideCount: a2, rotation: a3 ?? 0 });
+            Object.assign(this, { center: a0, radius: a1, sideCount: a2, rotation: a3 ?? 0 });
         }
         this.initState_();
     }
@@ -99,10 +99,10 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         this._setCenterX(Coordinates.x(value));
         this._setCenterY(Coordinates.y(value));
     }
-    get centerPoint() {
+    get center() {
         return new Point(this._centerX, this._centerY);
     }
-    set centerPoint(value) {
+    set center(value) {
         this._setCenterX(value.x);
         this._setCenterY(value.y);
     }
@@ -193,22 +193,22 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         return this;
     }
     @validGeometryArguments
-    static fromApothemEtc(apothem: number, centerPoint: [number, number] | Point, sideCount: number, rotation: number = 0) {
+    static fromApothemEtc(apothem: number, center: [number, number] | Point, sideCount: number, rotation: number = 0) {
         Assert.isNonNegativeNumber(apothem, "apothem");
         Assert.isInteger(sideCount, "sideCount");
         Assert.comparison(sideCount, "sideCount", "ge", 3);
         Assert.isRealNumber(rotation, "rotation");
-        const cc = getCoordinates(centerPoint, "centerPoint");
+        const cc = getCoordinates(center, "center");
         const r = apothem / Maths.cos(Maths.PI / sideCount);
         return new RegularPolygon(cc, r, sideCount, rotation);
     }
     @validGeometryArguments
-    static fromSideLengthEtc(sideLength: number, centerPoint: [number, number] | Point, sideCount: number, rotation: number = 0) {
+    static fromSideLengthEtc(sideLength: number, center: [number, number] | Point, sideCount: number, rotation: number = 0) {
         Assert.isNonNegativeNumber(sideLength, "sideLength");
         Assert.isInteger(sideCount, "sideCount");
         Assert.comparison(sideCount, "sideCount", "ge", 3);
         Assert.isRealNumber(rotation, "rotation");
-        const cc = getCoordinates(centerPoint, "centerPoint");
+        const cc = getCoordinates(center, "center");
         const r = sideLength / Maths.sin(Maths.PI / sideCount) / 2;
         return new RegularPolygon(cc, r, sideCount, rotation);
     }

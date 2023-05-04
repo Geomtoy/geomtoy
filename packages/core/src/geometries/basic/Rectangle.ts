@@ -209,8 +209,8 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         return new Rectangle(c, w, h, rotation);
     }
 
-    static fromCenterPointEtc(centerPoint: [number, number] | Point, width: number, height: number, rotation = 0) {
-        const cc = getCoordinates(centerPoint, "centerPoint");
+    static fromCenterEtc(center: [number, number] | Point, width: number, height: number, rotation = 0) {
+        const cc = getCoordinates(center, "center");
         const vw = Vector2.from2(rotation, -width / 2);
         const vh = Vector2.from2(rotation + Maths.PI / 2, -height / 2);
         const [x, y] = Vector2.add(cc, Vector2.add(vw, vh));
@@ -322,7 +322,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         const mn = Vector2.add(nn, vh);
         return [new Point(nn), new Point(nm), new Point(mm), new Point(mn)] as [Point, Point, Point, Point];
     }
-    getCenterPoint() {
+    getCenter() {
         const { coordinates: cc, _width: w, _height: h, _rotation: phi } = this;
         const vw = Vector2.from2(phi, w / 2);
         const vh = Vector2.from2(phi + Maths.PI / 2, h / 2);
@@ -355,21 +355,21 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
      * @param height
      */
     keepAspectRatioFit(width: number, height: number, clamped = true) {
-        const cc = this.getCenterPoint().coordinates;
+        const cc = this.getCenter().coordinates;
         const { _width: w, _height: h } = this;
 
         const nw = (w / h) * height;
         const nh = (h / w) * width;
 
         if (nw === width || nh === height) {
-            this.copyFrom(Rectangle.fromCenterPointEtc(cc, nw, nh, this._rotation));
+            this.copyFrom(Rectangle.fromCenterEtc(cc, nw, nh, this._rotation));
             return this;
         }
         if (nw < width === clamped) {
-            this.copyFrom(Rectangle.fromCenterPointEtc(cc, nw, height, this._rotation));
+            this.copyFrom(Rectangle.fromCenterEtc(cc, nw, height, this._rotation));
             return this;
         } else {
-            this.copyFrom(Rectangle.fromCenterPointEtc(cc, width, nh, this._rotation));
+            this.copyFrom(Rectangle.fromCenterEtc(cc, width, nh, this._rotation));
             return this;
         }
     }
@@ -398,7 +398,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
     apply(transformation: Transformation) {
         const { _x: x, _y: y, _width: w, _height: h, _rotation: phi } = this;
         // Treat the rectangle as it is from a square(-1/2,-1/2,1,1) with center at [0,0].
-        const c = this.getCenterPoint().coordinates;
+        const c = this.getCenter().coordinates;
         const rectangleTransformation = new Transformation();
         rectangleTransformation
             .addTranslate(...c)
@@ -416,7 +416,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
             const newWidth = Maths.abs(sx);
             const newHeight = Maths.abs(sy);
             const newRotation = rotate;
-            return Rectangle.fromCenterPointEtc([tx, ty], newWidth, newHeight, newRotation);
+            return Rectangle.fromCenterEtc([tx, ty], newWidth, newHeight, newRotation);
         } else {
             return this.toPath().apply(transformation);
         }

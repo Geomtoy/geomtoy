@@ -25,7 +25,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
 
     constructor(centerX: number, centerY: number, radius: number);
     constructor(centerCoordinates: [number, number], radius: number);
-    constructor(centerPoint: Point, radius: number);
+    constructor(center: Point, radius: number);
     constructor();
     constructor(a0?: any, a1?: any, a2?: any) {
         super();
@@ -36,7 +36,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
             Object.assign(this, { centerCoordinates: a0, radius: a1 });
         }
         if (a0 instanceof Point) {
-            Object.assign(this, { centerPoint: a0, radius: a1 });
+            Object.assign(this, { center: a0, radius: a1 });
         }
         this.initState_();
     }
@@ -85,10 +85,10 @@ export default class Circle extends Geometry implements ClosedGeometry {
         this._setCenterX(Coordinates.x(value));
         this._setCenterY(Coordinates.y(value));
     }
-    get centerPoint() {
+    get center() {
         return new Point(this._centerX, this._centerY);
     }
-    set centerPoint(value) {
+    set center(value) {
         this._setCenterX(value.x);
         this._setCenterY(value.y);
     }
@@ -126,8 +126,8 @@ export default class Circle extends Geometry implements ClosedGeometry {
         return this;
     }
 
-    static fromTwoPoints(centerPoint: [number, number] | Point, radiusControlPoint: [number, number] | Point) {
-        const cc = getCoordinates(centerPoint, "centerPoint");
+    static fromTwoPoints(center: [number, number] | Point, radiusControlPoint: [number, number] | Point) {
+        const cc = getCoordinates(center, "center");
         const cr = getCoordinates(radiusControlPoint, "radiusControlPoint");
         const r = Vector2.magnitude(Vector2.from(cc, cr));
         return new Circle(cc, r);
@@ -156,7 +156,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
         const [x3, y3] = getCoordinates(point3, "point3");
 
         if (Point.isThreePointsCollinear([x1, y1], [x2, y2], [x3, y3])) {
-            return null; // circle centerPoint at infinity
+            return null; // circle center at infinity
         }
 
         const a = 2 * (x2 - x1);
@@ -230,7 +230,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
     getArcBetweenAngles(startAngle: number, endAngle: number, positive = true): null | Arc {
         const sa = Angle.simplify(startAngle);
         const ea = Angle.simplify(endAngle);
-        return Arc.fromCenterPointAndStartEndAnglesEtc(this.centerCoordinates, this.radius, this.radius, sa, ea, positive);
+        return Arc.fromCenterAndStartEndAnglesEtc(this.centerCoordinates, this.radius, this.radius, sa, ea, positive);
     }
     isPointOn(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
@@ -254,7 +254,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
     getClosestPointFromPoint(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const { centerCoordinates: cc, _radius: r } = this;
-        // if `point` is exactly the same as the `centerPoint`, then zero vector, then angle 0.
+        // if `point` is exactly the same as the `center`, then zero vector, then angle 0.
         const v = Vector2.from(cc, c);
         const angle = Vector2.angle(v);
         const distance = Vector2.magnitude(v) - r;

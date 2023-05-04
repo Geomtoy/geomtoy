@@ -8,6 +8,7 @@ import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { Cartesian, Trilinear } from "../../helper/CoordinateSystem";
 import { validGeometry } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
+import { getCoordinates, getPoint } from "../../misc/point-like";
 import type Transformation from "../../transformation";
 import type { ClosedGeometry, PathCommand, ViewportDescriptor, WindingDirection } from "../../types";
 import Path from "../general/Path";
@@ -240,10 +241,6 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         return new SealedGeometryArray(lss);
     }
 
-    @stated
-    getLength() {
-        return this.side1Length + this.side2Length + this.side3Length;
-    }
     /**
      * Get the winding direction of vertices of triangle `this`.
      */
@@ -386,7 +383,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      */
     getSimilarityRatioWithTriangle(triangle: Triangle) {
         if (!this.isSimilarWithTriangle(triangle)) return NaN;
-        return this.getPerimeter() / triangle.getPerimeter();
+        return this.getLength() / triangle.getLength();
     }
 
     /**
@@ -435,7 +432,8 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get perimeter of triangle `this`.
      */
-    getPerimeter() {
+    @stated
+    getLength() {
         return this.side1Length + this.side2Length + this.side3Length;
     }
     /**
@@ -467,31 +465,32 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const t = c.toTrilinear(this.point1Coordinates, this.point2Coordinates, this.point3Coordinates);
         return t.valueOf();
     }
+
     /**
      * Whether point `point` is on triangle `this`.
      * @param point
      */
-    isPointOnSideLines(point: Point) {
-        const t = this.getTrilinearOfPoint(point);
+    isPointOn(point: [number, number] | Point) {
+        const p = getPoint(point, "point");
+        const t = this.getTrilinearOfPoint(p);
         return Float.sign(t[0], eps.epsilon) * Float.sign(t[1], eps.epsilon) * Float.sign(t[2], eps.epsilon) === 0;
-    }
-    isPointOn(point: Point): boolean {
-        return true;
     }
     /**
      * Whether point `point` is inside triangle `this`.
      * @param point
      */
-    isPointInside(point: Point) {
-        const t = this.getTrilinearOfPoint(point);
+    isPointInside(point: [number, number] | Point) {
+        const p = getPoint(point, "point");
+        const t = this.getTrilinearOfPoint(p);
         return Float.sign(t[0], eps.epsilon) * Float.sign(t[1], eps.epsilon) * Float.sign(t[2], eps.epsilon) === 1;
     }
     /**
      * Whether point `point` is outside triangle `this`.
      * @param point
      */
-    isPointOutside(point: Point) {
-        const t = this.getTrilinearOfPoint(point);
+    isPointOutside(point: [number, number] | Point) {
+        const p = getPoint(point, "point");
+        const t = this.getTrilinearOfPoint(p);
         return Float.sign(t[0], eps.epsilon) * Float.sign(t[1], eps.epsilon) * Float.sign(t[2], eps.epsilon) === -1;
     }
     /**
@@ -518,7 +517,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the centroid point of triangle `this`.
      */
-    getCentroidPoint() {
+    getCentroid() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const t: [number, number, number] = [b * c, c * a, a * b];
         return this.getPointAtTrilinear(t);
@@ -554,7 +553,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the orthocenter point of triangle `this`.
      */
-    getOrthocenterPoint() {
+    getOrthocenter() {
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
         const [x3, y3] = this.point3Coordinates;
@@ -583,7 +582,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const area = this.getArea();
         const r = Maths.sqrt((a * b * c) ** 2 / (4 * area ** 2) - (a ** 2 + b ** 2 + c ** 2) / 2);
-        return new Circle(this.getOrthocenterPoint(), r);
+        return new Circle(this.getOrthocenter(), r);
     }
     /**
      * Get the orthic triangle of triangle `this`.
@@ -606,14 +605,14 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the incenter point of triangle `this` using trilinear.
      */
-    getIncenterPointAlt() {
+    getIncenterAlt() {
         const t: [number, number, number] = [1, 1, 1];
         return this.getPointAtTrilinear(t);
     }
     /**
      * Get the circumcenter point of triangle `this` using trilinear.
      */
-    getCircumcenterPointAlt() {
+    getCircumcenterAlt() {
         const [aa, bb, cc] = [this.angle1, this.angle2, this.angle3];
         const t: [number, number, number] = [Maths.cos(aa), Maths.cos(bb), Maths.cos(cc)];
         return this.getPointAtTrilinear(t);
@@ -621,7 +620,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the escenter points of triangle `this`.
      */
-    getEscenterPointsAlt(): [Point, Point, Point] {
+    getEscentersAlt(): [Point, Point, Point] {
         const t1: [number, number, number] = [-1, 1, 1];
         const t2: [number, number, number] = [1, -1, 1];
         const t3: [number, number, number] = [1, 1, -1];
@@ -630,7 +629,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the Nine-point circle center point of triangle `this`.
      */
-    getNinePointCenterPoint() {
+    getNinePointCenter() {
         // Nine-point center = cos(B-C) : cos(C-A) : cos(A-B)
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         const t = new Trilinear(Maths.cos(this.angle2 - this.angle3), Maths.cos(this.angle3 - this.angle1), Maths.cos(this.angle1 - this.angle2));
@@ -641,7 +640,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Get the Nine-point circle of triangle `this`.
      */
     getNinePointCircle() {
-        const p = this.getNinePointCenterPoint();
+        const p = this.getNinePointCenter();
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const area = this.getArea();
         const r = (a * b * c) / (8 * area);
@@ -810,7 +809,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * @see {@link https://mathworld.wolfram.com/EulerPoints.html}
      */
     getEulerPoints(): [Point, Point, Point] {
-        const { x: hx, y: hy } = this.getOrthocenterPoint();
+        const { x: hx, y: hy } = this.getOrthocenter();
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
         const [x3, y3] = this.point3Coordinates;
@@ -835,8 +834,8 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      */
     getEulerLine() {
         if (this.isEquilateralTriangle()) return null;
-        const p1 = this.getCircumcenterPoint();
-        const p2 = this.getOrthocenterPoint();
+        const p1 = this.getCircumcenter();
+        const p2 = this.getOrthocenter();
         return Line.fromTwoPoints(p1, p2);
     }
 
@@ -871,12 +870,12 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the incenter point of triangle `this`.
      */
-    getIncenterPoint() {
+    getIncenter() {
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
         const [x3, y3] = this.point3Coordinates;
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
-        const d = a + b + c; // this.getPerimeter()
+        const d = a + b + c;
         const x = (a * x1 + b * x2 + c * x3) / d;
         const y = (a * y1 + b * y2 + c * y3) / d;
         return new Point(x, y);
@@ -886,14 +885,14 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      */
     getInscribedCircle() {
         const s = this.getArea();
-        const d = this.getPerimeter();
+        const d = this.getLength();
         const r = (2 * s) / d;
-        return new Circle(this.getIncenterPoint(), r);
+        return new Circle(this.getIncenter(), r);
     }
     /**
      * Get the circumcenter point of triangle `this`.
      */
-    getCircumcenterPoint() {
+    getCircumcenter() {
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
         const [x3, y3] = this.point3Coordinates;
@@ -916,12 +915,12 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const area = this.getArea();
         const r = (a * b * c) / (4 * area);
-        return new Circle(this.getCircumcenterPoint(), r);
+        return new Circle(this.getCircumcenter(), r);
     }
     /**
      * Get the escenter points of triangle `this`.
      */
-    getEscenterPoints(): [Point, Point, Point] {
+    getEscenters(): [Point, Point, Point] {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
@@ -937,7 +936,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
 
     getEscribedCircleRadii() {
         const s = this.getArea();
-        const p = this.getPerimeter() / 2;
+        const p = this.getLength() / 2;
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         return [s / (p - a), s / (p - b), s / (p - c)];
     }
@@ -946,7 +945,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Get the escribed circles of triangle `this`.
      */
     getEscribedCircles(): [Circle, Circle, Circle] {
-        const [ea, eb, ec] = this.getEscenterPoints();
+        const [ea, eb, ec] = this.getEscenters();
         const area = this.getArea();
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const ead = -a + b + c;

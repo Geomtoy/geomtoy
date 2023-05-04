@@ -17,7 +17,7 @@ export default class Inversion extends EventTarget {
 
     constructor(centerX: number, centerY: number, power?: number);
     constructor(centerCoordinates: [number, number], power?: number);
-    constructor(centerPoint: Point, power?: number);
+    constructor(center: Point, power?: number);
     constructor();
     constructor(a0?: any, a1?: any, a2?: any) {
         super();
@@ -28,7 +28,7 @@ export default class Inversion extends EventTarget {
             Object.assign(this, { centerCoordinates: a0, power: a1 ?? this._power });
         }
         if (a0 instanceof Point) {
-            Object.assign(this, { centerPoint: a0, power: a1 ?? this._power });
+            Object.assign(this, { center: a0, power: a1 ?? this._power });
         }
         this.initState_();
     }
@@ -77,10 +77,10 @@ export default class Inversion extends EventTarget {
         this._setCenterX(Coordinates.x(value));
         this._setCenterY(Coordinates.y(value));
     }
-    get centerPoint() {
+    get center() {
         return new Point(this._centerX, this._centerY);
     }
-    set centerPoint(value) {
+    set center(value) {
         this._setCenterX(value.x);
         this._setCenterY(value.y);
     }

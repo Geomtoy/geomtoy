@@ -269,7 +269,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         return this;
     }
 
-    static fromCenterPointAndStartEndAnglesEtc(centerPoint: [number, number] | Point, radiusX: number, radiusY: number, startAngle: number, endAngle: number, positive: boolean, rotation = 0) {
+    static fromCenterAndStartEndAnglesEtc(center: [number, number] | Point, radiusX: number, radiusY: number, startAngle: number, endAngle: number, positive: boolean, rotation = 0) {
         Assert.isNonNegativeNumber(radiusX, "radiusX");
         Assert.isNonNegativeNumber(radiusY, "radiusY");
         Assert.isRealNumber(startAngle, "startAngle");
@@ -279,7 +279,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         startAngle = Angle.simplify(startAngle);
         endAngle = Angle.simplify(endAngle);
 
-        const [cx, cy] = getCoordinates(centerPoint, "centerPoint");
+        const [cx, cy] = getCoordinates(center, "center");
         const ep = centerToEndpointParameterization({
             centerX: cx,
             centerY: cy,
@@ -298,7 +298,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const [x3, y3] = getCoordinates(radiusControlPoint, "radiusControlPoint");
 
         if (Point.isThreePointsCollinear([x1, y1], [x2, y2], [x3, y3])) {
-            return null; // circle centerPoint at infinity
+            return null; // circle center at infinity
         }
 
         const a = 2 * (x2 - x1);
@@ -363,7 +363,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         });
     }
     // @stated _centerParameterization
-    getCenterPoint() {
+    getCenter() {
         const { centerX, centerY } = this._centerParameterization();
         return new Point(centerX, centerY);
     }
@@ -505,8 +505,8 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
     splitAtAngle(a: number) {
         a = this._clampAngle(a, "a");
         const { centerX, centerY, startAngle, endAngle } = this._centerParameterization();
-        const portion1 = Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, startAngle, a, this.positive, this.rotation);
-        const portion2 = Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a, endAngle, this.positive, this.rotation);
+        const portion1 = Arc.fromCenterAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, startAngle, a, this.positive, this.rotation);
+        const portion2 = Arc.fromCenterAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a, endAngle, this.positive, this.rotation);
         // Do this to get better precision.
         portion1._point1X = this._point1X;
         portion1._point1Y = this._point1Y;
@@ -519,10 +519,10 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const ret: Arc[] = [];
         as = as.map(a => this._clampAngle(a, "element of as"));
         as = this._anglesOrder(Utility.uniqWith(as, (a, b) => Angle.equalTo(a, b, eps.angleEpsilon)));
-        const cc = this.getCenterPoint().coordinates;
+        const cc = this.getCenter().coordinates;
         [sa, ...as, ea].forEach((_, index, arr) => {
             if (index !== arr.length - 1) {
-                ret.push(Arc.fromCenterPointAndStartEndAnglesEtc(cc, this.radiusX, this.radiusY, arr[index], arr[index + 1], this.positive, this.rotation));
+                ret.push(Arc.fromCenterAndStartEndAnglesEtc(cc, this.radiusX, this.radiusY, arr[index], arr[index + 1], this.positive, this.rotation));
             }
         });
         // Do this to get better precision.
@@ -542,20 +542,20 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         a2 = this._clampAngle(a2, "a2");
         const { centerX, centerY } = this._centerParameterization();
         [a1, a2] = this._anglesOrder([a1, a2]);
-        return Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a1, a2, this.positive, this.rotation);
+        return Arc.fromCenterAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a1, a2, this.positive, this.rotation);
     }
     portionOfExtend(a1: number, a2: number) {
         Assert.isRealNumber(a1, "t1");
         Assert.isRealNumber(a2, "t2");
         const { centerX, centerY } = this._centerParameterization();
         [a1, a2] = this._anglesOrder([a1, a2]);
-        return Arc.fromCenterPointAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a1, a2, this.positive, this.rotation);
+        return Arc.fromCenterAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a1, a2, this.positive, this.rotation);
     }
 
     @validGeometryArguments
     getClosestPointFromPoint(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
-        const [cx, cy] = this.getCenterPoint().coordinates;
+        const [cx, cy] = this.getCenter().coordinates;
         const [sa, ea] = this.getStartEndAngles();
         const { rotation: phi, radiusX: rx, radiusY: ry } = this;
         const cosPhi = Maths.cos(phi);
@@ -568,7 +568,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const fn = this.getParametricEquation();
 
         if (cx === x && cy === y && rx === ry) {
-            return [new Point(fn(sa)), rx2] as [point: Point, distanceSquare: number]; // circle and at centerPoint
+            return [new Point(fn(sa)), rx2] as [point: Point, distanceSquare: number]; // circle and at center
         }
 
         let tPoly = [
