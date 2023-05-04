@@ -162,8 +162,8 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
             ]);
         }
         if (!rx0 && ry0) {
-            const c1 = Vector2.add(cc, Vector2.rotate([0, rx], phi));
-            const c2 = Vector2.add(cc, Vector2.rotate([0, -rx], phi));
+            const c1 = Vector2.add(cc, Vector2.rotate([rx, 0], phi));
+            const c2 = Vector2.add(cc, Vector2.rotate([-rx, 0], phi));
             // prettier-ignore
             return new SealedGeometryArray([
                 new LineSegment(c1, c2), 
@@ -197,7 +197,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         return Maths.sqrt(1 - b ** 2 / a ** 2);
     }
     /**
-     * Returns the tow foci of ellipse `this`.
+     * Returns the two foci of ellipse `this`.
      */
     getFoci() {
         const { radiusX: rx, radiusY: ry, centerCoordinates: cc, rotation: phi } = this;
@@ -353,7 +353,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const dx = x - cx;
         const dy = y - cy;
         const f = (dx * cosPhi + dy * sinPhi) ** 2 / rx ** 2 + (dx * sinPhi - dy * cosPhi) ** 2 / ry ** 2;
-        return Float.equalTo(f, 1, eps.epsilon);
+        return Float.greaterThan(f, 1, eps.epsilon);
     }
     isPointInside(point: [number, number] | Point): boolean {
         const [x, y] = getCoordinates(point, "point");
@@ -363,7 +363,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const dx = x - cx;
         const dy = y - cy;
         const f = (dx * cosPhi + dy * sinPhi) ** 2 / rx ** 2 + (dx * sinPhi - dy * cosPhi) ** 2 / ry ** 2;
-        return Float.equalTo(f, 1, eps.epsilon);
+        return Float.lessThan(f, 1, eps.epsilon);
     }
 
     @validGeometryArguments
