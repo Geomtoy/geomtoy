@@ -4,6 +4,7 @@ coverage
 lerna-debug.log
 npm-debug.log
 tree.json
+.npmrc
 **/geometries/complex/*
 **/geometries/subset/*
 **/geometries/todo/*
