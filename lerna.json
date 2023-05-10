@@ -3,8 +3,13 @@
     "version": "0.0.0",
     "command": {
         "version": {
+            "noPrivate": true,
             "allowBranch": "master",
-            "conventionalCommits": true
+            "changelogPreset": "conventionalcommits",
+            "conventionalCommits": true,
+            "gitRemote": "github",
+            "noCommitHooks": true,
+            "message": "chore: Release %v"
         }
     }
 }
