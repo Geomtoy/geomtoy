@@ -6,6 +6,7 @@
             "noPrivate": true,
             "allowBranch": "master", 
             "conventionalCommits": true,
+            "noChangelog":true,
             "gitRemote": "github",
             "message": "chore: Release %v"
         }
