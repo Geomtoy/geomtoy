@@ -1,6 +1,6 @@
 {
     "name": "@geomtoy/view",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "A 2D geometry responsive computing, visualizing and interacting library.",
     "keywords": [
         "svg",
@@ -37,7 +37,7 @@
         "dist/*"
     ],
     "dependencies": {
-        "@geomtoy/core": "^0.1.0",
-        "@geomtoy/util": "^0.1.0"
+        "@geomtoy/core": "^0.1.1",
+        "@geomtoy/util": "^0.1.1"
     }
 }
