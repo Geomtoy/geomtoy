@@ -1,8 +1,10 @@
 {
-    "workspaces": ["packages/*"],
-    "version": "0.0.0",
+    "workspaces": [
+        "packages/*"
+    ],
+    "version": "0.1.0",
     "command": {
-        "version": { 
+        "version": {
             "allowBranch": "master",
             "gitRemote": "github",
             "message": "chore: Release %v"
