@@ -6,7 +6,7 @@
         "commit": "git-cz",
         "prepare": "husky install",
         "version": "lerna version",
-        "publish": "lerna publish"
+        "publish": "lerna publish from-git"
     },
     "config": {
         "scope": "@geomtoy",
