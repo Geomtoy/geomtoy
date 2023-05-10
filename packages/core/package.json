@@ -2,11 +2,20 @@
     "name": "@geomtoy/core",
     "version": "0.1.0",
     "description": "A 2D geometry responsive computing, visualizing and interacting library.",
-    "author": "Fish Eleven",
-    "homepage": "https://github.com/Geomtoy/geomtoy.git/#README",
+    "keywords": [
+        "svg",
+        "canvas",
+        "2d",
+        "geometry"
+    ],
+    "author": "Fish Eleven <mog1347@gmail.com>",
+    "homepage": "https://www.geomtoy.com",
     "repository": {
         "type": "git",
         "url": "https://github.com/Geomtoy/geomtoy.git"
+    },
+    "bugs": {
+        "url": "https://github.com/Geomtoy/geomtoy.git/issues"
     },
     "license": "MIT",
     "publishConfig": {
