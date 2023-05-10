@@ -2,11 +2,8 @@
     "workspaces": ["packages/*"],
     "version": "0.0.0",
     "command": {
-        "version": {
-            "noPrivate": true,
-            "allowBranch": "master", 
-            "conventionalCommits": true,
-            "noChangelog":true,
+        "version": { 
+            "allowBranch": "master",
             "gitRemote": "github",
             "message": "chore: Release %v"
         }

@@ -5,7 +5,7 @@
     "scripts": {
         "commit": "git-cz",
         "prepare": "husky install",
-        "version": "lerna version",
+        "version": "lerna version --no-private --conventional-commits --no-changelog --no-push",
         "publish": "lerna publish from-git"
     },
     "config": {
