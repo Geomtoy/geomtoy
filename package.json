@@ -4,7 +4,9 @@
     "license": "MIT",
     "scripts": {
         "commit": "git-cz",
-        "prepare": "husky install"
+        "prepare": "husky install",
+        "version": "lerna version",
+        "publish": "lerna publish"
     },
     "config": {
         "scope": "@geomtoy",
