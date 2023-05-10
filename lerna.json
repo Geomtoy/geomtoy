@@ -8,7 +8,7 @@
             "changelogPreset": "conventionalcommits",
             "conventionalCommits": true,
             "gitRemote": "github",
-            "noCommitHooks": true,
+            "noPush": true,
             "message": "chore: Release %v"
         }
     }
