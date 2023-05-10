@@ -4,11 +4,9 @@
     "command": {
         "version": {
             "noPrivate": true,
-            "allowBranch": "master",
-            "changelogPreset": "conventionalcommits",
+            "allowBranch": "master", 
             "conventionalCommits": true,
             "gitRemote": "github",
-            "noPush": true,
             "message": "chore: Release %v"
         }
     }
