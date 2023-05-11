@@ -18,16 +18,14 @@ const DEFAULT_STYLE: Style = {
     strokeLineCap: "butt",
     strokeMiterLimit: 10 // canvas default 10, svg default 4
 };
-const DEFAULT_INTERACTIVE_STYLE: InteractiveStyle = {
-    fill: "black",
-    stroke: "black",
-    strokeWidth: 1
-};
 
 export const VE_VIEW_SYMBOL = Symbol("ViewElement.view");
 export const VE_SUB_VIEW_SYMBOL = Symbol("ViewElement.subView");
 export const VE_EVENT_HANDLERS_SYMBOL = Symbol("ViewElement.eventHandlers");
 export const VE_STYLE_SYMBOL = Symbol("ViewElement.style");
+export const VE_HOVER_STYLE_SYMBOL = Symbol("ViewElement.hoverStyle");
+export const VE_CLICK_STYLE_SYMBOL = Symbol("ViewElement.clickStyle");
+export const VE_ACTIVE_STYLE_SYMBOL = Symbol("ViewElement.activeStyle");
 
 export default class ViewElement<T extends Shape = Shape> {
     /**
@@ -55,15 +53,27 @@ export default class ViewElement<T extends Shape = Shape> {
     private _type: ViewElementType;
     private _zIndex: number;
     private _style = Utility.cloneDeep(DEFAULT_STYLE);
-    private _hoverStyle = Utility.cloneDeep(DEFAULT_INTERACTIVE_STYLE);
-    private _clickStyle = Utility.cloneDeep(DEFAULT_INTERACTIVE_STYLE);
-    private _activeStyle = Utility.cloneDeep(DEFAULT_INTERACTIVE_STYLE);
+    private _hoverStyle = {} as Partial<InteractiveStyle>;
+    private _clickStyle = {} as Partial<InteractiveStyle>;
+    private _activeStyle = {} as Partial<InteractiveStyle>;
 
     /** @internal */
     [VE_EVENT_HANDLERS_SYMBOL]: { [key: string]: ((e: ViewEventObject) => void)[] } = {};
     /** @internal */
     get [VE_STYLE_SYMBOL]() {
         return this._style;
+    }
+    /** @internal */
+    get [VE_HOVER_STYLE_SYMBOL]() {
+        return this._hoverStyle;
+    }
+    /** @internal */
+    get [VE_CLICK_STYLE_SYMBOL]() {
+        return this._clickStyle;
+    }
+    /** @internal */
+    get [VE_ACTIVE_STYLE_SYMBOL]() {
+        return this._activeStyle;
     }
 
     private _shape: T;
@@ -187,7 +197,7 @@ export default class ViewElement<T extends Shape = Shape> {
         (this[VE_VIEW_SYMBOL] ?? this[VE_SUB_VIEW_SYMBOL]?.[SV_VIEW_SYMBOL])?.requestRender();
     }
 
-    private _interactiveStyle(style: InteractiveStyle, value?: Partial<InteractiveStyle>) {
+    private _interactiveStyle(style: Partial<InteractiveStyle>, value?: Partial<InteractiveStyle>) {
         if (value === undefined) {
             return { ...style };
         }

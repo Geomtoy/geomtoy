@@ -7,7 +7,7 @@ import { Style, ViewElementEventType, ViewElementType, ViewEventType, type ViewE
 import Lasso from "./Lasso";
 import SubView, { SV_VIEW_SYMBOL } from "./SubView";
 import type ViewElement from "./ViewElement";
-import { VE_EVENT_HANDLERS_SYMBOL, VE_STYLE_SYMBOL, VE_SUB_VIEW_SYMBOL, VE_VIEW_SYMBOL } from "./ViewElement";
+import { VE_ACTIVE_STYLE_SYMBOL, VE_CLICK_STYLE_SYMBOL, VE_EVENT_HANDLERS_SYMBOL, VE_HOVER_STYLE_SYMBOL, VE_STYLE_SYMBOL, VE_SUB_VIEW_SYMBOL, VE_VIEW_SYMBOL } from "./ViewElement";
 
 function viewEventObject(isTouch: boolean, viewportX: number, viewportY: number, x: number, y: number) {
     return { isTouch, viewportX, viewportY, x, y } as ViewEventObject;
@@ -1478,10 +1478,10 @@ export default class View {
                 });
             }
 
-            const s = el.style();
-            const hs = el.hoverStyle();
-            const cs = el.clickStyle();
-            const as = el.activeStyle();
+            const s = el[VE_STYLE_SYMBOL];
+            const hs = el[VE_HOVER_STYLE_SYMBOL];
+            const cs = el[VE_CLICK_STYLE_SYMBOL];
+            const as = el[VE_ACTIVE_STYLE_SYMBOL];
 
             const hover = this._hoverElement === el;
             const click = this._currentOperationElement === el || this._currentActivationElement == el;
