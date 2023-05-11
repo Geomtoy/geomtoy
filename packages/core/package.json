@@ -34,7 +34,8 @@
     "browser": "dist/index.js",
     "types": "dist/index.d.ts",
     "files": [
-        "dist/*"
+        "dist/*",
+        "src/**/*"
     ],
     "dependencies": {
         "@geomtoy/util": "^0.1.1"
