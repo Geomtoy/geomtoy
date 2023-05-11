@@ -14,15 +14,15 @@
         "packages": {
             "core": {
                 "scopedName": "@geomtoy/core",
-                "pascalName": "Geomtoy"
+                "pascalName": "Geomtoy.core"
             },
             "util": {
                 "scopedName": "@geomtoy/util",
-                "pascalName": "GeomtoyUtil"
+                "pascalName": "Geomtoy.util"
             },
             "view": {
                 "scopedName": "@geomtoy/view",
-                "pascalName": "GeomtoyView"
+                "pascalName": "Geomtoy.view"
             }
         }
     },
