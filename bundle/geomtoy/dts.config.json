@@ -1,0 +1,16 @@
+{
+    "compilationOptions": {
+        "followSymlinks": false,
+        "preferredConfigPath": "./tsconfig.json"
+    },
+    "entries": [
+        {
+            "filePath": "./index.ts",
+            "outFile": "./dist/index.d.ts",
+            "noCheck": true,
+            "output": {
+                "noBanner": true
+            }
+        }
+    ]
+}
