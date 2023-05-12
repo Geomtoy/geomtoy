@@ -15,15 +15,15 @@ npx lerna bootstrap --ci
 ```
 
 ## Install
-### Install all packages
+### Install all-in-one bundle package
 ```sh
-npm i geomtoy -S
+npm i geomtoy
 ```
-### Install a specified package 
+### Install specified packages
 ```sh
-npm i "@geomtoy/core" -S
-npm i "@geomtoy/view" -S
-npm i "@geomtoy/util" -S
+npm i "@geomtoy/core"
+npm i "@geomtoy/view"
+npm i "@geomtoy/util"
 ```
 
 ## Usage
