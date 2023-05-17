@@ -4,22 +4,22 @@
 > A 2D geometry responsive computing, visualizing and interacting library.
 
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
-## Develop
+## Development
 
 ```sh
 # run these below in the repo root directory:
 # install `lerna` monorepo tool at the workspace `root`.
 npm ci 
-# install dependencies for each `leaf` package.
+# install dependencies and symlinks for each `leaf` package.
 npx lerna bootstrap --ci
 ```
 
-## Install
+## Installation
 ### Install all-in-one bundle package
 ```sh
 npm i geomtoy
 ```
-### Install specified packages
+### Install scoped packages
 ```sh
 npm i "@geomtoy/core"
 npm i "@geomtoy/view"
@@ -62,8 +62,11 @@ npm i "@geomtoy/util"
 - View scope and view element scope interaction events.
 - Support touch devices.
 
+## License
+Geomtoy is released under the [MIT License](https://github.com/Geomtoy/geomtoy/blob/master/LICENCE).
+
 ## Brief architecture
-![Brief architecture](https://raw.githubusercontent.com/Geomtoy/geomtoy-assets/master/images/architecture.png)
+![Brief architecture](https://assets.geomtoy.com/images/architecture.png)
 
 ## Roadmap
 - [ ] Support all conic curves.
