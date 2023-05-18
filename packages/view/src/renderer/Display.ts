@@ -38,12 +38,13 @@ export default class Display implements ViewportDescriptor {
     private _xAxisPositiveOnRight = DISPLAY_DEFAULTS.xAxisPositiveOnRight;
     private _yAxisPositiveOnBottom = DISPLAY_DEFAULTS.yAxisPositiveOnBottom;
 
-    private _globalTransformation = TransformationMatrix.identity();
+    private _globalTransformation = [NaN, NaN, NaN, NaN, NaN, NaN] as [number, number, number, number, number, number];
     private _globalViewBox = [NaN, NaN, NaN, NaN] as [number, number, number, number];
 
     constructor(renderer: Renderer, displaySettings: Partial<DisplaySettings> = {}) {
         this._renderer = renderer;
         Object.assign(this, Utility.cloneDeep(displaySettings));
+        this._refresh();
     }
 
     /**
