@@ -5,6 +5,11 @@
     "scripts": {
         "commit": "git-cz",
         "prepare": "husky install",
+        "build-util": "cd packages/util && npm run bundle-js && npm run bundle-dts",
+        "build-core": "cd packages/core && npm run bundle-js && npm run bundle-dts",
+        "build-view": "cd packages/view && npm run bundle-js && npm run bundle-dts",
+        "build-geomtoy": "cd bundle/geomtoy && npm run bundle-js && npm run bundle-dts",
+        "build-all": "npm run build-util && npm run build-core && npm run build-view && npm run build-geomtoy",
         "version": "lerna version --no-private --conventional-commits --no-changelog --no-push",
         "publish-git": "lerna publish from-git",
         "publish-package": "lerna publish from-package"
