@@ -5,7 +5,7 @@ import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { bezierLength } from "../../misc/bezier-length";
-import { validGeometry } from "../../misc/decor-geometry";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
@@ -281,7 +281,6 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         ].filter((t) : t is number => Type.isNumber(t) &&  Float.between(t, 0, 1, false, false, eps.timeEpsilon) );
         return Utility.uniqWith(tRoots, (a, b) => Float.equalTo(a, b, eps.timeEpsilon));
     }
-
     move(deltaX: number, deltaY: number) {
         this.point1Coordinates = Vector2.add(this.point1Coordinates, [deltaX, deltaY]);
         this.point2Coordinates = Vector2.add(this.point2Coordinates, [deltaX, deltaY]);
@@ -297,6 +296,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * @param point4
      * @param ts
      */
+    @validGeometryArguments
     static fromFourPointsAndTimes(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point, point4: [number, number] | Point, ts: [number, number]) {
         // t1!==t2!==0 or 1
         const [t1, t2] = ts;
@@ -328,10 +328,10 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * Whether point `point` is on bezier `this`.
      * @param point
      */
+    @validGeometryArguments
     isPointOn(point: [number, number] | Point) {
         return !Number.isNaN(this.getTimeOfPoint(point));
     }
-
     reverse() {
         // prettier-ignore
         [
@@ -363,6 +363,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
     /**
      * Returns the length of bezier `this`.
      */
+    @stated
     getLength() {
         const [polyX, polyY] = this.getPolynomial();
         const [polyXD, polyYD] = [Polynomial.derivative(polyX), Polynomial.derivative(polyY)];
@@ -402,7 +403,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         });
         return [minX, minY, maxX - minX, maxY - minY] as [number, number, number, number];
     }
-
+    @stated
     isTripleLine() {
         // This means $ax^3+bx^2y+cxy^2+dy^3+ex^2+fxy+gy^2+hx+iy+j=0$ can write as $(lx+my+n)^3=0$
         const coefs = this.getImplicitFunctionCoefs();
@@ -435,10 +436,10 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
             Float.equalTo(i, 3 * m * n ** 2, eps.coefficientEpsilon)
         );
     }
-
     /**
      * Returns a function as parametric equation.
      */
+    @stated
     getParametricEquation() {
         const [polyX, polyY] = this.getPolynomial();
         return function (t: number) {
@@ -450,6 +451,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
     /**
      * Returns the coefficients of the implicit function $ax^3+bx^2y+cxy^2+dy^3+ex^2+fxy+gy^2+hx+iy+j=0$.
      */
+    @stated
     getImplicitFunctionCoefs(): [a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number] {
         const [[cx3, cx2, cx1, cx0], [cy3, cy2, cy1, cy0]] = this.getPolynomial();
 
@@ -574,7 +576,6 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
 
         return [a, b, c, d, e, f, g, h, i, j];
     }
-
     /**
      * Returns the self-intersection situation of bezier `this`.
      * @see https://math.stackexchange.com/questions/3776840/2d-cubic-bezier-curve-point-of-self-intersection
@@ -582,6 +583,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * - If bezier `this` has a self-intersection, the two time values of the self-intersection will be returned.
      * - Else return a empty array.
      */
+    @stated
     selfIntersection(): [] | [number, number] {
         const tsi = this.selfIntersectionExtend();
         if (tsi.length === 0) return [];
@@ -590,7 +592,6 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         }
         return [];
     }
-
     /**
      * Returns the self-intersection situation of the underlying curve of bezier `this`.
      * @see https://math.stackexchange.com/questions/3776840/2d-cubic-bezier-curve-point-of-self-intersection
@@ -598,6 +599,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * - If the underlying curve has a self-intersection, the two time values of the self-intersection will be returned.
      * - Else return a empty array.
      */
+    @stated
     selfIntersectionExtend(): [] | [number, number] {
         const [[cx3, cx2, cx1, cx0], [cy3, cy2, cy1, cy0]] = this.getPolynomial();
         // Suppose bezier has self-intersection which has two distinct times `t1` and `t2`.
@@ -617,11 +619,11 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         if (tRoots[0] < tRoots[1]) return [tRoots[0], tRoots[1]];
         return [tRoots[1], tRoots[0]];
     }
-
     /**
      * Get the closest point on bezier `this` from point `point`.
      * @param point
      */
+    @validGeometryArguments
     getClosestPointFromPoint(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         const [polyX, polyY] = this.getPolynomial();
@@ -649,7 +651,6 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         });
         return [new Point(fn(minT)), minSd] as [point: Point, distanceSquare: number];
     }
-
     // #region Time and point
     /**
      * Get the point at time `t` of bezier `this`.
@@ -690,12 +691,13 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * In this case, the smaller time value found first will be returned.
      * @param point
      */
+    @validGeometryArguments
     getTimeOfPoint(point: [number, number] | Point): number {
         const t = this.getTimeOfPointExtend(point);
         if (Float.between(t, 0, 1, false, false, eps.timeEpsilon)) return Maths.clamp(t, 0, 1);
         return NaN;
     }
-
+    @validGeometryArguments
     getTimesOfPointExtend(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         const [polyX, polyY] = this.getPolynomial();
@@ -752,6 +754,7 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
      * - the smallest time will be returned.
      * @param point
      */
+    @validGeometryArguments
     getTimeOfPointExtend(point: [number, number] | Point): number {
         const times = this.getTimesOfPointExtend(point);
         if (times.length === 0) return NaN;
@@ -774,7 +777,6 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         }
         return Maths.clamp(t, 0, 1);
     }
-
     @stated
     private _d1() {
         const [polyX, polyY] = this.getPolynomial();
@@ -815,7 +817,6 @@ export default class Bezier extends Geometry implements FiniteOpenGeometry {
         const c = this.getParametricEquation()(t);
         return normalized ? new Vector(c, Vector2.normalize(nv)) : new Vector(c, nv);
     }
-
     /**
      * Get the curvature of quadratic bezier `this` at time `t`.
      * @note

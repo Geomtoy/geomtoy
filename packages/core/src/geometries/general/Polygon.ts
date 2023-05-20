@@ -398,6 +398,7 @@ export default class Polygon extends Geometry {
      * @see: https://en.wikipedia.org/wiki/Convex_polygon
      * @see https://stackoverflow.com/questions/471962/how-do-i-efficiently-determine-if-a-polygon-is-convex-non-convex-or-complex/45372025#45372025
      */
+    @stated
     isConvex() {
         const l = this.vertexCount;
         if (this.vertexCount < 3) return false; // at least 3 segments
@@ -426,7 +427,7 @@ export default class Polygon extends Geometry {
         }
         return Float.equalTo(Maths.abs(angleSum), 2 * Maths.PI, eps.angleEpsilon);
     }
-
+    @stated
     isConcave() {
         const l = this.vertexCount;
         if (this.vertexCount < 4) return false; // at least 4 segments
@@ -452,6 +453,7 @@ export default class Polygon extends Geometry {
         }
         return Float.equalTo(angleSum, (l - 1) * Maths.PI, eps.angleEpsilon);
     }
+    @stated
     isSelfIntersecting() {
         const segments = this.getSegments(true);
         for (let i = 0; i < segments.length - 1; i++) {
@@ -562,7 +564,7 @@ export default class Polygon extends Geometry {
         }
         return new Point(sumX / a / 3, sumY / a / 3);
     }
-
+    @stated
     getBoundingBox() {
         let bbox = Box.nullBox();
         for (const seg of this.getSegments(true)) bbox = Box.extend(bbox, seg.getBoundingBox());

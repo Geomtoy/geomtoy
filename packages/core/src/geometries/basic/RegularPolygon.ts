@@ -161,7 +161,6 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
             !Number.isNaN(this._sideCount)
         );
     }
-
     degenerate(check: false): Point | this | null;
     degenerate(check: true): boolean;
     @statedWithBoolean(undefined)
@@ -177,11 +176,14 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
     getWindingDirection() {
         return 1 as WindingDirection;
     }
-    getLength(): number {
-        throw new Error("Method not implemented.");
+    @stated
+    getArea(): number {
+        const p = this.getLength();
+        return (p * this.apothem) / 2;
     }
-    isPointOn(point: [number, number] | Point): boolean {
-        throw new Error("Method not implemented.");
+    @stated
+    getLength() {
+        return this.sideCount * this.sideLength;
     }
     @validGeometryArguments
     isPointOn(point: [number, number] | Point) {
@@ -225,34 +227,28 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
         const r = sideLength / Maths.sin(Maths.PI / sideCount) / 2;
         return new RegularPolygon(cc, r, sideCount, rotation);
     }
-
+    @stated
     getVertices() {
         return Utility.range(0, this.sideCount).map(index => {
             return new Point(Vector2.add(this.centerCoordinates, Vector2.from2(((2 * Maths.PI) / this.sideCount) * index + this.rotation, this.radius)));
         });
     }
+    @stated
     getSideLineSegments() {
         const ps = this.getVertices();
         return Utility.range(0, this.sideCount).map(index => {
             return new LineSegment(Utility.nth(ps, index - this.sideCount)!, Utility.nth(ps, index - this.sideCount + 1)!);
         });
     }
-
+    @stated
     getCircumscribedCircle() {
         return new Circle(this.centerCoordinates, this.radius);
     }
+    @stated
     getInscribedCircle() {
         return new Circle(this.centerCoordinates, this.apothem);
     }
-
-    getPerimeter(): number {
-        return this.sideCount * this.sideLength;
-    }
-    getArea(): number {
-        const p = this.getPerimeter();
-        return (p * this.apothem) / 2;
-    }
-
+    @stated
     getBoundingBox() {
         return this.toPolygon().getBoundingBox();
     }

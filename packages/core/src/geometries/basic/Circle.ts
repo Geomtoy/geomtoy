@@ -5,8 +5,8 @@ import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import Inversion from "../../inversion";
-import { validGeometry } from "../../misc/decor-geometry";
-import { statedWithBoolean } from "../../misc/decor-stated";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
+import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
 import type { ClosedGeometry, PathCommand, ViewportDescriptor, WindingDirection } from "../../types";
@@ -120,18 +120,18 @@ export default class Circle extends Geometry implements ClosedGeometry {
         if (r0) return new Point(this._centerX, this._centerY);
         return this;
     }
-
     move(deltaX: number, deltaY: number) {
         this.centerCoordinates = Vector2.add(this.centerCoordinates, [deltaX, deltaY]);
         return this;
     }
-
+    @validGeometryArguments
     static fromTwoPoints(center: [number, number] | Point, radiusControlPoint: [number, number] | Point) {
         const cc = getCoordinates(center, "center");
         const cr = getCoordinates(radiusControlPoint, "radiusControlPoint");
         const r = Vector2.magnitude(Vector2.from(cc, cr));
         return new Circle(cc, r);
     }
+    @validGeometryArguments
     static fromTwoPointsAndRadius(point1: [number, number] | Point, point2: [number, number] | Point, radius: number) {
         const c1 = getCoordinates(point1, "point1");
         const c2 = getCoordinates(point2, "point2");
@@ -150,6 +150,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
         const vc2 = Vector2.scalarMultiply(Vector2.normalize(Vector2.rotate(v, -Maths.PI / 2)), cd);
         return [new Circle(Vector2.add(mc, vc1), radius), new Circle(Vector2.add(mc, vc2), radius)] as [Circle, Circle];
     }
+    @validGeometryArguments
     static fromThreePoints(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point) {
         const [x1, y1] = getCoordinates(point1, "point1");
         const [x2, y2] = getCoordinates(point2, "point2");
@@ -171,22 +172,24 @@ export default class Circle extends Geometry implements ClosedGeometry {
 
         return new Circle(cx, cy, r);
     }
-
     /**
      * Returns the length of circle `this`.
      */
+    @stated
     getLength() {
         return 2 * Maths.PI * this.radius;
     }
     /**
      * Returns the area of circle `this`.
      */
+    @stated
     getArea() {
         return Maths.PI * this.radius ** 2;
     }
     /**
      * Returns a function as parametric equation of circle `this`.
      */
+    @stated
     getParametricEquation() {
         const { centerCoordinates: cc, radius: r } = this;
         return function (angle: number) {
@@ -208,6 +211,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
     getPointAtAngle(angle: number) {
         return new Point(this.getParametricEquation()(angle));
     }
+    @validGeometryArguments
     getAngleOfPoint(point: [number, number] | Point) {
         const { centerCoordinates: cc } = this;
         const c = getCoordinates(point, "point");
@@ -217,6 +221,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
     /**
      * Returns the coefficients of the implicit function $ax^2+bx+cxy+dy+ey^2+f=0$
      */
+    @stated
     getImplicitFunctionCoefs() {
         const { centerX: cx, centerY: cy, radius: r } = this;
         const a = 1;
@@ -232,25 +237,28 @@ export default class Circle extends Geometry implements ClosedGeometry {
         const ea = Angle.simplify(endAngle);
         return Arc.fromCenterAndStartEndAnglesEtc(this.centerCoordinates, this.radius, this.radius, sa, ea, positive);
     }
+    @validGeometryArguments
     isPointOn(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const sd = Vector2.squaredMagnitude(Vector2.from(this.centerCoordinates, c));
         const sr = this.radius ** 2;
         return Float.equalTo(sd, sr, eps.epsilon);
     }
+    @validGeometryArguments
     isPointOutside(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const sd = Vector2.squaredMagnitude(Vector2.from(this.centerCoordinates, c));
         const sr = this.radius ** 2;
         return Float.greaterThan(sd, sr, eps.epsilon);
     }
+    @validGeometryArguments
     isPointInside(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const sd = Vector2.squaredMagnitude(Vector2.from(this.centerCoordinates, c));
         const sr = this.radius ** 2;
         return Float.lessThan(sd, sr, eps.epsilon);
     }
-
+    @validGeometryArguments
     getClosestPointFromPoint(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const { centerCoordinates: cc, _radius: r } = this;
@@ -260,7 +268,6 @@ export default class Circle extends Geometry implements ClosedGeometry {
         const distance = Vector2.magnitude(v) - r;
         return [this.getPointAtAngle(angle), distance ** 2] as [point: Point, distanceSquare: number];
     }
-
     /**
      * Get the tangent vector of circle `this` at angle `a`.
      * @param a
@@ -312,6 +319,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
      * If two circles intersect in two points, and the radii drawn to the points of intersection meet at right angles,
      * then the circles are orthogonal to each other.
      */
+    @validGeometryArguments
     isOrthogonalToCircle(circle: Circle) {
         const { centerCoordinates: cc1, radius: r1 } = this;
         const { centerCoordinates: cc2, radius: r2 } = circle;
@@ -331,6 +339,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
      * @param circle1
      * @param circle2
      */
+    @validGeometryArguments
     static getCommonTangentLinesOfTwoCircles(circle1: Circle, circle2: Circle): [] | [line: Line, points: [tangentPointOnCircle1: Point, tangentPointOnCircle2: Point]][] {
         const data = [] as [line: Line, points: [tangentPointOnCircle1: Point, tangentPointOnCircle2: Point]][];
         const { centerCoordinates: cc1, radius: r1 } = circle1;
@@ -404,6 +413,7 @@ export default class Circle extends Geometry implements ClosedGeometry {
      * @param  circle2
      * @param  point
      */
+    @validGeometryArguments
     static getCommonTangentCirclesOfTwoCirclesThroughPoint(circle1: Circle, circle2: Circle, point: [number, number] | Point): Circle[] | [] {
         if (circle1.isPointOn(point) && circle2.isPointOn(point)) return [];
         if (Float.equalTo(circle1.radius, circle2.radius, eps.epsilon) && Coordinates.equalTo(circle1.centerCoordinates, circle2.centerCoordinates, eps.epsilon)) return [];
@@ -455,11 +465,11 @@ export default class Circle extends Geometry implements ClosedGeometry {
         // there are infinite parallel lines between them, means infinite infinite circle.
         return [];
     }
-
+    @stated
     getInscribedRegularPolygon(sideCount: number, angle = 0) {
         return new RegularPolygon(this._centerX, this._centerY, this._radius, sideCount, angle);
     }
-
+    @stated
     getBoundingBox() {
         const { centerX: cx, centerY: cy, radius: r } = this;
         const w = r * 2;
@@ -468,7 +478,6 @@ export default class Circle extends Geometry implements ClosedGeometry {
         const y = cy - r;
         return [x, y, w, h] as [number, number, number, number];
     }
-
     getGraphics(viewport: ViewportDescriptor) {
         const dg = this.degenerate(false);
         if (dg === null) return new Graphics();
@@ -482,7 +491,6 @@ export default class Circle extends Geometry implements ClosedGeometry {
         gg.close();
         return g;
     }
-
     /**
      * Convert circle `this` to path, using two `Path.arcTo` commands.
      */
@@ -496,7 +504,6 @@ export default class Circle extends Geometry implements ClosedGeometry {
         commands.push(Path.arcTo(radius, radius, 0, false, true, c0));
         return new Path(commands, true);
     }
-
     /**
      * To path, using `Path.bezierTo` command to do bezier approximation.
      * @see https://spencermortensen.com/articles/bezier-circle/
@@ -532,7 +539,6 @@ export default class Circle extends Geometry implements ClosedGeometry {
         commands.push(Path.bezierTo(cp41, cp42, [xs, ym]));
         return new Path(commands, true);
     }
-
     apply(transformation: Transformation) {
         const { centerCoordinates: cc, radius: r } = this;
 

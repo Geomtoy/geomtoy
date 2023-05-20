@@ -5,7 +5,7 @@ import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { bezierLength } from "../../misc/bezier-length";
-import { validGeometry } from "../../misc/decor-geometry";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
@@ -278,12 +278,14 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
      * Whether point `point` is on quadratic bezier `this`.
      * @param point
      */
+    @validGeometryArguments
     isPointOn(point: [number, number] | Point) {
         return !Number.isNaN(this.getTimeOfPoint(point));
     }
     /**
      * Get the length of quadratic bezier `this`.
      */
+    @stated
     getLength() {
         const [polyX, polyY] = this.getPolynomial();
         const [polyXD, polyYD] = [Polynomial.derivative(polyX), Polynomial.derivative(polyY)];
@@ -325,6 +327,7 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
     /**
      * Returns a function as parametric equation.
      */
+    @stated
     getParametricEquation() {
         const [polyX, polyY] = this.getPolynomial();
         return function (t: number) {
@@ -333,7 +336,7 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
             return [x, y] as [number, number];
         };
     }
-
+    @stated
     isDoubleLine() {
         // This means $ax^2+bxy+cy^2+dx+ey+f=0$ can write as $(lx+my+n)^2=0$
         const coefs = this.getImplicitFunctionCoefs();
@@ -359,10 +362,10 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
             Float.equalTo(e, 2 * m * n, eps.coefficientEpsilon)
         );
     }
-
     /**
      * Returns the coefficients of the implicit function $ax^2+bxy+cy^2+dx+ey+f=0$.
      */
+    @stated
     getImplicitFunctionCoefs(): [a: number, b: number, c: number, d: number, e: number, f: number] {
         const [[cx2, cx1, cx0], [cy2, cy1, cy0]] = this.getPolynomial();
 
@@ -402,6 +405,7 @@ export default class QuadraticBezier extends Geometry implements FiniteOpenGeome
      * Get the closest point on quadratic bezier `this` from point `point`.
      * @param point
      */
+    @validGeometryArguments
     getClosestPointFromPoint(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         const [polyX, polyY] = this.getPolynomial();

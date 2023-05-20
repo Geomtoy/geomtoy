@@ -5,7 +5,7 @@ import { eps, optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import { Cartesian } from "../../helper/CoordinateSystem";
 import PointGraphics from "../../helper/PointGraphics";
-import { validGeometry } from "../../misc/decor-geometry";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import Transformation from "../../transformation";
@@ -118,6 +118,7 @@ export default class Point extends Geometry {
      * @param point2
      * @param point3
      */
+    @validGeometryArguments
     static isThreePointsCollinear(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point) {
         const c1 = getCoordinates(point1, "point1");
         const c2 = getCoordinates(point2, "point2");
@@ -135,6 +136,7 @@ export default class Point extends Geometry {
      * @param point3
      * @param point4
      */
+    @validGeometryArguments
     static isFourPointsConcyclic(point1: [number, number] | Point, point2: [number, number] | Point, point3: [number, number] | Point, point4: [number, number] | Point) {
         const c1 = getCoordinates(point1, "point1");
         const c2 = getCoordinates(point2, "point2");
@@ -173,6 +175,7 @@ export default class Point extends Geometry {
      * Whether point `this` equal to point `point`.
      * @param point
      */
+    @validGeometryArguments
     equalTo(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         return Coordinates.equalTo(this.coordinates, c, eps.epsilon);
@@ -180,6 +183,7 @@ export default class Point extends Geometry {
     /**
      * Get the distance between point `this` and point `point`.
      */
+    @validGeometryArguments
     getDistanceBetweenPoint(point: [number, number] | Point): number {
         const c = getCoordinates(point, "point");
         return Vector2.magnitude(Vector2.from(this.coordinates, c));
@@ -187,6 +191,7 @@ export default class Point extends Geometry {
     /**
      * Get the distance square between point `this` and point `point`.
      */
+    @validGeometryArguments
     getSquaredDistanceBetweenPoint(point: [number, number] | Point): number {
         const c = getCoordinates(point, "point");
         return Vector2.squaredMagnitude(Vector2.from(this.coordinates, c));
@@ -195,6 +200,7 @@ export default class Point extends Geometry {
      * Get the distance between point `this` and line `line`.
      * @param line
      */
+    @validGeometryArguments
     getDistanceBetweenLine(line: Line): number {
         return Maths.abs(this.getSignedDistanceBetweenLine(line));
     }
@@ -202,6 +208,7 @@ export default class Point extends Geometry {
      * Get the signed distance between point `this` and line `line`.
      * @param line
      */
+    @validGeometryArguments
     getSignedDistanceBetweenLine(line: Line): number {
         const [a, b, c] = line.getImplicitFunctionCoefs();
         const { x, y } = this;
@@ -211,6 +218,7 @@ export default class Point extends Geometry {
      * Get the distance square between point `this` and line `line`.
      * @param line
      */
+    @validGeometryArguments
     getSquaredDistanceBetweenLine(line: Line): number {
         const [a, b, c] = line.getImplicitFunctionCoefs();
         const { x, y } = this;
@@ -220,6 +228,7 @@ export default class Point extends Geometry {
      * Get the distance between point `this` and line segment `lineSegment`.
      * @param lineSegment
      */
+    @validGeometryArguments
     getDistanceBetweenLineSegment(lineSegment: LineSegment): number {
         return Maths.abs(this.getSignedDistanceBetweenLineSegment(lineSegment));
     }
@@ -227,6 +236,7 @@ export default class Point extends Geometry {
      * Get the signed distance between point `this` and line segment `lineSegment`.
      * @param lineSegment
      */
+    @validGeometryArguments
     getSignedDistanceBetweenLineSegment(lineSegment: LineSegment): number {
         const c = this.coordinates;
         const { point1Coordinates: c1, point2Coordinates: c2 } = lineSegment;
@@ -238,6 +248,7 @@ export default class Point extends Geometry {
      * Get the distance square between point `this` and line segment `lineSegment`
      * @param lineSegment
      */
+    @validGeometryArguments
     getSquaredDistanceBetweenLineSegment(lineSegment: LineSegment): number {
         const c = this.coordinates;
         const { point1Coordinates: c1, point2Coordinates: c2 } = lineSegment;
@@ -245,6 +256,7 @@ export default class Point extends Geometry {
         const v10 = Vector2.from(c1, c);
         return Vector2.cross(v12, v10) ** 2 / Vector2.squaredMagnitude(Vector2.from(c1, c2));
     }
+    @stated
     getBoundingBox() {
         return [...this.coordinates, 0, 0] as [number, number, number, number];
     }

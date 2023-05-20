@@ -678,6 +678,7 @@ export default class Path extends Geometry {
         } while (!this.isPointInside(rnd));
         return new Point(rnd);
     }
+    @stated
     getBoundingBox() {
         let bbox = Box.nullBox();
         for (const seg of this.getSegments(true)) bbox = Box.extend(bbox, seg.getBoundingBox());

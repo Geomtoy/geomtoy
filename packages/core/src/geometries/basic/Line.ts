@@ -5,7 +5,7 @@ import { eps, optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import ArrowGraphics from "../../helper/ArrowGraphics";
-import { validGeometry } from "../../misc/decor-geometry";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
@@ -170,6 +170,7 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
      * @param point2
      * @param usePoint1
      */
+    @validGeometryArguments
     static fromTwoPoints(point1: [number, number] | Point, point2: [number, number] | Point, usePoint1 = true): Line | null {
         const [x1, y1] = getCoordinates(point1, "point1");
         const [x2, y2] = getCoordinates(point2, "point2");
@@ -188,6 +189,7 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
      * @param point
      * @param angle
      */
+    @validGeometryArguments
     static fromPointAndAngle(point: [number, number] | Point, angle: number) {
         const c = getCoordinates(point, "point");
         Assert.isRealNumber(angle, "angle");
@@ -245,10 +247,12 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
         const [a, b, c] = this.getImplicitFunctionCoefs();
         return Float.equalTo(a * x + b * y + c, 0, eps.epsilon);
     }
+    @stated
     isParallelToXAxis() {
         return this.slope === Infinity;
     }
-    isParallelToYAxis(): boolean {
+    @stated
+    isParallelToYAxis() {
         return this.slope === 0;
     }
     getXWhereYEqualTo(y: number) {
@@ -346,7 +350,7 @@ export default class Line extends Geometry implements InfiniteOpenGeometry {
         const [a2, b2, c2] = line.getImplicitFunctionCoefs();
         return Maths.abs(c1 - c2) / Maths.hypot(a1, b1);
     }
-
+    @stated
     getBoundingBox() {
         return this.point.getBoundingBox();
     }

@@ -4,7 +4,7 @@ import EventSourceObject from "../../event/EventSourceObject";
 import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
-import { validGeometry } from "../../misc/decor-geometry";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
@@ -149,7 +149,6 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
             !Number.isNaN(this._point2Y)
         );
     }
-
     degenerate(check: false): Point | this | null;
     degenerate(check: true): boolean;
     @statedWithBoolean(undefined)
@@ -168,6 +167,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         this.point2Coordinates = Vector2.add(this.point2Coordinates, [deltaX, deltaY]);
         return this;
     }
+    @validGeometryArguments
     static fromPointAndAngleAndLength(point: [number, number] | Point, angle: number, length: number) {
         if (Float.equalTo(length, 0, eps.epsilon)) return null;
         const c1 = getCoordinates(point, "point");
@@ -178,6 +178,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
      * Whether point `point` is on line segment `this`.
      * @param point
      */
+    @validGeometryArguments
     isPointOn(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;
@@ -206,6 +207,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
     /**
      * Get the length of line segment `this`.
      */
+    @stated
     getLength() {
         return Vector2.magnitude(Vector2.from(this.point1Coordinates, this.point2Coordinates));
     }
@@ -249,7 +251,6 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
         const c = x0 * (y0 - y1) + y0 * (x1 - x0);
         return [a, b, c];
     }
-
     /**
      * Get the closest point on line segment `this` from point `point`.
      * @param point
@@ -283,6 +284,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
     /**
      * Get the middle point of line segment `this`.
      */
+    @stated
     getMiddlePoint() {
         const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = this;
         return new Point((x1 + x2) / 2, (y1 + y2) / 2);
@@ -290,6 +292,7 @@ export default class LineSegment extends Geometry implements FiniteOpenGeometry 
     /**
      * Get the perpendicularly bisecting line of line segment `this`.
      */
+    @stated
     getPerpendicularlyBisectingLine() {
         const { point1X: x1, point1Y: y1, point2X: x2, point2Y: y2 } = this;
         return new Line(this.getMiddlePoint(), (x1 - x2) / (y1 - y2));

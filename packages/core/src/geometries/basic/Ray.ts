@@ -5,7 +5,7 @@ import { eps, optioner } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import ArrowGraphics from "../../helper/ArrowGraphics";
-import { validGeometry } from "../../misc/decor-geometry";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
@@ -112,6 +112,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         return check ? false : this;
     }
 
+    @validGeometryArguments
     isPointOn(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const vr = Vector2.from2(this.angle, 1);
@@ -126,6 +127,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
         return this;
     }
 
+    @validGeometryArguments
     static fromTwoPoints(point1: [number, number] | Point, point2: [number, number] | Point) {
         const c1 = getCoordinates(point1, "point1");
         const c2 = getCoordinates(point2, "point2");
@@ -145,6 +147,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
      * @param ray1
      * @param ray2
      */
+    @validGeometryArguments
     static getAngleNSectionRaysFromTwoRays(n: number, ray1: Ray, ray2: Ray): Ray[] | null {
         Assert.isInteger(n, "n");
         Assert.comparison(n, "n", "gt", 1);
@@ -170,6 +173,7 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
      * Returns the closest point(the foot of the perpendicular) on line `this` from point `point`.
      * @param point
      */
+    @validGeometryArguments
     getClosestPointFromPoint(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const co = this.coordinates;
@@ -228,14 +232,16 @@ export default class Ray extends Geometry implements InfiniteOpenGeometry {
 
         return g;
     }
+    @stated
+    getBoundingBox() {
+        return this.point.getBoundingBox();
+    }
 
     toLine() {
         const { coordinates: c, angle: a } = this;
         return Line.fromPointAndAngle(c, a);
     }
-    getBoundingBox() {
-        return this.point.getBoundingBox();
-    }
+
     clone() {
         const ret = new Ray();
         ret._x = this._x;

@@ -140,7 +140,6 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
             !Number.isNaN(this._radiusY)
         );
     }
-
     degenerate(check: false): Point | SealedGeometryArray<[LineSegment, LineSegment]> | this | null;
     degenerate(check: true): boolean;
     @statedWithBoolean(undefined)
@@ -176,6 +175,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     /**
      * @see https://en.wikipedia.org/wiki/Ellipse#Circumference
      */
+    @stated
     getLength() {
         const { radiusX: rx, radiusY: ry } = this;
         const a = Maths.max(rx, ry);
@@ -183,6 +183,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const esq = 1 - b ** 2 / a ** 2;
         return 4 * a * completeEllipticIntegralOfSecondKind(esq);
     }
+    @stated
     getArea() {
         const { radiusX: rx, radiusY: ry } = this;
         return Maths.PI * rx * ry;
@@ -190,6 +191,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     /**
      * Returns the eccentricity of ellipse `this`.
      */
+    @stated
     getEccentricity() {
         const { radiusX: rx, radiusY: ry } = this;
         const a = Maths.max(rx, ry);
@@ -199,6 +201,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
     /**
      * Returns the two foci of ellipse `this`.
      */
+    @stated
     getFoci() {
         const { radiusX: rx, radiusY: ry, centerCoordinates: cc, rotation: phi } = this;
         if (rx === ry) {
@@ -219,18 +222,19 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         }
         return [new Point(f1), new Point(f2)] as [Point, Point];
     }
-
+    @stated
     getXAxisVertices() {
         const { radiusX: rx, centerCoordinates: cc, rotation: phi } = this;
         const [v1, v2] = [Vector2.subtract(cc, Vector2.rotate([rx, 0], phi)), Vector2.add(cc, Vector2.rotate([rx, 0], phi))];
         return [new Point(v1), new Point(v2)] as [Point, Point];
     }
+    @stated
     getYAxisVertices() {
         const { radiusY: ry, centerCoordinates: cc, rotation: phi } = this;
         const [v1, v2] = [Vector2.subtract(cc, Vector2.rotate([0, ry], phi)), Vector2.add(cc, Vector2.rotate([0, ry], phi))];
         return [new Point(v1), new Point(v2)] as [Point, Point];
     }
-
+    @stated
     getDirectrices() {
         const { radiusX: rx, radiusY: ry, centerCoordinates: cc, rotation: phi } = this;
         if (rx === ry) {
@@ -259,7 +263,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const ul = Line.fromPointAndAngle(uc, angle);
         return [ll, ul] as [Line, Line];
     }
-
+    @validGeometryArguments
     static fromTwoFociAndDistanceSum(focus1: [number, number] | Point, focus2: [number, number] | Point, distanceSum: number) {
         Assert.isPositiveNumber(distanceSum, "distanceSum");
         const c1 = getCoordinates(focus1, "focus1");
@@ -276,7 +280,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const angle = Vector2.angle(v);
         return new Ellipse(cc, a, b, angle);
     }
-
+    @validGeometryArguments
     static fromTwoFociAndPointOn(focus1: [number, number] | Point, focus2: [number, number] | Point, point: [number, number] | Point) {
         const c1 = getCoordinates(focus1, "focus1");
         const c2 = getCoordinates(focus2, "focus2");
@@ -284,7 +288,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const ds = Vector2.magnitude(Vector2.from(c0, c1)) + Vector2.magnitude(Vector2.from(c0, c2));
         return Ellipse.fromTwoFociAndDistanceSum(c1, c2, ds);
     }
-
+    @validGeometryArguments
     static fromTwoFociAndEccentricity(focus1: [number, number] | Point, focus2: [number, number] | Point, eccentricity: number) {
         if (!(eccentricity > 0 && eccentricity < 1)) {
             console.warn("[G]The `eccentricity` should be a number between 0(not including) and 1(not including).");
@@ -300,7 +304,6 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const angle = Vector2.angle(v);
         return new Ellipse(cc, a, b, angle);
     }
-
     /**
      * Determine a ellipse from center `center` and two endpoints `endpoint1` and `endpoint2` of conjugate diameters.
      * @see https://en.wikipedia.org/wiki/Rytz%27s_construction
@@ -308,6 +311,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
      * @param endpoint1
      * @param endpoint2
      */
+    @validGeometryArguments
     static fromCenterAndConjugateDiametersEndPoints(center: [number, number] | Point, endpoint1: [number, number] | Point, endpoint2: [number, number] | Point) {
         const cc = getCoordinates(center, "center");
         const c1 = getCoordinates(endpoint1, "endpoint1");
@@ -334,7 +338,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const angle = Vector2.angle(Vector2.add(v02, vb));
         return new Ellipse(cc, Maths.abs(a), Maths.abs(b), angle);
     }
-
+    @validGeometryArguments
     isPointOn(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         const { centerX: cx, centerY: cy, radiusX: rx, radiusY: ry, rotation: phi } = this;
@@ -345,6 +349,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const f = (dx * cosPhi + dy * sinPhi) ** 2 / rx ** 2 + (dx * sinPhi - dy * cosPhi) ** 2 / ry ** 2;
         return Float.equalTo(f, 1, eps.epsilon);
     }
+    @validGeometryArguments
     isPointOutside(point: [number, number] | Point): boolean {
         const [x, y] = getCoordinates(point, "point");
         const { centerX: cx, centerY: cy, radiusX: rx, radiusY: ry, rotation: phi } = this;
@@ -355,6 +360,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const f = (dx * cosPhi + dy * sinPhi) ** 2 / rx ** 2 + (dx * sinPhi - dy * cosPhi) ** 2 / ry ** 2;
         return Float.greaterThan(f, 1, eps.epsilon);
     }
+    @validGeometryArguments
     isPointInside(point: [number, number] | Point): boolean {
         const [x, y] = getCoordinates(point, "point");
         const { centerX: cx, centerY: cy, radiusX: rx, radiusY: ry, rotation: phi } = this;
@@ -365,7 +371,6 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const f = (dx * cosPhi + dy * sinPhi) ** 2 / rx ** 2 + (dx * sinPhi - dy * cosPhi) ** 2 / ry ** 2;
         return Float.lessThan(f, 1, eps.epsilon);
     }
-
     @validGeometryArguments
     getClosestPointFromPoint(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
@@ -407,22 +412,18 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         });
         return [new Point(fn(minA)), minSd] as [point: Point, distanceSquare: number];
     }
-
     move(deltaX: number, deltaY: number) {
         this.centerCoordinates = Vector2.add(this.centerCoordinates, [deltaX, deltaY]);
         return this;
     }
-
     getWindingDirection() {
         return 1 as WindingDirection;
     }
-
     getArcBetweenAngles(startAngle: number, endAngle: number, positive = true): null | Arc {
         const sa = Angle.simplify(startAngle);
         const ea = Angle.simplify(endAngle);
         return Arc.fromCenterAndStartEndAnglesEtc(this.centerCoordinates, this.radiusX, this.radiusY, sa, ea, positive, this.rotation);
     }
-
     //https://www.coder.work/article/1220553
     static findTangentLineOfTwoEllipse(ellipse1: Ellipse, ellipse2: Ellipse) {}
 
@@ -444,13 +445,12 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
             ] as [number, number];
         };
     }
-
     getPointAtAngle(angle: number) {
         Assert.isRealNumber(angle, "angle");
         const [x, y] = this.getParametricEquation()(angle);
         return new Point(x, y);
     }
-
+    @validGeometryArguments
     getAngleOfPoint(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
         const { centerX: cx, centerY: cy, rotation: phi, radiusX: rx, radiusY: ry } = this;
@@ -465,7 +465,7 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         }
         return NaN;
     }
-
+    @stated
     getBoundingBox() {
         const { centerX: cx, centerY: cy, rotation: phi, radiusX: rx, radiusY: ry } = this;
         const cosPhi = Maths.cos(phi);
@@ -508,7 +508,6 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
             ] as [number, number];
         };
     }
-
     /**
      * Get the tangent vector of ellipse `this` at angle `a`.
      * @param a
@@ -544,7 +543,6 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         const cc = Vector2.add(c, Vector2.from2(angle, r));
         return new Circle(cc, Maths.abs(r));
     }
-
     /**
      * Returns the coefficients of the implicit function $ax^2+bxy+cy^2+dx+ey+f=0$.
      */
@@ -600,7 +598,6 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         commands.push(Path.arcTo(radiusX, radiusY, rotation, false, true, c0));
         return new Path(commands, true);
     }
-
     toPath2() {
         const kappa = 0.5522848;
         const { centerX: cx, centerY: cy, rotation: phi, radiusX: rx, radiusY: ry } = this;
@@ -632,7 +629,6 @@ export default class Ellipse extends Geometry implements ClosedGeometry, Rotatio
         commands.push(Path.bezierTo(cp41, cp42, [xs, ym]));
         return new Path(commands, true);
     }
-
     getGraphics(viewport: ViewportDescriptor) {
         const dg = this.degenerate(false);
         if (dg === null) return new Graphics();

@@ -5,7 +5,7 @@ import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import ArrowGraphics from "../../helper/ArrowGraphics";
-import { validGeometry } from "../../misc/decor-geometry";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
 import type Transformation from "../../transformation";
@@ -217,6 +217,8 @@ export default class Vector extends Geometry {
     static fromAngleAndMagnitude(angle: number, magnitude: number) {
         return new Vector(Vector2.from2(angle, magnitude));
     }
+
+    @validGeometryArguments
     static fromTwoPoints(point1: [number, number] | Point, point2: [number, number] | Point) {
         const c1 = getCoordinates(point1, "point1");
         const c2 = getCoordinates(point2, "point2");
@@ -247,6 +249,7 @@ export default class Vector extends Geometry {
      * - If `point` is on the exterior of `point2`, return a number in $(-\infty, -1)$.
      * @param point
      */
+    @validGeometryArguments
     getProportionOfPoint(point: [number, number] | Point) {
         const c = getCoordinates(point, "point");
         const { point1Coordinates: c1, point2Coordinates: c2 } = this;
@@ -271,6 +274,7 @@ export default class Vector extends Geometry {
      * - If `lambda` is in $(-\infty, -1)$, return a point on the exterior of `point2`.
      * @param lambda
      */
+    @validGeometryArguments
     getPointAtProportion(lambda: number): null | Point {
         if (lambda === -1) return null;
         if (Maths.abs(lambda) === Infinity) return this.point2.clone();
@@ -284,6 +288,11 @@ export default class Vector extends Geometry {
     toPoint() {
         return new Point(this.coordinates);
     }
+    @stated
+    getBoundingBox() {
+        return Box.from(this.point1Coordinates, this.point2Coordinates);
+    }
+
     /**
      * To point by `point2Coordinates` of vector `this`.
      */
@@ -302,17 +311,12 @@ export default class Vector extends Geometry {
     toLineSegment() {
         return new LineSegment(this.point1Coordinates, this.point2Coordinates);
     }
-    getBoundingBox() {
-        return Box.from(this.point1Coordinates, this.point2Coordinates);
-    }
-
     dotProduct(vector: Vector) {
         return Vector2.dot(this.coordinates, vector.coordinates);
     }
     crossProduct(vector: Vector) {
         return Vector2.cross(this.coordinates, vector.coordinates);
     }
-
     normalize() {
         this.coordinates = Vector2.normalize(this.coordinates);
         return this;

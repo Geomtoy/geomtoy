@@ -244,9 +244,11 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         return this;
     }
 
+    @stated
     getLength() {
         return 2 * this._width + 2 * this._height;
     }
+    @stated
     getArea() {
         return this._width * this._height;
     }
@@ -283,6 +285,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         const mn = Vector2.add(nn, vh);
         return [new Point(nn), new Point(nm), new Point(mm), new Point(mn)] as [Point, Point, Point, Point];
     }
+    @stated
     getCenter() {
         const { coordinates: cc, _width: w, _height: h, _rotation: phi } = this;
         const vw = Vector2.from2(phi, w / 2);
@@ -290,7 +293,7 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
         const c = Vector2.add(cc, Vector2.add(vw, vh));
         return new Point(c);
     }
-
+    @stated
     getBoundingBox() {
         const { _x: x, _y: y, _width: w, _height: h, rotation: phi } = this;
         const vw = Vector2.from2(phi, w);

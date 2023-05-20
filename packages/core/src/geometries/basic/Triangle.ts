@@ -6,9 +6,9 @@ import { eps } from "../../geomtoy";
 import Graphics from "../../graphics";
 import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { Cartesian, Trilinear } from "../../helper/CoordinateSystem";
-import { validGeometry } from "../../misc/decor-geometry";
+import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
-import { getCoordinates, getPoint } from "../../misc/point-like";
+import { getPoint } from "../../misc/point-like";
 import type Transformation from "../../transformation";
 import type { ClosedGeometry, PathCommand, ViewportDescriptor, WindingDirection } from "../../types";
 import Path from "../general/Path";
@@ -249,7 +249,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const cp = Vector2.cross(Vector2.from(c1, c2), Vector2.from(c1, c3));
         return cp >= 0 ? 1 : -1;
     }
-
+    @validGeometryArguments
     static equilateralTriangleFromLineSegment(lineSegment: LineSegment, positive = true) {
         const c1 = lineSegment.point1Coordinates;
         const c2 = lineSegment.point2Coordinates;
@@ -268,6 +268,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the sides as line segments of triangle `this`.
      */
+    @stated
     getSideLineSegments(): [LineSegment, LineSegment, LineSegment] {
         return [
             new LineSegment(this.point2Coordinates, this.point3Coordinates),
@@ -278,6 +279,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the altitudes as line segments of triangle `this`.
      */
+    @stated
     getAltitudeLineSegments(): [LineSegment, LineSegment, LineSegment] {
         const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
         const c1p = Vector2.add(c2, Vector2.project(Vector2.from(c2, c1), Vector2.from(c2, c3)));
@@ -288,6 +290,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the medians as line segments of triangle `this`.
      */
+    @stated
     getMedianLineSegments(): [LineSegment, LineSegment, LineSegment] {
         const { point1Coordinates: c1, point2Coordinates: c2, point3Coordinates: c3 } = this;
         const c1p = Vector2.add(Vector2.scalarMultiply(c2, 1 / 2), Vector2.scalarMultiply(c3, 1 / 2));
@@ -298,6 +301,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the symmedians as line segments of triangle `this`.
      */
+    @stated
     getSymmedianLineSegments() {
         const ls = [this.side1Length, this.side2Length, this.side3Length];
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates];
@@ -315,6 +319,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the angle bisectors as line segments of triangle `this`.
      */
+    @stated
     getAngleBisectingLineSegments(): [LineSegment, LineSegment, LineSegment] {
         const ls = [this.side1Length, this.side2Length, this.side3Length];
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates];
@@ -332,6 +337,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the perpendicular bisectors as line segments of triangle `this`.
      */
+    @stated
     getPerpendicularlyBisectingLineSegments(): [LineSegment, LineSegment, LineSegment] {
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates];
         return Utility.range(0, 3).map(i => {
@@ -389,6 +395,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Whether triangle `this` is an acute triangle.
      */
+    @stated
     isAcuteTriangle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length].sort((a, b) => a - b);
         return Float.greaterThan(a ** 2 + b ** 2, c ** 2, eps.epsilon);
@@ -396,6 +403,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Whether triangle `this` is a right triangle.
      */
+    @stated
     isRightTriangle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length].sort((a, b) => a - b);
         return Float.equalTo(a ** 2 + b ** 2, c ** 2, eps.epsilon);
@@ -403,6 +411,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Whether triangle `this` is an obtuse triangle.
      */
+    @stated
     isObtuseTriangle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length].sort((a, b) => a - b);
         return Float.lessThan(a ** 2 + b ** 2, c ** 2, eps.epsilon);
@@ -410,12 +419,14 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Whether triangle `this` is a scalene triangle(a triangle with no congruent sides).
      */
+    @stated
     isScaleneTriangle() {
         return !Float.equalTo(this.side1Length, this.side2Length, eps.epsilon) && !Float.equalTo(this.side1Length, this.side3Length, eps.epsilon);
     }
     /**
      * Whether triangle `this` is an isosceles triangle(a triangle with at least two congruent sides).
      */
+    @stated
     isIsoscelesTriangle() {
         return (
             Float.equalTo(this.side1Length, this.side2Length, eps.epsilon) ||
@@ -426,6 +437,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Whether triangle `this` is an equilateral triangle(a triangle with three congruent sides).
      */
+    @stated
     isEquilateralTriangle() {
         return Float.equalTo(this.side1Length, this.side2Length, eps.epsilon) && Float.equalTo(this.side1Length, this.side3Length, eps.epsilon);
     }
@@ -439,6 +451,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get area of triangle `this`.
      */
+    @stated
     getArea() {
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
@@ -460,6 +473,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Get the trilinear coordinates of point `point` respect to triangle `this`.
      * @param point
      */
+    @validGeometryArguments
     getTrilinearOfPoint(point: Point) {
         const c = new Cartesian(...point.coordinates);
         const t = c.toTrilinear(this.point1Coordinates, this.point2Coordinates, this.point3Coordinates);
@@ -470,6 +484,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Whether point `point` is on triangle `this`.
      * @param point
      */
+    @validGeometryArguments
     isPointOn(point: [number, number] | Point) {
         const p = getPoint(point, "point");
         const t = this.getTrilinearOfPoint(p);
@@ -479,6 +494,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Whether point `point` is inside triangle `this`.
      * @param point
      */
+    @validGeometryArguments
     isPointInside(point: [number, number] | Point) {
         const p = getPoint(point, "point");
         const t = this.getTrilinearOfPoint(p);
@@ -488,6 +504,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Whether point `point` is outside triangle `this`.
      * @param point
      */
+    @validGeometryArguments
     isPointOutside(point: [number, number] | Point) {
         const p = getPoint(point, "point");
         const t = this.getTrilinearOfPoint(p);
@@ -497,6 +514,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Get the isogonal conjugate point of point `point` respect to triangle `this`.
      * @param point
      */
+    @validGeometryArguments
     getIsogonalConjugatePointOfPoint(point: Point) {
         if (this.isPointOn(point)) return null;
         const t = this.getTrilinearOfPoint(point);
@@ -507,6 +525,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Get the isotomic conjugate point of point `point` respect to triangle `this`.
      * @param point
      */
+    @validGeometryArguments
     getIsotomicConjugatePointOfPoint(point: Point) {
         if (this.isPointOn(point)) return null;
         const t = this.getTrilinearOfPoint(point);
@@ -517,6 +536,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the centroid point of triangle `this`.
      */
+    @stated
     getCentroid() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const t: [number, number, number] = [b * c, c * a, a * b];
@@ -525,6 +545,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the medial triangle of triangle `this`.
      */
+    @stated
     getMedialTriangle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
@@ -539,6 +560,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the antimedial triangle of triangle `this`.
      */
+    @stated
     getAntimedialTriangle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
@@ -553,6 +575,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the orthocenter point of triangle `this`.
      */
+    @stated
     getOrthocenter() {
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
@@ -577,6 +600,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * @description
      * If `this` is not obtuse triangle, return null.
      */
+    @stated
     getPolarCircle(): Circle | null {
         if (!this.isObtuseTriangle()) return null;
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
@@ -590,6 +614,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * - If triangle `this` is right triangle, return null
      * - Else return the orthic triangle.
      */
+    @stated
     getOrthicTriangle() {
         if (this.isRightTriangle()) return null;
         const [a1, a2, a3] = [this.angle1, this.angle2, this.angle3];
@@ -605,6 +630,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the incenter point of triangle `this` using trilinear.
      */
+    @stated
     getIncenterAlt() {
         const t: [number, number, number] = [1, 1, 1];
         return this.getPointAtTrilinear(t);
@@ -612,6 +638,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the circumcenter point of triangle `this` using trilinear.
      */
+    @stated
     getCircumcenterAlt() {
         const [aa, bb, cc] = [this.angle1, this.angle2, this.angle3];
         const t: [number, number, number] = [Maths.cos(aa), Maths.cos(bb), Maths.cos(cc)];
@@ -620,6 +647,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the escenter points of triangle `this`.
      */
+    @stated
     getEscentersAlt(): [Point, Point, Point] {
         const t1: [number, number, number] = [-1, 1, 1];
         const t2: [number, number, number] = [1, -1, 1];
@@ -629,6 +657,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the Nine-point circle center point of triangle `this`.
      */
+    @stated
     getNinePointCenter() {
         // Nine-point center = cos(B-C) : cos(C-A) : cos(A-B)
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
@@ -639,6 +668,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the Nine-point circle of triangle `this`.
      */
+    @stated
     getNinePointCircle() {
         const p = this.getNinePointCenter();
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
@@ -649,6 +679,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the Nagel point of triangle `this`.
      */
+    @stated
     getNagelPoint() {
         // Nagel = (b+c-a)/a : (c+a-b)/b : (a+b-c)/c = csc^2(A/2) : csc^2(B/2) : csc^2(C/2)
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
@@ -682,6 +713,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the Gergonne point of triangle `this`.
      */
+    @stated
     getGergonnePoint() {
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
@@ -696,6 +728,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Get the Gergonne triangle of triangle `this`.
      * @see {@link https://en.wikipedia.org/wiki/Incircle_and_excircles_of_a_triangle_Gergonne_triangle_and_point}
      */
+    @stated
     getGergonneTriangle() {
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         const [a1, a2, a3] = [this.angle1, this.angle2, this.angle3];
@@ -710,7 +743,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const cc3 = t3.toCartesian(...cs);
         return new Triangle(cc1.valueOf(), cc2.valueOf(), cc3.valueOf());
     }
-
+    @stated
     getLemoinePoint() {
         // Lemoine = a : b : c = sinA : sinB : sinC
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
@@ -719,6 +752,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const cc = t.toCartesian(...cs);
         return new Point(cc.valueOf());
     }
+    @stated
     getLemoineLine() {
         return new Line(0, 0, 0);
     }
@@ -726,6 +760,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Get the Feuerbach circle of triangle `this`.
      * @see {@link https://en.wikipedia.org/wiki/Feuerbach_point}
      */
+    @stated
     getFeuerbachPoint() {
         // Feuerbach = 1−cos(B−C) : 1−cos(C−A) : 1−cos(A−B)
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
@@ -737,6 +772,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Get the Feuerbach triangle of triangle `this`.
      * @see {@link https://mathworld.wolfram.com/FeuerbachTriangle.html}
      */
+    @stated
     getFeuerbachTriangle() {
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         const [a1, a2, a3] = [this.angle1, this.angle2, this.angle3];
@@ -757,6 +793,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * @see {@link https://en.wikipedia.org/wiki/Fermat_point}
      */
     //todo modify
+    @stated
     getFirstFermatPoint() {
         // Fermat1 = csc(A+PI/3) : csc(B+PI/3) : csc(C+PI/3)
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
@@ -769,6 +806,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * @see {@link https://en.wikipedia.org/wiki/Fermat_point}
      */
     //todo modify
+    @stated
     getSecondFermatPoint() {
         // Fermat2 = csc(A-PI/3) : csc(B-PI/3) : csc(C-PI/3)
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
@@ -782,6 +820,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * If triangle is an equilateral triangle, return null, otherwise return the first isodynamic point.
      * @see {@link https://en.wikipedia.org/wiki/Isodynamic_point}
      */
+    @stated
     getFirstIsodynamicPoint() {
         // isodynamic1 = sin(A+PI/3) : sin(B+PI/3) : sin(C+PI/3)
         if (this.isEquilateralTriangle()) return null;
@@ -796,6 +835,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * If triangle is an equilateral triangle, return null, otherwise return the second isodynamic point.
      * @see {@link https://en.wikipedia.org/wiki/Isodynamic_point}
      */
+    @stated
     getSecondIsodynamicPoint() {
         // isodynamic2 = sin(A-PI/3) : sin(B-PI/3) : sin(C-PI/3)
         if (this.isEquilateralTriangle()) return null;
@@ -808,6 +848,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * @see {@link https://mathworld.wolfram.com/EulerPoints.html}
      */
+    @stated
     getEulerPoints(): [Point, Point, Point] {
         const { x: hx, y: hy } = this.getOrthocenter();
         const [x1, y1] = this.point1Coordinates;
@@ -832,6 +873,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Get Euler line of triangle `this`
      * @see {@link https://en.wikipedia.org/wiki/Euler_line}
      */
+    @stated
     getEulerLine() {
         if (this.isEquilateralTriangle()) return null;
         const p1 = this.getCircumcenter();
@@ -845,6 +887,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
      * Get the tangential triangle of triangle `this`.
      * @see {@link https://en.wikipedia.org/wiki/Tangential_triangle}
      */
+    @stated
     getTangentialTriangle() {
         const cs = [this.point1Coordinates, this.point2Coordinates, this.point3Coordinates] as const;
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
@@ -870,6 +913,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the incenter point of triangle `this`.
      */
+    @stated
     getIncenter() {
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
@@ -883,6 +927,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the inscribed circle of triangle `this`.
      */
+    @stated
     getInscribedCircle() {
         const s = this.getArea();
         const d = this.getLength();
@@ -892,6 +937,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the circumcenter point of triangle `this`.
      */
+    @stated
     getCircumcenter() {
         const [x1, y1] = this.point1Coordinates;
         const [x2, y2] = this.point2Coordinates;
@@ -911,6 +957,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the circumscribed circle of triangle `this`.
      */
+    @stated
     getCircumscribedCircle() {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const area = this.getArea();
@@ -920,6 +967,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the escenter points of triangle `this`.
      */
+    @stated
     getEscenters(): [Point, Point, Point] {
         const [a, b, c] = [this.side1Length, this.side2Length, this.side3Length];
         const [x1, y1] = this.point1Coordinates;
@@ -933,7 +981,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const ec: [number, number] = [(a * x1 + b * x2 - c * x3) / ecd, (a * y1 + b * y2 - c * y3) / ecd];
         return [new Point(ea), new Point(eb), new Point(ec)];
     }
-
+    @stated
     getEscribedCircleRadii() {
         const s = this.getArea();
         const p = this.getLength() / 2;
@@ -944,6 +992,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
     /**
      * Get the escribed circles of triangle `this`.
      */
+    @stated
     getEscribedCircles(): [Circle, Circle, Circle] {
         const [ea, eb, ec] = this.getEscenters();
         const area = this.getArea();
@@ -956,7 +1005,7 @@ export default class Triangle extends Geometry implements ClosedGeometry {
         const rc = (2 * area) / ecd;
         return [new Circle(ea, ra), new Circle(eb, rb), new Circle(ec, rc)];
     }
-
+    @stated
     getBoundingBox() {
         return this.toPolygon().getBoundingBox();
     }

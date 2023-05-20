@@ -269,6 +269,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         return this;
     }
 
+    @validGeometryArguments
     static fromCenterAndStartEndAnglesEtc(center: [number, number] | Point, radiusX: number, radiusY: number, startAngle: number, endAngle: number, positive: boolean, rotation = 0) {
         Assert.isNonNegativeNumber(radiusX, "radiusX");
         Assert.isNonNegativeNumber(radiusY, "radiusY");
@@ -292,6 +293,7 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         });
         return new Arc(ep.point1X, ep.point1Y, ep.point2X, ep.point2Y, ep.radiusX, ep.radiusY, ep.largeArc, ep.positive, ep.rotation);
     }
+    @validGeometryArguments
     static fromThreePointsCircular(point1: [number, number] | Point, point2: [number, number] | Point, radiusControlPoint: [number, number] | Point) {
         const [x1, y1] = getCoordinates(point1, "point1");
         const [x2, y2] = getCoordinates(point2, "point2");
@@ -401,7 +403,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         const { centerX: cx, centerY: cy } = this._centerParameterization();
         return new Circle(cx, cy, this._radiusY);
     }
-
     reverse() {
         this._positive = !this._positive;
         // prettier-ignore
@@ -419,10 +420,11 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         this.trigger_(new EventSourceObject(this, Arc.events.point2YChanged));
         return this;
     }
-
+    @validGeometryArguments
     isPointOn(point: [number, number] | Point) {
         return !Number.isNaN(this.getAngleOfPoint(point));
     }
+    @validGeometryArguments
     getAngleOfPoint(point: [number, number] | Point) {
         const a = this.toEllipse().getAngleOfPoint(point);
         if (Number.isNaN(a)) return a;
@@ -434,7 +436,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         a = this._clampAngle(a, "a");
         return this.toEllipse().getPointAtAngle(a);
     }
-
     @stated
     getBoundingBox() {
         let minX = Infinity;
@@ -452,7 +453,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         });
         return [minX, minY, maxX - minX, maxY - minY] as [number, number, number, number];
     }
-
     private _clampAngle(a: number, p: string) {
         Assert.isRealNumber(a, p);
         const { startAngle: sa, endAngle: ea } = this._centerParameterization();
@@ -462,7 +462,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         }
         return Angle.clamp(a, sa, ea, positive);
     }
-
     getTangentVectorAtAngle(a: number, normalized = false) {
         a = this._clampAngle(a, "a");
         const tv = this.toEllipse().getTangentVectorAtAngle(a, normalized);
@@ -482,7 +481,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         a = this._clampAngle(a, "a");
         return this.toEllipse().getOsculatingCircleAtAngle(a);
     }
-
     // Sort the angles by the `this.positive` from start angle to end angle, this is very important.
     private _anglesOrder(as: number[]) {
         const { startAngle: sa, endAngle: ea } = this._centerParameterization();
@@ -501,7 +499,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
             ]
         );
     }
-
     splitAtAngle(a: number) {
         a = this._clampAngle(a, "a");
         const { centerX, centerY, startAngle, endAngle } = this._centerParameterization();
@@ -551,7 +548,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         [a1, a2] = this._anglesOrder([a1, a2]);
         return Arc.fromCenterAndStartEndAnglesEtc([centerX, centerY], this.radiusX, this.radiusY, a1, a2, this.positive, this.rotation);
     }
-
     @validGeometryArguments
     getClosestPointFromPoint(point: [number, number] | Point) {
         const [x, y] = getCoordinates(point, "point");
@@ -598,7 +594,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         });
         return [new Point(fn(minA)), minSd] as [point: Point, distanceSquare: number];
     }
-
     /**
      * Returns the length of arc `this`.
      * @see https://en.wikipedia.org/wiki/Ellipse#Arc_length
@@ -660,7 +655,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
             return held;
         }
     }
-
     toPath(closed = false) {
         const commands: PathCommand[] = [];
         const { point1Coordinates: c1, point2Coordinates: c2, radiusX, radiusY, rotation, largeArc, positive } = this;
@@ -668,13 +662,11 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         commands.push(Path.arcTo(radiusX, radiusY, rotation, largeArc, positive, c2));
         return new Path(commands, closed);
     }
-
     apply(transformation: Transformation) {
         const { _point1X: x1, _point1Y: y1, _point2X: x2, _point2Y: y2, _radiusX: rx, _radiusY: ry, _rotation: phi, _largeArc: la, _positive: p } = this;
         const ep = endpointParameterizationTransform({ point1X: x1, point1Y: y1, point2X: x2, point2Y: y2, radiusX: rx, radiusY: ry, largeArc: la, positive: p, rotation: phi }, transformation.matrix);
         return new Arc(ep.point1X, ep.point1Y, ep.point2X, ep.point2Y, ep.radiusX, ep.radiusY, ep.largeArc, ep.positive, ep.rotation);
     }
-
     getGraphics(viewport: ViewportDescriptor) {
         const dg = this.degenerate(false);
         if (dg === null) return new Graphics();
@@ -688,7 +680,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         gg.endpointArcTo(rx, ry, rotation, largeArc, positive, ...c2);
         return g;
     }
-
     clone() {
         const ret = new Arc();
         ret._point1X = this._point1X;
@@ -702,7 +693,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         ret._rotation = this._rotation;
         return ret;
     }
-
     copyFrom(shape: Arc | null) {
         if (shape === null) shape = new Arc();
         // make `_inputRadiusX` and `_inputRadiusY` to `NaN` first, avoid redundant calls of `_correctAndSetRadii`
@@ -721,7 +711,6 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
         this._setPositive(shape._positive);
         return this;
     }
-
     override toJSON() {
         return {
             name: this.name,
