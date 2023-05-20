@@ -7,6 +7,7 @@ import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
+import { simplePointPosition } from "../../misc/simple-point-position";
 import Transformation from "../../transformation";
 import type { ClosedGeometry, PathCommand, ViewportDescriptor, WindingDirection } from "../../types";
 import Path from "../general/Path";
@@ -182,11 +183,23 @@ export default class RegularPolygon extends Geometry implements ClosedGeometry {
     isPointOn(point: [number, number] | Point): boolean {
         throw new Error("Method not implemented.");
     }
-    isPointOutside(point: [number, number] | Point): boolean {
-        throw new Error("Method not implemented.");
+    @validGeometryArguments
+    isPointOn(point: [number, number] | Point) {
+        const c = getCoordinates(point, "point");
+        const vertices = this.getVertices().map(p => p.coordinates);
+        return simplePointPosition(vertices, c, eps.vectorEpsilon) === 0;
     }
-    isPointInside(point: [number, number] | Point): boolean {
-        throw new Error("Method not implemented.");
+    @validGeometryArguments
+    isPointOutside(point: [number, number] | Point) {
+        const c = getCoordinates(point, "point");
+        const vertices = this.getVertices().map(p => p.coordinates);
+        return simplePointPosition(vertices, c, eps.vectorEpsilon) === 1;
+    }
+    @validGeometryArguments
+    isPointInside(point: [number, number] | Point) {
+        const c = getCoordinates(point, "point");
+        const vertices = this.getVertices().map(p => p.coordinates);
+        return simplePointPosition(vertices, c, eps.vectorEpsilon) === -1;
     }
     move(deltaX: number, deltaY: number) {
         this.centerCoordinates = Vector2.add(this.centerCoordinates, [deltaX, deltaY]);

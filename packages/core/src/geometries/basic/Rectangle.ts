@@ -8,6 +8,7 @@ import GeometryGraphic from "../../graphics/GeometryGraphic";
 import { validGeometry, validGeometryArguments } from "../../misc/decor-geometry";
 import { stated, statedWithBoolean } from "../../misc/decor-stated";
 import { getCoordinates } from "../../misc/point-like";
+import { simplePointPosition } from "../../misc/simple-point-position";
 import Transformation from "../../transformation";
 import type { ClosedGeometry, PathCommand, RotationFeaturedGeometry, ViewportDescriptor, WindingDirection } from "../../types";
 import Path from "../general/Path";
@@ -254,61 +255,21 @@ export default class Rectangle extends Geometry implements ClosedGeometry, Rotat
     }
     @validGeometryArguments
     isPointOn(point: [number, number] | Point) {
-        const c0 = getCoordinates(point, "point");
-        const [c1, c2, c3, c4] = this.getVertices().map(p => p.coordinates);
-        const v12 = Vector2.from(c1, c2);
-        const v23 = Vector2.from(c2, c3);
-        const v34 = Vector2.from(c3, c4);
-        const v41 = Vector2.from(c4, c1);
-        const v10 = Vector2.from(c1, c0);
-        const v20 = Vector2.from(c2, c0);
-        const v30 = Vector2.from(c3, c0);
-        const v40 = Vector2.from(c4, c0);
-
-        if (Float.equalTo(Vector2.cross(v12, v10), 0, eps.vectorEpsilon) && Float.between(Vector2.dot(v12, v10) / Vector2.dot(v12, v12), 0, 1, false, false, eps.vectorEpsilon)) return true;
-        if (Float.equalTo(Vector2.cross(v23, v20), 0, eps.vectorEpsilon) && Float.between(Vector2.dot(v23, v20) / Vector2.dot(v23, v23), 0, 1, false, false, eps.vectorEpsilon)) return true;
-        if (Float.equalTo(Vector2.cross(v34, v30), 0, eps.vectorEpsilon) && Float.between(Vector2.dot(v34, v30) / Vector2.dot(v34, v34), 0, 1, false, false, eps.vectorEpsilon)) return true;
-        if (Float.equalTo(Vector2.cross(v41, v40), 0, eps.vectorEpsilon) && Float.between(Vector2.dot(v41, v40) / Vector2.dot(v41, v41), 0, 1, false, false, eps.vectorEpsilon)) return true;
-        return false;
+        const c = getCoordinates(point, "point");
+        const vertices = this.getVertices().map(p => p.coordinates);
+        return simplePointPosition(vertices, c, eps.vectorEpsilon) === 0;
     }
     @validGeometryArguments
     isPointOutside(point: [number, number] | Point) {
-        const c0 = getCoordinates(point, "point");
-        const [c1, c2, c3, c4] = this.getVertices().map(p => p.coordinates);
-        const v12 = Vector2.from(c1, c2);
-        const v23 = Vector2.from(c2, c3);
-        const v34 = Vector2.from(c3, c4);
-        const v41 = Vector2.from(c4, c1);
-        const v10 = Vector2.from(c1, c0);
-        const v20 = Vector2.from(c2, c0);
-        const v30 = Vector2.from(c3, c0);
-        const v40 = Vector2.from(c4, c0);
-        if (Float.lessThan(Vector2.cross(v12, v10), 0, eps.vectorEpsilon)) return true;
-        if (Float.lessThan(Vector2.cross(v23, v20), 0, eps.vectorEpsilon)) return true;
-        if (Float.lessThan(Vector2.cross(v34, v30), 0, eps.vectorEpsilon)) return true;
-        if (Float.lessThan(Vector2.cross(v41, v40), 0, eps.vectorEpsilon)) return true;
-        return false;
+        const c = getCoordinates(point, "point");
+        const vertices = this.getVertices().map(p => p.coordinates);
+        return simplePointPosition(vertices, c, eps.vectorEpsilon) === 1;
     }
     @validGeometryArguments
     isPointInside(point: [number, number] | Point) {
-        const c0 = getCoordinates(point, "point");
-        const [c1, c2, c3, c4] = this.getVertices().map(p => p.coordinates);
-        const v12 = Vector2.from(c1, c2);
-        const v23 = Vector2.from(c2, c3);
-        const v34 = Vector2.from(c3, c4);
-        const v41 = Vector2.from(c4, c1);
-        const v10 = Vector2.from(c1, c0);
-        const v20 = Vector2.from(c2, c0);
-        const v30 = Vector2.from(c3, c0);
-        const v40 = Vector2.from(c4, c0);
-        if (
-            Float.greaterThan(Vector2.cross(v12, v10), 0, eps.vectorEpsilon) &&
-            Float.greaterThan(Vector2.cross(v23, v20), 0, eps.vectorEpsilon) &&
-            Float.greaterThan(Vector2.cross(v34, v30), 0, eps.vectorEpsilon) &&
-            Float.greaterThan(Vector2.cross(v41, v40), 0, eps.vectorEpsilon)
-        )
-            return true;
-        return false;
+        const c = getCoordinates(point, "point");
+        const vertices = this.getVertices().map(p => p.coordinates);
+        return simplePointPosition(vertices, c, eps.vectorEpsilon) === -1;
     }
 
     @stated
