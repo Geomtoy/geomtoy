@@ -533,7 +533,8 @@ export default class Polygon extends Geometry {
         } while (!this.isPointInside(rnd));
         return new Point(rnd);
     }
-    getCentroidPoint() {
+    @stated
+    getCentroid() {
         const l = this.vertexCount;
         let sumX = 0;
         let sumY = 0;
@@ -548,7 +549,8 @@ export default class Polygon extends Geometry {
     /**
      * @see https://en.wikipedia.org/wiki/Centroid
      */
-    getWeightedCentroidPoint() {
+    @stated
+    getWeightedCentroid() {
         const l = this.vertexCount;
         let a = 0;
         let sumX = 0;
