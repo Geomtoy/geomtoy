@@ -1,20 +1,26 @@
-## v0.2.2 (2023-05-18)
+## v0.2.3 (2023-05-20)
 
 ### Bugs fixed:
 
-- **view**: Fix initial value of `globalTransformation` and `globalViewBox`([`54b2cff`](https://github.com/Geomtoy/geomtoy/commit/54b2cff25607214a8a7e69dcc9a4f2a763e00647)) (by FishEleven)
+- **core**: Add some missing decorators for some methods([`4f3baa4`](https://github.com/Geomtoy/geomtoy/commit/4f3baa4a1d735e95e4fcb1ba7564209eb5f53a7b)) (by FishEleven)
 
-## v0.2.1 (2023-05-12)
+## v0.2.2 (2023-05-19)
 
 ### Bugs fixed:
 
-- **view**: Fix style default logic([`0ba6641`](https://github.com/Geomtoy/geomtoy/commit/0ba6641b4003308bea3a79909b8a8b11cb961fb8)) (by FishEleven)
+- **view**: Fix initial value of `globalTransformation` and `globalViewBox`([`d847c28`](https://github.com/Geomtoy/geomtoy/commit/d847c28a419dead3f1a8f5589ea5a194eb870e7c)) (by FishEleven)
 
-## v0.2.0 (2023-05-11)
+## v0.2.1 (2023-05-19)
+
+### Bugs fixed:
+
+- **view**: Fix style default logic([`0e6adac`](https://github.com/Geomtoy/geomtoy/commit/0e6adacdea2b664005d2ef7f54292105378aae02)) (by FishEleven)
+
+## v0.2.0 (2023-05-19)
 
 ### New feature:
 
-- **geomtoy**: Add `geomtoy` all-in-one package([`11d3bcd`](https://github.com/Geomtoy/geomtoy/commit/11d3bcddbb4b0acda7334b1376515aceb0915e29)) (by FishEleven)
+- **geomtoy**: Add `geomtoy` all-in-one bundle package([`9ccd17a`](https://github.com/Geomtoy/geomtoy/commit/9ccd17a555a7096333c049ac6f61a2ba3547ffae)) (by FishEleven)
 
 ## v0.1.2 (2023-05-11)
 
