@@ -1,3 +1,13 @@
+## v0.3.0 (2023-05-21)
+
+### New feature:
+
+- **core**: Add `deepClone` to all parent shapes([`498b5af`](https://github.com/Geomtoy/geomtoy/commit/498b5af21ec14da38e4a0c162c35e9198d42b305)) (by FishEleven)
+
+### Bugs fixed:
+
+- **core**: The native `structuredClone` cannot retain classes, so replace it with `cloneResult`([`c3390f4`](https://github.com/Geomtoy/geomtoy/commit/c3390f45100c1c9b972e728131dce505d619473c)) (by FishEleven)
+
 ## v0.2.4 (2023-05-21)
 
 ### Bugs fixed:
