@@ -38,7 +38,12 @@ export default {
             globals: {
                 [pkgUtil.scopedName]: pkgUtil.pascalName
             },
-            plugins: [terser()]
+            plugins: [
+                terser({
+                    keep_classnames: true,
+                    keep_fnames: true
+                })
+            ]
         }
     ],
     external(id) {

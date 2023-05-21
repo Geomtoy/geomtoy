@@ -31,7 +31,12 @@ export default {
             format: "umd",
             name: pkgUtil.pascalName,
             amd: { id: pkgUtil.scopedName },
-            plugins: [terser()]
+            plugins: [
+                terser({
+                    keep_classnames: true,
+                    keep_fnames: true
+                })
+            ]
         }
     ],
     plugins: [nodeResolve({ extensions }), babel({ babelHelpers: "bundled", extensions, rootMode: "upward" })]

@@ -29,7 +29,12 @@ export default {
             format: "umd",
             name: "Geomtoy",
             amd: { id: "geomtoy" },
-            plugins: [terser()]
+            plugins: [
+                terser({
+                    keep_classnames: true,
+                    keep_fnames: true
+                })
+            ]
         }
     ],
     plugins: [nodeResolve({ extensions }), babel({ babelHelpers: "bundled", extensions, rootMode: "upward" })]
