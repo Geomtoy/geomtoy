@@ -1,6 +1,7 @@
 import { Box } from "@geomtoy/util";
 import Geometry from "../base/Geometry";
 import Graphics from "../graphics";
+import { isParentShape } from "../misc/parent-shape";
 import Transformation from "../transformation";
 import type { ParentShape, ViewportDescriptor } from "../types";
 import GeometryArray from "./GeometryArray";
@@ -65,6 +66,18 @@ export default class SealedGeometryArray<T extends Geometry[]> extends Geometry 
     clone() {
         return new SealedGeometryArray(this._items);
     }
+    deepClone() {
+        const ret = new SealedGeometryArray(this._items);
+        for (const [i, v] of this._items.entries()) {
+            if (isParentShape(v)) {
+                ret._items[i as keyof T] = v.deepClone() as unknown as T[number];
+            } else {
+                ret._items[i as keyof T] = v.clone() as T[number];
+            }
+        }
+        return ret;
+    }
+
     getGraphics(viewport: ViewportDescriptor) {
         const g = new Graphics();
         for (const item of this._items) {

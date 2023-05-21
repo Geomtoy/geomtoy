@@ -2,6 +2,7 @@ import { Utility } from "@geomtoy/util";
 import Shape from "../base/Shape";
 import EventSourceObject from "../event/EventSourceObject";
 import Graphics from "../graphics";
+import { isParentShape } from "../misc/parent-shape";
 import type { ParentShape, ViewportDescriptor } from "../types";
 import { initObjectProxy } from "./helper";
 
@@ -44,6 +45,17 @@ export default class ShapeObject<T extends Shape> extends Shape implements Paren
     }
     clone() {
         return new ShapeObject(this._items);
+    }
+    deepClone() {
+        const ret = new ShapeObject() as ShapeObject<T>;
+        for (const [k, v] of Object.entries(this._items)) {
+            if (isParentShape(v)) {
+                ret._items[k] = v.deepClone() as unknown as T;
+            } else {
+                ret._items[k] = v.clone() as T;
+            }
+        }
+        return ret;
     }
     getGraphics(viewport: ViewportDescriptor) {
         const g = new Graphics();

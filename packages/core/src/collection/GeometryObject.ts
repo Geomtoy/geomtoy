@@ -2,6 +2,7 @@ import { Box, Utility } from "@geomtoy/util";
 import Geometry from "../base/Geometry";
 import EventSourceObject from "../event/EventSourceObject";
 import Graphics from "../graphics";
+import { isParentShape } from "../misc/parent-shape";
 import Transformation from "../transformation";
 import type { ParentShape, ViewportDescriptor } from "../types";
 import { initObjectProxy } from "./helper";
@@ -74,6 +75,17 @@ export default class GeometryObject<T extends Geometry> extends Geometry impleme
     }
     clone() {
         return new GeometryObject(this._items);
+    }
+    deepClone() {
+        const ret = new GeometryObject() as GeometryObject<T>;
+        for (const [k, v] of Object.entries(this._items)) {
+            if (isParentShape(v)) {
+                ret._items[k] = v.deepClone() as unknown as T;
+            } else {
+                ret._items[k] = v.clone() as T;
+            }
+        }
+        return ret;
     }
     getGraphics(viewport: ViewportDescriptor) {
         const g = new Graphics();

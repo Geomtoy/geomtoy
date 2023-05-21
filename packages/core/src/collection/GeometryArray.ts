@@ -2,10 +2,10 @@ import { Box, Utility } from "@geomtoy/util";
 import Geometry from "../base/Geometry";
 import EventSourceObject from "../event/EventSourceObject";
 import Graphics from "../graphics";
+import { isParentShape } from "../misc/parent-shape";
 import Transformation from "../transformation";
 import type { ParentShape, ViewportDescriptor } from "../types";
 import { initArrayProxy } from "./helper";
-import ShapeArray from "./ShapeArray";
 
 export default class GeometryArray<T extends Geometry> extends Geometry implements ParentShape {
     private _items: T[] = [];
@@ -27,7 +27,7 @@ export default class GeometryArray<T extends Geometry> extends Geometry implemen
         if (Utility.is(this._items, value)) return;
         this._items.length = 0;
         for (const [i, v] of value.entries()) this._items[i] = v;
-        this.trigger_(new EventSourceObject(this, ShapeArray.events.itemsReset));
+        this.trigger_(new EventSourceObject(this, GeometryArray.events.itemsReset));
     }
     get items() {
         return this._itemsProxy;
@@ -73,7 +73,18 @@ export default class GeometryArray<T extends Geometry> extends Geometry implemen
         return this;
     }
     clone() {
-        return new ShapeArray(this._items);
+        return new GeometryArray(this._items);
+    }
+    deepClone() {
+        const ret = new GeometryArray() as GeometryArray<T>;
+        for (const [i, v] of this._items.entries()) {
+            if (isParentShape(v)) {
+                ret._items[i] = v.deepClone() as unknown as T;
+            } else {
+                ret._items[i] = v.clone() as T;
+            }
+        }
+        return ret;
     }
     getGraphics(viewport: ViewportDescriptor) {
         const g = new Graphics();

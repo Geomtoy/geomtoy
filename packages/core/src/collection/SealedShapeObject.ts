@@ -1,5 +1,6 @@
 import Shape from "../base/Shape";
 import Graphics from "../graphics";
+import { isParentShape } from "../misc/parent-shape";
 import type { ParentShape, ViewportDescriptor } from "../types";
 import { initSealedObjectProxy } from "./helper";
 
@@ -33,6 +34,17 @@ export default class SealedShapeObject<T extends { [key: string]: Shape }> exten
     }
     clone() {
         return new SealedShapeObject(this._items);
+    }
+    deepClone() {
+        const ret = new SealedShapeObject(this._items);
+        for (const [k, v] of Object.entries(this._items)) {
+            if (isParentShape(v)) {
+                ret._items[k as keyof T] = v.deepClone() as unknown as T[keyof T];
+            } else {
+                ret._items[k as keyof T] = v.clone() as T[keyof T];
+            }
+        }
+        return ret;
     }
     getGraphics(viewport: ViewportDescriptor) {
         const g = new Graphics();
