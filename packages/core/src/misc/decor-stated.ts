@@ -1,3 +1,5 @@
+import { cloneResult } from "./clone-result";
+
 const STATE_SYMBOL = Symbol("decor-stated");
 const STATE_KEY_SYMBOL = Symbol("decor-stated.stateKey");
 export const DISABLE_STATE_SYMBOL = Symbol("decor-stated.disable");
@@ -21,7 +23,8 @@ export function stated(target: any, propertyKey: string, descriptor: TypedProper
         }
 
         if (propertyKey in this[STATE_SYMBOL]) {
-            return structuredClone(this[STATE_SYMBOL][propertyKey]);
+            if (this[STATE_SYMBOL][propertyKey] === this) return this;
+            return cloneResult(this[STATE_SYMBOL][propertyKey]);
         }
         return (this[STATE_SYMBOL][propertyKey] = method.call(this));
     };
@@ -50,7 +53,8 @@ export function statedWithBoolean(...defaultValues: (boolean | undefined)[]) {
                 .join("-");
 
             if (valueKey in this[STATE_SYMBOL][propertyKey]) {
-                return structuredClone(this[STATE_SYMBOL][propertyKey][valueKey]);
+                if (this[STATE_SYMBOL][propertyKey][valueKey] === this) return this;
+                return cloneResult(this[STATE_SYMBOL][propertyKey][valueKey]);
             }
             return (this[STATE_SYMBOL][propertyKey][valueKey] = method.call(this, ...arguments));
         };
