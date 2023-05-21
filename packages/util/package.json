@@ -28,7 +28,9 @@
         "test": "karma start",
         "test:single": "karma start --single-run"
     },
-    "typedocMain": "src/index.ts",
+    "typedoc": {
+        "entryPoint": "src/index.ts"
+    },
     "main": "dist/index.cjs",
     "module": "dist/index.mjs",
     "browser": "dist/index.js",
