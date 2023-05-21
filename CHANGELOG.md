@@ -1,3 +1,9 @@
+## v0.2.4 (2023-05-21)
+
+### Bugs fixed:
+
+- **core**: The `cached` and `stated` decorators should return cloned values([`4d6478b`](https://github.com/Geomtoy/geomtoy/commit/4d6478b986a49874aeefa7bfd9621d0c91d91b92)) (by FishEleven)
+
 ## v0.2.3 (2023-05-20)
 
 ### Bugs fixed:
