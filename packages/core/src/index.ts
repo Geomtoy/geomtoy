@@ -1,6 +1,4 @@
 import Geomtoy from "./geomtoy";
-
-/** @category Entry */
 export { Geomtoy };
 
 export * from "./types";
@@ -12,7 +10,6 @@ import Shape from "./base/Shape";
 import Geometry from "./base/Geometry";
 import EventObject from "./event/EventObject";
 import EventSourceObject from "./event/EventSourceObject";
-/** @category Base */
 export { BaseObject, EventTarget, Shape, Geometry, EventObject, EventSourceObject };
 
 import Arc from "./geometries/basic/Arc";
@@ -37,8 +34,6 @@ import Image from "./non-geometries/Image";
 import Text from "./non-geometries/Text";
 
 import Arbitrary from "./geometries/Arbitrary";
-
-/** @category Shape */
 export { Arc, Bezier, Circle, Ellipse, Image, Line, LineSegment, Point, QuadraticBezier, Ray, Rectangle, RegularPolygon, Text, Triangle, Vector, Path, Polygon, Compound, Arbitrary };
 
 import SealedShapeArray from "./collection/SealedShapeArray";
@@ -49,8 +44,6 @@ import SealedGeometryArray from "./collection/SealedGeometryArray";
 import SealedGeometryObject from "./collection/SealedGeometryObject";
 import GeometryArray from "./collection/GeometryArray";
 import GeometryObject from "./collection/GeometryObject";
-
-/** @category Collection */
 export { SealedShapeArray, SealedShapeObject, ShapeArray, ShapeObject, SealedGeometryArray, SealedGeometryObject, GeometryArray, GeometryObject };
 
 import Dynamic from "./dynamic";
@@ -58,13 +51,10 @@ import Inversion from "./inversion";
 import Intersection from "./intersection";
 import Transformation from "./transformation";
 import BooleanOperation from "./boolean-operation";
-
-/** @category Tool */
 export { Dynamic, Inversion, Intersection, Transformation, BooleanOperation };
 
 import Graphics from "./graphics";
 import GeometryGraphic from "./graphics/GeometryGraphic";
 import ImageGraphic from "./graphics/ImageGraphic";
 import TextGraphic from "./graphics/TextGraphic";
-/** @category Graphics */
 export { Graphics, GeometryGraphic, ImageGraphic, TextGraphic };
