@@ -12,7 +12,7 @@ export function cached(target: any, propertyKey: string, descriptor: TypedProper
         if (this[DISABLE_CACHE_SYMBOL] === true) return method.call(this);
 
         if (this[CACHE_SYMBOL] === undefined) this[CACHE_SYMBOL] = {};
-        if (propertyKey in this[CACHE_SYMBOL]) return this[CACHE_SYMBOL][propertyKey];
+        if (propertyKey in this[CACHE_SYMBOL]) return structuredClone(this[CACHE_SYMBOL][propertyKey]);
         return (this[CACHE_SYMBOL][propertyKey] = method.call(this));
     };
 }

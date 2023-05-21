@@ -465,7 +465,6 @@ export default class Circle extends Geometry implements ClosedGeometry {
         // there are infinite parallel lines between them, means infinite infinite circle.
         return [];
     }
-    @stated
     getInscribedRegularPolygon(sideCount: number, angle = 0) {
         return new RegularPolygon(this._centerX, this._centerY, this._radius, sideCount, angle);
     }

@@ -364,12 +364,12 @@ export default class Arc extends Geometry implements FiniteOpenGeometry {
             rotation
         });
     }
-    // @stated _centerParameterization
+    @stated
     getCenter() {
         const { centerX, centerY } = this._centerParameterization();
         return new Point(centerX, centerY);
     }
-    // @stated _centerParameterization
+    @stated
     getStartEndAngles() {
         const { startAngle, endAngle } = this._centerParameterization();
         return [startAngle, endAngle] as [number, number];

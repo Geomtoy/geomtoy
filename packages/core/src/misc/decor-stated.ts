@@ -21,7 +21,7 @@ export function stated(target: any, propertyKey: string, descriptor: TypedProper
         }
 
         if (propertyKey in this[STATE_SYMBOL]) {
-            return this[STATE_SYMBOL][propertyKey];
+            return structuredClone(this[STATE_SYMBOL][propertyKey]);
         }
         return (this[STATE_SYMBOL][propertyKey] = method.call(this));
     };
@@ -50,7 +50,7 @@ export function statedWithBoolean(...defaultValues: (boolean | undefined)[]) {
                 .join("-");
 
             if (valueKey in this[STATE_SYMBOL][propertyKey]) {
-                return this[STATE_SYMBOL][propertyKey][valueKey];
+                return structuredClone(this[STATE_SYMBOL][propertyKey][valueKey]);
             }
             return (this[STATE_SYMBOL][propertyKey][valueKey] = method.call(this, ...arguments));
         };
