@@ -4,6 +4,7 @@ import Geomtoy from "./geomtoy";
 export { Geomtoy };
 
 export * from "./types";
+export { isParentShape } from "./misc/parent-shape";
 
 import BaseObject from "./base/BaseObject";
 import EventTarget from "./base/EventTarget";

@@ -1,4 +1,4 @@
-import { Geomtoy, Image, ParentShape, SealedShapeArray, SealedShapeObject, Shape, ShapeArray, ShapeObject } from "@geomtoy/core";
+import { Geomtoy, Image, isParentShape, ParentShape, SealedShapeArray, SealedShapeObject, Shape, ShapeArray, ShapeObject } from "@geomtoy/core";
 import { Assert, Maths, TransformationMatrix, Vector2 } from "@geomtoy/util";
 import PointChecker from "../helper/PointChecker";
 import type Renderer from "../renderer/Renderer";
@@ -14,10 +14,6 @@ function viewEventObject(isTouch: boolean, viewportX: number, viewportY: number,
 }
 function withElement(veo: ViewEventObject, el: ViewElement | null) {
     return { ...veo, currentElement: el } as ViewEventObject;
-}
-
-function isParentShape(v: Shape): v is Shape & ParentShape {
-    return "items" in v;
 }
 
 const VIEW_DEFAULTS = {

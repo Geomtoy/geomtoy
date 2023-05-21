@@ -362,8 +362,9 @@ export interface DynamicEventTargetConstructor<T extends { [key: string]: any }>
 export type WindingDirection = 1 /**for positive**/ | -1 /**for negative**/ | 0 /**for undetermined**/;
 export type FillRule = "nonzero" | "evenodd";
 
-export interface ParentShape {
+export interface ParentShape extends Shape {
     get items(): Shape[] | { [key: string]: Shape };
+    deepClone(): ParentShape;
 }
 
 export interface ClosedGeometry {
